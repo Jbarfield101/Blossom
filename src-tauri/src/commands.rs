@@ -4,7 +4,7 @@ use std::{
   path::PathBuf,
   process::{Command as PCommand, Stdio},
 };
-use tauri::{AppHandle, Manager, Runtime, Window};
+use tauri::{AppHandle, Manager, Runtime, Window, Emitter};
 
 /// Absolute path to your GPU conda env's python.exe.
 /// Change this if your env path differs.
