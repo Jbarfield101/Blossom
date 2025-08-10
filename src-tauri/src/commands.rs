@@ -96,6 +96,7 @@ pub async fn lofi_generate_gpu_stream<R: Runtime>(
   bpm: Option<u32>,
   style: Option<String>,
   seed: Option<u64>,
+  out_dir: Option<String>,
 ) -> Result<String, String> {
   let py = conda_python();
   if !py.exists() {
@@ -160,10 +161,22 @@ pub async fn lofi_generate_gpu_stream<R: Runtime>(
     return Err(format!("Python exited with {status}: {stderr_s}"));
   }
 
-  match final_path {
-    Some(p) => Ok(p),
-    None => Err("No FILE line received from python".into()),
+  let mut path = match final_path {
+    Some(p) => PathBuf::from(p),
+    None => return Err("No FILE line received from python".into()),
+  };
+
+  if let Some(dir) = out_dir {
+    let dir_path = PathBuf::from(&dir);
+    std::fs::create_dir_all(&dir_path).map_err(|e| e.to_string())?;
+    if let Some(name) = path.file_name() {
+      let target = dir_path.join(name);
+      std::fs::rename(&path, &target).map_err(|e| e.to_string())?;
+      path = target;
+    }
   }
+
+  Ok(path.to_string_lossy().to_string())
 }
 
 /// Run full-song generation based on a structured spec.

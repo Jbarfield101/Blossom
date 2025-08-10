@@ -1,4 +1,3 @@
-import React from 'react';
 import { useLofi } from './useLofiEngine';
 
 export default function LofiPage() {
