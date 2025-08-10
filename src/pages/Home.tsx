@@ -9,7 +9,15 @@ export default function Home() {
     <>
       <HoverCircle color={hoverColor} />
       <FeatureCarousel onHoverColor={setHoverColor} />
-      <div style={{ position: "absolute", top: 20, right: 20 }}>
+      <div
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          pointerEvents: "none",
+        }}
+      >
         <VersionBadge />
       </div>
     </>

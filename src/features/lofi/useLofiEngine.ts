@@ -47,7 +47,7 @@ type Actions = {
   setSeed: (seed: number) => void; // placeholder we’ll use later
 };
 
-export const useLofi = create<LofiState & Actions>((set, get) => ({
+export const useLofi = create<LofiState & Actions>((set) => ({
   isPlaying: false,
   bpm: 80,
   seed: 0,

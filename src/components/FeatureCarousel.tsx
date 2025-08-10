@@ -1,6 +1,6 @@
 
-import type { ReactNode } from "react";  
-import { useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
+import { useMemo, useRef, useState } from "react";
 import { IconButton } from "@mui/material";
 import {
   FaMusic, FaCubes, FaCameraRetro, FaRobot, FaBolt, FaCalendarAlt
@@ -29,8 +29,12 @@ export default function FeatureCarousel({
 
   const go = (dir: 1 | -1) => setI(v => mod(v + dir, len));
 
-  // scroll with mouse wheel
+  const wheelLock = useRef(0);
+  // scroll with mouse wheel (throttle to one item per tick)
   const onWheel = (e: React.WheelEvent) => {
+    const now = Date.now();
+    if (now - wheelLock.current < 200) return;
+    wheelLock.current = now;
     if (Math.abs(e.deltaY) < 5 && Math.abs(e.deltaX) < 5) return;
     go(e.deltaY > 0 || e.deltaX > 0 ? 1 : -1);
   };
@@ -112,7 +116,7 @@ export default function FeatureCarousel({
             >
               <IconButton
                 sx={{
-                  fontSize: "3rem",
+                  fontSize: "3.5rem",
                   color: "white",
                   "&:hover": {
                     color: it.color.replace("0.55", "1"),
@@ -127,7 +131,7 @@ export default function FeatureCarousel({
               >
                 {it.icon}
               </IconButton>
-              <div style={{ color: "#222", marginTop: 8, fontSize: 14 }}>{it.label}</div>
+              <div style={{ color: "white", marginTop: 8, fontSize: 14 }}>{it.label}</div>
             </div>
           );
         })}

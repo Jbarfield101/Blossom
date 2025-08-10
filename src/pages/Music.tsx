@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { FaPlay, FaPause } from "react-icons/fa";
 import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { open } from "@tauri-apps/plugin-dialog";
 
 export default function Music() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -19,6 +20,7 @@ export default function Music() {
   const [bpm, setBpm] = useState(82);
   const [style, setStyle] = useState<"lofi" | "jazz" | "ambient">("lofi");
   const [count, setCount] = useState(1);
+  const [outDir, setOutDir] = useState("");
 
   // progress
   const [progress, setProgress] = useState(0);
@@ -88,6 +90,11 @@ export default function Music() {
     }
   };
 
+  const pickOutDir = async () => {
+    const dir = await open({ directory: true, multiple: false });
+    if (typeof dir === "string") setOutDir(dir);
+  };
+
   const generate = async () => {
     setBusy(true);
     setErr(null);
@@ -96,13 +103,18 @@ export default function Music() {
 
     try {
       // call the streaming command (returns string or string[])
-      const res = await invoke<string | string[]>("lofi_generate_gpu_stream", {
+      const payload: any = {
         prompt,
         totalSeconds: lengthSec,
         bpm,
         style,
         count,
-      });
+      };
+      if (outDir) payload.outDir = outDir;
+      const res = await invoke<string | string[]>(
+        "lofi_generate_gpu_stream",
+        payload
+      );
 
       // use the first result for the player (you'll still get all files on disk)
       const firstPath = Array.isArray(res) ? res[0] : res;
@@ -136,6 +148,18 @@ export default function Music() {
           />
           <button onClick={generate} disabled={busy} style={styles.btn}>
             {busy ? `Composing… ${progress}%` : "Generate"}
+          </button>
+        </div>
+
+        <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+          <input
+            style={styles.input}
+            value={outDir}
+            readOnly
+            placeholder="Output folder"
+          />
+          <button onClick={pickOutDir} style={styles.btn} disabled={busy}>
+            Choose
           </button>
         </div>
 

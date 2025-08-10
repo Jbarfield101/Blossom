@@ -6,6 +6,7 @@ mod commands;
 
 fn main() {
   tauri::Builder::default()
+    .plugin(tauri_plugin_dialog::init())
     .invoke_handler(tauri::generate_handler![
       commands::lofi_generate_gpu,
       commands::lofi_generate_gpu_stream, // <-- add this
