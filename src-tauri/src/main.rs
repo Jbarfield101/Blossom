@@ -7,7 +7,8 @@ mod commands;
 fn main() {
   tauri::Builder::default()
     .invoke_handler(tauri::generate_handler![
-      commands::lofi_generate_gpu
+      commands::lofi_generate_gpu,
+      commands::lofi_generate_gpu_stream, // <-- add this
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
