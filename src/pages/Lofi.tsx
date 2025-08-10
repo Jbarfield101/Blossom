@@ -1,4 +1,4 @@
-import SongForm from "../SongForm";
+import SongForm from "../components/SongForm";
 import VersionBadge from "../components/VersionBadge";
 
 export default function Lofi() {
