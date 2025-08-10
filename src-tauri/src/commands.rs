@@ -5,6 +5,8 @@ use std::{
   process::{Command as PCommand, Stdio},
 };
 use tauri::{AppHandle, Manager, Runtime, Window, Emitter};
+use chrono::Local;
+use serde_json::Value;
 
 /// Absolute path to your GPU conda env's python.exe.
 /// Change this if your env path differs.
@@ -162,4 +164,69 @@ pub async fn lofi_generate_gpu_stream<R: Runtime>(
     Some(p) => Ok(p),
     None => Err("No FILE line received from python".into()),
   }
+}
+
+/// Run full-song generation based on a structured spec.
+#[tauri::command]
+pub async fn run_lofi_song<R: Runtime>(
+  window: Window<R>,
+  app: AppHandle<R>,
+  spec: Value,
+) -> Result<String, String> {
+  let py = conda_python();
+  if !py.exists() {
+    return Err(format!("Python not found at {}", py.display()));
+  }
+
+  let script = script_path(&app);
+  if !script.exists() {
+    return Err(format!("Script not found at {}", script.display()));
+  }
+
+  let out_dir = spec
+    .get("outDir")
+    .and_then(|v| v.as_str())
+    .ok_or("spec.outDir missing")?;
+  std::fs::create_dir_all(out_dir).map_err(|e| e.to_string())?;
+
+  let title = spec
+    .get("title")
+    .and_then(|v| v.as_str())
+    .unwrap_or("Song");
+  let stamp = Local::now().format("%Y%m%d_%H%M%S").to_string();
+  let file_name = format!("{} - {}.wav", title, stamp);
+  let out_path = PathBuf::from(out_dir).join(file_name);
+
+  let json_str = serde_json::to_string(&spec).map_err(|e| e.to_string())?;
+
+  let mut cmd = PCommand::new(&py);
+  cmd.arg("-u")
+    .arg(&script)
+    .arg("--song-json").arg(json_str)
+    .arg("--out").arg(&out_path)
+    .stdout(Stdio::piped())
+    .stderr(Stdio::piped());
+
+  let mut child = cmd.spawn().map_err(|e| format!("Failed to start python: {e}"))?;
+  let mut stdout = BufReader::new(child.stdout.take().unwrap());
+  let mut line = String::new();
+  loop {
+    line.clear();
+    let read = stdout.read_line(&mut line).map_err(|e| e.to_string())?;
+    if read == 0 { break; }
+    let _ = window.emit("lofi_progress", line.trim().to_string());
+  }
+
+  let mut stderr_s = String::new();
+  if let Some(mut e) = child.stderr.take() {
+    use std::io::Read;
+    let _ = e.read_to_string(&mut stderr_s);
+  }
+
+  let status = child.wait().map_err(|e| e.to_string())?;
+  if !status.success() {
+    return Err(format!("Python exited with {status}: {stderr_s}"));
+  }
+
+  Ok(out_path.to_string_lossy().to_string())
 }

@@ -8,7 +8,7 @@ import Calendar from "./pages/Calendar";
 import Comfy from "./pages/Comfy";
 import Assistant from "./pages/Assistant";
 import Laser from "./pages/Laser";
-import LofiBot from "./pages/LofiBot";
+import Lofi from "./pages/Lofi";
 
 export default function App() {
   return (
@@ -23,7 +23,7 @@ export default function App() {
         <Route path="/comfy" element={<Comfy />} />
         <Route path="/assistant" element={<Assistant />} />
         <Route path="/laser" element={<Laser />} />
-        <Route path="/lofi-bot" element={<LofiBot />} /> {/* new route */}
+        <Route path="/lofi" element={<Lofi />} />
       </Routes>
     </>
   );
