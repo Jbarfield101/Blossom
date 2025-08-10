@@ -1,20 +1,23 @@
 // src-tauri/src/commands.rs
 use std::{
-  io::{BufRead, BufReader},
+  fs,
+  io::{BufRead, BufReader, Read},
   path::PathBuf,
   process::{Command as PCommand, Stdio},
 };
-use tauri::{AppHandle, Manager, Runtime, Window, Emitter};
-use chrono::Local;
-use serde_json::Value;
 
-/// Absolute path to your GPU conda env's python.exe.
-/// Change this if your env path differs.
+use chrono::Local;
+use serde::{Deserialize, Serialize};
+use tauri::{AppHandle, Emitter, Manager, Runtime, Window};
+
+/* ---------- Python paths ---------- */
+
+/// Absolute path to your GPU conda env's python.exe. Change if needed.
 fn conda_python() -> PathBuf {
   PathBuf::from(r"C:\Users\Owner\.conda\envs\blossom-ml\python.exe")
 }
 
-/// Resolve path to the non-stream script (dev -> repo path; prod -> bundled Resources).
+/// Resolve path to the non-stream script (dev -> repo path; prod -> Resources).
 fn script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
   if let Ok(cwd) = std::env::current_dir() {
     let dev = cwd.join("src-tauri").join("python").join("lofi_gpu.py");
@@ -43,6 +46,31 @@ fn script_stream_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
     .join("python")
     .join("lofi_gpu_stream.py")
 }
+
+/* ---------- Serde-mapped types (camelCase from UI) ---------- */
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Section {
+  pub name: String,
+  pub bars: u32,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")] // maps outDir -> out_dir, etc.
+pub struct SongSpec {
+  pub title: String,
+  pub out_dir: String,
+  pub bpm: u32,
+  pub key: String,
+  pub structure: Vec<Section>,
+  pub mood: Vec<String>,
+  pub instruments: Vec<String>,
+  pub ambience: Vec<String>,
+  pub seed: u64,
+}
+
+/* ---------- Commands ---------- */
 
 /// Non‑streaming generate (no progress). Returns a single wav path.
 #[tauri::command]
@@ -146,13 +174,15 @@ pub async fn lofi_generate_gpu_stream<R: Runtime>(
       }
     } else if let Some(rest) = t.strip_prefix("FILE ") {
       final_path = Some(rest.to_string());
+    } else {
+      // forward any other lines for debugging
+      let _ = window.emit("lofi_progress", t.to_string());
     }
   }
 
   // Drain stderr if needed
   let mut stderr_s = String::new();
   if let Some(mut e) = child.stderr.take() {
-    use std::io::Read;
     let _ = e.read_to_string(&mut stderr_s);
   }
 
@@ -179,12 +209,12 @@ pub async fn lofi_generate_gpu_stream<R: Runtime>(
   Ok(path.to_string_lossy().to_string())
 }
 
-/// Run full-song generation based on a structured spec.
+/// Run full-song generation based on a structured spec (typed, camelCase-friendly).
 #[tauri::command]
 pub async fn run_lofi_song<R: Runtime>(
   window: Window<R>,
   app: AppHandle<R>,
-  spec: Value,
+  spec: SongSpec, // <-- typed, with #[serde(rename_all="camelCase")]
 ) -> Result<String, String> {
   let py = conda_python();
   if !py.exists() {
@@ -196,22 +226,19 @@ pub async fn run_lofi_song<R: Runtime>(
     return Err(format!("Script not found at {}", script.display()));
   }
 
-  let out_dir = spec
-    .get("outDir")
-    .and_then(|v| v.as_str())
-    .ok_or("spec.outDir missing")?;
-  std::fs::create_dir_all(out_dir).map_err(|e| e.to_string())?;
+  // Ensure the output directory exists
+  let out_dir = PathBuf::from(&spec.out_dir);
+  fs::create_dir_all(&out_dir).map_err(|e| e.to_string())?;
 
-  let title = spec
-    .get("title")
-    .and_then(|v| v.as_str())
-    .unwrap_or("Song");
+  // Build outfile name
   let stamp = Local::now().format("%Y%m%d_%H%M%S").to_string();
-  let file_name = format!("{} - {}.wav", title, stamp);
-  let out_path = PathBuf::from(out_dir).join(file_name);
+  let file_name = format!("{} - {stamp}.wav", spec.title);
+  let out_path = out_dir.join(file_name);
 
+  // Serialize spec to JSON for Python
   let json_str = serde_json::to_string(&spec).map_err(|e| e.to_string())?;
 
+  // Launch Python
   let mut cmd = PCommand::new(&py);
   cmd.arg("-u")
     .arg(&script)
@@ -220,9 +247,13 @@ pub async fn run_lofi_song<R: Runtime>(
     .stdout(Stdio::piped())
     .stderr(Stdio::piped());
 
+  window.emit("lofi_progress", r#"{"stage":"start","message":"starting"}"#).ok();
+
   let mut child = cmd.spawn().map_err(|e| format!("Failed to start python: {e}"))?;
   let mut stdout = BufReader::new(child.stdout.take().unwrap());
   let mut line = String::new();
+
+  // Forward JSON status lines printed by Python to the UI
   loop {
     line.clear();
     let read = stdout.read_line(&mut line).map_err(|e| e.to_string())?;
@@ -230,9 +261,9 @@ pub async fn run_lofi_song<R: Runtime>(
     let _ = window.emit("lofi_progress", line.trim().to_string());
   }
 
+  // Gather stderr on failure
   let mut stderr_s = String::new();
   if let Some(mut e) = child.stderr.take() {
-    use std::io::Read;
     let _ = e.read_to_string(&mut stderr_s);
   }
 
@@ -241,5 +272,6 @@ pub async fn run_lofi_song<R: Runtime>(
     return Err(format!("Python exited with {status}: {stderr_s}"));
   }
 
+  window.emit("lofi_progress", r#"{"stage":"done","message":"saved"}"#).ok();
   Ok(out_path.to_string_lossy().to_string())
 }

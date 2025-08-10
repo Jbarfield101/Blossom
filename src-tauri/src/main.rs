@@ -6,7 +6,12 @@ mod commands;
 
 fn main() {
   tauri::Builder::default()
+<<<<<<< Updated upstream
     .plugin(tauri_plugin_dialog::init())
+=======
+    .plugin(tauri_plugin_dialog::init())   // <-- REQUIRED for open()
+    // .plugin(tauri_plugin_shell::init()) // optional later
+>>>>>>> Stashed changes
     .invoke_handler(tauri::generate_handler![
       commands::lofi_generate_gpu,
       commands::lofi_generate_gpu_stream, // <-- add this
