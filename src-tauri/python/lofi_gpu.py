@@ -1,194 +1,216 @@
-# src-tauri/python/lofi_gpu.py
-# ------------------------------------------------------------
-# Generates a short lo‑fi clip and prints the output file path.
-# Prefers GPU (CUDA) with Audiocraft's MusicGen; falls back to CPU
-# or a simple sine wave if libraries are missing. Safe for first
-# end‑to‑end wiring with Tauri.
-# ------------------------------------------------------------
+# lofi_gpu.py
+# Song-mode lofi renderer for Blossom (non-stream)
+# - Accepts JSON SongSpec from Tauri
+# - Generates sectioned audio with fixed seed
+# - Crossfades sections
+# - Post-process: normalize, HPF/LPF, soft-limit, export
+#
+# Dependencies:
+#   pip install pydub numpy
+#   (optional) pip install pyloudnorm
+# Requires FFmpeg available in PATH for pydub.
 
 import argparse
-import os
-import sys
-import time
-import tempfile
+import json
 import math
-import wave
-import contextlib
+import os
+import random
+from typing import List, Dict, Tuple, Any
 
-# Optional imports guarded inside functions so the script works even
-# if torch / audiocraft / torchaudio / soundfile are not installed.
-def _try_imports():
-    mods = {}
-    try:
-        import torch  # type: ignore
-        mods["torch"] = torch
-    except Exception:
-        mods["torch"] = None
-    try:
-        from audiocraft.models import musicgen  # type: ignore
-        mods["musicgen"] = musicgen
-    except Exception:
-        mods["musicgen"] = None
-    try:
-        import torchaudio  # type: ignore
-        mods["torchaudio"] = torchaudio
-    except Exception:
-        mods["torchaudio"] = None
-    try:
-        import soundfile as sf  # type: ignore
-        mods["soundfile"] = sf
-    except Exception:
-        mods["soundfile"] = None
-    try:
-        import numpy as np  # type: ignore
-        mods["np"] = np
-    except Exception:
-        mods["np"] = None
-    return mods
+from pydub import AudioSegment, effects
+import numpy as np
 
+# ---------- Utilities ----------
 
-def save_wav_from_tensor(waveform, sample_rate, out_path, mods):
+def bars_to_ms(bars: int, bpm: float, beats_per_bar: int = 4) -> int:
+    """Convert bars @ bpm to milliseconds."""
+    seconds_per_beat = 60.0 / float(bpm)
+    seconds = bars * beats_per_bar * seconds_per_beat
+    return int(seconds * 1000)
+
+def crossfade_concat(sections: List[AudioSegment], ms: int = 120) -> AudioSegment:
+    """Concatenate with crossfade between each segment."""
+    if not sections:
+        return AudioSegment.silent(duration=1)
+    out = sections[0]
+    for seg in sections[1:]:
+        out = out.append(seg, crossfade=ms)
+    return out
+
+def ensure_wav_bitdepth(audio: AudioSegment, sample_width: int = 2) -> AudioSegment:
+    """Force target bit depth (default 16-bit PCM)."""
+    return audio.set_sample_width(sample_width)
+
+# ---------- Simple post-processing chain ----------
+
+def soft_clip_np(x: np.ndarray, drive: float = 1.0) -> np.ndarray:
     """
-    Save a torch/numpy waveform as 16-bit PCM WAV to out_path.
-    Supports torchaudio, soundfile, or pure stdlib wave+numpy fallback.
+    Gentle soft-clip using tanh.
+    x is float32/float64 in [-1, 1].
     """
-    # waveform expected shape: (channels, samples) OR (1, samples)
-    ta = mods.get("torchaudio")
-    sf = mods.get("soundfile")
-    np = mods.get("np")
+    return np.tanh(x * drive)
 
-    # Normalize to 2D float32 [-1, 1]
+def apply_soft_limit(audio: AudioSegment, drive: float = 1.1) -> AudioSegment:
+    """
+    Convert to numpy, soft clip, return to AudioSegment.
+    """
+    samples = np.array(audio.get_array_of_samples()).astype(np.float32)
+
+    # stereo handling
+    channels = audio.channels
+    if channels == 2:
+        samples = samples.reshape((-1, 2))
+    else:
+        samples = samples.reshape((-1, 1))
+
+    # normalize to [-1, 1]
+    max_int = float(2 ** (8 * audio.sample_width - 1))
+    x = samples / max_int
+
+    y = soft_clip_np(x, drive=drive)
+
+    # back to int
+    y = np.clip(y * max_int, -max_int, max_int - 1).astype(np.int16 if audio.sample_width == 2 else samples.dtype)
+
+    if channels == 2:
+        y = y.reshape((-1,))
+    out = audio._spawn(y.tobytes())
+    return out
+
+def loudness_normalize_lufs(audio: AudioSegment, target_lufs: float = -14.0) -> AudioSegment:
+    """
+    If pyloudnorm is available, use it for LUFS targeting.
+    Otherwise fall back to pydub normalize.
+    """
     try:
-        import numpy as _np  # local import for fallback path too
-        if "torch" in str(type(waveform)):
-            # torch tensor
-            waveform = waveform.detach().cpu().float()
-            if waveform.dim() == 1:
-                waveform = waveform.unsqueeze(0)
-            data = waveform.numpy()
-        else:
-            # assume numpy
-            data = _np.asarray(waveform, dtype=_np.float32)
-            if data.ndim == 1:
-                data = data[_np.newaxis, :]
-    except Exception as e:
-        raise RuntimeError(f"Failed to normalize waveform: {e}")
+        import pyloudnorm as pyln
+        # Convert to numpy float32 mono for measurement
+        samples = np.array(audio.get_array_of_samples()).astype(np.float32)
+        if audio.channels == 2:
+            samples = samples.reshape((-1, 2)).mean(axis=1)
+        max_int = float(2 ** (8 * audio.sample_width - 1))
+        x = samples / max_int
 
-    # torchaudio path
-    if ta is not None:
-        try:
-            import torch  # type: ignore
-            tensor = torch.from_numpy(data)
-            ta.save(out_path, tensor, sample_rate=sample_rate, encoding="PCM_S", bits_per_sample=16)
-            return
-        except Exception:
-            pass
+        meter = pyln.Meter(audio.frame_rate)  # EBU R128 meter
+        loudness = meter.integrated_loudness(x)
+        gain_needed = target_lufs - loudness
+        return audio.apply_gain(gain_needed)
+    except Exception:
+        # Approximate
+        return effects.normalize(audio)
 
-    # soundfile path
-    if sf is not None:
-        try:
-            # soundfile expects shape (samples, channels)
-            sf.write(out_path, data.T, samplerate=sample_rate, subtype="PCM_16")
-            return
-        except Exception:
-            pass
+def post_process_chain(audio: AudioSegment) -> AudioSegment:
+    """
+    Clean chain:
+      1) Loudness normalize (target ~ -14 LUFS if possible)
+      2) High-pass @ 30 Hz
+      3) Low-pass @ 18 kHz
+      4) Soft limiter
+      5) Dither handled by encoder on export to 16-bit
+    """
+    a = loudness_normalize_lufs(audio, target_lufs=-14.0)
+    a = a.high_pass_filter(30)
+    a = a.low_pass_filter(18000)
+    a = apply_soft_limit(a, drive=1.05)
+    a = ensure_wav_bitdepth(a, sample_width=2)  # 16-bit
+    return a
 
-    # pure stdlib wave path (requires numpy for int16 conversion)
-    if np is None:
-        raise RuntimeError("No torchaudio/soundfile/numpy available to save WAV.")
+# ---------- Generation stubs ----------
 
-    # clamp and convert float [-1,1] -> int16
-    data16 = (np.clip(data, -1.0, 1.0) * 32767.0).astype(np.int16)
-    # interleave channels (C,S) -> (S,C)
-    interleaved = data16.T.copy(order="C")
+def model_generate_audio(bars: int, bpm: int, seed: int, section: str, motif: Dict[str, Any]) -> AudioSegment:
+    """
+    REPLACE THIS with your real generator call.
+    It must return a pydub.AudioSegment of the requested length.
 
-    with contextlib.closing(wave.open(out_path, "wb")) as w:
-        nch = interleaved.shape[1] if interleaved.ndim == 2 else 1
-        w.setnchannels(nch)
-        w.setsampwidth(2)
-        w.setframerate(sample_rate)
-        w.writeframes(interleaved.tobytes())
+    Temporary fallback:
+      - creates a quiet ambience segment with light noise so the pipeline runs.
+    """
+    random.seed(seed + hash(section) % (2**31 - 1))
+    duration_ms = bars_to_ms(bars, bpm)
 
+    # Base silence
+    seg = AudioSegment.silent(duration=duration_ms, frame_rate=44100).set_channels(2).set_sample_width(2)
 
-def generate_with_audiocraft(prompt: str, duration: int, seed: int, mods) -> tuple:
-    torch = mods["torch"]
-    musicgen = mods["musicgen"]
-    if torch is None or musicgen is None:
-        raise RuntimeError("Audiocraft or Torch not available.")
-
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    # set seed via torch (works across Audiocraft versions)
-    torch.manual_seed(int(seed))
-    if device == "cuda":
-        torch.cuda.manual_seed_all(int(seed))
-
-    model_name = os.environ.get("MUSICGEN_MODEL", "facebook/musicgen-small")
-    model = musicgen.MusicGen.get_pretrained(model_name, device=device)
-
-    # DO NOT pass seed here (your version doesn't support it)
-    model.set_generation_params(
-        duration=duration,
-        use_sampling=True,
-        top_k=250,
-        top_p=0.0,
-        temperature=1.0,
+    # Add a faint noise bed so it isn't flat silent (placeholder)
+    # (You can remove once you plug in the model.)
+    sr = seg.frame_rate
+    n_samples = int(duration_ms * sr / 1000)
+    noise = (np.random.rand(n_samples, 2).astype(np.float32) * 2 - 1) * 0.002  # very quiet
+    noise_int16 = (noise * 32767).astype(np.int16).reshape(-1)
+    noise_seg = AudioSegment(
+        noise_int16.tobytes(),
+        frame_rate=sr,
+        sample_width=2,
+        channels=2
     )
+    seg = seg.overlay(noise_seg)
 
-    with torch.no_grad():
-        # Some versions use descriptions=..., others accept a positional list.
-        # The positional form is the most compatible:
-        wavs = model.generate([prompt], progress=False)
-        wav = wavs[0]  # tensor (channels, samples) or (1, samples)
-        if wav.dim() == 1:
-            wav = wav.unsqueeze(0)
-        return wav.detach().cpu().float(), 32000
+    return seg
 
+# ---------- Song builder ----------
 
+def build_song(sections: List[Tuple[str, int]], bpm: int, seed: int, motif: Dict[str, Any]) -> AudioSegment:
+    parts: List[AudioSegment] = []
+    for name, bars in sections:
+        part = model_generate_audio(bars=bars, bpm=bpm, seed=seed, section=name, motif=motif)
+        parts.append(part)
+    song = crossfade_concat(parts, ms=120)
+    return song
 
-
-def generate_sine(duration: int, freq: float = 220.0, sr: int = 44100):
-    """
-    Last-resort fallback: generate a short sine tone.
-    Returns (waveform as numpy float32 (1,S), sample_rate).
-    """
-    import numpy as np
-    t = np.arange(0, duration, 1.0 / sr, dtype=np.float32)
-    y = 0.15 * np.sin(2 * math.pi * freq * t)
-    return y[np.newaxis, :], sr  # (1, samples)
-
+# ---------- Main ----------
 
 def main():
-    p = argparse.ArgumentParser(description="Lo‑Fi generator (GPU if available). Prints output path.")
-    p.add_argument("--prompt", type=str, required=True, help="Text prompt for the music model.")
-    p.add_argument("--duration", type=int, default=12, help="Clip length in seconds.")
-    p.add_argument("--seed", type=int, default=0, help="Random seed for reproducibility.")
-    args = p.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--song-json", required=True, help="JSON blob from Tauri SongSpec")
+    parser.add_argument("--out", required=True, help="Output WAV path")
+    args = parser.parse_args()
 
-    mods = _try_imports()
-    out_path = os.path.join(tempfile.gettempdir(), f"blossom_lofi_{int(time.time())}.wav")
+    spec = json.loads(args.song_json)
 
-    # Try Audiocraft => else fallback to sine, with clear stderr logging
-    try:
-        if mods["torch"] is not None and mods["musicgen"] is not None:
-            waveform, sr = generate_with_audiocraft(args.prompt, args.duration, args.seed, mods)
-            sys.stderr.write("[lofi_gpu] MODE=AUDIOCRAFT\n")
-        else:
-            raise RuntimeError("Torch/Audiocraft not available")
-    except Exception as e:
-        sys.stderr.write(f"[lofi_gpu] MODE=SINE  reason={e}\n")
-        waveform, sr = generate_sine(args.duration)
+    # Expected spec keys (from Tauri):
+    # title, outDir (handled in Rust), bpm, key, structure[{name,bars}], mood[], instruments[], ambience[], seed
+    bpm = int(spec.get("bpm", 80))
+    seed = int(spec.get("seed", 12345))
 
-    try:
-        save_wav_from_tensor(waveform, sr, out_path, mods)
-    except Exception as e:
-        print(f"Failed to save audio: {e}", file=sys.stderr)
-        sys.exit(1)
+    structure = spec.get("structure")
+    if not structure:
+        # default lofi structure if none provided
+        structure = [
+            {"name": "Intro", "bars": 4},
+            {"name": "A", "bars": 16},
+            {"name": "B", "bars": 16},
+            {"name": "A", "bars": 16},
+            {"name": "Outro", "bars": 8},
+        ]
+    sections = [(s["name"], int(s["bars"])) for s in structure]
 
-    # IMPORTANT: print the file path (Tauri reads stdout)
-    print(os.path.abspath(out_path))
+    motif = {
+        "mood": spec.get("mood", []),
+        "instruments": spec.get("instruments", []),
+        "ambience": spec.get("ambience", []),
+        "key": spec.get("key", "C"),
+    }
 
+    # Generate
+    print(json.dumps({"stage": "generate", "message": "building sections"}))
+    song = build_song(sections, bpm=bpm, seed=seed, motif=motif)
 
+    # Post-process
+    print(json.dumps({"stage": "post", "message": "cleaning audio"}))
+    song = post_process_chain(song)
+
+    # Export
+    out_path = args.out
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    tmp_path = out_path.replace(".wav", ".tmp.wav")
+
+    # Write temp then rename (safer on Windows)
+    song.export(tmp_path, format="wav", parameters=["-acodec", "pcm_s16le"])
+    if os.path.exists(out_path):
+        os.remove(out_path)
+    os.replace(tmp_path, out_path)
+
+    print(json.dumps({"stage": "done", "message": "saved", "path": out_path}))
 
 if __name__ == "__main__":
     main()
