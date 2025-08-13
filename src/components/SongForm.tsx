@@ -44,7 +44,7 @@ export default function SongForm() {
 
   // THEME (applies to all songs)
   const [titleBase, setTitleBase] = useState("Midnight Coffee");
-  const [outDir, setOutDir] = useState("");
+  const [outDir, setOutDir] = useState(localStorage.getItem('outDir') ?? '');
   const [bpm, setBpm] = useState(80);
   const [key, setKey] = useState<string>("C");
   const [mood, setMood] = useState<string[]>(["calm", "nostalgic"]);
@@ -85,6 +85,14 @@ export default function SongForm() {
       audioRef.current = null;
     };
   }, []);
+
+  // persist output directory across sessions
+  useEffect(() => {
+    localStorage.setItem('outDir', outDir);
+    return () => {
+      localStorage.setItem('outDir', outDir);
+    };
+  }, [outDir]);
 
   // progress listener from backend — attach to the "currently running" job
   const runningJobId = useMemo(
@@ -130,7 +138,10 @@ export default function SongForm() {
   async function pickFolder() {
     try {
       const dir = await open({ directory: true, multiple: false });
-      if (dir) setOutDir(dir as string);
+      if (dir) {
+        setOutDir(dir as string);
+        localStorage.setItem('outDir', dir as string);
+      }
     } catch (e: any) {
       setErr(e?.message || String(e));
     }
