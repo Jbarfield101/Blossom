@@ -71,5 +71,17 @@ describe('useCalendar store', () => {
     expect(totals.work).toBe(1.5 * hour);
     expect(totals.play).toBe(0.5 * hour);
   });
+
+  it('rejects events where end is not after start', () => {
+    useCalendar.getState().addEvent({
+      title: 'Bad',
+      date: '2024-01-01T09:00',
+      end: '2024-01-01T09:00',
+      tags: [],
+      status: 'scheduled',
+      hasCountdown: false,
+    });
+    expect(useCalendar.getState().events).toHaveLength(0);
+  });
 });
 
