@@ -5,6 +5,7 @@ import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 
 type Section = { name: string; bars: number };
+type AmbienceSpec = string | { name: string; gain: number };
 type SongSpec = {
   title: string;
   outDir: string;
@@ -13,7 +14,7 @@ type SongSpec = {
   structure: Section[];
   mood: string[];
   instruments: string[];
-  ambience: string[];
+  ambience: AmbienceSpec[];
   seed: number;
 };
 
@@ -29,7 +30,7 @@ type Job = {
 const KEYS = ["C", "D", "E", "F", "G", "A", "B"];
 const MOODS = ["calm", "melancholy", "cozy", "hopeful", "nostalgic"];
 const INSTR = ["rhodes", "nylon guitar", "upright bass", "pads"];
-const AMBI = ["rain", "cafe"];
+const AMBI = ["rain", "cafe", "vinyl", "campfire", "water"];
 
 export default function SongForm() {
   const audioRef = useRef<HTMLAudioElement | null>(null);

@@ -258,6 +258,41 @@ def _bass_note(freq, ms, amp=0.18):
     x *= _env_ad(ms*0.7, ms)
     return x
 
+# ---------- Ambience generators ----------
+def _amb_rain(n: int, rng) -> np.ndarray:
+    return _butter_lowpass((rng.random(n).astype(np.float32)*2-1)*0.04, 1200)
+
+def _amb_cafe(n: int, rng) -> np.ndarray:
+    return (rng.random(n).astype(np.float32)*2-1)*0.01
+
+def _amb_vinyl(n: int, rng) -> np.ndarray:
+    hiss = _butter_lowpass((rng.random(n).astype(np.float32)*2-1)*0.02, 5000)
+    cracks = ((rng.random(n) < 0.005).astype(np.float32)*(rng.random(n)*2-1))
+    cracks = _butter_lowpass(cracks, 4000) * 0.6
+    return hiss + cracks
+
+def _amb_campfire(n: int, rng) -> np.ndarray:
+    x = np.zeros(n, dtype=np.float32)
+    num_pops = int(n / SR * 3)
+    for _ in range(max(1, num_pops)):
+        dur_ms = float(rng.uniform(30, 80))
+        samples = int(dur_ms * SR / 1000)
+        pop = (rng.random(samples).astype(np.float32)*2-1) * 0.6
+        pop *= _env_ad(dur_ms*0.8, dur_ms)
+        pop = _butter_highpass(pop, 1000)
+        idx = int(rng.integers(0, max(1, n - len(pop))))
+        x[idx:idx+len(pop)] += pop
+    bed = _butter_lowpass((rng.random(n).astype(np.float32)*2-1)*0.005, 1000)
+    return x + bed
+
+def _amb_water(n: int, rng) -> np.ndarray:
+    base = (rng.random(n).astype(np.float32)*2-1)
+    base = _butter_highpass(base, 500)
+    base = _butter_lowpass(base, 3000)
+    t = np.arange(n) / SR
+    mod = 0.5 + 0.5*np.sin(2*np.pi*0.2*t)
+    return base * mod.astype(np.float32) * 0.3
+
 # ---------- Variation controls ----------
 DRUM_PATTERNS = {
     "boom_bap_A":  {"kick": [(0,0.00), (2,0.50)], "snare":[(1,0.00), (3,0.00)], "hat_8ths": True},
@@ -426,15 +461,35 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
                         _place(fifth, bass, pos5)
 
     # --- ambience rotation
-    amb_list = motif.get("ambience") or []
-    if not amb_list:
-       amb_list = random.choice([["rain"], ["cafe"], ["rain","cafe"]])
+    amb_raw = motif.get("ambience") or []
+    if not amb_raw:
+        amb_raw = random.choice([["rain"], ["cafe"], ["rain", "cafe"]])
+
+    amb_entries: List[Tuple[str, float]] = []
+    for item in amb_raw:
+        if isinstance(item, dict):
+            name = item.get("type") or item.get("name")
+            gain = float(item.get("gain", 1.0))
+        else:
+            name = str(item)
+            gain = 1.0
+        if name:
+            amb_entries.append((name.lower(), gain))
+    if not amb_entries:
+        amb_entries = [("rain", 1.0)]
 
     amb_mix = np.zeros(n, dtype=np.float32)
-    if "rain" in amb_list:
-        amb_mix += _butter_lowpass((np.random.rand(n).astype(np.float32)*2-1)*0.04, 1200)
-    if "cafe" in amb_list:
-        amb_mix += (np.random.rand(n).astype(np.float32)*2-1)*0.01
+    amb_gens = {
+        "rain": _amb_rain,
+        "cafe": _amb_cafe,
+        "vinyl": _amb_vinyl,
+        "campfire": _amb_campfire,
+        "water": _amb_water,
+    }
+    for name, gain in amb_entries:
+        fn = amb_gens.get(name)
+        if fn:
+            amb_mix += gain * fn(n, rng)
 
     mix = 0.7*drums + 0.7*hats + 0.6*keys + 0.5*bass + 0.3*amb_mix
     mix = np.tanh(mix * 1.2).astype(np.float32)
