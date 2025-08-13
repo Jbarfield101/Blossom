@@ -3,16 +3,114 @@ use std::{
   fs,
   io::{BufRead, BufReader, Read},
   path::PathBuf,
-  process::{Command as PCommand, Stdio},
+  process::{Child, Command as PCommand, Stdio},
+  sync::{Mutex, OnceLock},
 };
 
 use chrono::Local;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, Runtime, Window};
 
-/* ---------- Python paths ---------- */
+/* ==============================
+   ComfyUI launcher (no extra crate)
+   ============================== */
 
-/// Absolute path to your GPU conda env's python.exe. Change if needed.
+static COMFY_CHILD: OnceLock<Mutex<Option<Child>>> = OnceLock::new();
+
+fn comfy_dir() -> PathBuf {
+  // TODO: put your ComfyUI repo folder here
+  // e.g.: PathBuf::from(r"C:\dev\ComfyUI")
+  PathBuf::from(r"C:\Comfy\ComfyUI")
+}
+
+// Reuse our python path from below
+fn comfy_python() -> PathBuf {
+  conda_python()
+}
+
+#[tauri::command]
+pub async fn comfy_status() -> Result<bool, String> {
+  let lock = COMFY_CHILD.get_or_init(|| Mutex::new(None)).lock().unwrap();
+  Ok(lock.as_ref().is_some())
+}
+
+#[tauri::command]
+pub async fn comfy_start<R: Runtime>(window: Window<R>) -> Result<(), String> {
+  {
+    let mut lock = COMFY_CHILD.get_or_init(|| Mutex::new(None)).lock().unwrap();
+    if lock.is_some() {
+      return Ok(()); // already running
+    }
+  }
+
+  let dir = comfy_dir();
+  if !dir.exists() {
+    return Err(format!("ComfyUI folder not found at {}", dir.display()));
+  }
+
+  let py = comfy_python();
+  if !py.exists() {
+    return Err(format!("Python not found at {}", py.display()));
+  }
+
+  let mut cmd = PCommand::new(&py);
+  cmd.current_dir(&dir)
+     .arg("main.py")
+     .arg("--port").arg("8188")
+     .arg("--listen") // remove if you only want localhost
+     .stdout(Stdio::piped())
+     .stderr(Stdio::piped());
+
+  let mut child = cmd.spawn().map_err(|e| format!("Failed to start ComfyUI: {e}"))?;
+
+  // stream logs
+  let mut stdout = BufReader::new(child.stdout.take().unwrap());
+  let mut stderr = BufReader::new(child.stderr.take().unwrap());
+  let w1 = window.clone();
+  let w2 = window.clone();
+
+  std::thread::spawn(move || {
+    let mut line = String::new();
+    loop {
+      line.clear();
+      let Ok(n) = stdout.read_line(&mut line) else { break };
+      if n == 0 { break; }
+      let _ = w1.emit("comfy_log", format!("[out] {}", line.trim_end()));
+    }
+  });
+
+  std::thread::spawn(move || {
+    let mut line = String::new();
+    loop {
+      line.clear();
+      let Ok(n) = stderr.read_line(&mut line) else { break };
+      if n == 0 { break; }
+      let _ = w2.emit("comfy_log", format!("[err] {}", line.trim_end()));
+    }
+  });
+
+  {
+    let mut lock = COMFY_CHILD.get_or_init(|| Mutex::new(None)).lock().unwrap();
+    *lock = Some(child);
+  }
+
+  Ok(())
+}
+
+#[tauri::command]
+pub async fn comfy_stop() -> Result<(), String> {
+  let mut lock = COMFY_CHILD.get_or_init(|| Mutex::new(None)).lock().unwrap();
+  if let Some(mut child) = lock.take() {
+    let _ = child.kill();
+  }
+  Ok(())
+}
+
+/* ==============================
+   Python paths
+   ============================== */
+
+/// Absolute path to your conda env's python.exe.
 fn conda_python() -> PathBuf {
   PathBuf::from(r"C:\Users\Owner\.conda\envs\blossom-ml\python.exe")
 }
@@ -47,7 +145,9 @@ fn script_stream_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
     .join("lofi_gpu_stream.py")
 }
 
-/* ---------- Serde-mapped types (camelCase from UI) ---------- */
+/* ==============================
+   Serde-mapped types (camelCase)
+   ============================== */
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -57,7 +157,7 @@ pub struct Section {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")] // maps outDir -> out_dir, etc.
+#[serde(rename_all = "camelCase")] // outDir -> out_dir, etc
 pub struct SongSpec {
   pub title: String,
   pub out_dir: String,
@@ -68,9 +168,13 @@ pub struct SongSpec {
   pub instruments: Vec<String>,
   pub ambience: Vec<String>,
   pub seed: u64,
+  pub variety: Option<u32>,
+  pub drum_pattern: Option<String>,
 }
 
-/* ---------- Commands ---------- */
+/* ==============================
+   Audio commands
+   ============================== */
 
 /// Non‑streaming generate (no progress). Returns a single wav path.
 #[tauri::command]
@@ -144,14 +248,8 @@ pub async fn lofi_generate_gpu_stream<R: Runtime>(
      .arg("--total-seconds").arg(total_seconds.to_string())
      .arg("--seed").arg(seed.unwrap_or(42).to_string());
 
-  if let Some(b) = bpm {
-    cmd.arg("--bpm").arg(b.to_string());
-  }
-  if let Some(s) = style {
-    if !s.is_empty() {
-      cmd.arg("--style").arg(s);
-    }
-  }
+  if let Some(b) = bpm { cmd.arg("--bpm").arg(b.to_string()); }
+  if let Some(s) = style { if !s.is_empty() { cmd.arg("--style").arg(s); } }
 
   let mut child = cmd.stdout(Stdio::piped()).stderr(Stdio::piped())
     .spawn()
@@ -175,7 +273,6 @@ pub async fn lofi_generate_gpu_stream<R: Runtime>(
     } else if let Some(rest) = t.strip_prefix("FILE ") {
       final_path = Some(rest.to_string());
     } else {
-      // forward any other lines for debugging
       let _ = window.emit("lofi_progress", t.to_string());
     }
   }
@@ -198,10 +295,10 @@ pub async fn lofi_generate_gpu_stream<R: Runtime>(
 
   if let Some(dir) = out_dir {
     let dir_path = PathBuf::from(&dir);
-    std::fs::create_dir_all(&dir_path).map_err(|e| e.to_string())?;
+    fs::create_dir_all(&dir_path).map_err(|e| e.to_string())?;
     if let Some(name) = path.file_name() {
       let target = dir_path.join(name);
-      std::fs::rename(&path, &target).map_err(|e| e.to_string())?;
+      fs::rename(&path, &target).map_err(|e| e.to_string())?;
       path = target;
     }
   }
@@ -214,7 +311,7 @@ pub async fn lofi_generate_gpu_stream<R: Runtime>(
 pub async fn run_lofi_song<R: Runtime>(
   window: Window<R>,
   app: AppHandle<R>,
-  spec: SongSpec, // <-- typed, with #[serde(rename_all="camelCase")]
+  spec: SongSpec,
 ) -> Result<String, String> {
   let py = conda_python();
   if !py.exists() {

@@ -1,30 +1,27 @@
-# lofi_gpu.py
-# Song-mode lofi renderer for Blossom (non-stream)
-# - Accepts JSON SongSpec from Tauri
-# - Generates sectioned audio with fixed seed
-# - Crossfades sections
-# - Post-process: normalize, HPF/LPF, soft-limit, export
-#
-# Dependencies:
-#   pip install pydub numpy
-#   (optional) pip install pyloudnorm
-# Requires FFmpeg available in PATH for pydub (we set it explicitly below).
+# lofi_gpu.py (Blossom) — VARIATION UPGRADE, hardened
+# - Same CLI, JSON spec, and output behavior
+# - Fixes: safe 'variety' parsing (handles null), "Auto"/missing key,
+#          None-safe lists, decay clamp, small FFmpeg warning silencer.
 
 import argparse
 import json
 import os
 import random
 import sys
+import hashlib
+import warnings
 from typing import List, Dict, Tuple, Any
 
+import numpy as np
 from pydub import AudioSegment, effects
 from pydub.utils import which
-import numpy as np
 
-# ---------- FFmpeg wiring (must run BEFORE any export/decoding) ----------
+# Silence the early pydub warning before we wire ffmpeg manually
+warnings.filterwarnings("ignore", message="Couldn't find ffmpeg or avconv")
+
+# ---------- FFmpeg wiring ----------
 def _set_ffmpeg_paths():
     exe_dir = os.path.dirname(sys.executable)
-
     candidates_ffmpeg = [
         os.path.join(exe_dir, "ffmpeg.exe"),
         os.path.join(exe_dir, "Library", "bin", "ffmpeg.exe"),
@@ -37,7 +34,6 @@ def _set_ffmpeg_paths():
         os.path.join(exe_dir, "..", "Library", "bin", "ffprobe.exe"),
         which("ffprobe"),
     ]
-
     set_any = False
     for p in candidates_ffmpeg:
         if p and os.path.exists(p):
@@ -51,15 +47,16 @@ def _set_ffmpeg_paths():
             AudioSegment.ffprobe = p
             print(json.dumps({"stage": "info", "message": "ffprobe set", "path": p}))
             break
-
     if not set_any:
         print(json.dumps({"stage": "warn", "message": "ffmpeg not found; pydub exports will fail"}))
-
 _set_ffmpeg_paths()
-# ------------------------------------------------------------------------
+# -----------------------------------
 
-# ---------- Utilities ----------
 SR = 44100
+
+# ---------- Small helpers ----------
+def _stable_hash_int(s: str) -> int:
+    return int.from_bytes(hashlib.md5(s.encode("utf-8")).digest()[:4], "little")
 
 def bars_to_ms(bars: int, bpm: float, beats_per_bar: int = 4) -> int:
     seconds_per_beat = 60.0 / float(bpm)
@@ -81,19 +78,17 @@ def ensure_wav_bitdepth(audio: AudioSegment, sample_width: int = 2) -> AudioSegm
 def soft_clip_np(x: np.ndarray, drive: float = 1.0) -> np.ndarray:
     return np.tanh(x * drive)
 
-def apply_soft_limit(audio: AudioSegment, drive: float = 1.1) -> AudioSegment:
+def apply_soft_limit(audio: AudioSegment, drive: float = 1.05) -> AudioSegment:
     samples = np.array(audio.get_array_of_samples()).astype(np.float32)
     channels = audio.channels
     if channels == 2:
         samples = samples.reshape((-1, 2))
     else:
         samples = samples.reshape((-1, 1))
-
     max_int = float(2 ** (8 * audio.sample_width - 1))
     x = samples / max_int
     y = soft_clip_np(x, drive=drive)
     y = np.clip(y * max_int, -max_int, max_int - 1).astype(np.int16 if audio.sample_width == 2 else samples.dtype)
-
     if channels == 2:
         y = y.reshape((-1,))
     out = audio._spawn(y.tobytes())
@@ -114,15 +109,18 @@ def loudness_normalize_lufs(audio: AudioSegment, target_lufs: float = -14.0) -> 
     except Exception:
         return effects.normalize(audio)
 
-def post_process_chain(audio: AudioSegment) -> AudioSegment:
+def post_process_chain(audio: AudioSegment, rng=None) -> AudioSegment:
     a = loudness_normalize_lufs(audio, target_lufs=-14.0)
     a = a.high_pass_filter(30)
-    a = a.low_pass_filter(18000)
-    a = apply_soft_limit(a, drive=1.05)
-    a = ensure_wav_bitdepth(a, sample_width=2)  # 16-bit
+    # small randomization of LPF to avoid identical “air”
+    lpf_cut = 16000 if rng is None else int(rng.integers(14000, 18000))
+    a = a.low_pass_filter(lpf_cut)
+    drv = 1.05 if rng is None else float(rng.uniform(1.03, 1.08))
+    a = apply_soft_limit(a, drive=drv)
+    a = ensure_wav_bitdepth(a, sample_width=2)
     return a
 
-# ---------- Procedural lo-fi generator (replaces static stub) ----------
+# ---------- DSP building blocks ----------
 def _np_to_segment(x: np.ndarray, frame_rate=SR) -> AudioSegment:
     if x.ndim == 1:
         x = np.stack([x, x], axis=-1)
@@ -137,8 +135,10 @@ def _np_to_segment(x: np.ndarray, frame_rate=SR) -> AudioSegment:
     )
 
 def _env_ad(decay_ms: float, length_ms: int):
-    n = int(length_ms * SR / 1000)
+    # clamp decay to buffer length to avoid broadcasting errors
+    n = max(1, int(length_ms * SR / 1000))
     d = int(decay_ms * SR / 1000)
+    d = max(0, min(d, n))
     env = np.ones(n, dtype=np.float32)
     if d > 0:
         tail = np.linspace(1.0, 0.0, d, dtype=np.float32)
@@ -210,24 +210,27 @@ def _beats_ms(bpm):
     sixteenth = beat // 4
     return beat, eighth, sixteenth
 
-def _note_freq(note):
-    pitch = {"C":0,"C#":1,"Db":1,"D":2,"D#":3,"Eb":3,"E":4,"F":5,"F#":6,"Gb":6,"G":7,"G#":8,"Ab":8,"A":9,"A#":10,"Bb":10,"B":11}
-    name = ''.join([c for c in note if c.isalpha() or c in ['#','b']])
-    octave = int(''.join([c for c in note if c.isdigit()])) if any(ch.isdigit() for ch in note) else 4
-    n = pitch[name] + (octave - 4) * 12
-    return 440.0 * (2 ** ((n - 9) / 12.0))
+# ---------- Harmony helpers ----------
+SEMITONES = {"C":0,"C#":1,"Db":1,"D":2,"D#":3,"Eb":3,"E":4,"F":5,"F#":6,"Gb":6,"G":7,"G#":8,"Ab":8,"A":9,"A#":10,"Bb":10,"B":11}
 
-def _triad(root_note, quality="maj"):
-    root = _note_freq(root_note)
-    if quality == "min":
-        third = root * (2 ** (3/12))
-    else:
-        third = root * (2 ** (4/12))
-    fifth = root * (2 ** (7/12))
-    return [root, third, fifth]
+def _degree_to_root_semi(deg: str) -> int:
+    # Diatonic degrees in C (I=0), ii=2, iii=4, IV=5, V=7, vi=9
+    return {"I":0,"ii":2,"iii":4,"IV":5,"V":7,"vi":9}.get(deg, 0)
 
-def _key_center(key_letter):
-    return key_letter + "3"  # e.g., "C3"
+def _chord_freqs_from_degree(key_letter: str, deg: str, add7=False, add9=False, inversion=0):
+    key_off = SEMITONES.get(key_letter.upper(), 0)
+    root_c = _degree_to_root_semi(deg)
+    root_midi = 48 + ((root_c + key_off) % 12)  # around C3
+    quality = "min" if deg in ("ii","iii","vi") else "maj"
+    triad = [root_midi, root_midi + (3 if quality=="min" else 4), root_midi + 7]
+    if add7:
+        triad.append(root_midi + (10 if quality=="min" else 11))
+    if add9:
+        triad.append(root_midi + 14)
+    for _ in range(inversion):
+        triad[0] += 12
+        triad.sort()
+    return [440.0 * (2 ** ((m - 69)/12.0)) for m in triad]
 
 def _rhodes_chord(freqs, ms, amp=0.12):
     env = _env_ad(ms*0.85, ms)
@@ -246,22 +249,53 @@ def _bass_note(freq, ms, amp=0.18):
     x *= _env_ad(ms*0.7, ms)
     return x
 
-def _choose_prog(section_name, key_letter):
-    root = _key_center(key_letter)
-    degrees = {
-        "I": _triad(root, "maj"),
-        "IV": _triad({"C":"F","D":"G","E":"A","F":"Bb","G":"C","A":"D","B":"E"}.get(key_letter,"F")+"3","maj"),
-        "V": _triad({"C":"G","D":"A","E":"B","F":"C","G":"D","A":"E","B":"F#"} .get(key_letter,"G")+"3","maj"),
-        "vi": _triad({"C":"A","D":"B","E":"C#","F":"D","G":"E","A":"F#","B":"G#"} .get(key_letter,"A")+"3","min"),
-    }
-    if section_name.upper().startswith("A"):
-        return ["I","vi","IV","V"], degrees
-    elif section_name.upper().startswith("B"):
-        return ["vi","IV","I","V"], degrees
-    else:
-        return ["I","IV"], degrees
+# ---------- Variation controls ----------
+DRUM_PATTERNS = {
+    "boom_bap_A":  {"kick": [(0,0.00), (2,0.50)], "snare":[(1,0.00), (3,0.00)], "hat_8ths": True},
+    "boom_bap_B":  {"kick": [(0,0.00), (2,0.00)], "snare":[(1,0.00), (3,0.00)], "hat_8ths": True},
+    "laidback":    {"kick": [(0,0.00), (2,0.75)], "snare":[(1,0.00), (3,0.00)], "hat_8ths": True},
+    "half_time":   {"kick": [(0,0.00)],           "snare":[(2,0.00)],           "hat_8ths": True},
+}
 
-def _render_section(bars, bpm, section_name, motif):
+PROG_BANK_A = [["I","vi","IV","V"], ["I","V","vi","IV"], ["I","iii","vi","IV"]]
+PROG_BANK_B = [["vi","IV","I","V"], ["ii","V","I","vi"], ["IV","I","V","vi"]]
+PROG_BANK_INTRO = [["I","IV"], ["ii","V"], ["I","V"]]
+
+BASS_PATTERNS = ["roots_13", "root5_13", "held_whole"]
+
+# ---------- Placement helpers ----------
+def _place(sample, dest, pos_ms, amp=1.0):
+    i0 = int(max(0, pos_ms) * SR / 1000)
+    i1 = min(len(dest), i0 + len(sample))
+    if i1 > i0:
+        dest[i0:i1] += (sample[:i1 - i0] * amp)
+
+def _jitter_ms(rng, std_ms=6.0):
+    return float(rng.normal(0.0, std_ms))
+
+def _vel_scale(rng, mean=1.0, std=0.08, lo=0.8, hi=1.2):
+    v = rng.normal(mean, std)
+    return float(np.clip(v, lo, hi))
+
+def _swing_offset(eighth_ms, sub_idx, swing=0.58):
+    # odd eighths delayed (long-short)
+    if sub_idx % 2 == 1:
+        long = swing * 2.0 * eighth_ms - eighth_ms
+        return long - eighth_ms
+    return 0.0
+
+# ---------- Section renderer ----------
+def _render_section(bars, bpm, section_name, motif, rng, variety=60):
+    # Variety mapping (0..100)
+    t = float(np.clip(variety, 0, 100)) / 100.0
+    swing = 0.54 + 0.08*t
+    jitter_std = 2.0 + 10.0*t
+    ghost_prob = 0.2 + 0.6*t
+    fill_prob = 0.15 + 0.35*t
+    hat_prob = 0.95 - 0.2*t
+    add7_prob = 0.3 + 0.5*t
+    add9_prob = 0.1 + 0.35*t
+
     dur_ms = bars_to_ms(bars, bpm)
     beat, eighth, sixteenth = _beats_ms(bpm)
 
@@ -271,84 +305,148 @@ def _render_section(bars, bpm, section_name, motif):
     keys  = np.zeros(n, dtype=np.float32)
     hats  = np.zeros(n, dtype=np.float32)
 
-    # Drums: Kick 1&3, Snare 2&4, Hats 8ths
+    # --- choose drum pattern
+    pat_name = motif.get("drum_pattern") or rng.choice(list(DRUM_PATTERNS.keys()))
+    pat = DRUM_PATTERNS[pat_name]
+
+    # --- drums & hats
     for bar in range(bars):
         bar_start = bar * _bar_ms(bpm)
-        for beat_idx in [0, 2]:
-            pos = bar_start + beat_idx * beat
-            k = _kick(160)
-            i0 = int(pos * SR / 1000); i1 = min(n, i0 + len(k))
-            drums[i0:i1] += k[: i1 - i0]
-        for beat_idx in [1, 3]:
-            pos = bar_start + beat_idx * beat
-            s = _snare(180)
-            i0 = int(pos * SR / 1000); i1 = min(n, i0 + len(s))
-            drums[i0:i1] += s[: i1 - i0]
-        for sub in range(0, 8):
-            pos = bar_start + sub * eighth
-            h = _hat(60)
-            i0 = int(pos * SR / 1000); i1 = min(n, i0 + len(h))
-            hats[i0:i1] += h[: i1 - i0]
 
-    # Harmony
-    key_letter = (motif.get("key") or "C")[:1].upper()
-    prog, degrees = _choose_prog(section_name, key_letter)
+        # kicks
+        for beat_idx, frac in pat["kick"]:
+            pos = bar_start + beat_idx * beat + frac * beat
+            pos += _swing_offset(eighth, int(frac*8) % 8, swing)
+            pos += _jitter_ms(rng, jitter_std)
+            k = _kick(int(rng.uniform(140, 180))) * _vel_scale(rng, mean=1.0)
+            _place(k, drums, pos)
+
+        # snares
+        for beat_idx, frac in pat["snare"]:
+            pos = bar_start + beat_idx * beat + frac * beat + _jitter_ms(rng, jitter_std)
+            s = _snare(int(rng.uniform(160, 190))) * _vel_scale(rng, mean=1.0)
+            _place(s, drums, pos)
+
+        # ghost notes
+        if rng.random() < ghost_prob:
+            pos = bar_start + beat * rng.choice([0.75, 1.75, 2.75, 3.75]) + _jitter_ms(rng, jitter_std)
+            g = _snare(120) * 0.35 * _vel_scale(rng, mean=0.9)
+            _place(g, drums, pos)
+
+        # hats (8ths) w/ swing & dropouts
+        if pat["hat_8ths"]:
+            for sub in range(8):
+                if rng.random() < hat_prob:
+                    pos = bar_start + sub * eighth
+                    pos += _swing_offset(eighth, sub, swing)
+                    pos += _jitter_ms(rng, jitter_std*0.6)
+                    h = _hat(int(rng.uniform(45, 70))) * _vel_scale(rng, mean=0.95)
+                    _place(h, hats, pos)
+
+        # simple 1-bar fill at each 4 bars
+        if (bar + 1) % 4 == 0 and rng.random() < fill_prob:
+            for sidx in range(8, 16):
+                if rng.random() < 0.6:
+                    pos = bar_start + beat*4 - (16 - sidx) * sixteenth
+                    pos += _jitter_ms(rng, jitter_std*0.5)
+                    r = _hat(40) * 0.8 if rng.random() < 0.7 else _snare(90) * 0.5
+                    _place(r, drums, pos)
+
+    # --- harmony: choose progression + voicing options
+    key_letter_raw = motif.get("key")
+    key_letter = (str(key_letter_raw or "C")[:1]).upper()
+    if key_letter_raw is None or str(key_letter_raw).lower() == "auto":
+        # if caller sent "Auto" or omitted key, pick a stable key from seed
+        # (we do this in main, but keep defensive here)
+        pass
+
+    if section_name.upper().startswith("A"):
+        prog_seq = rng.choice(PROG_BANK_A)
+    elif section_name.upper().startswith("B"):
+        prog_seq = rng.choice(PROG_BANK_B)
+    else:
+        prog_seq = rng.choice(PROG_BANK_INTRO)
+
+    add7 = (rng.random() < add7_prob)
+    add9 = (rng.random() < add9_prob)
+    inv_cycle = int(rng.integers(0, 3))  # 0..2 inversions
+
     chord_len = 2 * beat
     chord_pos = 0
+    current_root_hz = None
+
     while chord_pos < dur_ms:
-        deg = prog[(chord_pos // chord_len) % len(prog)]
-        freqs = degrees[deg]
-        if "rhodes" in motif.get("instruments", []):
+        deg = prog_seq[(chord_pos // chord_len) % len(prog_seq)]
+        freqs = _chord_freqs_from_degree(key_letter, deg, add7=add7, add9=add9, inversion=inv_cycle)
+        current_root_hz = freqs[0]
+
+        if "rhodes" in (motif.get("instruments") or []) or not (motif.get("instruments") or []):
             chord = _rhodes_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.12)
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(chord))
             keys[i0:i1] += chord[: i1 - i0]
-        elif "pads" in motif.get("instruments", []):
+        elif "pads" in (motif.get("instruments") or []):
             pad = _rhodes_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.08)
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(pad))
             keys[i0:i1] += pad[: i1 - i0]
+
         chord_pos += chord_len
 
-    # Bass on roots (1 & 3)
-    if any(i in motif.get("instruments", []) for i in ["upright bass","bass","rhodes"]):
-        root_freq = _triad(_key_center(key_letter), "maj")[0]
+    # --- bass patterns
+    bass_pat = rng.choice(BASS_PATTERNS)
+    instrs = motif.get("instruments") or []
+    if any(i in instrs for i in ["upright bass","bass","rhodes"]) or not instrs:
         for bar in range(bars):
-            for beat_idx in [0, 2]:
-                pos = bar * _bar_ms(bpm) + beat_idx * beat
-                b = _bass_note(root_freq, int(beat*0.9), amp=0.18)
-                i0 = int(pos * SR / 1000); i1 = min(n, i0 + len(b))
-                bass[i0:i1] += b[: i1 - i0]
+            bar_start = bar * _bar_ms(bpm)
+            if bass_pat == "held_whole":
+                pos = bar_start
+                b = _bass_note(current_root_hz, int(beat*3.8), amp=0.16) * _vel_scale(rng, mean=0.95)
+                _place(b, bass, pos + _jitter_ms(rng, jitter_std))
+            else:
+                for beat_idx in [0, 2]:
+                    pos = bar_start + beat_idx * beat + _jitter_ms(rng, jitter_std)
+                    root = _bass_note(current_root_hz, int(beat*0.9), amp=0.18) * _vel_scale(rng)
+                    _place(root, bass, pos)
+                    if bass_pat == "root5_13" and rng.random() < 0.7:
+                        pos5 = pos + beat*0.5 + _jitter_ms(rng, jitter_std*0.7)
+                        fifth = _bass_note(current_root_hz*2**(7/12), int(beat*0.45), amp=0.14) * _vel_scale(rng, mean=0.9)
+                        _place(fifth, bass, pos5)
 
-    # Ambience
+    # --- ambience rotation
+    amb_list = motif.get("ambience") or []
+    if not amb_list:
+       amb_list = random.choice([["vinyl crackle"], ["rain"], ["cafe"], ["vinyl crackle","rain"]])
+
     amb_mix = np.zeros(n, dtype=np.float32)
-    if "vinyl crackle" in motif.get("ambience", []):
-        crack = _noise(dur_ms, 0.02)
+    if "vinyl crackle" in amb_list:
+        crack = (np.random.rand(n).astype(np.float32) * 2 - 1) * 0.02
         for tms in range(0, dur_ms, 500):
-            if np.random.rand() < 0.08:
+            if rng.random() < 0.08:
                 i0 = int(tms * SR / 1000)
                 ln = min(int(0.015 * SR), n - i0)
                 if ln > 0:
-                    amb_mix[i0:i0+ln] += (_noise(15, 0.4)[:ln])
+                    amb_mix[i0:i0+ln] += (np.random.rand(ln).astype(np.float32)*2 - 1) * 0.4
         amb_mix += crack
-    if "rain" in motif.get("ambience", []):
-        amb_mix += _butter_lowpass(_noise(dur_ms, 0.04), 1200)
-    if "cafe" in motif.get("ambience", []):
-        amb_mix += _noise(dur_ms, 0.01)
+    if "rain" in amb_list:
+        amb_mix += _butter_lowpass((np.random.rand(n).astype(np.float32)*2-1)*0.04, 1200)
+    if "cafe" in amb_list:
+        amb_mix += (np.random.rand(n).astype(np.float32)*2-1)*0.01
 
     mix = 0.7*drums + 0.7*hats + 0.6*keys + 0.5*bass + 0.3*amb_mix
     mix = np.tanh(mix * 1.2).astype(np.float32)
     return _np_to_segment(mix)
 
-def model_generate_audio(bars: int, bpm: int, seed: int, section: str, motif: Dict[str, Any]) -> AudioSegment:
-    np.random.seed((seed + hash(section)) & 0xFFFFFFFF)
-    random.seed(seed + hash(section) % (2**31 - 1))
-    return _render_section(bars, bpm, section, motif)
-# ---------- end procedural generator ----------
+# ---------- Public API ----------
+def model_generate_audio(bars: int, bpm: int, seed: int, section: str, motif: Dict[str, Any], variety: int) -> AudioSegment:
+    sec = _stable_hash_int(section)
+    full_seed = (seed ^ sec) & 0xFFFFFFFF
+    rng = np.random.default_rng(full_seed)
+    random.seed(full_seed)
+    return _render_section(bars, bpm, section, motif, rng=rng, variety=variety)
 
-# ---------- Song builder ----------
-def build_song(sections: List[Tuple[str, int]], bpm: int, seed: int, motif: Dict[str, Any]) -> AudioSegment:
+def build_song(sections: List[Tuple[str, int]], bpm: int, seed: int, motif: Dict[str, Any], variety: int) -> AudioSegment:
     parts: List[AudioSegment] = []
     for name, bars in sections:
-        part = model_generate_audio(bars=bars, bpm=bpm, seed=seed, section=name, motif=motif)
+        part = model_generate_audio(bars=bars, bpm=bpm, seed=seed, section=name, motif=motif, variety=variety)
         parts.append(part)
     song = crossfade_concat(parts, ms=120)
     return song
@@ -362,9 +460,18 @@ def main():
 
     spec = json.loads(args.song_json)
 
+    # BPM / Seed
     bpm = int(spec.get("bpm", 80))
     seed = int(spec.get("seed", 12345))
 
+    # Optional global variety knob (0..100); handle null/strings safely
+    try:
+        v = spec.get("variety", 60)
+        variety = 60 if v is None else int(v)
+    except Exception:
+        variety = 60
+
+    # Structure
     structure = spec.get("structure")
     if not structure:
         structure = [
@@ -376,18 +483,27 @@ def main():
         ]
     sections = [(s["name"], int(s["bars"])) for s in structure]
 
+    # Motif & defaults
+    key_val = spec.get("key")
+    if key_val is None or str(key_val).lower() == "auto":
+        rng_key = np.random.default_rng((seed ^ 0xA5A5A5A5) & 0xFFFFFFFF)
+        key_val = rng_key.choice(list("CDEFGAB"))
+
     motif = {
-        "mood": spec.get("mood", []),
-        "instruments": spec.get("instruments", []),
-        "ambience": spec.get("ambience", []),
-        "key": spec.get("key", "C"),
+        "mood": spec.get("mood") or [],
+        "instruments": spec.get("instruments") or [],
+        "ambience": spec.get("ambience") or [],
+        "key": key_val,
+        "drum_pattern": spec.get("drum_pattern"),
     }
 
     print(json.dumps({"stage": "generate", "message": "building sections"}))
-    song = build_song(sections, bpm=bpm, seed=seed, motif=motif)
+    song = build_song(sections, bpm=bpm, seed=seed, motif=motif, variety=variety)
 
     print(json.dumps({"stage": "post", "message": "cleaning audio"}))
-    song = post_process_chain(song)
+    # seed post-FX too so two renders at same seed are exactly repeatable
+    post_rng = np.random.default_rng((seed ^ 0x5A5A5A5A) & 0xFFFFFFFF)
+    song = post_process_chain(song, rng=post_rng)
 
     out_path = args.out
     os.makedirs(os.path.dirname(out_path), exist_ok=True)

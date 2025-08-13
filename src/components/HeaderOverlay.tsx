@@ -8,7 +8,7 @@ type Props = {
 
 export default function HeaderOverlay({
   appName = "Blossom",
-  version = "0.1.1",
+  version = "0.1.2",
   align = "center",
 }: Props) {
   const base: React.CSSProperties = {
