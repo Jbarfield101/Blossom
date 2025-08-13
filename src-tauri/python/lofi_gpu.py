@@ -430,13 +430,15 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     if not amb_list:
        amb_list = random.choice([["rain"], ["cafe"], ["rain","cafe"]])
 
+    amb_level = float(np.clip(motif.get("ambience_level", 1.0), 0.0, 1.0))
+
     amb_mix = np.zeros(n, dtype=np.float32)
     if "rain" in amb_list:
-        amb_mix += _butter_lowpass((np.random.rand(n).astype(np.float32)*2-1)*0.04, 1200)
+        amb_mix += _butter_lowpass((np.random.rand(n).astype(np.float32)*2-1)*0.02, 1200)
     if "cafe" in amb_list:
-        amb_mix += (np.random.rand(n).astype(np.float32)*2-1)*0.01
+        amb_mix += (np.random.rand(n).astype(np.float32)*2-1)*0.003
 
-    mix = 0.7*drums + 0.7*hats + 0.6*keys + 0.5*bass + 0.3*amb_mix
+    mix = 0.7*drums + 0.7*hats + 0.6*keys + 0.5*bass + 0.3*amb_mix*amb_level
     mix = np.tanh(mix * 1.2).astype(np.float32)
     return _np_to_segment(mix)
 
@@ -494,10 +496,16 @@ def main():
         rng_key = np.random.default_rng((seed ^ 0xA5A5A5A5) & 0xFFFFFFFF)
         key_val = rng_key.choice(list("CDEFGAB"))
 
+    try:
+        amb_lvl = float(spec.get("ambience_level", 1.0))
+    except Exception:
+        amb_lvl = 1.0
+
     motif = {
         "mood": spec.get("mood") or [],
         "instruments": spec.get("instruments") or [],
         "ambience": spec.get("ambience") or [],
+        "ambience_level": amb_lvl,
         "key": key_val,
         "drum_pattern": spec.get("drum_pattern"),
     }

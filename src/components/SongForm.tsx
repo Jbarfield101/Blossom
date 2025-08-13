@@ -14,6 +14,7 @@ type SongSpec = {
   mood: string[];
   instruments: string[];
   ambience: string[];
+  ambienceLevel: number; // 0..1
   seed: number;
 };
 
@@ -42,6 +43,7 @@ export default function SongForm() {
   const [mood, setMood] = useState<string[]>(["calm", "nostalgic"]);
   const [instruments, setInstruments] = useState<string[]>(["rhodes", "nylon guitar", "upright bass"]);
   const [ambience, setAmbience] = useState<string[]>(["rain"]);
+  const [ambienceLevel, setAmbienceLevel] = useState(1);
   const [structure, setStructure] = useState<Section[]>([
     { name: "Intro", bars: 4 },
     { name: "A", bars: 16 },
@@ -168,6 +170,7 @@ export default function SongForm() {
       mood,
       instruments,
       ambience,
+      ambienceLevel,
       seed: pickSeed(i),
     };
   }
@@ -426,6 +429,16 @@ export default function SongForm() {
                 );
               })}
             </div>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={ambienceLevel}
+              onChange={(e) => setAmbienceLevel(Number(e.target.value))}
+              style={S.slider}
+            />
+            <div style={S.small}>{Math.round(ambienceLevel * 100)}% intensity</div>
           </div>
         </div>
 
