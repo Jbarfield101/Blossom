@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useCalendar } from "../features/calendar/useCalendar";
 import Countdown from "../components/Countdown";
 import TagStats from "../components/TagStats";
@@ -6,6 +6,13 @@ import TagStats from "../components/TagStats";
 function pad(n: number) {
   return n.toString().padStart(2, "0");
 }
+
+const HOLIDAYS = [
+  { month: 0, day: 1, title: "New Year's Day" },
+  { month: 6, day: 4, title: "Independence Day" },
+  { month: 10, day: 31, title: "Halloween" },
+  { month: 11, day: 25, title: "Christmas Day" },
+];
 
 export default function Calendar() {
   const [current, setCurrent] = useState(new Date());
@@ -17,7 +24,12 @@ export default function Calendar() {
     "scheduled" | "canceled" | "missed" | "completed"
   >("scheduled");
   const [hasCountdown, setHasCountdown] = useState(false);
-  const { events, addEvent } = useCalendar();
+  const events = useCalendar((s) => s.events);
+  const addEvent = useCalendar((s) => s.addEvent);
+  const eventsRef = useRef(events);
+  useEffect(() => {
+    eventsRef.current = events;
+  }, [events]);
 
   const year = current.getFullYear();
   const month = current.getMonth();
@@ -57,17 +69,11 @@ export default function Calendar() {
   };
 
   useEffect(() => {
-    const holidays = [
-      { month: 0, day: 1, title: "New Year's Day" },
-      { month: 6, day: 4, title: "Independence Day" },
-      { month: 10, day: 31, title: "Halloween" },
-      { month: 11, day: 25, title: "Christmas Day" },
-    ];
-    holidays.forEach((h) => {
+    HOLIDAYS.forEach((h) => {
       const start = new Date(year, h.month, h.day, 0, 0).toISOString();
       const end = new Date(year, h.month, h.day, 23, 59).toISOString();
       const dayStr = start.slice(0, 10);
-      if (!events.some((e) => e.title === h.title && e.date.slice(0, 10) === dayStr)) {
+      if (!eventsRef.current.some((e) => e.title === h.title && e.date.slice(0, 10) === dayStr)) {
         addEvent({
           title: h.title,
           date: start,
@@ -78,7 +84,7 @@ export default function Calendar() {
         });
       }
     });
-  }, [year, events, addEvent]);
+  }, [year]);
 
   return (
     <div style={{ padding: 20, paddingTop: 80 }}>
