@@ -14,6 +14,8 @@ fn main() {
       commands::comfy_status,
       commands::comfy_start,
       commands::comfy_stop,
+      // Blender:
+      commands::blender_run_script,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

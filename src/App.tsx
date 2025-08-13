@@ -3,6 +3,7 @@ import TopBar from "./components/TopBar";
 import Home from "./pages/Home";
 import Settings from "./pages/Settings";
 import Objects from "./pages/Objects";
+import Blender from "./pages/Blender";
 import Music from "./pages/Music";
 import Calendar from "./pages/Calendar";
 import Comfy from "./pages/Comfy";
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/objects" element={<Objects />} />
+        <Route path="/objects/blender" element={<Blender />} />
         <Route path="/music" element={<Music />} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/comfy" element={<Comfy />} />
