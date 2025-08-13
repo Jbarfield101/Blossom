@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useCalendar } from "../features/calendar/useCalendar";
 import Countdown from "../components/Countdown";
+import type { CalendarEvent } from "../features/calendar/types";
 
 function pad(n: number) {
   return n.toString().padStart(2, "0");
@@ -16,7 +17,8 @@ export default function Calendar() {
     "scheduled" | "canceled" | "missed" | "completed"
   >("scheduled");
   const [hasCountdown, setHasCountdown] = useState(false);
-  const { events, addEvent } = useCalendar();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const { events, addEvent, updateEvent, removeEvent } = useCalendar();
 
   const year = current.getFullYear();
   const month = current.getMonth();
@@ -27,19 +29,45 @@ export default function Calendar() {
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
   while (cells.length % 7 !== 0) cells.push(null);
 
-  const add = () => {
-    if (!title || !date || !end) return;
-    const tagsArr = tags
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-    addEvent({ title, date, end, tags: tagsArr, status, hasCountdown });
+  const resetForm = () => {
     setTitle("");
     setDate("");
     setEnd("");
     setTags("");
     setStatus("scheduled");
     setHasCountdown(false);
+    setEditingId(null);
+  };
+
+  const submit = () => {
+    if (!title || !date || !end) return;
+    const tagsArr = tags
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+    if (editingId) {
+      updateEvent(editingId, {
+        title,
+        date,
+        end,
+        tags: tagsArr,
+        status,
+        hasCountdown,
+      });
+    } else {
+      addEvent({ title, date, end, tags: tagsArr, status, hasCountdown });
+    }
+    resetForm();
+  };
+
+  const startEdit = (ev: CalendarEvent) => {
+    setEditingId(ev.id);
+    setTitle(ev.title);
+    setDate(ev.date);
+    setEnd(ev.end);
+    setTags((ev.tags || []).join(", "));
+    setStatus(ev.status);
+    setHasCountdown(ev.hasCountdown);
   };
 
   const dayEvents = (day: number) => {
@@ -108,7 +136,14 @@ export default function Calendar() {
               <>
                 <div style={{ fontWeight: "bold" }}>{day}</div>
                 {dayEvents(day).map((ev) => (
-                  <div key={ev.id} style={{ fontSize: 10, marginTop: 2 }}>
+                  <div
+                    key={ev.id}
+                    style={{ fontSize: 10, marginTop: 2 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startEdit(ev);
+                    }}
+                  >
                     {ev.title}
                     {ev.tags && ev.tags.length > 0 && (
                       <div style={{ fontSize: 8 }}>#{ev.tags.join(", ")}</div>
@@ -121,6 +156,15 @@ export default function Calendar() {
                         <Countdown target={ev.date} />
                       </div>
                     )}
+                    <button
+                      style={{ fontSize: 8, marginTop: 2 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeEvent(ev.id);
+                      }}
+                    >
+                      Delete
+                    </button>
                   </div>
                 ))}
               </>
@@ -129,7 +173,7 @@ export default function Calendar() {
         ))}
       </div>
       <div style={{ marginTop: 20 }}>
-        <h3>Add Event</h3>
+        <h3>{editingId ? "Edit Event" : "Add Event"}</h3>
         <input
           placeholder="Title"
           value={title}
@@ -164,9 +208,14 @@ export default function Calendar() {
           />
           Countdown
         </label>
-        <button onClick={add} style={{ marginLeft: 8 }}>
-          Add
+        <button onClick={submit} style={{ marginLeft: 8 }}>
+          {editingId ? "Update" : "Add"}
         </button>
+        {editingId && (
+          <button onClick={resetForm} style={{ marginLeft: 4 }}>
+            Cancel
+          </button>
+        )}
       </div>
     </div>
   );
