@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useCalendar } from "../features/calendar/useCalendar";
 import Countdown from "../components/Countdown";
+import TagStats from "../components/TagStats";
 
 function pad(n: number) {
   return n.toString().padStart(2, "0");
@@ -168,6 +169,7 @@ export default function Calendar() {
           Add
         </button>
       </div>
+      <TagStats />
     </div>
   );
 }
