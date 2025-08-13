@@ -11,7 +11,9 @@ import { useCalendar } from "../features/calendar/useCalendar";
 
 export default function Settings() {
   const { events, selectedCountdownId, setSelectedCountdownId } = useCalendar();
-  const countdownEvents = events.filter((e) => e.hasCountdown);
+  const countdownEvents = events.filter(
+    (e) => e.hasCountdown && e.status !== "canceled" && e.status !== "missed"
+  );
   return (
     <Box sx={{ height: "100vh", display: "grid", placeItems: "center" }}>
       <Paper elevation={3} sx={{ p: 4, borderRadius: 3, minWidth: 360 }}>
