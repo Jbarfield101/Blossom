@@ -101,6 +101,7 @@ export default function Calendar() {
         {cells.map((day, idx) => (
           <div
             key={idx}
+            data-testid={day ? `day-${day}` : undefined}
             style={{ border: "1px solid #ccc", minHeight: 80, padding: 4, cursor: day ? "pointer" : "default" }}
             onClick={() => day && handleDayClick(day)}
           >
@@ -136,11 +137,13 @@ export default function Calendar() {
           onChange={(e) => setTitle(e.target.value)}
         />
         <input
+          data-testid="date-input"
           type="datetime-local"
           value={date}
           onChange={(e) => setDate(e.target.value)}
         />
         <input
+          data-testid="end-input"
           type="datetime-local"
           value={end}
           onChange={(e) => setEnd(e.target.value)}
@@ -164,7 +167,7 @@ export default function Calendar() {
           />
           Countdown
         </label>
-        <button onClick={add} style={{ marginLeft: 8 }}>
+        <button onClick={add} style={{ marginLeft: 8 }} data-testid="add-button">
           Add
         </button>
       </div>
