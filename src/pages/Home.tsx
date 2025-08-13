@@ -1,14 +1,40 @@
 // src/pages/Home.tsx
 import { useState } from "react";
+import Countdown from "../components/Countdown";
+import { useCalendar } from "../features/calendar/useCalendar";
 import HoverCircle from "../components/HoverCircle";
 import FeatureCarousel from "../components/FeatureCarousel";
 import VersionBadge from "../components/VersionBadge";
 
 export default function Home() {
   const [hoverColor, setHoverColor] = useState("rgba(255,255,255,0.22)");
+  const { events, selectedCountdownId } = useCalendar();
+  const countdownEvents = events.filter((e) => e.hasCountdown);
+  let event = null as typeof countdownEvents[number] | null;
+  if (selectedCountdownId) {
+    event = countdownEvents.find((e) => e.id === selectedCountdownId) || null;
+  } else if (countdownEvents.length === 1) {
+    event = countdownEvents[0];
+  }
 
   return (
     <>
+      {event && (
+        <div
+          style={{
+            position: "absolute",
+            top: 12,
+            right: 12,
+            zIndex: 50,
+            color: "#fff",
+            textAlign: "right",
+          }}
+        >
+          <div style={{ fontSize: 14 }}>
+            <strong>{event.title}:</strong> <Countdown target={event.date} />
+          </div>
+        </div>
+      )}
       {/* Top-center app title and version */}
       <div
         style={{
