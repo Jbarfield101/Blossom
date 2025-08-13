@@ -9,10 +9,11 @@ import Comfy from "./pages/Comfy";
 import Assistant from "./pages/Assistant";
 import Laser from "./pages/Laser";
 import Lofi from "./pages/Lofi";
+import { ThemeProvider } from "./theme";
 
 export default function App() {
   return (
-    <>
+    <ThemeProvider>
       <TopBar />
       <Routes>
         <Route path="/" element={<Home />} />
@@ -25,6 +26,6 @@ export default function App() {
         <Route path="/laser" element={<Laser />} />
         <Route path="/lofi" element={<Lofi />} />
       </Routes>
-    </>
+    </ThemeProvider>
   );
 }
