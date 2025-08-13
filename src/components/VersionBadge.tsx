@@ -10,8 +10,8 @@ export default function VersionBadge({
 }) {
   const wrap: React.CSSProperties = {
     display: "flex",
-    gap: 12,
-    alignItems: "baseline",
+    flexDirection: "column",
+    alignItems: "center",
     pointerEvents: "none",
   };
   const nameStyle: React.CSSProperties = {
@@ -22,16 +22,15 @@ export default function VersionBadge({
     textShadow: "0 2px 12px rgba(0,0,0,.45)",
   };
   const verStyle: React.CSSProperties = {
-    fontSize: 26,
-    fontWeight: 800,
-    color: "#fff",
-    opacity: 0.95,
+    fontSize: 20,
+    fontWeight: 700,
+    color: "#00bcd4",
     textShadow: "0 2px 12px rgba(0,0,0,.45)",
   };
   return (
     <div style={wrap}>
       <div style={nameStyle}>{name}</div>
-      <div style={verStyle}>{version}</div>
+      <div style={verStyle}>Version {version}</div>
     </div>
   );
 }

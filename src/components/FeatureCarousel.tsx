@@ -3,24 +3,34 @@ import type { ReactNode } from "react";
 import { useMemo, useRef, useState } from "react";
 import { IconButton } from "@mui/material";
 import {
-  FaMusic, FaCubes, FaCameraRetro, FaRobot, FaBolt, FaCalendarAlt
+  FaMusic,
+  FaCubes,
+  FaCameraRetro,
+  FaRobot,
+  FaBolt,
+  FaCalendarAlt,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
-type Item = { icon: ReactNode; label: string; color: string; path: string };
+type Item = { icon: ReactNode; label: string; path: string };
 export default function FeatureCarousel({
   onHoverColor,
 }: { onHoverColor: (c: string) => void }) {
   const nav = useNavigate();
 
-  const items: Item[] = useMemo(() => ([
-    { icon:<FaCubes/>,       label:"3D Object",    color:"rgba(165,216,255,0.55)", path:"/objects" },
-    { icon:<FaMusic/>,       label:"Lo‑Fi Music",  color:"rgba(245,176,194,0.55)", path:"/music" },
-    { icon:<FaCalendarAlt/>, label:"Calendar",     color:"rgba(211,200,255,0.55)", path:"/calendar" },
-    { icon:<FaCameraRetro/>, label:"ComfyUI",      color:"rgba(255,213,165,0.55)", path:"/comfy" },
-    { icon:<FaRobot/>,       label:"AI Assistant", color:"rgba(175,245,215,0.55)", path:"/assistant" },
-    { icon:<FaBolt/>,        label:"Laser Lab",    color:"rgba(255,180,180,0.55)", path:"/laser" },
-  ]), []);
+  const ACCENT = "#00bcd4";
+
+  const items: Item[] = useMemo(
+    () => [
+      { icon: <FaCubes />, label: "3D Object", path: "/objects" },
+      { icon: <FaMusic />, label: "Lo‑Fi Music", path: "/music" },
+      { icon: <FaCalendarAlt />, label: "Calendar", path: "/calendar" },
+      { icon: <FaCameraRetro />, label: "ComfyUI", path: "/comfy" },
+      { icon: <FaRobot />, label: "AI Assistant", path: "/assistant" },
+      { icon: <FaBolt />, label: "Laser Lab", path: "/laser" },
+    ],
+    []
+  );
 
   // index of the centered item
   const [i, setI] = useState(0);
@@ -39,22 +49,10 @@ export default function FeatureCarousel({
     go(e.deltaY > 0 || e.deltaX > 0 ? 1 : -1);
   };
 
-  // hover zones (auto-advance while hovering)
-  const leftTimer = useRef<number | null>(null);
-  const rightTimer = useRef<number | null>(null);
-
-  const startAuto = (dir: 1 | -1, ref: React.MutableRefObject<number | null>) => {
-    if (ref.current) return;
-    ref.current = window.setInterval(() => go(dir), 700);
-  };
-  const stopAuto = (ref: React.MutableRefObject<number | null>) => {
-    if (ref.current) { clearInterval(ref.current); ref.current = null; }
-  };
-
   // layout constants
-  const GAP = 140;         // distance between items
-  const SCALE_MID = 1.0;   // center scale
-  const SCALE_SIDE = 0.7;  // side scale
+  const GAP = 140; // distance between items
+  const SCALE_MID = 1.05; // center scale
+  const SCALE_SIDE = 0.7; // side scale
 
   return (
     <div
@@ -68,29 +66,6 @@ export default function FeatureCarousel({
         zIndex: 1
       }}
     >
-      {/* LEFT hover area */}
-      <div
-        onMouseEnter={() => startAuto(-1, leftTimer)}
-        onMouseLeave={() => stopAuto(leftTimer)}
-        onClick={() => go(-1)}
-        style={{
-          position: "absolute", left: 0, top: 0, bottom: 0, width: "18%",
-          cursor: "w-resize", zIndex: 2
-        }}
-        aria-label="Previous"
-      />
-      {/* RIGHT hover area */}
-      <div
-        onMouseEnter={() => startAuto(1, rightTimer)}
-        onMouseLeave={() => stopAuto(rightTimer)}
-        onClick={() => go(1)}
-        style={{
-          position: "absolute", right: 0, top: 0, bottom: 0, width: "18%",
-          cursor: "e-resize", zIndex: 2
-        }}
-        aria-label="Next"
-      />
-
       {/* items */}
       <div style={{ position: "relative", width: "100%", height: 240 }}>
         {[-2, -1, 0, 1, 2].map((offset) => {
@@ -111,27 +86,38 @@ export default function FeatureCarousel({
                 textAlign: "center",
                 opacity: center ? 1 : 0.6,
                 userSelect: "none",
-                width: 180
+                width: 180,
               }}
             >
               <IconButton
                 sx={{
-                  fontSize: "3.5rem",
-                  color: "white",
+                  fontSize: "3rem",
+                  color: center ? ACCENT : "white",
+                  boxShadow: center ? `0 0 20px 6px ${ACCENT}55` : "none",
+                  transition:
+                    "transform 280ms ease, color 180ms ease, box-shadow 180ms ease",
                   "&:hover": {
-                    color: it.color.replace("0.55", "1"),
-                    transform: "scale(1.06)",
-                    filter: "drop-shadow(0 8px 18px rgba(0,0,0,.18))"
+                    color: ACCENT,
+                    transform: "scale(1.05)",
+                    boxShadow: `0 0 20px 6px ${ACCENT}55`,
                   },
                 }}
-                onMouseEnter={() => onHoverColor(it.color)}
+                onMouseEnter={() => onHoverColor(`${ACCENT}55`)}
                 onMouseLeave={() => onHoverColor("rgba(255,255,255,0.22)")}
-                onClick={() => center ? nav(it.path) : setI(idx)}
+                onClick={() => (center ? nav(it.path) : setI(idx))}
                 aria-label={it.label}
               >
                 {it.icon}
               </IconButton>
-              <div style={{ color: "white", marginTop: 8, fontSize: 14 }}>{it.label}</div>
+              <div
+                style={{
+                  color: center ? ACCENT : "white",
+                  marginTop: 12,
+                  fontSize: 14,
+                }}
+              >
+                {it.label}
+              </div>
             </div>
           );
         })}
