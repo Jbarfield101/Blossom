@@ -32,11 +32,15 @@ export const useCalendar = create<CalendarState & Actions>()(
         events: [],
         selectedCountdownId: null,
         tagTotals: {},
-        addEvent: (e) =>
+        addEvent: (e) => {
+          const start = new Date(e.date).getTime();
+          const end = new Date(e.end).getTime();
+          if (end <= start) return;
           set((state) => {
             const events = [...state.events, { id: crypto.randomUUID(), ...e }];
             return { events, tagTotals: recalc(events) };
-          }),
+          });
+        },
         updateEvent: (id, patch) =>
           set((state) => {
             const events = state.events.map((ev) =>

@@ -19,6 +19,7 @@ export default function Calendar() {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
   const [end, setEnd] = useState("");
+  const [timeError, setTimeError] = useState(false);
   const [tags, setTags] = useState("");
   const [status, setStatus] = useState<
     "scheduled" | "canceled" | "missed" | "completed"
@@ -41,7 +42,7 @@ export default function Calendar() {
   while (cells.length % 7 !== 0) cells.push(null);
 
   const add = () => {
-    if (!title || !date || !end) return;
+    if (!title || !date || !end || timeError) return;
     const tagsArr = tags
       .split(",")
       .map((t) => t.trim())
@@ -54,6 +55,14 @@ export default function Calendar() {
     setStatus("scheduled");
     setHasCountdown(false);
   };
+
+  useEffect(() => {
+    if (!date || !end) {
+      setTimeError(false);
+      return;
+    }
+    setTimeError(new Date(end).getTime() <= new Date(date).getTime());
+  }, [date, end]);
 
   const dayEvents = (day: number) => {
     const dayStr = `${year}-${pad(month + 1)}-${pad(day)}`;
@@ -155,6 +164,11 @@ export default function Calendar() {
           value={end}
           onChange={(e) => setEnd(e.target.value)}
         />
+        {timeError && (
+          <div style={{ color: "red" }} data-testid="time-error">
+            End time must be after start time
+          </div>
+        )}
         <input
           placeholder="Tags (comma separated)"
           value={tags}
@@ -174,7 +188,12 @@ export default function Calendar() {
           />
           Countdown
         </label>
-        <button onClick={add} style={{ marginLeft: 8 }} data-testid="add-button">
+        <button
+          onClick={add}
+          style={{ marginLeft: 8 }}
+          data-testid="add-button"
+          disabled={timeError}
+        >
           Add
         </button>
       </div>
