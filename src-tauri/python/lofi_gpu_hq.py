@@ -18,6 +18,8 @@
 #   - Optional vinyl crackle when mood includes "nostalgic"
 #   - Master tone tilt (subtle low warmth + soft high trim)
 #   - Feature flags: hq_stereo / hq_reverb / hq_sidechain (default True)
+#   - Mood-aware mix & ambience levels
+#   - Optional lofi piano instrument
 
 import argparse
 import json
@@ -376,6 +378,16 @@ def _electric_piano_chord(freqs, ms, amp=0.1):
     out = _butter_lowpass(out, 5000)
     return out
 
+def _lofi_piano_chord(freqs, ms, amp=0.12):
+    env = _env_ad(ms*0.85, ms)
+    t = np.arange(int(ms * SR / 1000)) / SR
+    out = np.zeros_like(t, dtype=np.float32)
+    for f in freqs:
+        out += 0.6*np.sin(2*np.pi*f*t) + 0.4*np.sin(2*np.pi*(f*2)*t)
+    out *= env * amp / max(1, len(freqs))
+    out = _butter_lowpass(out, 4500)
+    return out
+
 def _clean_guitar_chord(freqs, ms, amp=0.08):
     env = _env_ad(ms*0.7, ms)
     t = np.arange(int(ms * SR / 1000)) / SR
@@ -546,6 +558,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     use_electric = ("electric piano" in instrs) and (rng.random() < ep_prob)
     use_clean_gtr = ("clean electric guitar" in instrs) and (rng.random() < gtr_prob)
     use_airy_pad = ("airy pads" in instrs) and (rng.random() < pad_prob)
+    use_lofi_piano = ("piano" in instrs) and (rng.random() < ep_prob)
 
     chord_len = 2 * beat
     chord_pos = 0
@@ -574,6 +587,10 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
             gtr = _clean_guitar_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.08) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(gtr))
             keys[i0:i1] += gtr[: i1 - i0]
+        if use_lofi_piano:
+            pn = _lofi_piano_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.13) * vel
+            i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(pn))
+            keys[i0:i1] += pn[: i1 - i0]
         if "pads" in instrs and "rhodes" not in instrs:
             pad = _rhodes_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.08) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(pad))
@@ -621,17 +638,17 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
 
     amb_mix = np.zeros(n, dtype=np.float32)
     if "rain" in amb_list:
-        r = (np.random.rand(n).astype(np.float32)*2-1)*0.01
+        r = (np.random.rand(n).astype(np.float32)*2-1)*0.004
         r = _butter_lowpass(r, 1200)
         amb_mix += r
     if "cafe" in amb_list:
-        c = (np.random.rand(n).astype(np.float32)*2-1)*0.0015
+        c = (np.random.rand(n).astype(np.float32)*2-1)*0.0008
         c = _butter_lowpass(c, 4000)
         amb_mix += c
 
     # tasteful crackle for nostalgic mood
     if "nostalgic" in (motif.get("mood") or []):
-        amb_mix += 0.5 * _vinyl_crackle(n, density=0.0008, ticky=0.004)
+        amb_mix += 0.4 * _vinyl_crackle(n, density=0.0005, ticky=0.003)
 
     # --- feature flags (can be passed via motif; default True)
     flags = {
@@ -661,8 +678,22 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
         _apply_duck_envelope(bass,  kick_positions_ms, depth_db=2.5)
 
     # final mix (mono bus)
-    mix = 0.72*drums + 0.55*hats + 0.68*keys + 0.52*bass + 0.12*amb_mix*amb_level
-    mix = np.tanh(mix * 1.18).astype(np.float32)
+    mood = motif.get("mood") or []
+    drum_gain = 0.58
+    hat_gain = 0.45
+    key_gain = 0.78
+    bass_gain = 0.60
+    amb_gain = 0.18 * amb_level
+
+    if "calm" in mood or "chill" in mood:
+        drum_gain *= 0.8; hat_gain *= 0.8; amb_gain *= 1.3
+    if "energetic" in mood:
+        drum_gain *= 1.15; hat_gain *= 1.1
+    if "warm" in mood:
+        key_gain *= 1.1
+
+    mix = drum_gain*drums + hat_gain*hats + key_gain*keys + bass_gain*bass + amb_gain*amb_mix
+    mix = np.tanh(mix * 1.15).astype(np.float32)
 
     # stereoize
     if flags.get("hq_stereo", True):
