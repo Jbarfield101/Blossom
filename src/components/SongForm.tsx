@@ -29,7 +29,16 @@ type Job = {
 const KEYS = ["C", "D", "E", "F", "G", "A", "B"];
 const MOODS = ["calm", "melancholy", "cozy", "hopeful", "nostalgic"];
 const INSTR = ["rhodes", "nylon guitar", "upright bass", "pads"];
-const AMBI = ["rain", "cafe"];
+const AMBI = ["rain", "cafe", "vinyl", "campfire", "water"];
+
+const PRESETS: Record<string, { label: string; bpm: number; instruments: string[]; ambience: string[] }> = {
+  campfire: {
+    label: "Campfire",
+    bpm: 68,
+    instruments: ["rhodes", "nylon guitar", "upright bass", "pads"],
+    ambience: ["vinyl", "campfire", "water"],
+  },
+};
 
 export default function SongForm() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -49,6 +58,7 @@ export default function SongForm() {
     { name: "A", bars: 16 },
     { name: "Outro", bars: 8 },
   ]);
+  const [preset, setPreset] = useState<string>("");
 
   // VARIATION / BATCH
   const [numSongs, setNumSongs] = useState(3);
@@ -117,6 +127,16 @@ export default function SongForm() {
 
   function toggle(list: string[], val: string) {
     return list.includes(val) ? list.filter((x) => x !== val) : [...list, val];
+  }
+
+  function applyPreset(name: string) {
+    setPreset(name);
+    const p = PRESETS[name];
+    if (p) {
+      setBpm(p.bpm);
+      setInstruments(p.instruments);
+      setAmbience(p.ambience);
+    }
   }
 
   async function pickFolder() {
@@ -288,6 +308,23 @@ export default function SongForm() {
           </button>
         </div>
         <div style={S.small}>{outDir || "No output folder selected"}</div>
+
+        {/* presets */}
+        <div style={{ ...S.panel, marginTop: 12 }}>
+          <label style={S.label}>Preset</label>
+          <select
+            value={preset}
+            onChange={(e) => applyPreset(e.target.value)}
+            style={{ ...S.input, padding: "8px 12px" }}
+          >
+            <option value="">Custom</option>
+            {Object.entries(PRESETS).map(([value, p]) => (
+              <option key={value} value={value}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
         {/* core knobs */}
         <div style={S.grid3}>
