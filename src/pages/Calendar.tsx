@@ -29,6 +29,7 @@ export default function Calendar() {
 
   const add = () => {
     if (!title || !date || !end) return;
+    if (new Date(end) <= new Date(date)) return;
     const tagsArr = tags
       .split(",")
       .map((t) => t.trim())
@@ -78,6 +79,8 @@ export default function Calendar() {
       }
     });
   }, [year, events, addEvent]);
+
+  const timeError = date && end && new Date(end) <= new Date(date);
 
   return (
     <div style={{ padding: 20, paddingTop: 80 }}>
@@ -139,11 +142,13 @@ export default function Calendar() {
           type="datetime-local"
           value={date}
           onChange={(e) => setDate(e.target.value)}
+          aria-label="start time"
         />
         <input
           type="datetime-local"
           value={end}
           onChange={(e) => setEnd(e.target.value)}
+          aria-label="end time"
         />
         <input
           placeholder="Tags (comma separated)"
@@ -164,9 +169,18 @@ export default function Calendar() {
           />
           Countdown
         </label>
-        <button onClick={add} style={{ marginLeft: 8 }}>
+        <button
+          onClick={add}
+          style={{ marginLeft: 8 }}
+          disabled={!title || !date || !end || timeError}
+        >
           Add
         </button>
+        {timeError && (
+          <div style={{ color: "red", marginTop: 8 }}>
+            End time must be after start time
+          </div>
+        )}
       </div>
     </div>
   );
