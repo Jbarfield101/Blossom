@@ -373,3 +373,30 @@ pub async fn run_lofi_song<R: Runtime>(
   window.emit("lofi_progress", r#"{"stage":"done","message":"saved"}"#).ok();
   Ok(out_path.to_string_lossy().to_string())
 }
+
+/* ==============================
+   Blender integration
+   ============================== */
+
+#[tauri::command]
+pub async fn blender_run_script(code: String) -> Result<(), String> {
+  let tmp = std::env::temp_dir().join("blossom_bpy_script.py");
+  fs::write(&tmp, code).map_err(|e| e.to_string())?;
+
+  let status = PCommand::new(blender_path())
+    .arg("--background")
+    .arg("--python")
+    .arg(&tmp)
+    .status()
+    .map_err(|e| format!("failed to run blender: {e}"))?;
+
+  if status.success() {
+    Ok(())
+  } else {
+    Err(format!("blender exited with status {status}"))
+  }
+}
+
+fn blender_path() -> PathBuf {
+  PathBuf::from("blender")
+}
