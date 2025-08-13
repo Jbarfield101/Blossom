@@ -5,13 +5,12 @@ import { useNavigate, useLocation } from "react-router-dom";
 export default function TopBar() {
   const nav = useNavigate();
   const { pathname } = useLocation();
-  const activeColor = (p: string) => (pathname === p ? "#111" : "white");
 
   return (
     <>
       <IconButton
         onClick={() => nav("/")}
-        style={{ position: "fixed", top: 12, left: 12, zIndex: 2, color: activeColor("/") }}
+        style={{ position: "fixed", top: 12, left: 12, zIndex: 2, color: "#fff" }}
         aria-label="Home"
       >
         <FaHome />
@@ -19,7 +18,13 @@ export default function TopBar() {
 
       <IconButton
         onClick={() => nav("/settings")}
-        style={{ position: "fixed", top: 12, right: 12, zIndex: 2, color: activeColor("/settings") }}
+        style={{
+          position: "fixed",
+          top: 12,
+          right: 12,
+          zIndex: 2,
+          color: pathname === "/settings" ? "var(--accent)" : "var(--text)",
+        }}
         aria-label="Settings"
       >
         <FaWrench />
