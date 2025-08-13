@@ -1,4 +1,4 @@
-// src/components/SongForm.tsx
+// src/components/SongForm.tsx (updated to match new lofi_gpu options)
 import { useEffect, useMemo, useRef, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke, convertFileSrc } from "@tauri-apps/api/core";
@@ -9,15 +9,15 @@ type SongSpec = {
   title: string;
   outDir: string;
   bpm: number;
-  key: string;            // "C".."B" (Python also tolerates "Auto" if you later add it)
+  key: string;            // "C".."B" or "Auto"
   structure: Section[];
   mood: string[];
   instruments: string[];
   ambience: string[];
   ambienceLevel: number; // 0..1
   seed: number;
-  variety: number;
-  drum_pattern?: string;
+  variety: number;       // 0..100
+  drum_pattern?: string; // new engine-friendly key
 };
 
 type Job = {
@@ -29,8 +29,9 @@ type Job = {
   error?: string;
 };
 
-const KEYS = ["C", "D", "E", "F", "G", "A", "B"];
-const MOODS = ["calm", "melancholy", "cozy", "hopeful", "nostalgic"];
+const KEYS_BASE = ["C", "D", "E", "F", "G", "A", "B"];
+const KEYS = ["Auto", ...KEYS_BASE];
+const MOODS = ["calm", "melancholy", "cozy", "nostalgic"]; // trimmed to tighter lofi palette
 const INSTR = [
   "rhodes",
   "nylon guitar",
@@ -41,38 +42,46 @@ const INSTR = [
   "airy pads",
 ];
 const AMBI = ["rain", "cafe"];
-const DRUM_PATS = ["random", "boom_bap_A", "boom_bap_B", "laidback", "half_time", "swing", "half_time_shuffle"];
+const DRUM_PATS = [
+  "random",
+  "boom_bap_A",
+  "boom_bap_B",
+  "laidback",
+  "half_time",
+  "swing",
+  "half_time_shuffle",
+];
 
 export default function SongForm() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // THEME (applies to all songs)
   const [titleBase, setTitleBase] = useState("Midnight Coffee");
-  const [outDir, setOutDir] = useState(localStorage.getItem('outDir') ?? '');
+  const [outDir, setOutDir] = useState(localStorage.getItem("outDir") ?? "");
   const [bpm, setBpm] = useState(80);
-  const [key, setKey] = useState<string>("C");
-  const [mood, setMood] = useState<string[]>(["calm", "nostalgic"]);
+  const [key, setKey] = useState<string>("Auto"); // default to engine's seeded key
+  const [mood, setMood] = useState<string[]>(["calm", "cozy", "nostalgic"]);
   const [instruments, setInstruments] = useState<string[]>(["rhodes", "nylon guitar", "upright bass"]);
   const [ambience, setAmbience] = useState<string[]>(["rain"]);
-  const [ambienceLevel, setAmbienceLevel] = useState(1);
+  const [ambienceLevel, setAmbienceLevel] = useState(0.5); // default gentler ambience
   const [structure, setStructure] = useState<Section[]>([
     { name: "Intro", bars: 4 },
     { name: "A", bars: 16 },
     { name: "B", bars: 16 },
-    { name: "A", bars: 16 },
+    { name: "A", bars: 8 }, // shorter return for subtle evolution
     { name: "Outro", bars: 8 },
   ]);
 
   // VARIATION / BATCH
-  const [numSongs, setNumSongs] = useState(3);
+  const [numSongs, setNumSongs] = useState(1); // test one render by default
   const [titleSuffixMode, setTitleSuffixMode] = useState<"number" | "timestamp">("number");
   const [seedBase, setSeedBase] = useState(12345);
   const [seedMode, setSeedMode] = useState<"increment" | "random">("random");
-  const [autoKeyPerSong, setAutoKeyPerSong] = useState(false);
+  const [autoKeyPerSong, setAutoKeyPerSong] = useState(false); // rotates through C..B if key != Auto
   const [bpmJitterPct, setBpmJitterPct] = useState(5); // +/- %
   const [playLast, setPlayLast] = useState(true);
-  const [drumPattern, setDrumPattern] = useState<string>("random");
-  const [variety, setVariety] = useState(60);
+  const [drumPattern, setDrumPattern] = useState<string>("laidback"); // friendlier default
+  const [variety, setVariety] = useState(45); // calmer fills & swing
 
   // UI state
   const [busy, setBusy] = useState(false);
@@ -95,36 +104,28 @@ export default function SongForm() {
 
   // persist output directory across sessions
   useEffect(() => {
-    localStorage.setItem('outDir', outDir);
+    localStorage.setItem("outDir", outDir);
     return () => {
-      localStorage.setItem('outDir', outDir);
+      localStorage.setItem("outDir", outDir);
     };
   }, [outDir]);
 
   // progress listener from backend — attach to the "currently running" job
-  const runningJobId = useMemo(
-    () => jobs.find((j) => !j.error && !j.outPath)?.id,
-    [jobs]
-  );
+  const runningJobId = useMemo(() => jobs.find((j) => !j.error && !j.outPath)?.id, [jobs]);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
     (async () => {
       const off = await listen("lofi_progress", (e) => {
         try {
-          const raw =
-            typeof e.payload === "string"
-              ? e.payload
-              : JSON.stringify(e.payload);
+          const raw = typeof e.payload === "string" ? e.payload : JSON.stringify(e.payload);
           let pretty = raw;
           try {
             const obj = JSON.parse(raw);
             if (obj && obj.stage && obj.message) pretty = `${obj.stage}: ${obj.message}`;
           } catch {}
           if (runningJobId) {
-            setJobs((prev) =>
-              prev.map((j) => (j.id === runningJobId ? { ...j, status: pretty } : j))
-            );
+            setJobs((prev) => prev.map((j) => (j.id === runningJobId ? { ...j, status: pretty } : j)));
           } else {
             setGlobalStatus(pretty);
           }
@@ -140,14 +141,14 @@ export default function SongForm() {
 
   function toggle(list: string[], val: string) {
     return list.includes(val) ? list.filter((x) => x !== val) : [...list, val];
-  }
+    }
 
   async function pickFolder() {
     try {
       const dir = await open({ directory: true, multiple: false });
       if (dir) {
         setOutDir(dir as string);
-        localStorage.setItem('outDir', dir as string);
+        localStorage.setItem("outDir", dir as string);
       }
     } catch (e: any) {
       setErr(e?.message || String(e));
@@ -163,9 +164,11 @@ export default function SongForm() {
   }
 
   function pickKey(i: number): string {
+    // If user chose Auto, pass it through to Python (stable per seed inside engine)
+    if (key === "Auto") return "Auto";
     if (!autoKeyPerSong) return key;
-    const idx = (i + Math.floor(seedBase % KEYS.length)) % KEYS.length;
-    return KEYS[idx];
+    const idx = (i + Math.floor(seedBase % KEYS_BASE.length)) % KEYS_BASE.length;
+    return KEYS_BASE[idx];
   }
 
   function jitterBpm(i: number): number {
@@ -173,7 +176,7 @@ export default function SongForm() {
     if (pct === 0) return bpm;
     const rnd = mulberry32(seedBase + i)();
     const sign = rnd < 0.5 ? -1 : 1;
-    const amount = Math.round((bpm * pct * 0.01) * (0.5 + Math.abs(rnd - 0.5)));
+    const amount = Math.round(bpm * pct * 0.01 * (0.5 + Math.abs(rnd - 0.5)));
     return Math.max(40, Math.min(160, bpm + sign * amount));
   }
 
@@ -185,6 +188,10 @@ export default function SongForm() {
   }
 
   function makeSpecForIndex(i: number): SongSpec {
+    // clamp guards
+    const amb = Math.max(0, Math.min(1, ambienceLevel));
+    const varPct = Math.max(0, Math.min(100, variety));
+
     return {
       title: buildTitle(i),
       outDir,
@@ -194,9 +201,9 @@ export default function SongForm() {
       mood,
       instruments,
       ambience,
-      ambienceLevel,
+      ambienceLevel: amb,
       seed: pickSeed(i),
-      variety,
+      variety: varPct,
       drum_pattern: drumPattern === "random" ? undefined : drumPattern,
     };
   }
@@ -227,25 +234,15 @@ export default function SongForm() {
     try {
       for (let i = 0; i < newJobs.length; i++) {
         const job = newJobs[i];
-        setJobs((prev) =>
-          prev.map((j) => (j.id === job.id ? { ...j, status: "starting…" } : j))
-        );
+        setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, status: "starting…" } : j)));
         try {
           const outPath = await invoke<string>("run_lofi_song", { spec: job.spec });
-          setJobs((prev) =>
-            prev.map((j) =>
-              j.id === job.id ? { ...j, outPath, status: "done" } : j
-            )
-          );
+          setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, outPath, status: "done" } : j)));
         } catch (e: any) {
           const message = e?.message || String(e);
           console.error("run_lofi_song failed:", e);
-          setJobs((prev) =>
-            prev.map((j) =>
-              j.id === job.id ? { ...j, status: "error", error: message } : j
-            )
-          );
-          // keep going with the rest
+          setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, status: "error", error: message } : j)));
+          // continue with remaining jobs
         }
       }
 
@@ -339,8 +336,8 @@ export default function SongForm() {
               </select>
             </div>
             <div style={{ ...S.toggle, marginTop: 8 }}>
-              <input type="checkbox" checked={autoKeyPerSong} onChange={(e) => setAutoKeyPerSong(e.target.checked)} />
-              <span style={S.small}>Randomize key per song (on‑theme rotation)</span>
+              <input type="checkbox" checked={autoKeyPerSong} onChange={(e) => setAutoKeyPerSong(e.target.checked)} disabled={key === "Auto"} />
+              <span style={S.small}>Rotate key per song{key === "Auto" ? " (disabled: Auto)" : ""}</span>
             </div>
           </div>
           <div style={S.panel}>
@@ -353,22 +350,10 @@ export default function SongForm() {
             />
             <div style={{ ...S.row, marginTop: 8 }}>
               <label style={{ ...S.small, flex: 1 }}>
-                <input
-                  type="radio"
-                  name="seedmode"
-                  checked={seedMode === "increment"}
-                  onChange={() => setSeedMode("increment")}
-                />{" "}
-                Increment (base + i)
+                <input type="radio" name="seedmode" checked={seedMode === "increment"} onChange={() => setSeedMode("increment")} /> Increment (base + i)
               </label>
               <label style={{ ...S.small, flex: 1 }}>
-                <input
-                  type="radio"
-                  name="seedmode"
-                  checked={seedMode === "random"}
-                  onChange={() => setSeedMode("random")}
-                />{" "}
-                Deterministic random
+                <input type="radio" name="seedmode" checked={seedMode === "random"} onChange={() => setSeedMode("random")} /> Deterministic random
               </label>
             </div>
           </div>
@@ -408,11 +393,7 @@ export default function SongForm() {
               {MOODS.map((m) => {
                 const on = mood.includes(m);
                 return (
-                  <button
-                    key={m}
-                    onClick={() => setMood((prev) => toggle(prev, m))}
-                    style={{ ...S.chipBtn, ...(on ? S.chipOn : {}) }}
-                  >
+                  <button key={m} onClick={() => setMood((prev) => toggle(prev, m))} style={{ ...S.chipBtn, ...(on ? S.chipOn : {}) }}>
                     {m}
                   </button>
                 );
@@ -426,11 +407,7 @@ export default function SongForm() {
               {INSTR.map((i) => {
                 const on = instruments.includes(i);
                 return (
-                  <button
-                    key={i}
-                    onClick={() => setInstruments((prev) => toggle(prev, i))}
-                    style={{ ...S.chipBtn, ...(on ? S.chipOn : {}) }}
-                  >
+                  <button key={i} onClick={() => setInstruments((prev) => toggle(prev, i))} style={{ ...S.chipBtn, ...(on ? S.chipOn : {}) }}>
                     {i}
                   </button>
                 );
@@ -445,25 +422,13 @@ export default function SongForm() {
               {AMBI.map((a) => {
                 const on = ambience.includes(a);
                 return (
-                  <button
-                    key={a}
-                    onClick={() => setAmbience((prev) => toggle(prev, a))}
-                    style={{ ...S.chipBtn, ...(on ? S.chipOn : {}) }}
-                  >
+                  <button key={a} onClick={() => setAmbience((prev) => toggle(prev, a))} style={{ ...S.chipBtn, ...(on ? S.chipOn : {}) }}>
                     {a}
                   </button>
                 );
               })}
             </div>
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.01}
-              value={ambienceLevel}
-              onChange={(e) => setAmbienceLevel(Number(e.target.value))}
-              style={S.slider}
-            />
+            <input type="range" min={0} max={1} step={0.01} value={ambienceLevel} onChange={(e) => setAmbienceLevel(Number(e.target.value))} style={S.slider} />
             <div style={S.small}>{Math.round(ambienceLevel * 100)}% intensity</div>
           </div>
         </div>
@@ -472,28 +437,17 @@ export default function SongForm() {
         <div style={S.grid2}>
           <div style={S.panel}>
             <label style={S.label}>Drum Pattern</label>
-            <select
-              value={drumPattern}
-              onChange={(e) => setDrumPattern(e.target.value)}
-              style={{ ...S.input, padding: "8px 12px" }}
-            >
+            <select value={drumPattern} onChange={(e) => setDrumPattern(e.target.value)} style={{ ...S.input, padding: "8px 12px" }}>
               {DRUM_PATS.map((p) => (
                 <option key={p} value={p}>{p}</option>
               ))}
             </select>
-            <div style={S.small}>Choose a groove or leave random</div>
+            <div style={S.small}>Choose a groove or leave random.</div>
           </div>
 
           <div style={S.panel}>
             <label style={S.label}>Variety</label>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={variety}
-              onChange={(e) => setVariety(Number(e.target.value))}
-              style={S.slider}
-            />
+            <input type="range" min={0} max={100} value={variety} onChange={(e) => setVariety(Number(e.target.value))} style={S.slider} />
             <div style={S.small}>{variety}% fills & swing</div>
           </div>
         </div>
@@ -502,20 +456,10 @@ export default function SongForm() {
         <div style={S.grid2}>
           <div style={S.panel}>
             <label style={S.label}>How many songs?</label>
-            <input
-              type="number"
-              min={1}
-              value={numSongs}
-              onChange={(e) => setNumSongs(Math.max(1, Number(e.target.value || 1)))}
-              style={S.input}
-            />
+            <input type="number" min={1} value={numSongs} onChange={(e) => setNumSongs(Math.max(1, Number(e.target.value || 1)))} style={S.input} />
             <div style={{ ...S.small, marginTop: 8 }}>
               Titles will be suffixed with{" "}
-              <select
-                value={titleSuffixMode}
-                onChange={(e) => setTitleSuffixMode(e.target.value as any)}
-                style={{ ...S.input, padding: "4px 8px", display: "inline-block", width: 160, marginLeft: 6 }}
-              >
+              <select value={titleSuffixMode} onChange={(e) => setTitleSuffixMode(e.target.value as any)} style={{ ...S.input, padding: "4px 8px", display: "inline-block", width: 160, marginLeft: 6 }}>
                 <option value="number"># (1, 2, 3…)</option>
                 <option value="timestamp">timestamp</option>
               </select>
@@ -524,14 +468,7 @@ export default function SongForm() {
 
           <div style={S.panel}>
             <label style={S.label}>BPM Jitter (per song)</label>
-            <input
-              type="range"
-              min={0}
-              max={30}
-              value={bpmJitterPct}
-              onChange={(e) => setBpmJitterPct(Number(e.target.value))}
-              style={S.slider}
-            />
+            <input type="range" min={0} max={30} value={bpmJitterPct} onChange={(e) => setBpmJitterPct(Number(e.target.value))} style={S.slider} />
             <div style={S.small}>±{bpmJitterPct}% around the base BPM</div>
             <div style={{ ...S.toggle, marginTop: 8 }}>
               <input type="checkbox" checked={playLast} onChange={(e) => setPlayLast(e.target.checked)} />
@@ -542,11 +479,7 @@ export default function SongForm() {
 
         {/* actions */}
         <div style={S.actions}>
-          <button
-            style={S.btn}
-            disabled={busy || !outDir || !titleBase}
-            onClick={renderBatch}
-          >
+          <button style={S.btn} disabled={busy || !outDir || !titleBase} onClick={renderBatch}>
             {busy ? "Rendering batch…" : "Render Songs"}
           </button>
 
@@ -625,7 +558,7 @@ export default function SongForm() {
 /* ========= tiny deterministic PRNG for variation (seedMode=random) ========= */
 function mulberry32(a: number) {
   return function () {
-    let t = (a += 0x6D2B79F5);
+    let t = (a += 0x6d2b79f5);
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;

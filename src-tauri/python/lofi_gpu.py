@@ -2,6 +2,9 @@
 # - Same CLI, JSON spec, and output behavior
 # - Fixes: safe 'variety' parsing (handles null), "Auto"/missing key,
 #          None-safe lists, decay clamp, small FFmpeg warning silencer.
+# - Upgrades: bass follows per-chord progression, calmer LUFS & darker LPF,
+#             hat micro-duck on snare, gentler ambience & LPF, chord
+#             velocity variation, subtle hat wow, better mix balance.
 
 import argparse
 import json
@@ -110,12 +113,17 @@ def loudness_normalize_lufs(audio: AudioSegment, target_lufs: float = -14.0) -> 
         return effects.normalize(audio)
 
 def post_process_chain(audio: AudioSegment, rng=None) -> AudioSegment:
-    a = loudness_normalize_lufs(audio, target_lufs=-14.0)
+    # Aim more lofi: slightly quieter and darker
+    a = loudness_normalize_lufs(audio, target_lufs=-16.0)  # was -14.0
     a = a.high_pass_filter(30)
-    # small randomization of LPF to avoid identical “air”
-    lpf_cut = 16000 if rng is None else int(rng.integers(14000, 18000))
-    a = a.low_pass_filter(lpf_cut)
-    drv = 1.05 if rng is None else float(rng.uniform(1.03, 1.08))
+
+    # gentle top roll-off for lofi
+    lpf_base = 11000
+    if rng is not None:
+        lpf_base = int(rng.integers(10000, 12000))
+    a = a.low_pass_filter(lpf_base)
+
+    drv = 1.03 if rng is None else float(rng.uniform(1.02, 1.06))
     a = apply_soft_limit(a, drive=drv)
     a = ensure_wav_bitdepth(a, sample_width=2)
     return a
@@ -351,6 +359,10 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     pat_name = motif.get("drum_pattern") or rng.choice(list(DRUM_PATTERNS.keys()))
     pat = DRUM_PATTERNS[pat_name]
 
+    # subtle timing wow for hats (per section)
+    wow_rate = rng.uniform(0.15, 0.35)  # Hz
+    wow_depth = rng.uniform(0.003, 0.006)  # fraction of eighth
+
     # --- drums & hats
     for bar in range(bars):
         bar_start = bar * _bar_ms(bpm)
@@ -368,6 +380,13 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
             pos = bar_start + beat_idx * beat + frac * beat + _jitter_ms(rng, jitter_std)
             s = _snare(int(rng.uniform(160, 190))) * _vel_scale(rng, mean=1.0)
             _place(s, drums, pos)
+            # micro-duck hats around snare
+            snare_center = pos
+            dip_len = int(0.06 * 1000)  # 60ms
+            i0 = int(max(0, snare_center - 15) * SR / 1000)
+            i1 = min(len(hats), i0 + int(dip_len * SR / 1000))
+            if i1 > i0:
+                hats[i0:i1] *= 0.85
 
         # ghost notes
         if rng.random() < ghost_prob:
@@ -375,13 +394,16 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
             g = _snare(120) * 0.35 * _vel_scale(rng, mean=0.9)
             _place(g, drums, pos)
 
-        # hats (8ths) w/ swing & dropouts
+        # hats (8ths) w/ swing, wow & dropouts
         if pat["hat_8ths"]:
             for sub in range(8):
                 if rng.random() < hat_prob:
                     pos = bar_start + sub * eighth
                     pos += _swing_offset(eighth, sub, swing)
                     pos += _jitter_ms(rng, jitter_std*0.6)
+                    # wow modulation
+                    phase = 2*np.pi*wow_rate*((bar_start + sub*eighth)/1000.0)
+                    pos += wow_depth * eighth * np.sin(phase)
                     h = _hat(int(rng.uniform(45, 70))) * _vel_scale(rng, mean=0.95)
                     _place(h, hats, pos)
 
@@ -398,8 +420,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     key_letter_raw = motif.get("key")
     key_letter = (str(key_letter_raw or "C")[:1]).upper()
     if key_letter_raw is None or str(key_letter_raw).lower() == "auto":
-        # if caller sent "Auto" or omitted key, pick a stable key from seed
-        # (we do this in main, but keep defensive here)
+        # pick stable key from seed in main(); keep defensive here
         pass
 
     if section_name.upper().startswith("A"):
@@ -424,74 +445,92 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
 
     chord_len = 2 * beat
     chord_pos = 0
-    current_root_hz = None
+
+    chord_roots_hz: List[float] = []
 
     while chord_pos < dur_ms:
         deg = prog_seq[(chord_pos // chord_len) % len(prog_seq)]
         freqs = _chord_freqs_from_degree(key_letter, deg, add7=add7, add9=add9, inversion=inv_cycle)
-        current_root_hz = freqs[0]
+        chord_roots_hz.append(freqs[0])
+
+        # per-chord velocity drift
+        vel = _vel_scale(rng, mean=1.0, std=0.05, lo=0.9, hi=1.1)
 
         if "rhodes" in instrs or not instrs:
-            chord = _rhodes_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.12)
+            chord = _rhodes_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.12) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(chord))
             keys[i0:i1] += chord[: i1 - i0]
         if "nylon guitar" in instrs:
-            nylon = _nylon_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.1)
+            nylon = _nylon_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.1) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(nylon))
             keys[i0:i1] += nylon[: i1 - i0]
         if use_electric:
-            ep = _electric_piano_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.1)
+            ep = _electric_piano_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.1) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(ep))
             keys[i0:i1] += ep[: i1 - i0]
         if use_clean_gtr:
-            gtr = _clean_guitar_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.08)
+            gtr = _clean_guitar_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.08) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(gtr))
             keys[i0:i1] += gtr[: i1 - i0]
         if "pads" in instrs and "rhodes" not in instrs:
-            pad = _rhodes_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.08)
+            pad = _rhodes_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.08) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(pad))
             keys[i0:i1] += pad[: i1 - i0]
         if use_airy_pad:
-            airy = _airy_pad_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.06)
+            airy = _airy_pad_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.06) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(airy))
             keys[i0:i1] += airy[: i1 - i0]
 
         chord_pos += chord_len
 
-    # --- bass patterns
+    # --- bass patterns (per-chord roots, not just the last one)
     bass_pat = rng.choice(BASS_PATTERNS)
-    if any(i in instrs for i in ["upright bass","bass","rhodes"]) or not instrs:
-        for bar in range(bars):
-            bar_start = bar * _bar_ms(bpm)
-            if bass_pat == "held_whole":
-                pos = bar_start
-                b = _bass_note(current_root_hz, int(beat*3.8), amp=0.16) * _vel_scale(rng, mean=0.95)
-                _place(b, bass, pos + _jitter_ms(rng, jitter_std))
-            else:
-                for beat_idx in [0, 2]:
-                    pos = bar_start + beat_idx * beat + _jitter_ms(rng, jitter_std)
-                    root = _bass_note(current_root_hz, int(beat*0.9), amp=0.18) * _vel_scale(rng)
-                    _place(root, bass, pos)
-                    if bass_pat == "root5_13" and rng.random() < 0.7:
-                        pos5 = pos + beat*0.5 + _jitter_ms(rng, jitter_std*0.7)
-                        fifth = _bass_note(current_root_hz*2**(7/12), int(beat*0.45), amp=0.14) * _vel_scale(rng, mean=0.9)
-                        _place(fifth, bass, pos5)
+    use_bass = any(i in instrs for i in ["upright bass", "bass", "rhodes"]) or not instrs
+
+    if use_bass:
+        for chord_idx, root_hz in enumerate(chord_roots_hz):
+            chord_start = chord_idx * chord_len
+            if chord_start >= dur_ms:
+                break
+            # Which bars does this chord touch?
+            start_bar = (chord_start // _bar_ms(bpm))
+            end_bar   = ((min(chord_start + chord_len, dur_ms) - 1) // _bar_ms(bpm))
+            for bar in range(int(start_bar), int(end_bar) + 1):
+                bar_start = bar * _bar_ms(bpm)
+
+                if bass_pat == "held_whole":
+                    pos = bar_start
+                    b = _bass_note(root_hz, int(beat*3.8), amp=0.16) * _vel_scale(rng, mean=0.95)
+                    _place(b, bass, pos + _jitter_ms(rng, jitter_std))
+                else:
+                    for beat_idx in [0, 2]:
+                        pos = bar_start + beat_idx * beat + _jitter_ms(rng, jitter_std)
+                        root = _bass_note(root_hz, int(beat*0.9), amp=0.18) * _vel_scale(rng)
+                        _place(root, bass, pos)
+                        if bass_pat == "root5_13" and rng.random() < 0.7:
+                            pos5 = pos + beat*0.5 + _jitter_ms(rng, jitter_std*0.7)
+                            fifth = _bass_note(root_hz*2**(7/12), int(beat*0.45), amp=0.14) * _vel_scale(rng, mean=0.9)
+                            _place(fifth, bass, pos5)
 
     # --- ambience rotation
     amb_list = motif.get("ambience") or []
     if not amb_list:
        amb_list = random.choice([["rain"], ["cafe"], ["rain","cafe"]])
 
-    amb_level = float(np.clip(motif.get("ambience_level", 1.0), 0.0, 1.0))
+    amb_level = float(np.clip(motif.get("ambience_level", 0.5), 0.0, 1.0))  # default lower
 
     amb_mix = np.zeros(n, dtype=np.float32)
     if "rain" in amb_list:
-        amb_mix += _butter_lowpass((np.random.rand(n).astype(np.float32)*2-1)*0.01, 1000)
+        r = (np.random.rand(n).astype(np.float32)*2-1)*0.01
+        r = _butter_lowpass(r, 1200)
+        amb_mix += r
     if "cafe" in amb_list:
-        amb_mix += (np.random.rand(n).astype(np.float32)*2-1)*0.0015
+        c = (np.random.rand(n).astype(np.float32)*2-1)*0.0015
+        c = _butter_lowpass(c, 4000)
+        amb_mix += c
 
-    mix = 0.7*drums + 0.55*hats + 0.6*keys + 0.5*bass + 0.15*amb_mix*amb_level
-    mix = np.tanh(mix * 1.2).astype(np.float32)
+    mix = 0.72*drums + 0.55*hats + 0.68*keys + 0.52*bass + 0.12*amb_mix*amb_level
+    mix = np.tanh(mix * 1.18).astype(np.float32)
     return _np_to_segment(mix)
 
 # ---------- Public API ----------
@@ -549,9 +588,9 @@ def main():
         key_val = rng_key.choice(list("CDEFGAB"))
 
     try:
-        amb_lvl = float(spec.get("ambience_level", 1.0))
+        amb_lvl = float(spec.get("ambience_level", 0.5))  # default lower
     except Exception:
-        amb_lvl = 1.0
+        amb_lvl = 0.5
 
     motif = {
         "mood": spec.get("mood") or [],
