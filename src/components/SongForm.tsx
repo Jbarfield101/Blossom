@@ -43,6 +43,7 @@ const INSTR = [
   "upright bass",
   "pads",
   "electric piano",
+  "piano",
   "clean electric guitar",
   "airy pads",
 ];
