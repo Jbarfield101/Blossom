@@ -1,23 +1,28 @@
-// src/components/SongForm.tsx (updated to match new lofi_gpu options)
+// src/components/SongForm.tsx — HQ wiring for lofi_gpu_hq
 import { useEffect, useMemo, useRef, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 
 type Section = { name: string; bars: number };
+
 type SongSpec = {
   title: string;
   outDir: string;
   bpm: number;
-  key: string;            // "C".."B" or "Auto"
+  key: string; // "C".."B" or "Auto"
   structure: Section[];
   mood: string[];
   instruments: string[];
   ambience: string[];
   ambienceLevel: number; // 0..1
   seed: number;
-  variety: number;       // 0..100
-  drum_pattern?: string; // new engine-friendly key
+  variety: number; // 0..100
+  drum_pattern?: string;
+  // NEW HQ feature flags (read by lofi_gpu_hq.py)
+  hq_stereo?: boolean;
+  hq_reverb?: boolean;
+  hq_sidechain?: boolean;
 };
 
 type Job = {
@@ -31,7 +36,7 @@ type Job = {
 
 const KEYS_BASE = ["C", "D", "E", "F", "G", "A", "B"];
 const KEYS = ["Auto", ...KEYS_BASE];
-const MOODS = ["calm", "melancholy", "cozy", "nostalgic"]; // trimmed to tighter lofi palette
+const MOODS = ["calm", "melancholy", "cozy", "nostalgic"];
 const INSTR = [
   "rhodes",
   "nylon guitar",
@@ -59,29 +64,38 @@ export default function SongForm() {
   const [titleBase, setTitleBase] = useState("Midnight Coffee");
   const [outDir, setOutDir] = useState(localStorage.getItem("outDir") ?? "");
   const [bpm, setBpm] = useState(80);
-  const [key, setKey] = useState<string>("Auto"); // default to engine's seeded key
+  const [key, setKey] = useState<string>("Auto");
   const [mood, setMood] = useState<string[]>(["calm", "cozy", "nostalgic"]);
-  const [instruments, setInstruments] = useState<string[]>(["rhodes", "nylon guitar", "upright bass"]);
+  const [instruments, setInstruments] = useState<string[]>([
+    "rhodes",
+    "nylon guitar",
+    "upright bass",
+  ]);
   const [ambience, setAmbience] = useState<string[]>(["rain"]);
-  const [ambienceLevel, setAmbienceLevel] = useState(0.5); // default gentler ambience
+  const [ambienceLevel, setAmbienceLevel] = useState(0.5);
   const [structure, setStructure] = useState<Section[]>([
     { name: "Intro", bars: 4 },
     { name: "A", bars: 16 },
     { name: "B", bars: 16 },
-    { name: "A", bars: 8 }, // shorter return for subtle evolution
+    { name: "A", bars: 8 },
     { name: "Outro", bars: 8 },
   ]);
 
   // VARIATION / BATCH
-  const [numSongs, setNumSongs] = useState(1); // test one render by default
+  const [numSongs, setNumSongs] = useState(1);
   const [titleSuffixMode, setTitleSuffixMode] = useState<"number" | "timestamp">("number");
   const [seedBase, setSeedBase] = useState(12345);
   const [seedMode, setSeedMode] = useState<"increment" | "random">("random");
-  const [autoKeyPerSong, setAutoKeyPerSong] = useState(false); // rotates through C..B if key != Auto
-  const [bpmJitterPct, setBpmJitterPct] = useState(5); // +/- %
+  const [autoKeyPerSong, setAutoKeyPerSong] = useState(false);
+  const [bpmJitterPct, setBpmJitterPct] = useState(5);
   const [playLast, setPlayLast] = useState(true);
-  const [drumPattern, setDrumPattern] = useState<string>("laidback"); // friendlier default
-  const [variety, setVariety] = useState(45); // calmer fills & swing
+  const [drumPattern, setDrumPattern] = useState<string>("laidback");
+  const [variety, setVariety] = useState(45);
+
+  // NEW: Mix polish toggles mapping to engine flags
+  const [hqStereo, setHqStereo] = useState(true);
+  const [hqReverb, setHqReverb] = useState(true);
+  const [hqSidechain, setHqSidechain] = useState(true);
 
   // UI state
   const [busy, setBusy] = useState(false);
@@ -102,7 +116,6 @@ export default function SongForm() {
     };
   }, []);
 
-  // persist output directory across sessions
   useEffect(() => {
     localStorage.setItem("outDir", outDir);
     return () => {
@@ -110,8 +123,10 @@ export default function SongForm() {
     };
   }, [outDir]);
 
-  // progress listener from backend — attach to the "currently running" job
-  const runningJobId = useMemo(() => jobs.find((j) => !j.error && !j.outPath)?.id, [jobs]);
+  const runningJobId = useMemo(
+    () => jobs.find((j) => !j.error && !j.outPath)?.id,
+    [jobs]
+  );
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -125,7 +140,9 @@ export default function SongForm() {
             if (obj && obj.stage && obj.message) pretty = `${obj.stage}: ${obj.message}`;
           } catch {}
           if (runningJobId) {
-            setJobs((prev) => prev.map((j) => (j.id === runningJobId ? { ...j, status: pretty } : j)));
+            setJobs((prev) =>
+              prev.map((j) => (j.id === runningJobId ? { ...j, status: pretty } : j))
+            );
           } else {
             setGlobalStatus(pretty);
           }
@@ -141,7 +158,7 @@ export default function SongForm() {
 
   function toggle(list: string[], val: string) {
     return list.includes(val) ? list.filter((x) => x !== val) : [...list, val];
-    }
+  }
 
   async function pickFolder() {
     try {
@@ -164,7 +181,6 @@ export default function SongForm() {
   }
 
   function pickKey(i: number): string {
-    // If user chose Auto, pass it through to Python (stable per seed inside engine)
     if (key === "Auto") return "Auto";
     if (!autoKeyPerSong) return key;
     const idx = (i + Math.floor(seedBase % KEYS_BASE.length)) % KEYS_BASE.length;
@@ -188,7 +204,6 @@ export default function SongForm() {
   }
 
   function makeSpecForIndex(i: number): SongSpec {
-    // clamp guards
     const amb = Math.max(0, Math.min(1, ambienceLevel));
     const varPct = Math.max(0, Math.min(100, variety));
 
@@ -205,6 +220,10 @@ export default function SongForm() {
       seed: pickSeed(i),
       variety: varPct,
       drum_pattern: drumPattern === "random" ? undefined : drumPattern,
+      // pass-through HQ flags
+      hq_stereo: hqStereo,
+      hq_reverb: hqReverb,
+      hq_sidechain: hqSidechain,
     };
   }
 
@@ -222,7 +241,6 @@ export default function SongForm() {
       return;
     }
 
-    // Build all jobs upfront (so UI shows the list)
     const newJobs: Job[] = Array.from({ length: numSongs }).map((_, i) => {
       const spec = makeSpecForIndex(i);
       const id = `${Date.now()}_${i}_${spec.seed}`;
@@ -242,11 +260,9 @@ export default function SongForm() {
           const message = e?.message || String(e);
           console.error("run_lofi_song failed:", e);
           setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, status: "error", error: message } : j)));
-          // continue with remaining jobs
         }
       }
 
-      // auto‑play the last successful render
       if (playLast) {
         const latestJobs = await getFreshJobs();
         const lastOut = [...latestJobs].reverse().find((j) => j.outPath)?.outPath;
@@ -265,7 +281,6 @@ export default function SongForm() {
     }
   }
 
-  // read latest jobs state inside async
   async function getFreshJobs(): Promise<Job[]> {
     return new Promise((r) => setJobs((prev) => (r(prev), prev)));
   }
@@ -452,6 +467,26 @@ export default function SongForm() {
           </div>
         </div>
 
+        {/* mix polish (HQ flags) */}
+        <div style={S.grid3}>
+          <div style={S.panel}>
+            <label style={S.label}>Mix Polish</label>
+            <div style={S.toggle}>
+              <input type="checkbox" checked={hqStereo} onChange={(e) => setHqStereo(e.target.checked)} />
+              <span style={S.small}>Stereo widen</span>
+            </div>
+            <div style={S.toggle}>
+              <input type="checkbox" checked={hqReverb} onChange={(e) => setHqReverb(e.target.checked)} />
+              <span style={S.small}>Room reverb</span>
+            </div>
+            <div style={S.toggle}>
+              <input type="checkbox" checked={hqSidechain} onChange={(e) => setHqSidechain(e.target.checked)} />
+              <span style={S.small}>Sidechain (kick)</span>
+            </div>
+            <div style={{ ...S.small, marginTop: 6 }}>These map to engine flags in <code>lofi_gpu_hq.py</code>.</div>
+          </div>
+        </div>
+
         {/* batch + variation */}
         <div style={S.grid2}>
           <div style={S.panel}>
@@ -488,19 +523,22 @@ export default function SongForm() {
             onClick={async () => {
               const a = audioRef.current;
               if (!a?.src) return setErr("No track loaded.");
-              if (isPlaying) { a.pause(); setIsPlaying(false); }
-              else { await a.play(); setIsPlaying(true); }
+              if (isPlaying) {
+                a.pause();
+                setIsPlaying(false);
+              } else {
+                await a.play();
+                setIsPlaying(true);
+              }
             }}
           >
             {isPlaying ? "Pause" : "Play last track"}
           </button>
         </div>
 
-        {/* global status + errors */}
         {globalStatus && <div style={S.status}>Status: {globalStatus}</div>}
         {err && <div style={S.err}>Error: {err}</div>}
 
-        {/* job table */}
         {jobs.length > 0 && (
           <table style={S.table}>
             <thead>
@@ -536,7 +574,11 @@ export default function SongForm() {
                         onClick={async () => {
                           const url = convertFileSrc(j.outPath!.replace(/\\/g, "/"));
                           const a = audioRef.current!;
-                          a.pause(); a.src = url; a.load(); await a.play(); setIsPlaying(true);
+                          a.pause();
+                          a.src = url;
+                          a.load();
+                          await a.play();
+                          setIsPlaying(true);
                         }}
                       >
                         Play
