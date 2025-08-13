@@ -9,7 +9,9 @@ import VersionBadge from "../components/VersionBadge";
 export default function Home() {
   const [hoverColor, setHoverColor] = useState("rgba(255,255,255,0.22)");
   const { events, selectedCountdownId } = useCalendar();
-  const countdownEvents = events.filter((e) => e.hasCountdown);
+  const countdownEvents = events.filter(
+    (e) => e.hasCountdown && e.status !== "canceled" && e.status !== "missed"
+  );
   let event = null as typeof countdownEvents[number] | null;
   if (selectedCountdownId) {
     event = countdownEvents.find((e) => e.id === selectedCountdownId) || null;
