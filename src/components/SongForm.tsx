@@ -16,6 +16,8 @@ type SongSpec = {
   ambience: string[];
   ambienceLevel: number; // 0..1
   seed: number;
+  variety: number;
+  drum_pattern?: string;
 };
 
 type Job = {
@@ -39,6 +41,7 @@ const INSTR = [
   "airy pads",
 ];
 const AMBI = ["rain", "cafe"];
+const DRUM_PATS = ["random", "boom_bap_A", "boom_bap_B", "laidback", "half_time", "swing", "half_time_shuffle"];
 
 export default function SongForm() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -68,6 +71,8 @@ export default function SongForm() {
   const [autoKeyPerSong, setAutoKeyPerSong] = useState(false);
   const [bpmJitterPct, setBpmJitterPct] = useState(5); // +/- %
   const [playLast, setPlayLast] = useState(true);
+  const [drumPattern, setDrumPattern] = useState<string>("random");
+  const [variety, setVariety] = useState(60);
 
   // UI state
   const [busy, setBusy] = useState(false);
@@ -191,6 +196,8 @@ export default function SongForm() {
       ambience,
       ambienceLevel,
       seed: pickSeed(i),
+      variety,
+      drum_pattern: drumPattern === "random" ? undefined : drumPattern,
     };
   }
 
@@ -458,6 +465,36 @@ export default function SongForm() {
               style={S.slider}
             />
             <div style={S.small}>{Math.round(ambienceLevel * 100)}% intensity</div>
+          </div>
+        </div>
+
+        {/* rhythm & feel */}
+        <div style={S.grid2}>
+          <div style={S.panel}>
+            <label style={S.label}>Drum Pattern</label>
+            <select
+              value={drumPattern}
+              onChange={(e) => setDrumPattern(e.target.value)}
+              style={{ ...S.input, padding: "8px 12px" }}
+            >
+              {DRUM_PATS.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+            <div style={S.small}>Choose a groove or leave random</div>
+          </div>
+
+          <div style={S.panel}>
+            <label style={S.label}>Variety</label>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={variety}
+              onChange={(e) => setVariety(Number(e.target.value))}
+              style={S.slider}
+            />
+            <div style={S.small}>{variety}% fills & swing</div>
           </div>
         </div>
 

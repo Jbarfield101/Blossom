@@ -297,9 +297,11 @@ DRUM_PATTERNS = {
     "half_time_shuffle": {"kick": [(0,0.00), (3,0.50)], "snare":[(2,0.00)], "hat_8ths": True},
 }
 
-PROG_BANK_A = [["I","vi","IV","V"], ["I","V","vi","IV"], ["I","iii","vi","IV"], ["I","vi","ii","V"], ["I","IV","ii","V"]]
-PROG_BANK_B = [["vi","IV","I","V"], ["ii","V","I","vi"], ["IV","I","V","vi"], ["vi","ii","V","I"], ["IV","vi","ii","V"]]
-PROG_BANK_INTRO = [["I","IV"], ["ii","V"], ["I","V"], ["vi","IV"], ["I","ii"]]
+PROG_BANK_A = [["I","vi","IV","V"], ["I","V","vi","IV"], ["I","iii","vi","IV"], ["I","vi","ii","V"], ["I","IV","ii","V"],
+                ["I","IV","V","IV"], ["I","ii","V","IV"], ["I","V","IV","V"]]
+PROG_BANK_B = [["vi","IV","I","V"], ["ii","V","I","vi"], ["IV","I","V","vi"], ["vi","ii","V","I"], ["IV","vi","ii","V"],
+                ["vi","IV","ii","V"], ["ii","vi","IV","I"], ["vi","V","IV","V"]]
+PROG_BANK_INTRO = [["I","IV"], ["ii","V"], ["I","V"], ["vi","IV"], ["I","ii"], ["I","vi"], ["IV","V"], ["ii","iii"]]
 
 BASS_PATTERNS = ["roots_13", "root5_13", "held_whole"]
 
@@ -484,11 +486,11 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
 
     amb_mix = np.zeros(n, dtype=np.float32)
     if "rain" in amb_list:
-        amb_mix += _butter_lowpass((np.random.rand(n).astype(np.float32)*2-1)*0.02, 1200)
+        amb_mix += _butter_lowpass((np.random.rand(n).astype(np.float32)*2-1)*0.01, 1000)
     if "cafe" in amb_list:
-        amb_mix += (np.random.rand(n).astype(np.float32)*2-1)*0.003
+        amb_mix += (np.random.rand(n).astype(np.float32)*2-1)*0.0015
 
-    mix = 0.7*drums + 0.7*hats + 0.6*keys + 0.5*bass + 0.3*amb_mix*amb_level
+    mix = 0.7*drums + 0.55*hats + 0.6*keys + 0.5*bass + 0.15*amb_mix*amb_level
     mix = np.tanh(mix * 1.2).astype(np.float32)
     return _np_to_segment(mix)
 
