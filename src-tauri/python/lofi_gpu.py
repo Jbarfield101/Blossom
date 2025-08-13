@@ -252,6 +252,35 @@ def _nylon_chord(freqs, ms, amp=0.1):
     out *= env * amp / max(1, len(freqs))
     return out
 
+def _electric_piano_chord(freqs, ms, amp=0.1):
+    env = _env_ad(ms*0.8, ms)
+    t = np.arange(int(ms * SR / 1000)) / SR
+    out = np.zeros_like(t, dtype=np.float32)
+    for f in freqs:
+        out += 0.6*np.sin(2*np.pi*f*t) + 0.4*np.sin(2*np.pi*(f*2)*t)
+    out *= env * amp / max(1, len(freqs))
+    out = _butter_lowpass(out, 5000)
+    return out
+
+def _clean_guitar_chord(freqs, ms, amp=0.08):
+    env = _env_ad(ms*0.7, ms)
+    t = np.arange(int(ms * SR / 1000)) / SR
+    out = np.zeros_like(t, dtype=np.float32)
+    for f in freqs:
+        out += np.sin(2*np.pi*f*t)
+    out = _butter_highpass(out, 300) * env * amp / max(1, len(freqs))
+    return out
+
+def _airy_pad_chord(freqs, ms, amp=0.06):
+    env = _env_ad(ms, ms)
+    t = np.arange(int(ms * SR / 1000)) / SR
+    out = np.zeros_like(t, dtype=np.float32)
+    for f in freqs:
+        out += np.sin(2*np.pi*f*t) + 0.5*np.sin(2*np.pi*(f/2)*t)
+    out *= env * amp / max(1, len(freqs))
+    out = _butter_lowpass(out, 2000)
+    return out
+
 def _bass_note(freq, ms, amp=0.18):
     x = _sine(freq, ms, amp=amp)
     x = _butter_lowpass(x, 200)
@@ -264,11 +293,13 @@ DRUM_PATTERNS = {
     "boom_bap_B":  {"kick": [(0,0.00), (2,0.00)], "snare":[(1,0.00), (3,0.00)], "hat_8ths": True},
     "laidback":    {"kick": [(0,0.00), (2,0.75)], "snare":[(1,0.00), (3,0.00)], "hat_8ths": True},
     "half_time":   {"kick": [(0,0.00)],           "snare":[(2,0.00)],           "hat_8ths": True},
+    "swing":       {"kick": [(0,0.00), (1,0.75), (2,0.00)], "snare":[(1,0.00), (3,0.00)], "hat_8ths": True},
+    "half_time_shuffle": {"kick": [(0,0.00), (3,0.50)], "snare":[(2,0.00)], "hat_8ths": True},
 }
 
-PROG_BANK_A = [["I","vi","IV","V"], ["I","V","vi","IV"], ["I","iii","vi","IV"]]
-PROG_BANK_B = [["vi","IV","I","V"], ["ii","V","I","vi"], ["IV","I","V","vi"]]
-PROG_BANK_INTRO = [["I","IV"], ["ii","V"], ["I","V"]]
+PROG_BANK_A = [["I","vi","IV","V"], ["I","V","vi","IV"], ["I","iii","vi","IV"], ["I","vi","ii","V"], ["I","IV","ii","V"]]
+PROG_BANK_B = [["vi","IV","I","V"], ["ii","V","I","vi"], ["IV","I","V","vi"], ["vi","ii","V","I"], ["IV","vi","ii","V"]]
+PROG_BANK_INTRO = [["I","IV"], ["ii","V"], ["I","V"], ["vi","IV"], ["I","ii"]]
 
 BASS_PATTERNS = ["roots_13", "root5_13", "held_whole"]
 
@@ -382,6 +413,13 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
 
     instrs = motif.get("instruments") or []
 
+    ep_prob = float(np.clip(0.3 + 0.4*t, 0, 1))
+    gtr_prob = float(np.clip(0.25 + 0.35*t, 0, 1))
+    pad_prob = float(np.clip(0.4 + 0.3*t, 0, 1))
+    use_electric = ("electric piano" in instrs) and (rng.random() < ep_prob)
+    use_clean_gtr = ("clean electric guitar" in instrs) and (rng.random() < gtr_prob)
+    use_airy_pad = ("airy pads" in instrs) and (rng.random() < pad_prob)
+
     chord_len = 2 * beat
     chord_pos = 0
     current_root_hz = None
@@ -399,10 +437,22 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
             nylon = _nylon_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.1)
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(nylon))
             keys[i0:i1] += nylon[: i1 - i0]
+        if use_electric:
+            ep = _electric_piano_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.1)
+            i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(ep))
+            keys[i0:i1] += ep[: i1 - i0]
+        if use_clean_gtr:
+            gtr = _clean_guitar_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.08)
+            i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(gtr))
+            keys[i0:i1] += gtr[: i1 - i0]
         if "pads" in instrs and "rhodes" not in instrs:
             pad = _rhodes_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.08)
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(pad))
             keys[i0:i1] += pad[: i1 - i0]
+        if use_airy_pad:
+            airy = _airy_pad_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.06)
+            i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(airy))
+            keys[i0:i1] += airy[: i1 - i0]
 
         chord_pos += chord_len
 

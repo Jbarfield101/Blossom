@@ -28,7 +28,15 @@ type Job = {
 
 const KEYS = ["C", "D", "E", "F", "G", "A", "B"];
 const MOODS = ["calm", "melancholy", "cozy", "hopeful", "nostalgic"];
-const INSTR = ["rhodes", "nylon guitar", "upright bass", "pads"];
+const INSTR = [
+  "rhodes",
+  "nylon guitar",
+  "upright bass",
+  "pads",
+  "electric piano",
+  "clean electric guitar",
+  "airy pads",
+];
 const AMBI = ["rain", "cafe"];
 
 export default function SongForm() {
