@@ -23,7 +23,7 @@ export default function Home() {
         }}
       >
         <h1 style={{ margin: 0, fontSize: "2rem" }}>Blossom</h1>
-        <VersionBadge version="0.1.1" />
+        <VersionBadge version="0.1.3" />
       </div>
 
       {/* Background hover effect */}

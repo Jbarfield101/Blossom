@@ -23,7 +23,7 @@ export default function Music() {
           pointerEvents: "none",
         }}
       >
-        <VersionBadge version="0.1.1" />
+        <VersionBadge version="0.1.3" />
       </div>
 
       {/* Checkbox Song Builder only */}

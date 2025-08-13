@@ -243,6 +243,15 @@ def _rhodes_chord(freqs, ms, amp=0.12):
     out *= wow.astype(np.float32)
     return out
 
+def _nylon_chord(freqs, ms, amp=0.1):
+    env = _env_ad(ms*0.6, ms)
+    t = np.arange(int(ms * SR / 1000)) / SR
+    out = np.zeros_like(t, dtype=np.float32)
+    for f in freqs:
+        out += np.sin(2*np.pi*f*t)
+    out *= env * amp / max(1, len(freqs))
+    return out
+
 def _bass_note(freq, ms, amp=0.18):
     x = _sine(freq, ms, amp=amp)
     x = _butter_lowpass(x, 200)
@@ -371,6 +380,8 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     add9 = (rng.random() < add9_prob)
     inv_cycle = int(rng.integers(0, 3))  # 0..2 inversions
 
+    instrs = motif.get("instruments") or []
+
     chord_len = 2 * beat
     chord_pos = 0
     current_root_hz = None
@@ -380,11 +391,15 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
         freqs = _chord_freqs_from_degree(key_letter, deg, add7=add7, add9=add9, inversion=inv_cycle)
         current_root_hz = freqs[0]
 
-        if "rhodes" in (motif.get("instruments") or []) or not (motif.get("instruments") or []):
+        if "rhodes" in instrs or not instrs:
             chord = _rhodes_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.12)
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(chord))
             keys[i0:i1] += chord[: i1 - i0]
-        elif "pads" in (motif.get("instruments") or []):
+        if "nylon guitar" in instrs:
+            nylon = _nylon_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.1)
+            i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(nylon))
+            keys[i0:i1] += nylon[: i1 - i0]
+        if "pads" in instrs and "rhodes" not in instrs:
             pad = _rhodes_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.08)
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(pad))
             keys[i0:i1] += pad[: i1 - i0]
@@ -393,7 +408,6 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
 
     # --- bass patterns
     bass_pat = rng.choice(BASS_PATTERNS)
-    instrs = motif.get("instruments") or []
     if any(i in instrs for i in ["upright bass","bass","rhodes"]) or not instrs:
         for bar in range(bars):
             bar_start = bar * _bar_ms(bpm)
@@ -414,18 +428,9 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     # --- ambience rotation
     amb_list = motif.get("ambience") or []
     if not amb_list:
-       amb_list = random.choice([["vinyl crackle"], ["rain"], ["cafe"], ["vinyl crackle","rain"]])
+       amb_list = random.choice([["rain"], ["cafe"], ["rain","cafe"]])
 
     amb_mix = np.zeros(n, dtype=np.float32)
-    if "vinyl crackle" in amb_list:
-        crack = (np.random.rand(n).astype(np.float32) * 2 - 1) * 0.02
-        for tms in range(0, dur_ms, 500):
-            if rng.random() < 0.08:
-                i0 = int(tms * SR / 1000)
-                ln = min(int(0.015 * SR), n - i0)
-                if ln > 0:
-                    amb_mix[i0:i0+ln] += (np.random.rand(ln).astype(np.float32)*2 - 1) * 0.4
-        amb_mix += crack
     if "rain" in amb_list:
         amb_mix += _butter_lowpass((np.random.rand(n).astype(np.float32)*2-1)*0.04, 1200)
     if "cafe" in amb_list:

@@ -29,7 +29,7 @@ type Job = {
 const KEYS = ["C", "D", "E", "F", "G", "A", "B"];
 const MOODS = ["calm", "melancholy", "cozy", "hopeful", "nostalgic"];
 const INSTR = ["rhodes", "nylon guitar", "upright bass", "pads"];
-const AMBI = ["vinyl crackle", "rain", "cafe"];
+const AMBI = ["rain", "cafe"];
 
 export default function SongForm() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -40,8 +40,8 @@ export default function SongForm() {
   const [bpm, setBpm] = useState(80);
   const [key, setKey] = useState<string>("C");
   const [mood, setMood] = useState<string[]>(["calm", "nostalgic"]);
-  const [instruments, setInstruments] = useState<string[]>(["rhodes", "upright bass"]);
-  const [ambience, setAmbience] = useState<string[]>(["vinyl crackle"]);
+  const [instruments, setInstruments] = useState<string[]>(["rhodes", "nylon guitar", "upright bass"]);
+  const [ambience, setAmbience] = useState<string[]>(["rain"]);
   const [structure, setStructure] = useState<Section[]>([
     { name: "Intro", bars: 4 },
     { name: "A", bars: 16 },
@@ -54,7 +54,7 @@ export default function SongForm() {
   const [numSongs, setNumSongs] = useState(3);
   const [titleSuffixMode, setTitleSuffixMode] = useState<"number" | "timestamp">("number");
   const [seedBase, setSeedBase] = useState(12345);
-  const [seedMode, setSeedMode] = useState<"increment" | "random">("increment");
+  const [seedMode, setSeedMode] = useState<"increment" | "random">("random");
   const [autoKeyPerSong, setAutoKeyPerSong] = useState(false);
   const [bpmJitterPct, setBpmJitterPct] = useState(5); // +/- %
   const [playLast, setPlayLast] = useState(true);
