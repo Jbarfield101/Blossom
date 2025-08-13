@@ -3,7 +3,7 @@ import React from "react";
 
 export default function VersionBadge({
   name = "Blossom",
-  version = "0.1.1",
+  version = "0.1.3",
 }: {
   name?: string;
   version?: string;

@@ -2,39 +2,79 @@ import { create } from 'zustand';
 import * as Tone from 'tone';
 import type { LofiState } from './types';
 
+// small deterministic PRNG for pattern variation
+function mulberry32(a: number) {
+  return function () {
+    let t = (a += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 let initialized = false;
 let loop: Tone.Loop | null = null;
 let chain: {
-  synth: Tone.MonoSynth;
-  bit: Tone.BitCrusher;
-  filt: Tone.Filter;
+  lead: Tone.MonoSynth;
+  bass: Tone.MonoSynth;
+  hat: Tone.NoiseSynth;
   rev: Tone.Reverb;
 } | null = null;
 
+let melody: string[] = [];
+let bassLine: string[] = [];
+let step = 0;
+let bassStep = 0;
+
+function makePattern(seed: number) {
+  const rnd = mulberry32(seed);
+  const scale = ['C4', 'D#4', 'F4', 'G4', 'A#4'];
+  melody = Array.from({ length: 8 }, () => scale[Math.floor(rnd() * scale.length)]);
+  bassLine = melody.map((n) => Tone.Frequency(n).transpose(-12).toNote());
+  step = 0;
+  bassStep = 0;
+}
+
 function init() {
   if (initialized) return;
-  const synth = new Tone.MonoSynth({
+  const lead = new Tone.MonoSynth({
     oscillator: { type: 'triangle' },
-    filter: { type: 'lowpass', frequency: 800 },
     envelope: { attack: 0.01, decay: 0.2, sustain: 0.3, release: 1.2 },
-  });
+  }).toDestination();
 
-  const bit = new Tone.BitCrusher(4);
-  const filt = new Tone.Filter(1200, 'lowpass');
-  const rev = new Tone.Reverb({ decay: 3, wet: 0.35 });
+  const bass = new Tone.MonoSynth({
+    oscillator: { type: 'sawtooth' },
+    filter: { type: 'lowpass', frequency: 200 },
+    envelope: { attack: 0.01, decay: 0.3, sustain: 0.4, release: 1.0 },
+  }).toDestination();
 
-  synth.chain(bit, filt, rev, Tone.Destination);
+  const hat = new Tone.NoiseSynth({
+    envelope: { attack: 0.001, decay: 0.05, sustain: 0 },
+  }).toDestination();
 
-  chain = { synth, bit, filt, rev };
+  const rev = new Tone.Reverb({ decay: 3, wet: 0.25 }).toDestination();
+
+  lead.connect(rev);
+  bass.connect(rev);
+  hat.connect(rev);
+
+  chain = { lead, bass, hat, rev };
   Tone.Transport.bpm.value = 80;
 
-  // super-simple lo-fi pattern (we’ll evolve it)
-  const notes = ['C4', 'G3', 'A#3', 'F3'];
-  let i = 0;
   loop = new Tone.Loop((time) => {
     if (!chain) return;
-    chain.synth.triggerAttackRelease(notes[i % notes.length], '8n', time);
-    i++;
+    if (melody.length === 0) return;
+    const note = melody[step % melody.length];
+    chain.lead.triggerAttackRelease(note, '8n', time);
+    if (step % 2 === 0) {
+      chain.hat.triggerAttackRelease('16n', time);
+    }
+    if (step % 4 === 0) {
+      const b = bassLine[bassStep % bassLine.length];
+      chain.bass.triggerAttackRelease(b, '2n', time);
+      bassStep++;
+    }
+    step++;
   }, '4n');
 
   initialized = true;
@@ -44,17 +84,20 @@ type Actions = {
   play: () => Promise<void>;
   stop: () => void;
   setBpm: (bpm: number) => void;
-  setSeed: (seed: number) => void; // placeholder we’ll use later
+  setSeed: (seed: number) => void;
 };
 
-export const useLofi = create<LofiState & Actions>((set) => ({
+export const useLofi = create<LofiState & Actions>((set, get) => ({
   isPlaying: false,
   bpm: 80,
   seed: 0,
 
   play: async () => {
     init();
-    await Tone.start(); // resumes audio context (important for desktop)
+    const s = get().seed || Math.floor(Math.random() * 1_000_000);
+    makePattern(s);
+    set({ seed: s });
+    await Tone.start();
     loop?.start(0);
     Tone.Transport.start();
     set({ isPlaying: true });
@@ -71,5 +114,8 @@ export const useLofi = create<LofiState & Actions>((set) => ({
     set({ bpm });
   },
 
-  setSeed: (seed) => set({ seed }), // we’ll hook this into pattern gen soon
+  setSeed: (seed) => {
+    makePattern(seed);
+    set({ seed });
+  },
 }));
