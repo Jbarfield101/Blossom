@@ -167,6 +167,7 @@ pub struct SongSpec {
   pub mood: Vec<String>,
   pub instruments: Vec<String>,
   pub ambience: Vec<String>,
+  pub ambience_level: Option<f32>,
   pub seed: u64,
   pub variety: Option<u32>,
   pub drum_pattern: Option<String>,
