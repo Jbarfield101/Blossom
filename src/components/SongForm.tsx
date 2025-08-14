@@ -100,7 +100,15 @@ const PRESET_TEMPLATES: Record<string, Section[]> = {
     { name: "A", bars: 8 },
     { name: "Ambient", bars: 4 },
   ],
+  "Quick Beat": [
+    { name: "Intro", bars: 2 },
+    { name: "A", bars: 4 },
+    { name: "B", bars: 4 },
+    { name: "Outro", bars: 2 },
+  ],
 };
+
+const SONG_TEMPLATES = PRESET_TEMPLATES;
 
 export default function SongForm() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -129,7 +137,7 @@ export default function SongForm() {
     }
     return PRESET_TEMPLATES;
   });
-  const [selectedTemplate, setSelectedTemplate] = useState<string>("Classic Lofi");
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [structure, setStructure] = useState<Section[]>(() => [
     ...PRESET_TEMPLATES["Classic Lofi"],
   ]);
@@ -426,6 +434,30 @@ export default function SongForm() {
               </label>
             </div>
           </div>
+        </div>
+
+        {/* template selector */}
+        <div style={S.panel}>
+          <label style={S.label}>Song Templates</label>
+          <select
+            value={selectedTemplate}
+            onChange={(e) => {
+              const templateName = e.target.value;
+              setSelectedTemplate(templateName);
+              if (templateName && SONG_TEMPLATES[templateName]) {
+                setStructure(SONG_TEMPLATES[templateName]);
+              }
+            }}
+            style={{ ...S.input, padding: "8px 12px" }}
+          >
+            <option value="">Custom Structure</option>
+            <option value="Classic Lofi">Classic Lofi</option>
+            <option value="Study Session">Study Session</option>
+            <option value="Jazz Cafe">Jazz Cafe</option>
+            <option value="Midnight Drive">Midnight Drive</option>
+            <option value="Rain & Coffee">Rain & Coffee</option>
+            <option value="Quick Beat">Quick Beat</option>
+          </select>
         </div>
 
         {/* structure editor */}

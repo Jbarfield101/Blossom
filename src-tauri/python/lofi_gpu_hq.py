@@ -469,6 +469,32 @@ def _swing_offset(eighth_ms, sub_idx, swing=0.58):
         return long - eighth_ms
     return 0.0
 
+
+def calculate_mix_levels(mood, section_name):
+    """Calculate context-aware mix levels"""
+    levels = {
+        "drum_gain": 0.35,
+        "hat_gain": 0.25,
+        "key_gain": 1.0,
+        "bass_gain": 0.45,
+        "pad_gain": 0.7,
+    }
+
+    if "calm" in mood or "chill" in mood:
+        levels["drum_gain"] *= 0.7
+        levels["key_gain"] *= 1.1
+    if "energetic" in mood:
+        levels["drum_gain"] *= 1.2
+    if "melancholy" in mood:
+        levels["key_gain"] *= 1.15
+        levels["pad_gain"] *= 1.2
+
+    if section_name.lower() in ["intro", "outro"]:
+        levels["drum_gain"] *= 0.8
+        levels["key_gain"] *= 0.9
+
+    return levels
+
 # ---------- Section renderer ----------
 def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     # Variety mapping (0..100)
@@ -578,7 +604,6 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     use_electric = rng.random() < ep_prob
     use_clean_gtr = rng.random() < gtr_prob
     use_airy_pad = rng.random() < pad_prob
-    use_lofi_piano = "piano" in instrs
 
     chord_len = 2 * beat
     chord_pos = 0
@@ -607,8 +632,8 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
             gtr = _clean_guitar_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.15) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(gtr))
             keys[i0:i1] += gtr[: i1 - i0]
-        if use_lofi_piano:
-            pn = _lofi_piano_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.13) * vel
+        if "piano" in instrs:
+            pn = _lofi_piano_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.25) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(pn))
             keys[i0:i1] += pn[: i1 - i0]
         if "pads" in instrs and "rhodes" not in instrs:
@@ -700,18 +725,12 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
 
     # final mix (mono bus)
     mood = motif.get("mood") or []
-    drum_gain = 0.58
-    hat_gain = 0.45
-    key_gain = 0.78
-    bass_gain = 0.60
+    levels = calculate_mix_levels(mood, section_name)
+    drum_gain = levels["drum_gain"]
+    hat_gain = levels["hat_gain"]
+    key_gain = levels["key_gain"]
+    bass_gain = levels["bass_gain"]
     amb_gain = 0.18 * amb_level
-
-    if "calm" in mood or "chill" in mood:
-        drum_gain *= 0.8; hat_gain *= 0.8; amb_gain *= 1.3
-    if "energetic" in mood:
-        drum_gain *= 1.15; hat_gain *= 1.1
-    if "warm" in mood:
-        key_gain *= 1.1
 
     mix = drum_gain*drums + hat_gain*hats + key_gain*keys + bass_gain*bass + amb_gain*amb_mix
     mix = mix * 1.05
