@@ -33,6 +33,7 @@ from typing import List, Dict, Tuple, Any
 import numpy as np
 from pydub import AudioSegment, effects
 from pydub.utils import which
+from scipy.signal import butter, filtfilt
 
 warnings.filterwarnings("ignore", message="Couldn't find ffmpeg or avconv")
 
@@ -93,9 +94,10 @@ def ensure_wav_bitdepth(audio: AudioSegment, sample_width: int = 2) -> AudioSegm
 
 # ---------- Post-processing ----------
 def soft_clip_np(x: np.ndarray, drive: float = 1.0) -> np.ndarray:
-    return np.tanh(x * drive)
+    x = x * drive
+    return x / (1.0 + np.abs(x))
 
-def apply_soft_limit(audio: AudioSegment, drive: float = 1.05) -> AudioSegment:
+def apply_soft_limit(audio: AudioSegment, drive: float = 1.02) -> AudioSegment:
     samples = np.array(audio.get_array_of_samples()).astype(np.float32)
     channels = audio.channels
     if channels == 2:
@@ -112,19 +114,26 @@ def apply_soft_limit(audio: AudioSegment, drive: float = 1.05) -> AudioSegment:
     return out
 
 def loudness_normalize_lufs(audio: AudioSegment, target_lufs: float = -14.0) -> AudioSegment:
+    samples = np.array(audio.get_array_of_samples()).astype(np.float32)
+    if audio.channels == 2:
+        samples = samples.reshape((-1, 2)).mean(axis=1)
+    max_int = float(2 ** (8 * audio.sample_width - 1))
+    x = samples / max_int
     try:
         import pyloudnorm as pyln
-        samples = np.array(audio.get_array_of_samples()).astype(np.float32)
-        if audio.channels == 2:
-            samples = samples.reshape((-1, 2)).mean(axis=1)
-        max_int = float(2 ** (8 * audio.sample_width - 1))
-        x = samples / max_int
         meter = pyln.Meter(audio.frame_rate)
         loudness = meter.integrated_loudness(x)
-        gain_needed = target_lufs - loudness
-        return audio.apply_gain(gain_needed)
-    except Exception:
-        return effects.normalize(audio)
+    except ImportError:
+        rms = np.sqrt(np.mean(np.square(x)))
+        if rms <= 0:
+            return audio
+        loudness = 20 * np.log10(rms)
+        print(json.dumps({"stage": "warn", "message": "pyloudnorm missing, using RMS loudness estimate"}))
+    except Exception as e:
+        print(json.dumps({"stage": "warn", "message": f"loudness normalization failed: {e}"}))
+        return audio
+    gain_needed = target_lufs - loudness
+    return audio.apply_gain(gain_needed)
 
 def post_process_chain(audio: AudioSegment, rng=None) -> AudioSegment:
     # Aim more lofi: slightly quieter and darker
@@ -137,7 +146,7 @@ def post_process_chain(audio: AudioSegment, rng=None) -> AudioSegment:
         lpf_base = int(rng.integers(10000, 12000))
     a = a.low_pass_filter(lpf_base)
 
-    drv = 1.03 if rng is None else float(rng.uniform(1.02, 1.06))
+    drv = 1.02 if rng is None else float(rng.uniform(1.01, 1.04))
     a = apply_soft_limit(a, drive=drv)
 
     # Master tone tilt: subtle low warmth + soft high clamp
@@ -198,24 +207,16 @@ def _noise(ms, amp=0.3):
     return (amp * (np.random.rand(n).astype(np.float32) * 2 - 1)).astype(np.float32)
 
 def _butter_lowpass(x, cutoff_hz):
-    rc = 1.0 / (2 * np.pi * max(1.0, cutoff_hz))
-    dt = 1.0 / SR
-    alpha = dt / (rc + dt)
-    y = np.zeros_like(x)
-    for i in range(len(x)):
-        y[i] = y[i-1] + alpha * (x[i] - y[i-1]) if i > 0 else x[0]
-    return y
+    nyq = 0.5 * SR
+    norm = min(cutoff_hz / nyq, 0.999)
+    b, a = butter(4, norm, btype="low")
+    return filtfilt(b, a, x).astype(np.float32)
 
 def _butter_highpass(x, cutoff_hz):
-    rc = 1.0 / (2 * np.pi * max(1.0, cutoff_hz))
-    dt = 1.0 / SR
-    alpha = rc / (rc + dt)
-    y = np.zeros_like(x)
-    prev_x = x[0] if len(x) else 0.0
-    for i in range(len(x)):
-        y[i] = (y[i-1] + x[i] - prev_x) * alpha if i > 0 else 0.0
-        prev_x = x[i]
-    return y
+    nyq = 0.5 * SR
+    norm = min(cutoff_hz / nyq, 0.999)
+    b, a = butter(4, norm, btype="high")
+    return filtfilt(b, a, x).astype(np.float32)
 
 def _kick(ms=160):
     body = _pitch_sweep(90, 45, ms, amp=0.9) * _env_ad(ms*0.9, ms)
@@ -693,7 +694,9 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
         key_gain *= 1.1
 
     mix = drum_gain*drums + hat_gain*hats + key_gain*keys + bass_gain*bass + amb_gain*amb_mix
-    mix = np.tanh(mix * 1.15).astype(np.float32)
+    mix = mix * 1.05
+    mix = mix / (1.0 + np.abs(mix))
+    mix = mix.astype(np.float32)
 
     # stereoize
     if flags.get("hq_stereo", True):
