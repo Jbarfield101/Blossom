@@ -112,18 +112,25 @@ def loudness_normalize_lufs(audio: AudioSegment, target_lufs: float = -14.0) -> 
     except Exception:
         return effects.normalize(audio)
 
-def post_process_chain(audio: AudioSegment, rng=None) -> AudioSegment:
-    # Aim more lofi: slightly quieter and darker
-    a = loudness_normalize_lufs(audio, target_lufs=-16.0)  # was -14.0
+def enhanced_post_process_chain(audio: AudioSegment, rng=None) -> AudioSegment:
+    """Darker, warmer finishing chain for lofi character."""
+    a = loudness_normalize_lufs(audio, target_lufs=-16.0)
     a = a.high_pass_filter(30)
 
-    # gentle top roll-off for lofi
-    lpf_base = 11000
+    # multi-stage low-pass to emulate vintage gear
+    lpf_base = 7500
     if rng is not None:
-        lpf_base = int(rng.integers(10000, 12000))
+        lpf_base = int(rng.integers(6500, 8500))
+    a = a.low_pass_filter(lpf_base + 500)
     a = a.low_pass_filter(lpf_base)
 
-    drv = 1.03 if rng is None else float(rng.uniform(1.02, 1.06))
+    # simple vintage EQ: slight mid boost and presence dip
+    mids = a.low_pass_filter(2000).high_pass_filter(200).apply_gain(1.5)
+    a = a.overlay(mids)
+    presence = a.high_pass_filter(4000).apply_gain(-2.0)
+    a = a.overlay(presence)
+
+    drv = 1.05 if rng is None else float(rng.uniform(1.03, 1.07))
     a = apply_soft_limit(a, drive=drv)
     a = ensure_wav_bitdepth(a, sample_width=2)
     return a
@@ -209,6 +216,14 @@ def _hat(ms=60):
     n *= _env_ad(40, ms)
     return n
 
+def _process_drums(x: np.ndarray) -> np.ndarray:
+    """Basic lofi treatment for drum bus."""
+    y = _butter_lowpass(x, 8000)
+    max_val = 2 ** 7 - 1
+    y = np.round(y * max_val) / max_val
+    y = np.tanh(y * 1.8)
+    return y.astype(np.float32)
+
 def _bar_ms(bpm):
     return int((60.0 / bpm) * 4 * 1000)
 
@@ -240,15 +255,16 @@ def _chord_freqs_from_degree(key_letter: str, deg: str, add7=False, add9=False, 
         triad.sort()
     return [440.0 * (2 ** ((m - 69)/12.0)) for m in triad]
 
-def _rhodes_chord(freqs, ms, amp=0.12):
+def _lofi_rhodes_chord(freqs, ms, amp=0.12):
     env = _env_ad(ms*0.85, ms)
     t = np.arange(int(ms * SR / 1000)) / SR
     out = np.zeros_like(t, dtype=np.float32)
+    wow = 1.0 + 0.003*np.sin(2*np.pi*0.5*t) + 0.002*np.sin(2*np.pi*3*t)
     for f in freqs:
-        out += 0.7*np.sin(2*np.pi*f*t) + 0.3*np.sin(2*np.pi*(f*2)*t)
+        det = f * (1.0 + 0.01*(np.random.rand() - 0.5))
+        out += 0.7*np.sin(2*np.pi*det*t*wow) + 0.3*np.sin(2*np.pi*(det*2)*t*wow)
     out *= env * amp / max(1, len(freqs))
-    wow = 1.0 + 0.002*np.sin(2*np.pi*5*t)  # subtle wow/flutter
-    out *= wow.astype(np.float32)
+    out = _butter_lowpass(out, 4000)
     return out
 
 def _nylon_chord(freqs, ms, amp=0.1):
@@ -416,6 +432,8 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
                     r = _hat(40) * 0.8 if rng.random() < 0.7 else _snare(90) * 0.5
                     _place(r, drums, pos)
 
+    drums = _process_drums(drums)
+
     # --- harmony: choose progression + voicing options
     key_letter_raw = motif.get("key")
     key_letter = (str(key_letter_raw or "C")[:1]).upper()
@@ -457,7 +475,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
         vel = _vel_scale(rng, mean=1.0, std=0.05, lo=0.9, hi=1.1)
 
         if "rhodes" in instrs or not instrs:
-            chord = _rhodes_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.12) * vel
+            chord = _lofi_rhodes_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.12) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(chord))
             keys[i0:i1] += chord[: i1 - i0]
         if "nylon guitar" in instrs:
@@ -473,7 +491,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(gtr))
             keys[i0:i1] += gtr[: i1 - i0]
         if "pads" in instrs and "rhodes" not in instrs:
-            pad = _rhodes_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.08) * vel
+            pad = _lofi_rhodes_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.08) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(pad))
             keys[i0:i1] += pad[: i1 - i0]
         if use_airy_pad:
@@ -607,7 +625,7 @@ def main():
     print(json.dumps({"stage": "post", "message": "cleaning audio"}))
     # seed post-FX too so two renders at same seed are exactly repeatable
     post_rng = np.random.default_rng((seed ^ 0x5A5A5A5A) & 0xFFFFFFFF)
-    song = post_process_chain(song, rng=post_rng)
+    song = enhanced_post_process_chain(song, rng=post_rng)
 
     out_path = args.out
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
