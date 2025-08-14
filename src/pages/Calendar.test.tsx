@@ -15,7 +15,7 @@ describe('Calendar time validation', () => {
 
   it('allows adding events with valid times', () => {
     render(<Calendar />);
-    fireEvent.change(screen.getByPlaceholderText('Title'), {
+    fireEvent.change(screen.getByLabelText('Title'), {
       target: { value: 'Meeting' },
     });
     fireEvent.change(screen.getByTestId('date-input'), {
@@ -35,7 +35,7 @@ describe('Calendar time validation', () => {
 
   it('disables add when end is before start', () => {
     render(<Calendar />);
-    fireEvent.change(screen.getByPlaceholderText('Title'), {
+    fireEvent.change(screen.getByLabelText('Title'), {
       target: { value: 'Meeting' },
     });
     fireEvent.change(screen.getByTestId('date-input'), {
@@ -51,5 +51,13 @@ describe('Calendar time validation', () => {
     expect(
       useCalendar.getState().events.some((e) => e.title === 'Meeting')
     ).toBe(false);
+  });
+
+  it('supports basic keyboard navigation', () => {
+    render(<Calendar />);
+    const firstDay = screen.getByTestId('day-1');
+    fireEvent.click(firstDay);
+    fireEvent.keyDown(document, { key: 'ArrowRight' });
+    expect(screen.getByTestId('day-2')).toHaveFocus();
   });
 });
