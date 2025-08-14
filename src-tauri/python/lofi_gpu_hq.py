@@ -572,13 +572,13 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
 
     instrs = motif.get("instruments") or []
 
-    ep_prob = float(np.clip(0.3 + 0.4*t, 0, 1))
-    gtr_prob = float(np.clip(0.25 + 0.35*t, 0, 1))
-    pad_prob = float(np.clip(0.4 + 0.3*t, 0, 1))
-    use_electric = ("electric piano" in instrs) and (rng.random() < ep_prob)
-    use_clean_gtr = ("clean electric guitar" in instrs) and (rng.random() < gtr_prob)
-    use_airy_pad = ("airy pads" in instrs) and (rng.random() < pad_prob)
-    use_lofi_piano = ("piano" in instrs) and (rng.random() < ep_prob)
+    ep_prob = 0.9 if "electric piano" in instrs else 0.0
+    gtr_prob = 0.9 if "clean electric guitar" in instrs else 0.0
+    pad_prob = 0.9 if "airy pads" in instrs else 0.0
+    use_electric = rng.random() < ep_prob
+    use_clean_gtr = rng.random() < gtr_prob
+    use_airy_pad = rng.random() < pad_prob
+    use_lofi_piano = "piano" in instrs
 
     chord_len = 2 * beat
     chord_pos = 0
@@ -600,11 +600,11 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(nylon))
             keys[i0:i1] += nylon[: i1 - i0]
         if use_electric:
-            ep = _electric_piano_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.1) * vel
+            ep = _electric_piano_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.18) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(ep))
             keys[i0:i1] += ep[: i1 - i0]
         if use_clean_gtr:
-            gtr = _clean_guitar_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.08) * vel
+            gtr = _clean_guitar_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.15) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(gtr))
             keys[i0:i1] += gtr[: i1 - i0]
         if use_lofi_piano:
@@ -612,11 +612,11 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(pn))
             keys[i0:i1] += pn[: i1 - i0]
         if "pads" in instrs and "rhodes" not in instrs:
-            pad = _lofi_rhodes_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.08) * vel
+            pad = _lofi_rhodes_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.12) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(pad))
             keys[i0:i1] += pad[: i1 - i0]
         if use_airy_pad:
-            airy = _airy_pad_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.06) * vel
+            airy = _airy_pad_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.12) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(airy))
             keys[i0:i1] += airy[: i1 - i0]
 

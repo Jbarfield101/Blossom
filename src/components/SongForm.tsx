@@ -58,6 +58,50 @@ const DRUM_PATS = [
   "half_time_shuffle",
 ];
 
+const PRESET_TEMPLATES: Record<string, Section[]> = {
+  "Classic Lofi": [
+    { name: "Intro", bars: 4 },
+    { name: "A", bars: 8 },
+    { name: "B", bars: 8 },
+    { name: "A", bars: 8 },
+    { name: "B", bars: 8 },
+    { name: "Outro", bars: 4 },
+  ],
+  "Study Session": [
+    { name: "Intro", bars: 2 },
+    { name: "A", bars: 16 },
+    { name: "B", bars: 16 },
+    { name: "A", bars: 16 },
+    { name: "C", bars: 8 },
+    { name: "Outro", bars: 2 },
+  ],
+  "Jazz Cafe": [
+    { name: "Intro", bars: 8 },
+    { name: "A", bars: 12 },
+    { name: "B", bars: 12 },
+    { name: "Solo", bars: 8 },
+    { name: "A", bars: 12 },
+    { name: "Outro", bars: 8 },
+  ],
+  "Midnight Drive": [
+    { name: "Intro", bars: 4 },
+    { name: "Verse", bars: 16 },
+    { name: "Chorus", bars: 8 },
+    { name: "Verse", bars: 16 },
+    { name: "Chorus", bars: 8 },
+    { name: "Bridge", bars: 8 },
+    { name: "Outro", bars: 4 },
+  ],
+  "Rain & Coffee": [
+    { name: "Ambient", bars: 4 },
+    { name: "A", bars: 8 },
+    { name: "A", bars: 8 },
+    { name: "B", bars: 12 },
+    { name: "A", bars: 8 },
+    { name: "Ambient", bars: 4 },
+  ],
+};
+
 export default function SongForm() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -74,13 +118,22 @@ export default function SongForm() {
   ]);
   const [ambience, setAmbience] = useState<string[]>(["rain"]);
   const [ambienceLevel, setAmbienceLevel] = useState(0.5);
-  const [structure, setStructure] = useState<Section[]>([
-    { name: "Intro", bars: 4 },
-    { name: "A", bars: 16 },
-    { name: "B", bars: 16 },
-    { name: "A", bars: 8 },
-    { name: "Outro", bars: 8 },
+  const [templates, setTemplates] = useState<Record<string, Section[]>>(() => {
+    const stored = localStorage.getItem("songTemplates");
+    if (stored) {
+      try {
+        return { ...PRESET_TEMPLATES, ...JSON.parse(stored) };
+      } catch {
+        return PRESET_TEMPLATES;
+      }
+    }
+    return PRESET_TEMPLATES;
+  });
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("Classic Lofi");
+  const [structure, setStructure] = useState<Section[]>(() => [
+    ...PRESET_TEMPLATES["Classic Lofi"],
   ]);
+  const [newTemplateName, setNewTemplateName] = useState("");
 
   // VARIATION / BATCH
   const [numSongs, setNumSongs] = useState(1);
@@ -393,11 +446,57 @@ export default function SongForm() {
                       copy[i] = { ...copy[i], bars };
                       return copy;
                     });
+                    setSelectedTemplate("");
                   }}
                   style={S.input}
                 />
               </div>
             ))}
+          </div>
+          <div style={{ ...S.row, marginTop: 8 }}>
+            <select
+              value={selectedTemplate}
+              onChange={(e) => {
+                const name = e.target.value;
+                setSelectedTemplate(name);
+                if (name && templates[name]) {
+                  setStructure([...templates[name]]);
+                }
+              }}
+              style={{ ...S.input, padding: "8px 12px" }}
+            >
+              <option value="">Custom</option>
+              {Object.keys(templates).map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+            <input
+              style={S.input}
+              placeholder="Template name"
+              value={newTemplateName}
+              onChange={(e) => setNewTemplateName(e.target.value)}
+            />
+            <button
+              style={S.btn}
+              onClick={() => {
+                const nm = newTemplateName.trim();
+                if (!nm) return;
+                setTemplates((prev) => {
+                  const next = { ...prev, [nm]: structure };
+                  const custom = Object.fromEntries(
+                    Object.entries(next).filter(([k]) => !PRESET_TEMPLATES[k])
+                  );
+                  localStorage.setItem("songTemplates", JSON.stringify(custom));
+                  return next;
+                });
+                setSelectedTemplate(nm);
+                setNewTemplateName("");
+              }}
+            >
+              Save
+            </button>
           </div>
         </div>
 
