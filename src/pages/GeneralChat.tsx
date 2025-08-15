@@ -9,6 +9,8 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import Center from "./_Center";
 
 interface Message {
@@ -128,20 +130,38 @@ export default function GeneralChat() {
               sx={{
                 display: "flex",
                 justifyContent: m.role === "user" ? "flex-end" : "flex-start",
-                my: 1,
+                my: 1.5,
               }}
             >
               <Box
                 sx={{
-                  bgcolor: m.role === "user" ? "primary.main" : "grey.300",
-                  color: m.role === "user" ? "primary.contrastText" : "text.primary",
+                  bgcolor: m.role === "user" ? "primary.light" : "grey.100",
+                  color: (theme) =>
+                    m.role === "user"
+                      ? theme.palette.getContrastText(theme.palette.primary.light)
+                      : theme.palette.text.primary,
                   borderRadius: 1,
-                  p: 1,
+                  p: 2,
+                  border: "1px solid",
+                  borderColor: "divider",
                   maxWidth: "80%",
                   whiteSpace: "pre-wrap",
+                  "& table": {
+                    whiteSpace: "normal",
+                    borderCollapse: "collapse",
+                    width: "100%",
+                  },
+                  "& th, & td": {
+                    border: "1px solid",
+                    borderColor: "divider",
+                    p: 1,
+                  },
+                  "& th": {
+                    bgcolor: "grey.200",
+                  },
                 }}
               >
-                {m.content}
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
               </Box>
             </Box>
           ))}
