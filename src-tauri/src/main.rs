@@ -20,6 +20,8 @@ fn main() {
             commands::general_chat,
             // Blender:
             commands::blender_run_script,
+            // News scraping:
+            commands::fetch_big_brother_news,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

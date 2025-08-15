@@ -8,6 +8,7 @@ use std::{
 };
 
 use chrono::Local;
+use rss::Channel;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::{AppHandle, Emitter, Manager, Runtime, Window};
@@ -605,4 +606,44 @@ pub async fn general_chat(messages: Vec<ChatMessage>) -> Result<String, String> 
         .or_else(|| json["content"].as_str())
         .ok_or("no content")?;
     Ok(content.to_string())
+}
+
+#[derive(Serialize)]
+pub struct NewsArticle {
+    pub title: String,
+    pub link: String,
+    pub pub_date: Option<String>,
+    pub source: String,
+}
+
+#[tauri::command]
+pub async fn fetch_big_brother_news() -> Result<Vec<NewsArticle>, String> {
+    let feeds = vec![
+        ("Big Brother Network", "https://bigbrothernetwork.com/feed/"),
+        (
+            "Reality Blurred",
+            "https://www.realityblurred.com/realitytv/tag/big-brother/feed/",
+        ),
+    ];
+
+    let mut articles = Vec::new();
+
+    for (source, url) in feeds {
+        let resp = ureq::get(url).call().map_err(|e| e.to_string())?;
+        let body = resp.into_string().map_err(|e| e.to_string())?;
+        let channel = Channel::read_from(body.as_bytes()).map_err(|e| e.to_string())?;
+        for item in channel.items() {
+            let title = item.title().unwrap_or("Untitled").to_string();
+            let link = item.link().unwrap_or("").to_string();
+            let pub_date = item.pub_date().map(|s| s.to_string());
+            articles.push(NewsArticle {
+                title,
+                link,
+                pub_date,
+                source: source.to_string(),
+            });
+        }
+    }
+
+    Ok(articles)
 }
