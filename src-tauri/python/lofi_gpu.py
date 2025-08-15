@@ -379,7 +379,8 @@ def _swing_offset(eighth_ms, sub_idx, swing=0.58):
     return 0.0
 
 # ---------- Section renderer ----------
-def _render_section(bars, bpm, section_name, motif, rng, variety=60):
+def _render_section(bars, bpm, section_name, motif, rng, variety=60,
+                    duck_depth_db=2.0, duck_attack_ms=14, duck_release_ms=180):
     # Variety mapping (0..100)
     t = float(np.clip(variety, 0, 100)) / 100.0
     swing = 0.54 + 0.08*t
@@ -399,6 +400,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     keys  = np.zeros(n, dtype=np.float32)
     hats  = np.zeros(n, dtype=np.float32)
     snare_positions_ms: List[float] = []
+    kick_positions_ms: List[float] = []
 
     # --- choose drum pattern
     pat_name = motif.get("drum_pattern") or rng.choice(list(DRUM_PATTERNS.keys()))
@@ -419,6 +421,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
             pos += _jitter_ms(rng, jitter_std)
             k = _kick(int(rng.uniform(140, 180))) * _vel_scale(rng, mean=1.0)
             _place(k, drums, pos)
+            kick_positions_ms.append(pos)
 
         # snares
         for beat_idx, frac in pat["snare"]:
@@ -568,6 +571,14 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
                             pos5 = pos + beat*0.5 + _jitter_ms(rng, jitter_std*0.7)
                             fifth = _bass_note(root_hz*2**(7/12), int(beat*0.45), amp=0.14) * _vel_scale(rng, mean=0.9)
                             _place(fifth, bass, pos5)
+    _apply_duck_envelope(keys, kick_positions_ms,
+                         depth_db=duck_depth_db,
+                         attack_ms=duck_attack_ms,
+                         release_ms=duck_release_ms)
+    _apply_duck_envelope(bass, kick_positions_ms,
+                         depth_db=duck_depth_db,
+                         attack_ms=duck_attack_ms,
+                         release_ms=duck_release_ms)
 
     # --- ambience rotation
     amb_list = motif.get("ambience") or []
@@ -603,17 +614,28 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     return _np_to_segment(mix)
 
 # ---------- Public API ----------
-def model_generate_audio(bars: int, bpm: int, seed: int, section: str, motif: Dict[str, Any], variety: int) -> AudioSegment:
+def model_generate_audio(bars: int, bpm: int, seed: int, section: str,
+                         motif: Dict[str, Any], variety: int,
+                         duck_depth_db=2.0, duck_attack_ms=14, duck_release_ms=180) -> AudioSegment:
     sec = _stable_hash_int(section)
     full_seed = (seed ^ sec) & 0xFFFFFFFF
     rng = np.random.default_rng(full_seed)
     random.seed(full_seed)
-    return _render_section(bars, bpm, section, motif, rng=rng, variety=variety)
+    return _render_section(bars, bpm, section, motif, rng=rng, variety=variety,
+                           duck_depth_db=duck_depth_db,
+                           duck_attack_ms=duck_attack_ms,
+                           duck_release_ms=duck_release_ms)
 
-def build_song(sections: List[Tuple[str, int]], bpm: int, seed: int, motif: Dict[str, Any], variety: int) -> AudioSegment:
+def build_song(sections: List[Tuple[str, int]], bpm: int, seed: int,
+               motif: Dict[str, Any], variety: int,
+               duck_depth_db=2.0, duck_attack_ms=14, duck_release_ms=180) -> AudioSegment:
     parts: List[AudioSegment] = []
     for name, bars in sections:
-        part = model_generate_audio(bars=bars, bpm=bpm, seed=seed, section=name, motif=motif, variety=variety)
+        part = model_generate_audio(bars=bars, bpm=bpm, seed=seed, section=name,
+                                    motif=motif, variety=variety,
+                                    duck_depth_db=duck_depth_db,
+                                    duck_attack_ms=duck_attack_ms,
+                                    duck_release_ms=duck_release_ms)
         parts.append(part)
     song = crossfade_concat(parts, ms=120)
     return song
