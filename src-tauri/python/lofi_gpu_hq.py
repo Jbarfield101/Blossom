@@ -1,5 +1,5 @@
-# lofi_gpu.py (Blossom HQ)
-# lofi_gpu.py (Blossom HQ)
+# lofi_gpu_hq.py (Blossom HQ)
+# High-quality renderer with optional polish features
 # Same CLI / JSON spec / output behavior as before
 # Adds high‑quality polish while keeping determinism by seed.
 #
