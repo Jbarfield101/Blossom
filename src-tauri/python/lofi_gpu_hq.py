@@ -443,14 +443,28 @@ def _load_ambience_sample(name: str, n: int, rng=None) -> Optional[np.ndarray]:
 # ---------- Harmony helpers ----------
 SEMITONES = {"C":0,"C#":1,"Db":1,"D":2,"D#":3,"Eb":3,"E":4,"F":5,"F#":6,"Gb":6,"G":7,"G#":8,"Ab":8,"A":9,"A#":10,"Bb":10,"B":11}
 
-def _degree_to_root_semi(deg: str) -> int:
-    return {"I":0,"ii":2,"iii":4,"IV":5,"V":7,"vi":9}.get(deg, 0)
+def _degree_to_root_semi(deg: str) -> Tuple[int, str]:
+    info = {
+        "I": (0, "maj"),
+        "ii": (2, "min"),
+        "iii": (4, "min"),
+        "IV": (5, "maj"),
+        "V": (7, "maj"),
+        "vi": (9, "min"),
+        "i": (0, "min"),
+        "iv": (5, "min"),
+        "v": (7, "min"),
+        "bVII": (10, "maj"),
+        "bVI": (8, "maj"),
+        "bIII": (3, "maj"),
+        "bII": (1, "maj"),
+    }
+    return info.get(deg, (0, "maj"))
 
 def _chord_freqs_from_degree(key_letter: str, deg: str, add7=False, add9=False, inversion=0):
     key_off = SEMITONES.get(key_letter, 0)
-    root_c = _degree_to_root_semi(deg)
+    root_c, quality = _degree_to_root_semi(deg)
     root_midi = 48 + ((root_c + key_off) % 12)
-    quality = "min" if deg in ("ii","iii","vi") else "maj"
     triad = [root_midi, root_midi + (3 if quality=="min" else 4), root_midi + 7]
     if add7:
         triad.append(root_midi + (10 if quality=="min" else 11))
@@ -542,10 +556,37 @@ DRUM_PATTERNS = {
 }
 
 PROG_BANK_A = [["I","vi","IV","V"], ["I","V","vi","IV"], ["I","iii","vi","IV"], ["I","vi","ii","V"], ["I","IV","ii","V"],
-                ["I","IV","V","IV"], ["I","ii","V","IV"], ["I","V","IV","V"]]
+               ["I","IV","V","IV"], ["I","ii","V","IV"], ["I","V","IV","V"],
+               ["i","bVII","bVI","V"], ["i","iv","bVII","bIII"], ["I","bVII","IV","V"],
+               ["I","vi","IV","bVII"], ["i","bVI","iv","V"]]
 PROG_BANK_B = [["vi","IV","I","V"], ["ii","V","I","vi"], ["IV","I","V","vi"], ["vi","ii","V","I"], ["IV","vi","ii","V"],
-                ["vi","IV","ii","V"], ["ii","vi","IV","I"], ["vi","V","IV","V"]]
-PROG_BANK_INTRO = [["I","IV"], ["ii","V"], ["I","V"], ["vi","IV"], ["I","ii"], ["I","vi"], ["IV","V"], ["ii","iii"]]
+               ["vi","IV","ii","V"], ["ii","vi","IV","I"], ["vi","V","IV","V"],
+               ["i","bVII","bVI","i"], ["i","iv","V","i"], ["i","bVI","iv","bVII"],
+               ["vi","bVII","I","V"], ["i","bIII","bVII","i"]]
+PROG_BANK_INTRO = [["I","IV"], ["ii","V"], ["I","V"], ["vi","IV"], ["I","ii"], ["I","vi"], ["IV","V"], ["ii","iii"],
+                   ["i","iv"], ["i","bVII"], ["i","bVI"], ["iv","bVII"], ["I","bVII"], ["bIII","bVI"]]
+
+def _stitch_progression(bank: List[List[str]], length: int, rng) -> List[str]:
+    if not bank:
+        return ["I"] * length
+    starts: List[str] = []
+    trans: Dict[str, List[str]] = {}
+    for seq in bank:
+        if not seq:
+            continue
+        starts.append(seq[0])
+        for a, b in zip(seq, seq[1:]):
+            trans.setdefault(a, []).append(b)
+    cur = rng.choice(starts)
+    out = [cur]
+    for _ in range(1, length):
+        nxts = trans.get(cur)
+        if not nxts:
+            cur = rng.choice(starts)
+        else:
+            cur = rng.choice(nxts)
+        out.append(cur)
+    return out
 
 BASS_PATTERNS = ["roots_13", "root5_13", "held_whole"]
 
@@ -700,13 +741,6 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     if len(token) > 1 and token[1] in ("b", "#"):
         key_letter += token[1]
 
-    if section_name.upper().startswith("A"):
-        prog_seq = rng.choice(PROG_BANK_A)
-    elif section_name.upper().startswith("B"):
-        prog_seq = rng.choice(PROG_BANK_B)
-    else:
-        prog_seq = rng.choice(PROG_BANK_INTRO)
-
     add7 = (rng.random() < add7_prob)
     add9 = (rng.random() < add9_prob)
     inv_cycle = int(rng.integers(0, 3))
@@ -719,7 +753,14 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     use_airy_pad = ("airy pads" in instrs)
 
     chord_len = 2 * beat
-    chord_pos = 0
+    if section_name.upper().startswith("A"):
+        bank = PROG_BANK_A
+    elif section_name.upper().startswith("B"):
+        bank = PROG_BANK_B
+    else:
+        bank = PROG_BANK_INTRO
+    num_chords = int(np.ceil(dur_ms / chord_len))
+    prog_seq = _stitch_progression(bank, num_chords, rng)
     melodic_sources = {
         "rhodes",
         "piano",
@@ -732,8 +773,10 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
 
     chord_roots_hz: List[float] = []
 
-    while chord_pos < dur_ms:
-        deg = prog_seq[(chord_pos // chord_len) % len(prog_seq)]
+    for idx, deg in enumerate(prog_seq):
+        chord_pos = idx * chord_len
+        if chord_pos >= dur_ms:
+            break
         freqs = _chord_freqs_from_degree(key_letter, deg, add7=add7, add9=add9, inversion=inv_cycle)
         chord_roots_hz.append(freqs[0])
         vel = _vel_scale(rng, mean=1.0, std=0.05, lo=0.9, hi=1.1)
@@ -762,8 +805,6 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
             airy = _airy_pad_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.12) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(airy))
             pads[i0:i1] += airy[: i1 - i0]
-
-        chord_pos += chord_len
 
     if "piano" in instrs:
         mood = motif.get("mood") or []
