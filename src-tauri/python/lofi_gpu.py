@@ -114,8 +114,7 @@ def loudness_normalize_lufs(audio: AudioSegment, target_lufs: float = -14.0) -> 
 
 def enhanced_post_process_chain(audio: AudioSegment, rng=None) -> AudioSegment:
     """Darker, warmer finishing chain for lofi character."""
-    a = loudness_normalize_lufs(audio, target_lufs=-16.0)
-    a = a.high_pass_filter(30)
+    a = audio.high_pass_filter(30)
 
     # multi-stage low-pass to emulate vintage gear
     lpf_base = 7500
@@ -132,6 +131,7 @@ def enhanced_post_process_chain(audio: AudioSegment, rng=None) -> AudioSegment:
 
     drv = 1.05 if rng is None else float(rng.uniform(1.03, 1.07))
     a = apply_soft_limit(a, drive=drv)
+    a = loudness_normalize_lufs(a, target_lufs=-16.0)
     a = ensure_wav_bitdepth(a, sample_width=2)
     return a
 
@@ -548,7 +548,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
         amb_mix += c
 
     mix = 0.72*drums + 0.55*hats + 0.68*keys + 0.52*bass + 0.12*amb_mix*amb_level
-    mix = np.tanh(mix * 1.18).astype(np.float32)
+    mix = mix.astype(np.float32)
     return _np_to_segment(mix)
 
 # ---------- Public API ----------
