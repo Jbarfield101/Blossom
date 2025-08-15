@@ -4,23 +4,23 @@
 mod commands;
 
 fn main() {
-  tauri::Builder::default()
-    .plugin(tauri_plugin_dialog::init())
-    .invoke_handler(tauri::generate_handler![
-      commands::lofi_generate_gpu,
-      commands::lofi_generate_gpu_stream,
-      commands::run_lofi_song,
-      // ComfyUI:
-      commands::comfy_status,
-      commands::comfy_start,
-      commands::comfy_stop,
-      // Ollama general chat:
-      commands::start_ollama,
-      commands::stop_ollama,
-      commands::general_chat,
-      // Blender:
-      commands::blender_run_script,
-    ])
-    .run(tauri::generate_context!())
-    .expect("error while running tauri application");
+    tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
+        .invoke_handler(tauri::generate_handler![
+            commands::lofi_generate_gpu,
+            commands::lofi_generate_gpu_stream,
+            commands::run_lofi_song,
+            // ComfyUI:
+            commands::comfy_status,
+            commands::comfy_start,
+            commands::comfy_stop,
+            // Ollama general chat:
+            commands::start_ollama,
+            commands::stop_ollama,
+            commands::general_chat,
+            // Blender:
+            commands::blender_run_script,
+        ])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
 }
