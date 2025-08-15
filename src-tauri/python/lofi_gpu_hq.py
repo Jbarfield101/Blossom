@@ -96,10 +96,28 @@ def ensure_wav_bitdepth(audio: AudioSegment, sample_width: int = 2) -> AudioSegm
 
 def _normalize_instruments(instrs):
     alias = {"pads": "airy pads"}
+    canon = [
+        "electric piano",
+        "upright bass",
+        "clean electric guitar",
+        "nylon guitar",
+        "airy pads",
+        "piano",
+        "rhodes",
+        "bass",
+    ]
     out = []
     for s in (instrs or []):
         k = str(s).strip().lower()
-        out.append(alias.get(k, k))
+        k = alias.get(k, k)
+        matched = False
+        for name in canon:
+            if name in k:
+                out.append(name)
+                matched = True
+                break
+        if not matched:
+            out.append(k)
     return out
 
 # ---------- Post-processing ----------
