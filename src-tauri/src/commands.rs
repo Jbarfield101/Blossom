@@ -614,6 +614,7 @@ pub struct NewsArticle {
     pub link: String,
     pub pub_date: Option<String>,
     pub source: String,
+    pub summary: Option<String>,
 }
 
 #[tauri::command]
@@ -636,11 +637,28 @@ pub async fn fetch_big_brother_news() -> Result<Vec<NewsArticle>, String> {
             let title = item.title().unwrap_or("Untitled").to_string();
             let link = item.link().unwrap_or("").to_string();
             let pub_date = item.pub_date().map(|s| s.to_string());
+            let description = item.description().unwrap_or("");
+
+            let prompt = format!(
+                "Summarize this Big Brother article in one or two sentences.\nTitle: {title}\nDescription: {description}"
+            );
+
+            let summary = match general_chat(vec![ChatMessage {
+                role: "user".into(),
+                content: prompt,
+            }])
+            .await
+            {
+                Ok(s) => Some(s.trim().to_string()),
+                Err(_) => None,
+            };
+
             articles.push(NewsArticle {
                 title,
                 link,
                 pub_date,
                 source: source.to_string(),
+                summary,
             });
         }
     }
