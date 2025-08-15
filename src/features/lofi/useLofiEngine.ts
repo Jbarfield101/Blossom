@@ -18,6 +18,9 @@ let chain: {
   lead: Tone.MonoSynth;
   bass: Tone.MonoSynth;
   hat: Tone.NoiseSynth;
+  kick: Tone.MembraneSynth;
+  snare: Tone.NoiseSynth;
+  pad: Tone.PolySynth;
   rev: Tone.Reverb;
 } | null = null;
 
@@ -25,6 +28,14 @@ let melody: string[] = [];
 let bassLine: string[] = [];
 let step = 0;
 let bassStep = 0;
+let chordStep = 0;
+
+const chords = [
+  ['C4', 'E4', 'G4', 'B4'],
+  ['F4', 'A4', 'C5', 'E5'],
+  ['A3', 'C4', 'E4', 'G4'],
+  ['G3', 'B3', 'D4', 'F4'],
+];
 
 function makePattern(seed: number) {
   const rnd = mulberry32(seed);
@@ -33,32 +44,39 @@ function makePattern(seed: number) {
   bassLine = melody.map((n) => Tone.Frequency(n).transpose(-12).toNote());
   step = 0;
   bassStep = 0;
+  chordStep = 0;
 }
 
 function init() {
   if (initialized) return;
+  const rev = new Tone.Reverb({ decay: 3, wet: 0.25 }).toDestination();
+
   const lead = new Tone.MonoSynth({
     oscillator: { type: 'triangle' },
     envelope: { attack: 0.01, decay: 0.2, sustain: 0.3, release: 1.2 },
-  }).toDestination();
+  }).connect(rev);
 
   const bass = new Tone.MonoSynth({
     oscillator: { type: 'sawtooth' },
     filter: { type: 'lowpass', frequency: 200 },
     envelope: { attack: 0.01, decay: 0.3, sustain: 0.4, release: 1.0 },
-  }).toDestination();
+  }).connect(rev);
 
   const hat = new Tone.NoiseSynth({
     envelope: { attack: 0.001, decay: 0.05, sustain: 0 },
-  }).toDestination();
+  });
+  const hatVol = new Tone.Volume(-12).connect(rev);
+  hat.connect(hatVol);
 
-  const rev = new Tone.Reverb({ decay: 3, wet: 0.25 }).toDestination();
+  const kick = new Tone.MembraneSynth().connect(rev);
+  const snare = new Tone.NoiseSynth({
+    envelope: { attack: 0.001, decay: 0.2, sustain: 0 },
+  }).connect(rev);
 
-  lead.connect(rev);
-  bass.connect(rev);
-  hat.connect(rev);
+  const padFilter = new Tone.Filter({ type: 'lowpass', frequency: 500 }).connect(rev);
+  const pad = new Tone.PolySynth(Tone.Synth).connect(padFilter);
 
-  chain = { lead, bass, hat, rev };
+  chain = { lead, bass, hat, kick, snare, pad, rev };
   Tone.Transport.bpm.value = 80;
 
   loop = new Tone.Loop((time) => {
@@ -69,10 +87,19 @@ function init() {
     if (step % 2 === 0) {
       chain.hat.triggerAttackRelease('16n', time);
     }
+    if (step % 4 === 0 || step % 4 === 2) {
+      chain.kick.triggerAttackRelease('C2', '8n', time);
+    }
+    if (step % 4 === 1 || step % 4 === 3) {
+      chain.snare.triggerAttackRelease('16n', time);
+    }
     if (step % 4 === 0) {
       const b = bassLine[bassStep % bassLine.length];
       chain.bass.triggerAttackRelease(b, '2n', time);
+      const chord = chords[chordStep % chords.length];
+      chain.pad.triggerAttackRelease(chord, '1m', time);
       bassStep++;
+      chordStep++;
     }
     step++;
   }, '4n');
