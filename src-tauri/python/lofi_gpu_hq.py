@@ -578,25 +578,62 @@ def calculate_mix_levels(mood, section_name):
         "key_gain": 0.9,
         "bass_gain": 0.38,
         "pad_gain": 0.6,
+        "melody_gain": 0.8,
     }
 
     if "calm" in mood or "chill" in mood:
         levels["drum_gain"] *= 0.7
         levels["key_gain"] *= 1.1
         levels["pad_gain"] *= 1.1
+        levels["melody_gain"] *= 1.05
     if "energetic" in mood:
         levels["drum_gain"] *= 1.2
         levels["pad_gain"] *= 0.9
+        levels["melody_gain"] *= 1.1
     if "melancholy" in mood:
         levels["key_gain"] *= 1.15
         levels["pad_gain"] *= 1.2
+        levels["melody_gain"] *= 1.1
 
     if section_name.lower() in ["intro", "outro"]:
         levels["drum_gain"] *= 0.8
         levels["key_gain"] *= 0.9
         levels["pad_gain"] *= 0.95
+        levels["melody_gain"] *= 0.9
 
     return levels
+
+
+def _render_melody(prog_seq, key_letter, bpm, dur_ms, rng):
+    """Simple lead line following the key and chord progression."""
+
+    def _mel_note(freq, ms):
+        x = _sine(freq, ms, amp=0.22)
+        x *= _env_ad(ms * 0.8, ms)
+        x = _butter_lowpass(x, 4000)
+        return x
+
+    beat, eighth, sixteenth = _beats_ms(bpm)
+    chord_len = 2 * beat
+    n = int(dur_ms * SR / 1000)
+    out = np.zeros(n, dtype=np.float32)
+
+    for chord_idx in range(int(np.ceil(dur_ms / chord_len))):
+        deg = prog_seq[chord_idx % len(prog_seq)]
+        freqs = _chord_freqs_from_degree(key_letter, deg, add7=False, add9=False)
+        choices = [f * 2 for f in freqs]
+        for sub in range(4):  # 8th-note grid within each chord
+            if rng.random() < 0.5:
+                pos = chord_idx * chord_len + sub * eighth
+                if pos >= dur_ms:
+                    break
+                freq = float(rng.choice(choices))
+                dur = int(rng.choice([eighth, sixteenth * 3, beat]))
+                note = _mel_note(freq, dur)
+                note *= _vel_scale(rng, mean=1.0, std=0.05, lo=0.8, hi=1.2)
+                _place(note, out, pos + _jitter_ms(rng, 4.0))
+
+    return out
 
 # ---------- Section renderer ----------
 def _render_section(bars, bpm, section_name, motif, rng, variety=60):
@@ -801,6 +838,8 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
                             fifth = _bass_note(root_hz*2**(7/12), int(beat*0.45), amp=0.14) * _vel_scale(rng, mean=0.9)
                             _place(fifth, bass, pos5)
 
+    melody = _render_melody(prog_seq, key_letter, bpm, dur_ms, rng)
+
     # --- ambience rotation
     amb_list = motif.get("ambience") or []
     if not amb_list:
@@ -852,12 +891,15 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
         drum_bus = drums + 0.6*hats
         keys_bus = keys * 0.5
         pads_bus = pads * 0.5
+        melody_bus = melody * 0.5
         wet_drums = _schroeder_room(drum_bus, mix=0.10, pre_ms=10, decay=0.32)
         wet_keys  = _schroeder_room(keys_bus, mix=0.07, pre_ms=14, decay=0.28)
         wet_pads  = _schroeder_room(pads_bus, mix=0.07, pre_ms=14, decay=0.28)
+        wet_mel   = _schroeder_room(melody_bus, mix=0.07, pre_ms=14, decay=0.28)
         drums = 0.9*drums + 0.25*wet_drums
         keys  = 0.95*keys + 0.18*wet_keys
         pads  = 0.95*pads + 0.18*wet_pads
+        melody = 0.95*melody + 0.18*wet_mel
 
     mood = motif.get("mood") or []
 
@@ -873,6 +915,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
             bass_depth = 1.0
         _apply_duck_envelope(keys, kick_positions_ms, depth_db=depth)
         _apply_duck_envelope(pads,  kick_positions_ms, depth_db=depth)
+        _apply_duck_envelope(melody, kick_positions_ms, depth_db=depth)
         _apply_duck_envelope(bass,  kick_positions_ms, depth_db=bass_depth)
 
     # final mix (mono bus)
@@ -884,6 +927,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     key_gain = levels["key_gain"]
     pad_gain = levels["pad_gain"]
     bass_gain = levels["bass_gain"]
+    melody_gain = levels["melody_gain"]
     amb_gain = 0.12 * amb_level
 
     mix = (
@@ -891,6 +935,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
         + hat_gain*hats
         + key_gain*keys
         + pad_gain*pads
+        + melody_gain*melody
         + bass_gain*bass
         + amb_gain*amb_mix
     )
