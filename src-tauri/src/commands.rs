@@ -8,11 +8,13 @@ use std::{
 };
 
 use chrono::Local;
+use robotstxt::DefaultMatcher;
 use rss::Channel;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::{AppHandle, Emitter, Manager, Runtime, Window};
 use ureq;
+use url::Url;
 
 /* ==============================
 ComfyUI launcher (no extra crate)
@@ -649,6 +651,25 @@ pub async fn fetch_big_brother_news(force: Option<bool>) -> Result<Vec<NewsArtic
     let mut articles = Vec::new();
 
     for (source, url) in feeds {
+        let parsed = Url::parse(url).map_err(|e| e.to_string())?;
+        let mut robots_url = parsed.clone();
+        robots_url.set_path("/robots.txt");
+        robots_url.set_query(None);
+        robots_url.set_fragment(None);
+
+        let allowed = match ureq::get(robots_url.as_str()).call() {
+            Ok(resp) => {
+                let robots_body = resp.into_string().unwrap_or_default();
+                let mut matcher = DefaultMatcher::default();
+                matcher.one_agent_allowed_by_robots(&robots_body, "*", url)
+            }
+            Err(_) => true,
+        };
+
+        if !allowed {
+            continue;
+        }
+
         let resp = ureq::get(url).call().map_err(|e| e.to_string())?;
         let body = resp.into_string().map_err(|e| e.to_string())?;
         let channel = Channel::read_from(body.as_bytes()).map_err(|e| e.to_string())?;
