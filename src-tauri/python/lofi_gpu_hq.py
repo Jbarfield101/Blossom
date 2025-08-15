@@ -540,11 +540,11 @@ def _swing_offset(eighth_ms, sub_idx, swing=0.58):
 def calculate_mix_levels(mood, section_name):
     """Calculate context-aware mix levels"""
     levels = {
-        "drum_gain": 0.32,
-        "hat_gain": 0.20,
-        "key_gain": 1.0,
-        "bass_gain": 0.42,
-        "pad_gain": 0.7,
+        "drum_gain": 0.28,
+        "hat_gain": 0.18,
+        "key_gain": 0.9,
+        "bass_gain": 0.38,
+        "pad_gain": 0.65,
     }
 
     if "calm" in mood or "chill" in mood:
@@ -838,6 +838,9 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
 
     mix = drum_gain*drums + hat_gain*hats + key_gain*keys + bass_gain*bass + amb_gain*amb_mix
     mix = mix.astype(np.float32)
+    peak = float(np.max(np.abs(mix)))
+    if peak > 1.0:
+        mix *= 0.9 / peak
 
     # stereoize
     if flags.get("hq_stereo", True):
