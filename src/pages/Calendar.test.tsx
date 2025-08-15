@@ -56,7 +56,7 @@ describe('Calendar time validation', () => {
   it('supports basic keyboard navigation', () => {
     render(<Calendar />);
     const firstDay = screen.getByTestId('day-1');
-    fireEvent.click(firstDay);
+    fireEvent.doubleClick(firstDay);
     fireEvent.keyDown(document, { key: 'ArrowRight' });
     expect(screen.getByTestId('day-2')).toHaveFocus();
   });
@@ -86,6 +86,9 @@ describe('Calendar time validation', () => {
       target: { value: `${yyyy}-${mm}-01T10:00` },
     });
     fireEvent.click(screen.getByTestId('add-button'));
+    const day1 = screen.getByTestId('day-1');
+    fireEvent.click(day1);
+    fireEvent.click(screen.getByTestId('quick-add-overlay'));
     const deleteBtn = screen.getByLabelText('Delete event');
     fireEvent.click(deleteBtn);
     expect(
