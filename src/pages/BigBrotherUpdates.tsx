@@ -10,7 +10,9 @@ import {
 
 interface Article {
   title: string;
-  timestamp: string;
+  link: string;
+  pub_date?: string;
+  source: string;
 }
 
 export default function BigBrotherUpdates() {
@@ -20,7 +22,7 @@ export default function BigBrotherUpdates() {
   });
 
   useEffect(() => {
-    invoke<Article[]>("big_brother_updates")
+    invoke<Article[]>("fetch_big_brother_news")
       .then((data) => {
         setArticles(data);
         localStorage.setItem("bigBrotherUpdates", JSON.stringify(data));
@@ -37,10 +39,21 @@ export default function BigBrotherUpdates() {
       </Typography>
       <List>
         {articles.map((article, idx) => (
-          <ListItem key={idx} divider>
+          <ListItem
+            key={idx}
+            divider
+            component="a"
+            href={article.link}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <ListItemText
               primary={article.title}
-              secondary={new Date(article.timestamp).toLocaleString()}
+              secondary={`${article.source}${
+                article.pub_date
+                  ? ` - ${new Date(article.pub_date).toLocaleString()}`
+                  : ""
+              }`}
             />
           </ListItem>
         ))}
