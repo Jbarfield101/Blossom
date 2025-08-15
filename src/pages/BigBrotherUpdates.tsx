@@ -63,29 +63,30 @@ export default function BigBrotherUpdates() {
       </Box>
       <List>
         {articles.map((article, idx) => (
-          <ListItem
-            key={idx}
-            divider
-            component="a"
-            href={article.link}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <ListItem key={idx} divider alignItems="flex-start">
             <ListItemText
               primary={article.title}
               secondary={
                 <>
+                  {article.summary && (
+                    <>
+                      {article.summary}
+                      <br />
+                    </>
+                  )}
                   {`${article.source}${
                     article.pub_date
                       ? ` - ${new Date(article.pub_date).toLocaleString()}`
                       : ""
                   }`}
-                  {article.summary && (
-                    <>
-                      <br />
-                      {article.summary}
-                    </>
-                  )}
+                  <br />
+                  <a
+                    href={article.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Read more
+                  </a>
                 </>
               }
             />
