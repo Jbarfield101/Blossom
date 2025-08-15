@@ -676,7 +676,15 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
 
     chord_len = 2 * beat
     chord_pos = 0
-    add_rhodes_default = (not instrs)
+    melodic_sources = {
+        "rhodes",
+        "piano",
+        "electric piano",
+        "clean electric guitar",
+        "nylon guitar",
+        "airy pads",
+    }
+    add_rhodes_default = not any(src in instrs for src in melodic_sources)
 
     chord_roots_hz: List[float] = []
 
@@ -793,8 +801,8 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
         keys_bus = keys * 0.5
         wet_drums = _schroeder_room(drum_bus, mix=0.10, pre_ms=10, decay=0.32)
         wet_keys  = _schroeder_room(keys_bus, mix=0.07, pre_ms=14, decay=0.28)
-        drums = 0.85*drums + 0.4*(wet_drums - drum_bus)
-        keys  = 0.95*keys  + 0.35*(wet_keys  - keys_bus)
+        drums = 0.9*drums + 0.25*wet_drums
+        keys  = 0.95*keys + 0.18*wet_keys
 
     mood = motif.get("mood") or []
 
