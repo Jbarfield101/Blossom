@@ -1,4 +1,5 @@
 # lofi_gpu.py (Blossom HQ)
+# lofi_gpu.py (Blossom HQ)
 # Same CLI / JSON spec / output behavior as before
 # Adds high‑quality polish while keeping determinism by seed.
 #
@@ -206,9 +207,13 @@ def _pitch_sweep(f0, f1, ms, amp=0.8):
     phase = 2 * np.pi * np.cumsum(freqs) / SR
     return (amp * np.sin(phase)).astype(np.float32)
 
-def _noise(ms, amp=0.3):
+def _noise(ms, amp=0.3, rng=None):
     n = int(ms * SR / 1000)
-    return (amp * (np.random.rand(n).astype(np.float32) * 2 - 1)).astype(np.float32)
+    if rng is not None:
+        r = (rng.random(n).astype(np.float32) * 2 - 1)
+    else:
+        r = (np.random.rand(n).astype(np.float32) * 2 - 1)
+    return (amp * r).astype(np.float32)
 
 def _butter_lowpass(x, cutoff_hz):
     nyq = 0.5 * SR
@@ -222,22 +227,22 @@ def _butter_highpass(x, cutoff_hz):
     b, a = butter(4, norm, btype="high")
     return filtfilt(b, a, x).astype(np.float32)
 
-def _kick(ms=160):
+def _kick(ms=160, rng=None):
     body = _pitch_sweep(90, 45, ms, amp=0.9) * _env_ad(ms*0.9, ms)
-    click = _noise(40, 0.2) * _env_ad(20, 40)
+    click = _noise(40, 0.2, rng=rng) * _env_ad(20, 40)
     x = body.copy(); x[:len(click)] += click
     x = _butter_lowpass(x, 150)
     return x
 
-def _snare(ms=180):
+def _snare(ms=180, rng=None):
     tone = _sine(180, ms, 0.05) * _env_ad(120, ms)
-    noise = _noise(ms, 0.5) * _env_ad(140, ms)
+    noise = _noise(ms, 0.5, rng=rng) * _env_ad(140, ms)
     x = noise + tone
     x = _butter_highpass(x, 180)
     return x
 
-def _hat(ms=60):
-    n = _noise(ms, 0.4)
+def _hat(ms=60, rng=None):
+    n = _noise(ms, 0.4, rng=rng)
     n = _butter_highpass(n, 5000)
     n *= _env_ad(40, ms)
     return n
@@ -333,15 +338,24 @@ def _schroeder_room(x: np.ndarray, mix=0.12, pre_ms=12, decay=0.35):
     wet = allpass(wet, 3, 0.70)
     return (1.0 - mix) * dry + mix * wet
 
-def _vinyl_crackle(n: int, density=0.0015, ticky=0.003) -> np.ndarray:
-    x = (np.random.rand(n).astype(np.float32)*2 - 1) * 0.0007  # hiss
-    pops = (np.random.rand(n) < density).astype(np.float32)
-    if pops.any():
-        x[pops > 0] += (np.random.rand(int(pops.sum())).astype(np.float32)*2-1) * ticky
+def _vinyl_crackle(n: int, density=0.0015, ticky=0.003, rng=None) -> np.ndarray:
+    if rng is None:
+        x = (np.random.rand(n).astype(np.float32)*2 - 1) * 0.0007  # hiss
+        pops = (np.random.rand(n) < density).astype(np.float32)
+        if pops.any():
+            x[pops > 0] += (np.random.rand(int(pops.sum())).astype(np.float32)*2-1) * ticky
+    else:
+        x = (rng.random(n).astype(np.float32)*2 - 1) * 0.0007  # hiss
+        pops = (rng.random(n) < density).astype(np.float32)
+        if pops.any():
+            x[pops > 0] += (rng.random(int(pops.sum())).astype(np.float32)*2-1) * ticky
     return _butter_lowpass(x, 6000)
 
-def _analog_noise_floor(n: int, level=0.0003) -> np.ndarray:
-    noise = np.random.randn(n).astype(np.float32) * level
+def _analog_noise_floor(n: int, level=0.0003, rng=None) -> np.ndarray:
+    if rng is not None:
+        noise = rng.standard_normal(n).astype(np.float32) * level
+    else:
+        noise = np.random.randn(n).astype(np.float32) * level
     return _butter_highpass(noise, 200)
 
 # ---------- Harmony helpers ----------
@@ -365,13 +379,17 @@ def _chord_freqs_from_degree(key_letter: str, deg: str, add7=False, add9=False, 
         triad.sort()
     return [440.0 * (2 ** ((m - 69)/12.0)) for m in triad]
 
-def _lofi_rhodes_chord(freqs, ms, amp=0.12):
+def _lofi_rhodes_chord(freqs, ms, amp=0.12, rng=None):
     env = _env_ad(ms*0.85, ms)
     t = np.arange(int(ms * SR / 1000)) / SR
     out = np.zeros_like(t, dtype=np.float32)
     wow = 1.0 + 0.003*np.sin(2*np.pi*0.5*t) + 0.002*np.sin(2*np.pi*3*t)
     for f in freqs:
-        det = f * (1.0 + 0.01*(np.random.rand() - 0.5))
+        if rng is not None:
+            det_jit = (rng.random() - 0.5)
+        else:
+            det_jit = (np.random.rand() - 0.5)
+        det = f * (1.0 + 0.01*det_jit)
         out += 0.7*np.sin(2*np.pi*det*t*wow) + 0.3*np.sin(2*np.pi*(det*2)*t*wow)
     out *= env * amp / max(1, len(freqs))
     out = _butter_lowpass(out, 4000)
@@ -535,14 +553,14 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
             pos = bar_start + beat_idx * beat + frac * beat
             pos += _swing_offset(eighth, int(frac*8) % 8, swing)
             pos += _jitter_ms(rng, jitter_std)
-            k = _kick(int(rng.uniform(140, 180))) * _vel_scale(rng, mean=1.0)
+            k = _kick(int(rng.uniform(140, 180)), rng=rng) * _vel_scale(rng, mean=1.0)
             _place(k, drums, pos)
             kick_positions_ms.append(pos)
 
         # snares
         for beat_idx, frac in pat["snare"]:
             pos = bar_start + beat_idx * beat + frac * beat + _jitter_ms(rng, jitter_std)
-            s = _snare(int(rng.uniform(160, 190))) * _vel_scale(rng, mean=1.0)
+            s = _snare(int(rng.uniform(160, 190)), rng=rng) * _vel_scale(rng, mean=1.0)
             _place(s, drums, pos)
             # micro-duck hats around snare
             snare_center = pos
@@ -555,7 +573,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
         # ghost notes
         if rng.random() < ghost_prob:
             pos = bar_start + beat * rng.choice([0.75, 1.75, 2.75, 3.75]) + _jitter_ms(rng, jitter_std)
-            g = _snare(120) * 0.35 * _vel_scale(rng, mean=0.9)
+            g = _snare(120, rng=rng) * 0.35 * _vel_scale(rng, mean=0.9)
             _place(g, drums, pos)
 
         # hats (8ths)
@@ -567,7 +585,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
                     pos += _jitter_ms(rng, jitter_std*0.6)
                     phase = 2*np.pi*wow_rate*((bar_start + sub*eighth)/1000.0)
                     pos += wow_depth * eighth * np.sin(phase)
-                    h = _hat(int(rng.uniform(45, 70))) * _vel_scale(rng, mean=0.95)
+                    h = _hat(int(rng.uniform(45, 70)), rng=rng) * _vel_scale(rng, mean=0.95)
                     _place(h, hats, pos)
 
         # simple 1-bar fill at each 4 bars
@@ -576,7 +594,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
                 if rng.random() < 0.6:
                     pos = bar_start + beat*4 - (16 - sidx) * sixteenth
                     pos += _jitter_ms(rng, jitter_std*0.5)
-                    r = _hat(40) * 0.8 if rng.random() < 0.7 else _snare(90) * 0.5
+                    r = _hat(40, rng=rng) * 0.8 if rng.random() < 0.7 else _snare(90, rng=rng) * 0.5
                     _place(r, drums, pos)
 
     drums = _process_drums(drums)
@@ -617,7 +635,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
         vel = _vel_scale(rng, mean=1.0, std=0.05, lo=0.9, hi=1.1)
 
         if "rhodes" in instrs or not instrs:
-            chord = _lofi_rhodes_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.12) * vel
+            chord = _lofi_rhodes_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.12, rng=rng) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(chord))
             keys[i0:i1] += chord[: i1 - i0]
         if "nylon guitar" in instrs:
@@ -637,7 +655,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(pn))
             keys[i0:i1] += pn[: i1 - i0]
         if "pads" in instrs and "rhodes" not in instrs:
-            pad = _lofi_rhodes_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.12) * vel
+            pad = _lofi_rhodes_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.12, rng=rng) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(pad))
             keys[i0:i1] += pad[: i1 - i0]
         if use_airy_pad:
@@ -683,18 +701,18 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
 
     amb_mix = np.zeros(n, dtype=np.float32)
     if "rain" in amb_list:
-        r = (np.random.rand(n).astype(np.float32)*2-1)*0.004
+        r = ((rng.random(n).astype(np.float32)*2-1) if rng is not None else (np.random.rand(n).astype(np.float32)*2-1)) * 0.004
         r = _butter_lowpass(r, 1200)
         amb_mix += r
     if "cafe" in amb_list:
-        c = (np.random.rand(n).astype(np.float32)*2-1)*0.0008
+        c = ((rng.random(n).astype(np.float32)*2-1) if rng is not None else (np.random.rand(n).astype(np.float32)*2-1)) * 0.0008
         c = _butter_lowpass(c, 4000)
         amb_mix += c
 
     # more pronounced vinyl character for nostalgic mood
     if "nostalgic" in (motif.get("mood") or []):
-        amb_mix += 0.6 * _vinyl_crackle(n, density=0.0012, ticky=0.006)
-        amb_mix += _analog_noise_floor(n, level=0.0003)
+        amb_mix += 0.6 * _vinyl_crackle(n, density=0.0012, ticky=0.006, rng=rng)
+        amb_mix += _analog_noise_floor(n, level=0.0003, rng=rng)
 
     # --- feature flags (can be passed via motif; default True)
     flags = {
