@@ -5,6 +5,7 @@ import {
   Box,
   Button,
   CircularProgress,
+  IconButton,
   Stack,
   TextField,
   Typography,
@@ -12,6 +13,7 @@ import {
 import type { Theme } from "@mui/material/styles";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import Center from "./_Center";
 
 interface Message {
@@ -20,26 +22,59 @@ interface Message {
   ts: number;
 }
 
+interface Chat {
+  id: string;
+  name: string;
+  messages: Message[];
+}
+
 export default function GeneralChat() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [currentChatId, setCurrentChatId] = useState<string>("");
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<"init" | "starting" | "ready" | "error">("init");
   const [error, setError] = useState<string>("");
   const [logs, setLogs] = useState<string[]>([]);
 
+  const currentChat = chats.find((c) => c.id === currentChatId);
+  const messages = currentChat?.messages ?? [];
+
   useEffect(() => {
-    const stored = localStorage.getItem("generalChatHistory");
-    if (stored) {
+    const storedChats = localStorage.getItem("generalChats");
+    if (storedChats) {
       try {
-        const parsed: Message[] = JSON.parse(stored);
-        const now = Date.now();
-        const tenDays = 10 * 24 * 60 * 60 * 1000;
-        const pruned = parsed.filter((m) => now - m.ts < tenDays);
-        setMessages(pruned);
-        localStorage.setItem("generalChatHistory", JSON.stringify(pruned));
+        const parsed: Chat[] = JSON.parse(storedChats);
+        setChats(parsed);
+        setCurrentChatId(parsed[0]?.id || "");
       } catch {
         // ignore
+      }
+    } else {
+      const old = localStorage.getItem("generalChatHistory");
+      if (old) {
+        try {
+          const parsed: Message[] = JSON.parse(old);
+          const now = Date.now();
+          const tenDays = 10 * 24 * 60 * 60 * 1000;
+          const pruned = parsed.filter((m) => now - m.ts < tenDays);
+          const initial: Chat = {
+            id: genId(),
+            name: "Chat 1",
+            messages: pruned,
+          };
+          setChats([initial]);
+          setCurrentChatId(initial.id);
+          localStorage.setItem("generalChats", JSON.stringify([initial]));
+          localStorage.removeItem("generalChatHistory");
+        } catch {
+          // ignore
+        }
+      } else {
+        const initial: Chat = { id: genId(), name: "Chat 1", messages: [] };
+        setChats([initial]);
+        setCurrentChatId(initial.id);
+        localStorage.setItem("generalChats", JSON.stringify([initial]));
       }
     }
 
@@ -67,11 +102,25 @@ export default function GeneralChat() {
     }
   }
 
+  function updateChat(id: string, messages: Message[], name?: string) {
+    setChats((prev) => {
+      const updated = prev.map((c) =>
+        c.id === id ? { ...c, messages, ...(name ? { name } : {}) } : c
+      );
+      localStorage.setItem("generalChats", JSON.stringify(updated));
+      return updated;
+    });
+  }
+
   async function send() {
-    if (!input.trim()) return;
+    if (!input.trim() || !currentChat) return;
     const userMsg: Message = { role: "user", content: input, ts: Date.now() };
+    let name = currentChat.name;
+    if (currentChat.messages.length === 0) {
+      name = input.trim().slice(0, 20) || name;
+    }
     const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
+    updateChat(currentChat.id, newMessages, name);
     setInput("");
     setLoading(true);
     try {
@@ -79,15 +128,45 @@ export default function GeneralChat() {
         messages: newMessages.map(({ role, content }) => ({ role, content })),
       });
       const asst: Message = { role: "assistant", content: reply, ts: Date.now() };
-      const updated = [...newMessages, asst];
-      setMessages(updated);
-      localStorage.setItem("generalChatHistory", JSON.stringify(updated));
+      updateChat(currentChat.id, [...newMessages, asst]);
     } catch (e) {
       setError(String(e));
       setStatus("error");
     } finally {
       setLoading(false);
     }
+  }
+
+  function genId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2);
+  }
+
+  function newChat() {
+    const chat: Chat = {
+      id: genId(),
+      name: `Chat ${chats.length + 1}`,
+      messages: [],
+    };
+    setChats((prev) => {
+      const updated = [...prev, chat];
+      localStorage.setItem("generalChats", JSON.stringify(updated));
+      return updated;
+    });
+    setCurrentChatId(chat.id);
+  }
+
+  function deleteChat(id: string) {
+    setChats((prev) => {
+      const updated = prev.filter((c) => c.id !== id);
+      const final = updated.length
+        ? updated
+        : [{ id: genId(), name: "Chat 1", messages: [] }];
+      localStorage.setItem("generalChats", JSON.stringify(final));
+      if (currentChatId === id) {
+        setCurrentChatId(final[0].id);
+      }
+      return final;
+    });
   }
 
   if (status !== "ready") {
@@ -122,8 +201,50 @@ export default function GeneralChat() {
   }
 
   return (
-    <Center>
-      <Stack spacing={2} sx={{ width: "100%", maxWidth: 600, height: "100%" }}>
+    <Box sx={{ height: "100vh", display: "flex" }}>
+      <Box
+        sx={{
+          width: 200,
+          borderRight: "1px solid",
+          borderColor: "divider",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <Button
+          startIcon={<PlusIcon width={20} />}
+          onClick={newChat}
+          sx={{ m: 1 }}
+          variant="contained"
+        >
+          New Chat
+        </Button>
+        <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
+          {chats.map((chat) => (
+            <Box
+              key={chat.id}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                bgcolor: chat.id === currentChatId ? "grey.200" : "transparent",
+                '&:hover': { bgcolor: "grey.100" },
+              }}
+            >
+              <Button
+                onClick={() => setCurrentChatId(chat.id)}
+                sx={{ flexGrow: 1, justifyContent: "flex-start", textTransform: "none" }}
+                variant="text"
+              >
+                {chat.name}
+              </Button>
+              <IconButton size="small" onClick={(e) => { e.stopPropagation(); deleteChat(chat.id); }}>
+                <TrashIcon width={16} />
+              </IconButton>
+            </Box>
+          ))}
+        </Box>
+      </Box>
+      <Stack spacing={2} sx={{ p: 2, flexGrow: 1, width: "100%", maxWidth: 600, mx: "auto" }}>
         <Box sx={{ flexGrow: 1, overflowY: "auto", width: "100%" }}>
           {messages.map((m, i) => (
             <Box
@@ -147,17 +268,17 @@ export default function GeneralChat() {
                   borderColor: "divider",
                   maxWidth: "80%",
                   whiteSpace: "pre-wrap",
-                  "& table": {
+                  '& table': {
                     whiteSpace: "normal",
                     borderCollapse: "collapse",
                     width: "100%",
                   },
-                  "& th, & td": {
+                  '& th, & td': {
                     border: "1px solid",
                     borderColor: "divider",
                     p: 1,
                   },
-                  "& th": {
+                  '& th': {
                     bgcolor: "grey.200",
                   },
                 }}
@@ -185,6 +306,6 @@ export default function GeneralChat() {
           {loading && <CircularProgress size={24} />}
         </Stack>
       </Stack>
-    </Center>
+    </Box>
   );
 }
