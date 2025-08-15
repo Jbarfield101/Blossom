@@ -9,13 +9,16 @@ use std::{
 
 use chrono::Local;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use tauri::{AppHandle, Emitter, Manager, Runtime, Window};
+use ureq;
 
 /* ==============================
    ComfyUI launcher (no extra crate)
    ============================== */
 
 static COMFY_CHILD: OnceLock<Mutex<Option<Child>>> = OnceLock::new();
+static OLLAMA_CHILD: OnceLock<Mutex<Option<Child>>> = OnceLock::new();
 
 fn comfy_dir() -> PathBuf {
   // TODO: put your ComfyUI repo folder here
@@ -399,4 +402,137 @@ pub async fn blender_run_script(code: String) -> Result<(), String> {
 
 fn blender_path() -> PathBuf {
   PathBuf::from("blender")
+}
+
+/* ==============================
+   Ollama general chat
+   ============================== */
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ChatMessage {
+  pub role: String,
+  pub content: String,
+}
+
+fn models_dir<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
+  let dir = app
+    .path()
+    .app_data_dir()
+    .ok_or("app data dir")?
+    .join("ollama-models");
+  fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+  Ok(dir)
+}
+
+#[tauri::command]
+pub async fn start_ollama<R: Runtime>(app: AppHandle<R>, window: Window<R>) -> Result<(), String> {
+  // check if already running
+  if ureq::get("http://127.0.0.1:11434/")
+    .timeout(std::time::Duration::from_millis(500))
+    .call()
+    .is_ok()
+  {
+    return Ok(());
+  }
+
+  let dir = models_dir(&app)?;
+
+  // spawn serve
+  let mut cmd = PCommand::new("ollama");
+  cmd.arg("serve")
+    .env("OLLAMA_MODELS", &dir)
+    .stdout(Stdio::null())
+    .stderr(Stdio::null());
+  let child = cmd.spawn().map_err(|e| format!("failed to start ollama: {e}"))?;
+  {
+    let mut lock = OLLAMA_CHILD.get_or_init(|| Mutex::new(None)).lock().unwrap();
+    *lock = Some(child);
+  }
+
+  // wait for server
+  for _ in 0..20 {
+    if ureq::get("http://127.0.0.1:11434/")
+      .timeout(std::time::Duration::from_millis(500))
+      .call()
+      .is_ok()
+    {
+      break;
+    }
+    std::thread::sleep(std::time::Duration::from_millis(500));
+  }
+
+  if ureq::get("http://127.0.0.1:11434/")
+    .timeout(std::time::Duration::from_millis(500))
+    .call()
+    .is_err()
+  {
+    return Err("Ollama did not start".into());
+  }
+
+  // check model
+  let resp = ureq::get("http://127.0.0.1:11434/api/tags")
+    .call()
+    .map_err(|e| e.to_string())?;
+  let json: Value = resp.into_json().map_err(|e| e.to_string())?;
+  let has = json["models"].as_array().map(|arr| {
+    arr.iter().any(|m| m["name"].as_str() == Some("gpt-oss:20b"))
+  }).unwrap_or(false);
+
+  if !has {
+    let mut pull = PCommand::new("ollama");
+    pull
+      .arg("pull")
+      .arg("gpt-oss:20b")
+      .env("OLLAMA_MODELS", &dir)
+      .stdout(Stdio::piped())
+      .stderr(Stdio::piped());
+    let mut child = pull.spawn().map_err(|e| format!("ollama pull failed: {e}"))?;
+    let mut stdout = BufReader::new(child.stdout.take().unwrap());
+    let mut stderr = BufReader::new(child.stderr.take().unwrap());
+    let w1 = window.clone();
+    let w2 = window.clone();
+    std::thread::spawn(move || {
+      let mut line = String::new();
+      loop {
+        line.clear();
+        let Ok(n) = stdout.read_line(&mut line) else { break };
+        if n == 0 { break; }
+        let _ = w1.emit("ollama_log", line.trim_end().to_string());
+      }
+    });
+    std::thread::spawn(move || {
+      let mut line = String::new();
+      loop {
+        line.clear();
+        let Ok(n) = stderr.read_line(&mut line) else { break };
+        if n == 0 { break; }
+        let _ = w2.emit("ollama_log", line.trim_end().to_string());
+      }
+    });
+    let status = child.wait().map_err(|e| e.to_string())?;
+    if !status.success() {
+      return Err("ollama pull failed".into());
+    }
+  }
+
+  Ok(())
+}
+
+#[tauri::command]
+pub async fn general_chat(messages: Vec<ChatMessage>) -> Result<String, String> {
+  let resp = ureq::post("http://127.0.0.1:11434/api/chat")
+    .set("Content-Type", "application/json")
+    .send_json(ureq::json!({
+      "model": "gpt-oss:20b",
+      "stream": false,
+      "messages": messages,
+    }))
+    .map_err(|e| e.to_string())?;
+
+  let json: Value = resp.into_json().map_err(|e| e.to_string())?;
+  let content = json["message"]["content"]
+    .as_str()
+    .or_else(|| json["content"].as_str())
+    .ok_or("no content")?;
+  Ok(content.to_string())
 }
