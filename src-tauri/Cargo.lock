@@ -346,7 +346,7 @@ dependencies = [
 
 [[package]]
 name = "blossom"
-version = "0.1.3"
+version = "0.1.5"
 dependencies = [
  "chrono",
  "once_cell",
