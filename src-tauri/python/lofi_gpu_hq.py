@@ -320,7 +320,10 @@ def stereoize_np(x: np.ndarray) -> np.ndarray:
     hf = _butter_highpass(x, 2500) * 0.06
     left  = x + _shift_ms(hf, -0.9)
     right = x + _shift_ms(hf,  0.9)
-    return np.stack([left.astype(np.float32), right.astype(np.float32)], axis=-1)
+    haas = np.stack([left, right], axis=-1)
+    dry  = np.stack([x, x], axis=-1)
+    stereo = 0.75 * dry + 0.25 * haas
+    return stereo.astype(np.float32)
 
 def _apply_duck_envelope(buf: np.ndarray, positions_ms: List[float], depth_db=2.0, attack_ms=14, hold_ms=30, release_ms=180):
     if not positions_ms:
@@ -781,13 +784,19 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
         drums = 0.85*drums + 0.4*(wet_drums - drum_bus)
         keys  = 0.95*keys  + 0.35*(wet_keys  - keys_bus)
 
+    mood = motif.get("mood") or []
+
     # sidechain ducking to kick (subtle)
     if flags.get("hq_sidechain", True):
-        _apply_duck_envelope(keys, kick_positions_ms, depth_db=2.0)
+        depth = 2.0
+        if "energetic" in mood or variety >= 70:
+            depth = 2.5
+        elif "calm" in mood or "melancholy" in mood or variety <= 40:
+            depth = 1.2
+        _apply_duck_envelope(keys, kick_positions_ms, depth_db=depth)
         _apply_duck_envelope(bass,  kick_positions_ms, depth_db=2.5)
 
     # final mix (mono bus)
-    mood = motif.get("mood") or []
     levels = calculate_mix_levels(mood, section_name)
     drum_gain = levels["drum_gain"]
     hat_gain = levels["hat_gain"]
