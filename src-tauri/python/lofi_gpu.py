@@ -469,6 +469,10 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     drums = _process_drums(drums)
     hats = _process_hats(hats, snare_positions_ms, variety)
 
+    if section_name in ("Intro", "Outro"):
+        drums *= 0.5
+        hats *= 0.5
+
     # --- harmony: choose progression + voicing options
     key_letter_raw = motif.get("key")
     raw = str(key_letter_raw or "C").strip().replace("♭", "b").replace("♯", "#")
@@ -590,21 +594,29 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
         amb_mix += c
 
     mix = 0.66*drums + 0.44*hats + 0.73*keys + 0.49*bass + 0.08*amb_mix*amb_level
+
+    if section_name not in ("Intro", "Outro"):
+        buildup_bars = min(4, bars)
+        ramp_len = min(len(mix), int(bars_to_ms(buildup_bars, bpm) * SR / 1000))
+        if ramp_len > 0:
+            ramp = np.linspace(0.0, 1.0, ramp_len, dtype=np.float32)
+            mix[:ramp_len] *= ramp
+
     mix = mix.astype(np.float32)
     return _np_to_segment(mix)
 
 # ---------- Public API ----------
-def model_generate_audio(bars: int, bpm: int, seed: int, section: str, motif: Dict[str, Any], variety: int) -> AudioSegment:
-    sec = _stable_hash_int(section)
+def model_generate_audio(bars: int, bpm: int, seed: int, section_name: str, motif: Dict[str, Any], variety: int) -> AudioSegment:
+    sec = _stable_hash_int(section_name)
     full_seed = (seed ^ sec) & 0xFFFFFFFF
     rng = np.random.default_rng(full_seed)
     random.seed(full_seed)
-    return _render_section(bars, bpm, section, motif, rng=rng, variety=variety)
+    return _render_section(bars, bpm, section_name=section_name, motif=motif, rng=rng, variety=variety)
 
 def build_song(sections: List[Tuple[str, int]], bpm: int, seed: int, motif: Dict[str, Any], variety: int) -> AudioSegment:
     parts: List[AudioSegment] = []
     for name, bars in sections:
-        part = model_generate_audio(bars=bars, bpm=bpm, seed=seed, section=name, motif=motif, variety=variety)
+        part = model_generate_audio(bars=bars, bpm=bpm, seed=seed, section_name=name, motif=motif, variety=variety)
         parts.append(part)
     song = crossfade_concat(parts, ms=120)
     return song
