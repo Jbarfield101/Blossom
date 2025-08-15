@@ -6,11 +6,13 @@ import {
   ListItem,
   ListItemText,
   Typography,
+  Link,
 } from "@mui/material";
 
 interface Article {
   title: string;
   link: string;
+  summary: string;
   pub_date?: string;
   source: string;
 }
@@ -39,21 +41,33 @@ export default function BigBrotherUpdates() {
       </Typography>
       <List>
         {articles.map((article, idx) => (
-          <ListItem
-            key={idx}
-            divider
-            component="a"
-            href={article.link}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <ListItem key={idx} divider alignItems="flex-start">
             <ListItemText
-              primary={article.title}
-              secondary={`${article.source}${
-                article.pub_date
-                  ? ` - ${new Date(article.pub_date).toLocaleString()}`
-                  : ""
-              }`}
+              primary={
+                <Typography variant="h6" component="div">
+                  {article.title}
+                </Typography>
+              }
+              secondary={
+                <>
+                  <Typography variant="body2" color="text.primary">
+                    {article.summary}
+                  </Typography>
+                  <Link
+                    href={article.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Read more
+                  </Link>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    {article.source}
+                    {article.pub_date
+                      ? ` - ${new Date(article.pub_date).toLocaleString()}`
+                      : ""}
+                  </Typography>
+                </>
+              }
             />
           </ListItem>
         ))}
