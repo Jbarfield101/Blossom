@@ -18,12 +18,30 @@ describe('useLofi engine', () => {
         ({ toDestination: () => ({ connect: () => ({}) }), connect: () => ({}), triggerAttackRelease: vi.fn() });
       const MonoSynth = vi.fn().mockImplementation(() => mkSynth());
       const NoiseSynth = vi.fn().mockImplementation(() => mkSynth());
+      const MembraneSynth = vi.fn().mockImplementation(() => mkSynth());
+      const PolySynth = vi.fn().mockImplementation(() => mkSynth());
       const Reverb = vi.fn().mockImplementation(() => ({ toDestination: () => ({ connect: () => ({}) }) }));
+      const Volume = vi.fn().mockImplementation(() => ({ connect: vi.fn() }));
+      const Filter = vi.fn().mockImplementation(() => ({ connect: vi.fn() }));
       const Loop = vi
         .fn()
         .mockImplementation(() => ({ start: vi.fn(), stop: vi.fn() }));
       const Frequency = (n: string) => ({ transpose: () => ({ toNote: () => n }) });
-      return { start, Transport, MonoSynth, NoiseSynth, Reverb, Loop, Frequency };
+      const Synth = vi.fn();
+      return {
+        start,
+        Transport,
+        MonoSynth,
+        NoiseSynth,
+        MembraneSynth,
+        PolySynth,
+        Reverb,
+        Volume,
+        Filter,
+        Loop,
+        Frequency,
+        Synth,
+      };
     });
     ({ useLofi } = await import('../useLofiEngine'));
     tone = await import('tone');
