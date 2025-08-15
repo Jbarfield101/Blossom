@@ -254,6 +254,13 @@ def _butter_highpass(x, cutoff_hz):
     b, a = butter(4, norm, btype="high")
     return filtfilt(b, a, x).astype(np.float32)
 
+def _butter_bandpass(x, low_hz, high_hz):
+    nyq = 0.5 * SR
+    low = max(0.0, low_hz / nyq)
+    high = min(high_hz / nyq, 0.999)
+    b, a = butter(2, [low, high], btype="band")
+    return filtfilt(b, a, x).astype(np.float32)
+
 def _kick(ms=160, rng=None):
     body = _pitch_sweep(90, 45, ms, amp=0.9) * _env_ad(ms*0.9, ms)
     click = _noise(40, 0.2, rng=rng) * _env_ad(20, 40)
@@ -280,6 +287,13 @@ def _process_drums(x: np.ndarray) -> np.ndarray:
     max_val = 2 ** 7 - 1
     y = np.round(y * max_val) / max_val
     y = np.tanh(y * 1.8)
+    return y.astype(np.float32)
+
+def _process_hats(x: np.ndarray, snare_positions_ms: List[float], variety: int) -> np.ndarray:
+    y = _butter_lowpass(x, 10000)
+    _apply_duck_envelope(y, snare_positions_ms, depth_db=1.0, attack_ms=5, hold_ms=20, release_ms=60)
+    if variety > 70:
+        y *= 10 ** (-0.8 / 20.0)
     return y.astype(np.float32)
 
 def _bar_ms(bpm):
@@ -570,6 +584,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     wow_depth = rng.uniform(0.003, 0.006)
 
     kick_positions_ms: List[float] = []
+    snare_positions_ms: List[float] = []
 
     # --- drums & hats
     for bar in range(bars):
@@ -589,6 +604,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
             pos = bar_start + beat_idx * beat + frac * beat + _jitter_ms(rng, jitter_std)
             s = _snare(int(rng.uniform(160, 190)), rng=rng) * _vel_scale(rng, mean=1.0)
             _place(s, drums, pos)
+            snare_positions_ms.append(pos)
             # micro-duck hats around snare
             snare_center = pos
             dip_len = int(0.06 * 1000)
@@ -625,6 +641,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
                     _place(r, drums, pos)
 
     drums = _process_drums(drums)
+    hats = _process_hats(hats, snare_positions_ms, variety)
 
     # --- harmony: choose progression + voicing options
     key_letter_raw = motif.get("key")
@@ -732,7 +749,9 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
         amb_mix += r
     if "cafe" in amb_list:
         c = ((rng.random(n).astype(np.float32)*2-1) if rng is not None else (np.random.rand(n).astype(np.float32)*2-1)) * 0.0008
-        c = _butter_lowpass(c, 4000)
+        c = _butter_lowpass(c, 3000)
+        mid = _butter_bandpass(c, 1000, 2000)
+        c -= mid * 0.15
         amb_mix += c
 
     # more pronounced vinyl character for nostalgic mood
@@ -774,7 +793,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     hat_gain = levels["hat_gain"]
     key_gain = levels["key_gain"]
     bass_gain = levels["bass_gain"]
-    amb_gain = 0.18 * amb_level
+    amb_gain = 0.12 * amb_level
 
     mix = drum_gain*drums + hat_gain*hats + key_gain*keys + bass_gain*bass + amb_gain*amb_mix
     mix = mix.astype(np.float32)
