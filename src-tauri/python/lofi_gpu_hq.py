@@ -93,6 +93,15 @@ def crossfade_concat(sections: List[AudioSegment], ms: int = 120) -> AudioSegmen
 def ensure_wav_bitdepth(audio: AudioSegment, sample_width: int = 2) -> AudioSegment:
     return audio.set_sample_width(sample_width)
 
+
+def _normalize_instruments(instrs):
+    alias = {"pads": "airy pads"}
+    out = []
+    for s in (instrs or []):
+        k = str(s).strip().lower()
+        out.append(alias.get(k, k))
+    return out
+
 # ---------- Post-processing ----------
 def soft_clip_np(x: np.ndarray, drive: float = 1.0) -> np.ndarray:
     x = x * drive
@@ -614,17 +623,16 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     add9 = (rng.random() < add9_prob)
     inv_cycle = int(rng.integers(0, 3))
 
-    instrs = motif.get("instruments") or []
+    instrs = _normalize_instruments(motif.get("instruments"))
+    print(json.dumps({"stage": "debug", "section": section_name, "instruments": instrs}))
 
-    ep_prob = 0.9 if "electric piano" in instrs else 0.0
-    gtr_prob = 0.9 if "clean electric guitar" in instrs else 0.0
-    pad_prob = 0.9 if "airy pads" in instrs else 0.0
-    use_electric = rng.random() < ep_prob
-    use_clean_gtr = rng.random() < gtr_prob
-    use_airy_pad = rng.random() < pad_prob
+    use_electric = ("electric piano" in instrs)
+    use_clean_gtr = ("clean electric guitar" in instrs)
+    use_airy_pad = ("airy pads" in instrs)
 
     chord_len = 2 * beat
     chord_pos = 0
+    add_rhodes_default = (not instrs)
 
     chord_roots_hz: List[float] = []
 
@@ -634,7 +642,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
         chord_roots_hz.append(freqs[0])
         vel = _vel_scale(rng, mean=1.0, std=0.05, lo=0.9, hi=1.1)
 
-        if "rhodes" in instrs or not instrs:
+        if ("rhodes" in instrs or add_rhodes_default) and ("piano" not in instrs):
             chord = _lofi_rhodes_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.12, rng=rng) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(chord))
             keys[i0:i1] += chord[: i1 - i0]
@@ -654,16 +662,16 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
             pn = _lofi_piano_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.25) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(pn))
             keys[i0:i1] += pn[: i1 - i0]
-        if "pads" in instrs and "rhodes" not in instrs:
-            pad = _lofi_rhodes_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.12, rng=rng) * vel
-            i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(pad))
-            keys[i0:i1] += pad[: i1 - i0]
         if use_airy_pad:
             airy = _airy_pad_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.12) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(airy))
             keys[i0:i1] += airy[: i1 - i0]
 
         chord_pos += chord_len
+
+    if "piano" in instrs:
+        keys = keys * 1.06
+        keys = 0.9 * keys + 0.1 * _butter_highpass(keys, 1800)
 
     # --- bass patterns (per-chord roots)
     bass_pat = rng.choice(BASS_PATTERNS)
