@@ -171,6 +171,7 @@ pub struct SongSpec {
   pub seed: u64,
   pub variety: Option<u32>,
   pub drum_pattern: Option<String>,
+  pub no_drums: Option<bool>,
 }
 
 /* ==============================

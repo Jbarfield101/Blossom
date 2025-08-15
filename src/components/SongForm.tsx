@@ -19,6 +19,7 @@ type SongSpec = {
   seed: number;
   variety: number; // 0..100
   drum_pattern?: string;
+  noDrums?: boolean;
   // NEW HQ feature flags (read by lofi_gpu_hq.py)
   hq_stereo?: boolean;
   hq_reverb?: boolean;
@@ -152,6 +153,7 @@ export default function SongForm() {
   const [bpmJitterPct, setBpmJitterPct] = useState(5);
   const [playLast, setPlayLast] = useState(true);
   const [drumPattern, setDrumPattern] = useState<string>("laidback");
+  const [noDrums, setNoDrums] = useState(false);
   const [variety, setVariety] = useState(45);
 
   // NEW: Mix polish toggles mapping to engine flags
@@ -282,6 +284,7 @@ export default function SongForm() {
       seed: pickSeed(i),
       variety: varPct,
       drum_pattern: drumPattern === "random" ? undefined : drumPattern,
+      noDrums,
       // pass-through HQ flags
       hq_stereo: hqStereo,
       hq_reverb: hqReverb,
@@ -560,7 +563,7 @@ export default function SongForm() {
                 );
               })}
             </div>
-            <div style={S.small}>Drums are synthesized automatically.</div>
+            <div style={S.small}>Drums are synthesized automatically unless disabled below.</div>
           </div>
 
           <div style={S.panel}>
@@ -584,11 +587,20 @@ export default function SongForm() {
         <div style={S.grid2}>
           <div style={S.panel}>
             <label style={S.label}>Drum Pattern</label>
-            <select value={drumPattern} onChange={(e) => setDrumPattern(e.target.value)} style={{ ...S.input, padding: "8px 12px" }}>
+            <select
+              value={drumPattern}
+              onChange={(e) => setDrumPattern(e.target.value)}
+              disabled={noDrums}
+              style={{ ...S.input, padding: "8px 12px" }}
+            >
               {DRUM_PATS.map((p) => (
                 <option key={p} value={p}>{p}</option>
               ))}
             </select>
+            <div style={{ ...S.toggle, marginTop: 8 }}>
+              <input type="checkbox" checked={noDrums} onChange={(e) => setNoDrums(e.target.checked)} />
+              <span style={S.small}>No drums</span>
+            </div>
             <div style={S.small}>Choose a groove or leave random.</div>
           </div>
 

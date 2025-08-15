@@ -93,6 +93,15 @@ def crossfade_concat(sections: List[AudioSegment], ms: int = 120) -> AudioSegmen
 def ensure_wav_bitdepth(audio: AudioSegment, sample_width: int = 2) -> AudioSegment:
     return audio.set_sample_width(sample_width)
 
+
+def _normalize_instruments(instrs):
+    alias = {"pads": "airy pads"}
+    out = []
+    for s in (instrs or []):
+        k = str(s).strip().lower()
+        out.append(alias.get(k, k))
+    return out
+
 # ---------- Post-processing ----------
 def soft_clip_np(x: np.ndarray, drive: float = 1.0) -> np.ndarray:
     x = x * drive
@@ -534,70 +543,68 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     keys  = np.zeros(n, dtype=np.float32)
     hats  = np.zeros(n, dtype=np.float32)
 
-    # --- choose drum pattern
-    pat_name = motif.get("drum_pattern") or rng.choice(list(DRUM_PATTERNS.keys()))
-    pat = DRUM_PATTERNS[pat_name]
-
-    # subtle timing wow for hats (per section)
-    wow_rate = rng.uniform(0.15, 0.35)
-    wow_depth = rng.uniform(0.003, 0.006)
-
+    skip_drums = bool(motif.get("no_drums"))
     kick_positions_ms: List[float] = []
 
-    # --- drums & hats
-    for bar in range(bars):
-        bar_start = bar * _bar_ms(bpm)
+    if not skip_drums:
+        pat_name = motif.get("drum_pattern") or rng.choice(list(DRUM_PATTERNS.keys()))
+        pat = DRUM_PATTERNS[pat_name]
 
-        # kicks
-        for beat_idx, frac in pat["kick"]:
-            pos = bar_start + beat_idx * beat + frac * beat
-            pos += _swing_offset(eighth, int(frac*8) % 8, swing)
-            pos += _jitter_ms(rng, jitter_std)
-            k = _kick(int(rng.uniform(140, 180)), rng=rng) * _vel_scale(rng, mean=1.0)
-            _place(k, drums, pos)
-            kick_positions_ms.append(pos)
+        wow_rate = rng.uniform(0.15, 0.35)
+        wow_depth = rng.uniform(0.003, 0.006)
 
-        # snares
-        for beat_idx, frac in pat["snare"]:
-            pos = bar_start + beat_idx * beat + frac * beat + _jitter_ms(rng, jitter_std)
-            s = _snare(int(rng.uniform(160, 190)), rng=rng) * _vel_scale(rng, mean=1.0)
-            _place(s, drums, pos)
-            # micro-duck hats around snare
-            snare_center = pos
-            dip_len = int(0.06 * 1000)
-            i0 = int(max(0, snare_center - 15) * SR / 1000)
-            i1 = min(len(hats), i0 + int(dip_len * SR / 1000))
-            if i1 > i0:
-                hats[i0:i1] *= 0.85
+        for bar in range(bars):
+            bar_start = bar * _bar_ms(bpm)
 
-        # ghost notes
-        if rng.random() < ghost_prob:
-            pos = bar_start + beat * rng.choice([0.75, 1.75, 2.75, 3.75]) + _jitter_ms(rng, jitter_std)
-            g = _snare(120, rng=rng) * 0.35 * _vel_scale(rng, mean=0.9)
-            _place(g, drums, pos)
+            # kicks
+            for beat_idx, frac in pat["kick"]:
+                pos = bar_start + beat_idx * beat + frac * beat
+                pos += _swing_offset(eighth, int(frac*8) % 8, swing)
+                pos += _jitter_ms(rng, jitter_std)
+                k = _kick(int(rng.uniform(140, 180)), rng=rng) * _vel_scale(rng, mean=1.0)
+                _place(k, drums, pos)
+                kick_positions_ms.append(pos)
 
-        # hats (8ths)
-        if pat["hat_8ths"]:
-            for sub in range(8):
-                if rng.random() < hat_prob:
-                    pos = bar_start + sub * eighth
-                    pos += _swing_offset(eighth, sub, swing)
-                    pos += _jitter_ms(rng, jitter_std*0.6)
-                    phase = 2*np.pi*wow_rate*((bar_start + sub*eighth)/1000.0)
-                    pos += wow_depth * eighth * np.sin(phase)
-                    h = _hat(int(rng.uniform(45, 70)), rng=rng) * _vel_scale(rng, mean=0.95)
-                    _place(h, hats, pos)
+            # snares
+            for beat_idx, frac in pat["snare"]:
+                pos = bar_start + beat_idx * beat + frac * beat + _jitter_ms(rng, jitter_std)
+                s = _snare(int(rng.uniform(160, 190)), rng=rng) * _vel_scale(rng, mean=1.0)
+                _place(s, drums, pos)
+                snare_center = pos
+                dip_len = int(0.06 * 1000)
+                i0 = int(max(0, snare_center - 15) * SR / 1000)
+                i1 = min(len(hats), i0 + int(dip_len * SR / 1000))
+                if i1 > i0:
+                    hats[i0:i1] *= 0.85
 
-        # simple 1-bar fill at each 4 bars
-        if (bar + 1) % 4 == 0 and rng.random() < fill_prob:
-            for sidx in range(8, 16):
-                if rng.random() < 0.6:
-                    pos = bar_start + beat*4 - (16 - sidx) * sixteenth
-                    pos += _jitter_ms(rng, jitter_std*0.5)
-                    r = _hat(40, rng=rng) * 0.8 if rng.random() < 0.7 else _snare(90, rng=rng) * 0.5
-                    _place(r, drums, pos)
+            # ghost notes
+            if rng.random() < ghost_prob:
+                pos = bar_start + beat * rng.choice([0.75, 1.75, 2.75, 3.75]) + _jitter_ms(rng, jitter_std)
+                g = _snare(120, rng=rng) * 0.35 * _vel_scale(rng, mean=0.9)
+                _place(g, drums, pos)
 
-    drums = _process_drums(drums)
+            # hats (8ths)
+            if pat["hat_8ths"]:
+                for sub in range(8):
+                    if rng.random() < hat_prob:
+                        pos = bar_start + sub * eighth
+                        pos += _swing_offset(eighth, sub, swing)
+                        pos += _jitter_ms(rng, jitter_std*0.6)
+                        phase = 2*np.pi*wow_rate*((bar_start + sub*eighth)/1000.0)
+                        pos += wow_depth * eighth * np.sin(phase)
+                        h = _hat(int(rng.uniform(45, 70)), rng=rng) * _vel_scale(rng, mean=0.95)
+                        _place(h, hats, pos)
+
+            # simple 1-bar fill at each 4 bars
+            if (bar + 1) % 4 == 0 and rng.random() < fill_prob:
+                for sidx in range(8, 16):
+                    if rng.random() < 0.6:
+                        pos = bar_start + beat*4 - (16 - sidx) * sixteenth
+                        pos += _jitter_ms(rng, jitter_std*0.5)
+                        r = _hat(40, rng=rng) * 0.8 if rng.random() < 0.7 else _snare(90, rng=rng) * 0.5
+                        _place(r, drums, pos)
+
+        drums = _process_drums(drums)
 
     # --- harmony: choose progression + voicing options
     key_letter_raw = motif.get("key")
@@ -614,17 +621,16 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     add9 = (rng.random() < add9_prob)
     inv_cycle = int(rng.integers(0, 3))
 
-    instrs = motif.get("instruments") or []
+    instrs = _normalize_instruments(motif.get("instruments"))
+    print(json.dumps({"stage": "debug", "section": section_name, "instruments": instrs}))
 
-    ep_prob = 0.9 if "electric piano" in instrs else 0.0
-    gtr_prob = 0.9 if "clean electric guitar" in instrs else 0.0
-    pad_prob = 0.9 if "airy pads" in instrs else 0.0
-    use_electric = rng.random() < ep_prob
-    use_clean_gtr = rng.random() < gtr_prob
-    use_airy_pad = rng.random() < pad_prob
+    use_electric = ("electric piano" in instrs)
+    use_clean_gtr = ("clean electric guitar" in instrs)
+    use_airy_pad = ("airy pads" in instrs)
 
     chord_len = 2 * beat
     chord_pos = 0
+    add_rhodes_default = (not instrs)
 
     chord_roots_hz: List[float] = []
 
@@ -634,7 +640,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
         chord_roots_hz.append(freqs[0])
         vel = _vel_scale(rng, mean=1.0, std=0.05, lo=0.9, hi=1.1)
 
-        if "rhodes" in instrs or not instrs:
+        if ("rhodes" in instrs or add_rhodes_default) and ("piano" not in instrs):
             chord = _lofi_rhodes_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.12, rng=rng) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(chord))
             keys[i0:i1] += chord[: i1 - i0]
@@ -651,19 +657,19 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(gtr))
             keys[i0:i1] += gtr[: i1 - i0]
         if "piano" in instrs:
-            pn = _lofi_piano_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.25) * vel
+            pn = _lofi_piano_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.32) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(pn))
             keys[i0:i1] += pn[: i1 - i0]
-        if "pads" in instrs and "rhodes" not in instrs:
-            pad = _lofi_rhodes_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.12, rng=rng) * vel
-            i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(pad))
-            keys[i0:i1] += pad[: i1 - i0]
         if use_airy_pad:
             airy = _airy_pad_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.12) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(airy))
             keys[i0:i1] += airy[: i1 - i0]
 
         chord_pos += chord_len
+
+    if "piano" in instrs:
+        keys = keys * 1.15
+        keys = 0.85 * keys + 0.15 * _butter_highpass(keys, 1600)
 
     # --- bass patterns (per-chord roots)
     bass_pat = rng.choice(BASS_PATTERNS)
@@ -749,6 +755,9 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     key_gain = levels["key_gain"]
     bass_gain = levels["bass_gain"]
     amb_gain = 0.18 * amb_level
+    if skip_drums:
+        drum_gain = 0.0
+        hat_gain = 0.0
 
     mix = drum_gain*drums + hat_gain*hats + key_gain*keys + bass_gain*bass + amb_gain*amb_mix
     mix = mix * 1.05
@@ -827,7 +836,8 @@ def main():
         "ambience": spec.get("ambience") or [],
         "ambience_level": amb_lvl,
         "key": key_val,
-        "drum_pattern": spec.get("drum_pattern"),
+        "drum_pattern": spec.get("drum_pattern") or spec.get("drumPattern"),
+        "no_drums": spec.get("no_drums") or spec.get("noDrums"),
         # optional HQ flags from UI (default True if omitted)
         "hq_stereo": spec.get("hq_stereo", True),
         "hq_reverb": spec.get("hq_reverb", True),
