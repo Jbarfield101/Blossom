@@ -29,7 +29,7 @@ import random
 import sys
 import hashlib
 import warnings
-from typing import List, Dict, Tuple, Any
+from typing import List, Dict, Tuple, Any, Optional
 
 import numpy as np
 from pydub import AudioSegment, effects
@@ -418,6 +418,28 @@ def _analog_noise_floor(n: int, level=0.0003, rng=None) -> np.ndarray:
         noise = np.random.randn(n).astype(np.float32) * level
     return _butter_highpass(noise, 200)
 
+def _load_ambience_sample(name: str, n: int, rng=None) -> Optional[np.ndarray]:
+    """Load and loop an ambience sample from samples/ambience."""
+    amb_dir = os.path.join(os.path.dirname(__file__), "samples", "ambience")
+    if not os.path.isdir(amb_dir):
+        return None
+    files = [f for f in os.listdir(amb_dir) if name.lower() in f.lower()]
+    if not files:
+        return None
+    choice = rng.choice(files) if rng is not None else random.choice(files)
+    seg = AudioSegment.from_file(os.path.join(amb_dir, choice))
+    seg = seg.set_frame_rate(SR).set_channels(1)
+    arr = np.array(seg.get_array_of_samples()).astype(np.float32)
+    max_int = float(2 ** (8 * seg.sample_width - 1))
+    arr = arr / max_int
+    if len(arr) < n:
+        reps = int(np.ceil(n / len(arr)))
+        arr = np.tile(arr, reps)
+    arr = arr[:n]
+    arr = _butter_highpass(arr, 200)
+    arr = _butter_lowpass(arr, 5000)
+    return arr * 0.002
+
 # ---------- Harmony helpers ----------
 SEMITONES = {"C":0,"C#":1,"Db":1,"D":2,"D#":3,"Eb":3,"E":4,"F":5,"F#":6,"Gb":6,"G":7,"G#":8,"Ab":8,"A":9,"A#":10,"Bb":10,"B":11}
 
@@ -778,7 +800,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     # --- ambience rotation
     amb_list = motif.get("ambience") or []
     if not amb_list:
-       amb_list = random.choice([["rain"], ["cafe"], ["rain","cafe"]])
+        amb_list = random.choice([["rain"], ["cafe"], ["rain","cafe"], ["vinyl"], ["street"]])
 
     amb_level = float(np.clip(motif.get("ambience_level", 0.5), 0.0, 1.0))
 
@@ -794,6 +816,14 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
         mid = _butter_bandpass(c, 1200, 1800)
         c -= mid * 0.15
         amb_mix += c
+    if "vinyl" in amb_list:
+        v = _load_ambience_sample("vinyl", n, rng=rng)
+        if v is not None:
+            amb_mix += v
+    if "street" in amb_list:
+        s = _load_ambience_sample("street", n, rng=rng)
+        if s is not None:
+            amb_mix += s
 
     # more pronounced vinyl character for nostalgic mood
     if "nostalgic" in (motif.get("mood") or []):
