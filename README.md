@@ -49,25 +49,6 @@ fn conda_python() -> PathBuf {
 
 Activate your Python environment first.
 
-### Stand‑alone song renderer
-
-Generates a complete track from a JSON specification:
-
-```bash
-python src-tauri/python/lofi_gpu.py --song-json '{"bpm":80,"seed":123}' --out output.wav
-```
-
-`lofi_gpu_hq.py` adds optional feature flags inside the JSON `motif` object:
-
-```json
-{
-  "hq_stereo": true,
-  "hq_reverb": true,
-  "hq_sidechain": true,
-  "limiter_drive": 1.0
-}
-```
-
 ### Streaming generator
 
 `lofi_gpu_stream.py` streams progress to stdout and prints the final file path:
