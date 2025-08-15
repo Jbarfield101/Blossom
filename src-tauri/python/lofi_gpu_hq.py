@@ -165,8 +165,7 @@ def loudness_normalize_lufs(audio: AudioSegment, target_lufs: float = -14.0) -> 
 
 def enhanced_post_process_chain(audio: AudioSegment, rng=None) -> AudioSegment:
     """Darker, warmer finishing chain for lofi character."""
-    a = loudness_normalize_lufs(audio, target_lufs=-16.0)
-    a = a.high_pass_filter(30)
+    a = audio.high_pass_filter(30)
 
     lpf_base = 7500
     if rng is not None:
@@ -195,6 +194,7 @@ def enhanced_post_process_chain(audio: AudioSegment, rng=None) -> AudioSegment:
     except Exception:
         pass
 
+    a = loudness_normalize_lufs(a, target_lufs=-16.0)
     a = ensure_wav_bitdepth(a, sample_width=2)
     return a
 
@@ -777,8 +777,6 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     amb_gain = 0.18 * amb_level
 
     mix = drum_gain*drums + hat_gain*hats + key_gain*keys + bass_gain*bass + amb_gain*amb_mix
-    mix = mix * 1.05
-    mix = mix / (1.0 + np.abs(mix))
     mix = mix.astype(np.float32)
 
     # stereoize
