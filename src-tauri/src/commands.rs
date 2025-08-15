@@ -118,19 +118,23 @@ fn conda_python() -> PathBuf {
   PathBuf::from(r"C:\Users\Owner\.conda\envs\blossom-ml\python.exe")
 }
 
-/// Resolve path to the non-stream script (dev -> repo path; prod -> Resources).
+/// Resolve path to the HQ non-stream script (dev -> repo path; prod -> Resources).
 fn script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
   if let Ok(cwd) = std::env::current_dir() {
-    let dev = cwd.join("src-tauri").join("python").join("lofi_gpu.py");
+    let dev = cwd
+      .join("src-tauri")
+      .join("python")
+      .join("lofi_gpu_hq.py");
     if dev.exists() {
       return dev;
     }
   }
-  app.path()
+  app
+    .path()
     .resource_dir()
     .expect("resource dir")
     .join("python")
-    .join("lofi_gpu.py")
+    .join("lofi_gpu_hq.py")
 }
 
 /// Resolve path to the stream script.

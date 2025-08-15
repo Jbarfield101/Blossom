@@ -30,9 +30,9 @@
       "icons/icon.ico"
     ],
     "resources": [
-  "python/lofi_gpu.py",
-  "python/lofi_gpu_stream.py"
-]
+      "python/lofi_gpu_hq.py",
+      "python/lofi_gpu_stream.py"
+    ]
 
   }
 }
