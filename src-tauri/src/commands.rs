@@ -37,14 +37,14 @@ pub async fn comfy_status() -> Result<bool, String> {
   Ok(lock.as_ref().is_some())
 }
 
-#[tauri::command]
-pub async fn comfy_start<R: Runtime>(window: Window<R>) -> Result<(), String> {
-  {
-    let mut lock = COMFY_CHILD.get_or_init(|| Mutex::new(None)).lock().unwrap();
-    if lock.is_some() {
-      return Ok(()); // already running
+  #[tauri::command]
+  pub async fn comfy_start<R: Runtime>(window: Window<R>) -> Result<(), String> {
+    {
+      let lock = COMFY_CHILD.get_or_init(|| Mutex::new(None)).lock().unwrap();
+      if lock.is_some() {
+        return Ok(()); // already running
+      }
     }
-  }
 
   let dir = comfy_dir();
   if !dir.exists() {
@@ -418,7 +418,7 @@ fn models_dir<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
   let dir = app
     .path()
     .app_data_dir()
-    .ok_or("app data dir")?
+    .map_err(|_| "app data dir".to_string())?
     .join("ollama-models");
   fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
   Ok(dir)
