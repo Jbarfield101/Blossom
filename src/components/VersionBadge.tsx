@@ -1,9 +1,10 @@
 // src/components/VersionBadge.tsx
 import React from "react";
+import appVersion from "../version";
 
 export default function VersionBadge({
   name = "Blossom",
-  version = "0.1.3",
+  version = appVersion,
 }: {
   name?: string;
   version?: string;

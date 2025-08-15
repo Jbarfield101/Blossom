@@ -1,4 +1,5 @@
 import React from "react";
+import appVersion from "../version";
 
 type Props = {
   appName?: string;
@@ -8,7 +9,7 @@ type Props = {
 
 export default function HeaderOverlay({
   appName = "Blossom",
-  version = "0.1.3",
+  version = appVersion,
   align = "center",
 }: Props) {
   const base: React.CSSProperties = {
