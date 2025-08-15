@@ -1,25 +1,36 @@
 import { Button, Stack } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import Center from "./_Center";
 
-const features = [
-  "Prompt Factory",
-  "Script",
-  "Music",
-  "SEO",
-  "Orchestration",
-  "RAG",
-  "Chat",
-  "World Builder",
-  "Big Brother updates",
+interface Feature {
+  label: string;
+  path?: string;
+}
+
+const features: Feature[] = [
+  { label: "Prompt Factory" },
+  { label: "Script" },
+  { label: "Music" },
+  { label: "SEO" },
+  { label: "Orchestration" },
+  { label: "RAG" },
+  { label: "General Chat", path: "/assistant/general-chat" },
+  { label: "World Builder" },
+  { label: "Big Brother updates" },
 ];
 
 export default function Assistant() {
+  const navigate = useNavigate();
   return (
     <Center>
       <Stack spacing={2} sx={{ width: "100%", maxWidth: 400 }}>
         {features.map((feature) => (
-          <Button key={feature} variant="contained">
-            {feature}
+          <Button
+            key={feature.label}
+            variant="contained"
+            onClick={() => feature.path && navigate(feature.path)}
+          >
+            {feature.label}
           </Button>
         ))}
       </Stack>

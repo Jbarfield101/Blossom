@@ -14,6 +14,9 @@ fn main() {
       commands::comfy_status,
       commands::comfy_start,
       commands::comfy_stop,
+      // Ollama general chat:
+      commands::start_ollama,
+      commands::general_chat,
       // Blender:
       commands::blender_run_script,
     ])
