@@ -16,7 +16,7 @@ const features: Feature[] = [
   { label: "RAG" },
   { label: "General Chat", path: "/assistant/general-chat" },
   { label: "World Builder" },
-  { label: "Big Brother updates" },
+  { label: "News", path: "/assistant/news" },
 ];
 
 export default function Assistant() {

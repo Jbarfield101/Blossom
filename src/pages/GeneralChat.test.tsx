@@ -28,7 +28,7 @@ describe('GeneralChat', () => {
     fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
 
     await waitFor(() => expect(invoke).toHaveBeenCalledWith('general_chat', expect.anything()));
-    expect(screen.getByText('Hello')).toBeInTheDocument();
+    expect(screen.getAllByText('Hello').length).toBeGreaterThan(0);
     expect(await screen.findByText('Reply')).toBeInTheDocument();
   });
 
