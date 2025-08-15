@@ -608,7 +608,10 @@ pub async fn general_chat(messages: Vec<ChatMessage>) -> Result<String, String> 
     Ok(content.to_string())
 }
 
-#[derive(Serialize)]
+use once_cell::sync::Lazy;
+use std::time::{Duration, Instant};
+
+#[derive(Serialize, Clone)]
 pub struct NewsArticle {
     pub title: String,
     pub link: String,
@@ -616,8 +619,24 @@ pub struct NewsArticle {
     pub source: String,
 }
 
+static NEWS_CACHE: Lazy<Mutex<Option<(Instant, Vec<NewsArticle>)>>> =
+    Lazy::new(|| Mutex::new(None));
+
 #[tauri::command]
-pub async fn fetch_big_brother_news() -> Result<Vec<NewsArticle>, String> {
+pub async fn fetch_big_brother_news(force: Option<bool>) -> Result<Vec<NewsArticle>, String> {
+    let force = force.unwrap_or(false);
+
+    {
+        let cache = NEWS_CACHE.lock().unwrap();
+        if !force {
+            if let Some((last_fetch, data)) = &*cache {
+                if last_fetch.elapsed() < Duration::from_secs(3600) {
+                    return Ok(data.clone());
+                }
+            }
+        }
+    }
+
     let feeds = vec![
         ("Big Brother Network", "https://bigbrothernetwork.com/feed/"),
         (
@@ -644,6 +663,9 @@ pub async fn fetch_big_brother_news() -> Result<Vec<NewsArticle>, String> {
             });
         }
     }
+
+    let mut cache = NEWS_CACHE.lock().unwrap();
+    *cache = Some((Instant::now(), articles.clone()));
 
     Ok(articles)
 }
