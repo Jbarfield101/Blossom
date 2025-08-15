@@ -63,7 +63,8 @@ python src-tauri/python/lofi_gpu.py --song-json '{"bpm":80,"seed":123}' --out ou
 {
   "hq_stereo": true,
   "hq_reverb": true,
-  "hq_sidechain": true
+  "hq_sidechain": true,
+  "limiter_drive": 1.0
 }
 ```
 
@@ -86,6 +87,8 @@ libraries are missing.
 - **HQ feature flags:** `lofi_gpu_hq.py` supports `hq_stereo`, `hq_reverb`, and
   `hq_sidechain` flags inside the `motif` object to enable or disable
   high‑quality processing.
+- **Limiter drive:** Add `limiter_drive` to the song JSON to control soft
+  clipping intensity (values around `1.0` keep saturation subtle).
 - **Streaming model:** `lofi_gpu_stream.py` accepts `--chunk`, `--bpm`,
   `--style`, and `--seed` options and prints `PROG <percent>` while generating.
 

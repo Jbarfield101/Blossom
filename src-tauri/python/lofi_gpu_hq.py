@@ -163,7 +163,7 @@ def loudness_normalize_lufs(audio: AudioSegment, target_lufs: float = -14.0) -> 
     gain_needed = target_lufs - loudness
     return audio.apply_gain(gain_needed)
 
-def enhanced_post_process_chain(audio: AudioSegment, rng=None) -> AudioSegment:
+def enhanced_post_process_chain(audio: AudioSegment, rng=None, drive: float = 1.02) -> AudioSegment:
     """Darker, warmer finishing chain for lofi character."""
     a = audio.high_pass_filter(30)
 
@@ -178,7 +178,9 @@ def enhanced_post_process_chain(audio: AudioSegment, rng=None) -> AudioSegment:
     presence = a.high_pass_filter(4000).apply_gain(-2.0)
     a = a.overlay(presence)
 
-    drv = 1.04 if rng is None else float(rng.uniform(1.02, 1.06))
+    drv = drive
+    if drive is None and rng is not None:
+        drv = float(rng.uniform(0.98, 1.04))
     a = apply_soft_limit(a, drive=drv)
 
     try:
@@ -905,6 +907,11 @@ def main():
     except Exception:
         amb_lvl = 0.5
 
+    try:
+        limiter_drive = float(spec.get("limiter_drive", 1.02))
+    except Exception:
+        limiter_drive = 1.02
+
     motif = {
         "mood": spec.get("mood") or [],
         "instruments": spec.get("instruments") or [],
@@ -916,6 +923,7 @@ def main():
         "hq_stereo": spec.get("hq_stereo", True),
         "hq_reverb": spec.get("hq_reverb", True),
         "hq_sidechain": spec.get("hq_sidechain", True),
+        "limiter_drive": limiter_drive,
     }
 
     print(json.dumps({"stage": "generate", "message": "building sections"}))
@@ -923,7 +931,7 @@ def main():
 
     print(json.dumps({"stage": "post", "message": "cleaning audio"}))
     post_rng = np.random.default_rng((seed ^ 0x5A5A5A5A) & 0xFFFFFFFF)
-    song = enhanced_post_process_chain(song, rng=post_rng)
+    song = enhanced_post_process_chain(song, rng=post_rng, drive=limiter_drive)
 
     out_path = args.out
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
