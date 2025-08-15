@@ -358,6 +358,7 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-opener",
  "ureq",
+ "url",
 ]
 
 [[package]]

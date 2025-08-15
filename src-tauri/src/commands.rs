@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::{AppHandle, Emitter, Manager, Runtime, Window};
 use ureq;
+use url::Url;
 
 /* ==============================
 ComfyUI launcher (no extra crate)
@@ -616,6 +617,44 @@ pub struct NewsArticle {
     pub source: String,
 }
 
+fn allowed_by_robots(url: &str, user_agent: &str) -> Result<bool, String> {
+    let parsed = Url::parse(url).map_err(|e| e.to_string())?;
+    let host = parsed
+        .host_str()
+        .ok_or_else(|| "missing host".to_string())?;
+    let robots_url = format!("{}://{host}/robots.txt", parsed.scheme());
+    let resp = ureq::get(&robots_url).call();
+    if let Ok(resp) = resp {
+        let body = resp.into_string().map_err(|e| e.to_string())?;
+        let mut applies = false;
+        let mut allowed = true;
+        for line in body.lines() {
+            let line = line.trim();
+            if line.is_empty() || line.starts_with('#') {
+                continue;
+            }
+            let lower = line.to_lowercase();
+            if lower.starts_with("user-agent:") {
+                let ua = line[11..].trim();
+                applies = ua == "*" || ua.eq_ignore_ascii_case(user_agent);
+            } else if applies && lower.starts_with("disallow:") {
+                let path = line[9..].trim();
+                if !path.is_empty() && parsed.path().starts_with(path) {
+                    allowed = false;
+                }
+            } else if applies && lower.starts_with("allow:") {
+                let path = line[6..].trim();
+                if !path.is_empty() && parsed.path().starts_with(path) {
+                    allowed = true;
+                }
+            }
+        }
+        Ok(allowed)
+    } else {
+        Ok(true)
+    }
+}
+
 #[tauri::command]
 pub async fn fetch_big_brother_news() -> Result<Vec<NewsArticle>, String> {
     let feeds = vec![
@@ -629,6 +668,9 @@ pub async fn fetch_big_brother_news() -> Result<Vec<NewsArticle>, String> {
     let mut articles = Vec::new();
 
     for (source, url) in feeds {
+        if !allowed_by_robots(url, "blossom")? {
+            continue;
+        }
         let resp = ureq::get(url).call().map_err(|e| e.to_string())?;
         let body = resp.into_string().map_err(|e| e.to_string())?;
         let channel = Channel::read_from(body.as_bytes()).map_err(|e| e.to_string())?;
