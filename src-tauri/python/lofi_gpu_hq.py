@@ -147,6 +147,7 @@ def loudness_normalize_lufs(audio: AudioSegment, target_lufs: float = -14.0) -> 
         samples = samples.reshape((-1, 2)).mean(axis=1)
     max_int = float(2 ** (8 * audio.sample_width - 1))
     x = samples / max_int
+    headroom = 0.0
     try:
         import pyloudnorm as pyln
         meter = pyln.Meter(audio.frame_rate)
@@ -156,11 +157,19 @@ def loudness_normalize_lufs(audio: AudioSegment, target_lufs: float = -14.0) -> 
         if rms <= 0:
             return audio
         loudness = 20 * np.log10(rms)
-        print(json.dumps({"stage": "warn", "message": "pyloudnorm missing, using RMS loudness estimate"}))
+        headroom = 3.0
+        print(
+            json.dumps(
+                {
+                    "stage": "warn",
+                    "message": "pyloudnorm missing, using RMS loudness estimate with 3 dB headroom",
+                }
+            )
+        )
     except Exception as e:
         print(json.dumps({"stage": "warn", "message": f"loudness normalization failed: {e}"}))
         return audio
-    gain_needed = target_lufs - loudness
+    gain_needed = target_lufs - loudness - headroom
     return audio.apply_gain(gain_needed)
 
 def enhanced_post_process_chain(audio: AudioSegment, rng=None) -> AudioSegment:

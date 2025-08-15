@@ -1,4 +1,4 @@
-scipy>=1.9.0
-pyloudnorm>=0.1.0
+pyloudnorm>=0.1.0  # required for LUFS normalization
 numpy>=1.21.0
 pydub>=0.25.0
+scipy>=1.9.0
