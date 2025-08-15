@@ -52,7 +52,9 @@ describe('SongForm', () => {
 
     fireEvent.click(screen.getByText(/render songs/i));
 
-    await waitFor(() => expect(invoke).toHaveBeenCalledWith('run_lofi_song', expect.anything()));
+    await waitFor(() => expect(invoke).toHaveBeenCalled());
+    const call = (invoke as any).mock.calls.find(([c]: any) => c === 'run_lofi_song');
+    expect(call[1].spec.structure[0]).toHaveProperty('chords');
     await waitFor(() => expect(listen).toHaveBeenCalledTimes(2));
 
     progressCb({ payload: JSON.stringify({ stage: 'render', message: '30%' }) });
