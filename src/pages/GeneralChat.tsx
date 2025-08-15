@@ -9,6 +9,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import type { Theme } from "@mui/material/styles";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Center from "./_Center";
@@ -136,7 +137,7 @@ export default function GeneralChat() {
               <Box
                 sx={{
                   bgcolor: m.role === "user" ? "primary.light" : "grey.100",
-                  color: (theme) =>
+                  color: (theme: Theme) =>
                     m.role === "user"
                       ? theme.palette.getContrastText(theme.palette.primary.light)
                       : theme.palette.text.primary,
