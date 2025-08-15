@@ -7,11 +7,11 @@ export default function TagStats() {
   if (entries.length === 0) return null;
 
   return (
-    <div style={{ marginTop: 20 }}>
-      <h3>Tag Stats</h3>
-      <ul>
+    <div className="bg-white rounded-lg shadow-md p-6 mt-6">
+      <h3 className="text-lg font-semibold mb-4">Tag Stats</h3>
+      <ul className="space-y-1">
         {entries.map(([tag, ms]) => (
-          <li key={tag}>
+          <li key={tag} className="text-sm text-gray-700">
             {tag}: {(ms / (1000 * 60 * 60)).toFixed(2)}h
           </li>
         ))}
