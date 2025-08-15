@@ -60,4 +60,36 @@ describe('Calendar time validation', () => {
     fireEvent.keyDown(document, { key: 'ArrowRight' });
     expect(screen.getByTestId('day-2')).toHaveFocus();
   });
+
+  it('prefills times when double clicking a day', () => {
+    render(<Calendar />);
+    const day1 = screen.getByTestId('day-1');
+    fireEvent.doubleClick(day1);
+    const dateInput = screen.getByTestId('date-input') as HTMLInputElement;
+    const endInput = screen.getByTestId('end-input') as HTMLInputElement;
+    expect(dateInput.value).toMatch(/T09:00/);
+    expect(endInput.value).toMatch(/T10:00/);
+  });
+
+  it('allows deleting events', () => {
+    render(<Calendar />);
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    fireEvent.change(screen.getByLabelText('Title'), {
+      target: { value: 'Meeting' },
+    });
+    fireEvent.change(screen.getByTestId('date-input'), {
+      target: { value: `${yyyy}-${mm}-01T09:00` },
+    });
+    fireEvent.change(screen.getByTestId('end-input'), {
+      target: { value: `${yyyy}-${mm}-01T10:00` },
+    });
+    fireEvent.click(screen.getByTestId('add-button'));
+    const deleteBtn = screen.getByLabelText('Delete event');
+    fireEvent.click(deleteBtn);
+    expect(
+      useCalendar.getState().events.some((e) => e.title === 'Meeting')
+    ).toBe(false);
+  });
 });
