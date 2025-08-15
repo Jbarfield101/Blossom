@@ -28,7 +28,8 @@ describe('GeneralChat', () => {
     fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
 
     await waitFor(() => expect(invoke).toHaveBeenCalledWith('general_chat', expect.anything()));
-    expect(screen.getByText('Hello')).toBeInTheDocument();
+    // message appears in a paragraph element; chat tab also uses the same text
+    expect(screen.getAllByText('Hello', { selector: 'p' })[0]).toBeInTheDocument();
     expect(await screen.findByText('Reply')).toBeInTheDocument();
   });
 

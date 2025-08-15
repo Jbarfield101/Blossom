@@ -6,13 +6,17 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  FormControlLabel,
+  Switch,
 } from "@mui/material";
 import { useCalendar } from "../features/calendar/useCalendar";
 import { Theme, useTheme } from "../features/theme/ThemeContext";
+import { useScrapedItems } from "../features/scraper/useScrapedItems";
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
   const { events, selectedCountdownId, setSelectedCountdownId } = useCalendar();
+  const { notificationsEnabled, setNotificationsEnabled } = useScrapedItems();
   const countdownEvents = events.filter(
     (e) => e.hasCountdown && e.status !== "canceled" && e.status !== "missed"
   );
@@ -23,6 +27,16 @@ export default function Settings() {
         <Typography variant="body2" color="text.secondary">
           Put toggles, theme, and module switches here.
         </Typography>
+        <FormControlLabel
+          sx={{ mt: 2 }}
+          control={
+            <Switch
+              checked={notificationsEnabled}
+              onChange={(e) => setNotificationsEnabled(e.target.checked)}
+            />
+          }
+          label="Enable Notifications"
+        />
         <FormControl fullWidth sx={{ mt: 3 }}>
           <InputLabel id="theme-label">Theme</InputLabel>
           <Select
