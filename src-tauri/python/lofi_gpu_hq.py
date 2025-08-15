@@ -555,14 +555,16 @@ def calculate_mix_levels(mood, section_name):
         "hat_gain": 0.18,
         "key_gain": 0.9,
         "bass_gain": 0.38,
-        "pad_gain": 0.65,
+        "pad_gain": 0.6,
     }
 
     if "calm" in mood or "chill" in mood:
         levels["drum_gain"] *= 0.7
         levels["key_gain"] *= 1.1
+        levels["pad_gain"] *= 1.1
     if "energetic" in mood:
         levels["drum_gain"] *= 1.2
+        levels["pad_gain"] *= 0.9
     if "melancholy" in mood:
         levels["key_gain"] *= 1.15
         levels["pad_gain"] *= 1.2
@@ -570,6 +572,7 @@ def calculate_mix_levels(mood, section_name):
     if section_name.lower() in ["intro", "outro"]:
         levels["drum_gain"] *= 0.8
         levels["key_gain"] *= 0.9
+        levels["pad_gain"] *= 0.95
 
     return levels
 
@@ -592,6 +595,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     drums = np.zeros(n, dtype=np.float32)
     bass  = np.zeros(n, dtype=np.float32)
     keys  = np.zeros(n, dtype=np.float32)
+    pads  = np.zeros(n, dtype=np.float32)
     hats  = np.zeros(n, dtype=np.float32)
 
     # --- choose drum pattern
@@ -735,7 +739,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
         if use_airy_pad:
             airy = _airy_pad_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.12) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(airy))
-            keys[i0:i1] += airy[: i1 - i0]
+            pads[i0:i1] += airy[: i1 - i0]
 
         chord_pos += chord_len
 
@@ -817,10 +821,13 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     if flags.get("hq_reverb", True):
         drum_bus = drums + 0.6*hats
         keys_bus = keys * 0.5
+        pads_bus = pads * 0.5
         wet_drums = _schroeder_room(drum_bus, mix=0.10, pre_ms=10, decay=0.32)
         wet_keys  = _schroeder_room(keys_bus, mix=0.07, pre_ms=14, decay=0.28)
+        wet_pads  = _schroeder_room(pads_bus, mix=0.07, pre_ms=14, decay=0.28)
         drums = 0.9*drums + 0.25*wet_drums
         keys  = 0.95*keys + 0.18*wet_keys
+        pads  = 0.95*pads + 0.18*wet_pads
 
     mood = motif.get("mood") or []
 
@@ -835,6 +842,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
             depth = 1.2
             bass_depth = 1.0
         _apply_duck_envelope(keys, kick_positions_ms, depth_db=depth)
+        _apply_duck_envelope(pads,  kick_positions_ms, depth_db=depth)
         _apply_duck_envelope(bass,  kick_positions_ms, depth_db=bass_depth)
 
     # final mix (mono bus)
@@ -844,10 +852,18 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     drum_gain = levels["drum_gain"]
     hat_gain = levels["hat_gain"]
     key_gain = levels["key_gain"]
+    pad_gain = levels["pad_gain"]
     bass_gain = levels["bass_gain"]
     amb_gain = 0.12 * amb_level
 
-    mix = drum_gain*drums + hat_gain*hats + key_gain*keys + bass_gain*bass + amb_gain*amb_mix
+    mix = (
+        drum_gain*drums
+        + hat_gain*hats
+        + key_gain*keys
+        + pad_gain*pads
+        + bass_gain*bass
+        + amb_gain*amb_mix
+    )
     mix = mix.astype(np.float32)
     peak = float(np.max(np.abs(mix)))
     if peak > 1.0:
