@@ -452,12 +452,16 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
 
         # simple 1-bar fill at each 4 bars
         if (bar + 1) % 4 == 0 and rng.random() < fill_prob:
+            last_fill_ms = None
             for sidx in range(8, 16):
                 if rng.random() < 0.6:
                     pos = bar_start + beat*4 - (16 - sidx) * sixteenth
                     pos += _jitter_ms(rng, jitter_std*0.5)
                     r = _hat(40) * 0.8 if rng.random() < 0.7 else _snare(90) * 0.5
+                    if last_fill_ms is not None and pos - last_fill_ms < 15:
+                        r *= 0.85
                     _place(r, drums, pos)
+                    last_fill_ms = pos
 
     drums = _process_drums(drums)
     hats = _process_hats(hats, snare_positions_ms, variety)

@@ -368,7 +368,9 @@ def _schroeder_room(x: np.ndarray, mix=0.12, pre_ms=12, decay=0.35):
         y = np.zeros_like(sig, dtype=np.float32)
         for i in range(len(sig)):
             xn = sig[i]
-            y[i] = ((y[i-d] if i >= d else 0.0) + g * (xn - (y[i-d] if i >= d else 0.0)))
+            xnd = sig[i-d] if i >= d else 0.0
+            ynd = y[i-d] if i >= d else 0.0
+            y[i] = -g * xn + xnd + g * ynd
         return y
     dry = x
     x = _shift_ms(x, pre_ms)
@@ -636,12 +638,16 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
 
         # simple 1-bar fill at each 4 bars
         if (bar + 1) % 4 == 0 and rng.random() < fill_prob:
+            last_fill_ms = None
             for sidx in range(8, 16):
                 if rng.random() < 0.6:
                     pos = bar_start + beat*4 - (16 - sidx) * sixteenth
                     pos += _jitter_ms(rng, jitter_std*0.5)
                     r = _hat(40, rng=rng) * 0.8 if rng.random() < 0.7 else _snare(90, rng=rng) * 0.5
+                    if last_fill_ms is not None and pos - last_fill_ms < 15:
+                        r *= 0.85
                     _place(r, drums, pos)
+                    last_fill_ms = pos
 
     drums = _process_drums(drums)
     hats = _process_hats(hats, snare_positions_ms, variety)
@@ -709,7 +715,13 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
 
     if "piano" in instrs:
         keys = keys * 1.06
-        keys = 0.9 * keys + 0.1 * _butter_highpass(keys, 1800)
+        mood = motif.get("mood") or []
+        if "calm" in mood or "melancholy" in mood or variety <= 40:
+            hp_freq = rng.uniform(800, 1000)
+            mix_amt = rng.uniform(0.05, 0.08)
+            keys = (1.0 - mix_amt) * keys + mix_amt * _butter_highpass(keys, hp_freq)
+        else:
+            keys = 0.9 * keys + 0.1 * _butter_highpass(keys, 1800)
 
     # --- bass patterns (per-chord roots)
     bass_pat = rng.choice(BASS_PATTERNS)
