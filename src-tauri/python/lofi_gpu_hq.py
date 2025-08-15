@@ -291,7 +291,10 @@ def _process_drums(x: np.ndarray) -> np.ndarray:
 
 def _process_hats(x: np.ndarray, snare_positions_ms: List[float], variety: int) -> np.ndarray:
     y = _butter_lowpass(x, 10000)
-    _apply_duck_envelope(y, snare_positions_ms, depth_db=1.0, attack_ms=5, hold_ms=20, release_ms=60)
+    depth = 1.0
+    if variety > 70:
+        depth = 0.7
+    _apply_duck_envelope(y, snare_positions_ms, depth_db=depth, attack_ms=5, hold_ms=20, release_ms=60)
     if variety > 70:
         y *= 10 ** (-0.8 / 20.0)
     return y.astype(np.float32)
@@ -411,7 +414,7 @@ def _degree_to_root_semi(deg: str) -> int:
     return {"I":0,"ii":2,"iii":4,"IV":5,"V":7,"vi":9}.get(deg, 0)
 
 def _chord_freqs_from_degree(key_letter: str, deg: str, add7=False, add9=False, inversion=0):
-    key_off = SEMITONES.get(key_letter.upper(), 0)
+    key_off = SEMITONES.get(key_letter, 0)
     root_c = _degree_to_root_semi(deg)
     root_midi = 48 + ((root_c + key_off) % 12)
     quality = "min" if deg in ("ii","iii","vi") else "maj"
@@ -654,7 +657,11 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
 
     # --- harmony: choose progression + voicing options
     key_letter_raw = motif.get("key")
-    key_letter = (str(key_letter_raw or "C")[:1]).upper()
+    raw = str(key_letter_raw or "C").strip().replace("♭", "b").replace("♯", "#")
+    token = raw.split()[0]
+    key_letter = token[0].upper()
+    if len(token) > 1 and token[1] in ("b", "#"):
+        key_letter += token[1]
 
     if section_name.upper().startswith("A"):
         prog_seq = rng.choice(PROG_BANK_A)
@@ -809,12 +816,15 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     # sidechain ducking to kick (subtle)
     if flags.get("hq_sidechain", True):
         depth = 2.0
+        bass_depth = 2.0
         if "energetic" in mood or variety >= 70:
             depth = 2.5
+            bass_depth = 2.5
         elif "calm" in mood or "melancholy" in mood or variety <= 40:
             depth = 1.2
+            bass_depth = 1.0
         _apply_duck_envelope(keys, kick_positions_ms, depth_db=depth)
-        _apply_duck_envelope(bass,  kick_positions_ms, depth_db=2.5)
+        _apply_duck_envelope(bass,  kick_positions_ms, depth_db=bass_depth)
 
     # final mix (mono bus)
     levels = calculate_mix_levels(mood, section_name)
