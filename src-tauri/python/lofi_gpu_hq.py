@@ -599,7 +599,7 @@ def calculate_mix_levels(mood, section_name):
     return levels
 
 # ---------- Section renderer ----------
-def _render_section(bars, bpm, section_name, motif, rng, variety=60):
+def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None):
     # Variety mapping (0..100)
     t = float(np.clip(variety, 0, 100)) / 100.0
     swing = 0.54 + 0.08*t
@@ -700,7 +700,9 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     if len(token) > 1 and token[1] in ("b", "#"):
         key_letter += token[1]
 
-    if section_name.upper().startswith("A"):
+    if chords:
+        prog_seq = [str(c) for c in chords]
+    elif section_name.upper().startswith("A"):
         prog_seq = rng.choice(PROG_BANK_A)
     elif section_name.upper().startswith("B"):
         prog_seq = rng.choice(PROG_BANK_B)
@@ -907,17 +909,24 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
         return _np_to_segment(mix)
 
 # ---------- Public API ----------
-def model_generate_audio(bars: int, bpm: int, seed: int, section: str, motif: Dict[str, Any], variety: int) -> AudioSegment:
+def model_generate_audio(bars: int, bpm: int, seed: int, section: str, motif: Dict[str, Any], variety: int, chords: Optional[List[str]] = None) -> AudioSegment:
     sec = _stable_hash_int(section)
     full_seed = (seed ^ sec) & 0xFFFFFFFF
     rng = np.random.default_rng(full_seed)
     random.seed(full_seed)
-    return _render_section(bars, bpm, section, motif, rng=rng, variety=variety)
-
-def build_song(sections: List[Tuple[str, int]], bpm: int, seed: int, motif: Dict[str, Any], variety: int) -> AudioSegment:
+    return _render_section(bars, bpm, section, motif, rng=rng, variety=variety, chords=chords)
+def build_song(sections: List[Tuple[str, int, Optional[List[str]]]], bpm: int, seed: int, motif: Dict[str, Any], variety: int) -> AudioSegment:
     parts: List[AudioSegment] = []
-    for name, bars in sections:
-        part = model_generate_audio(bars=bars, bpm=bpm, seed=seed, section=name, motif=motif, variety=variety)
+    for name, bars, chords in sections:
+        part = model_generate_audio(
+            bars=bars,
+            bpm=bpm,
+            seed=seed,
+            section=name,
+            motif=motif,
+            variety=variety,
+            chords=chords,
+        )
         parts.append(part)
     song = crossfade_concat(parts, ms=120)
     return song
@@ -952,7 +961,10 @@ def main():
             {"name": "A", "bars": 8},
             {"name": "Outro", "bars": 8},
         ]
-    sections = [(s["name"], int(s["bars"])) for s in structure]
+    sections = [
+        (s["name"], int(s["bars"]), s.get("chords") or None)
+        for s in structure
+    ]
 
     # Motif & defaults
     key_val = spec.get("key")

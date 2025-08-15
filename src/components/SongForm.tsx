@@ -4,7 +4,7 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 
-type Section = { name: string; bars: number };
+type Section = { name: string; bars: number; chords: string[] };
 
 type SongSpec = {
   title: string;
@@ -60,51 +60,51 @@ const DRUM_PATS = [
 
 const PRESET_TEMPLATES: Record<string, Section[]> = {
   "Classic Lofi": [
-    { name: "Intro", bars: 4 },
-    { name: "A", bars: 8 },
-    { name: "B", bars: 8 },
-    { name: "A", bars: 8 },
-    { name: "B", bars: 8 },
-    { name: "Outro", bars: 4 },
+    { name: "Intro", bars: 4, chords: [] },
+    { name: "A", bars: 8, chords: [] },
+    { name: "B", bars: 8, chords: [] },
+    { name: "A", bars: 8, chords: [] },
+    { name: "B", bars: 8, chords: [] },
+    { name: "Outro", bars: 4, chords: [] },
   ],
   "Study Session": [
-    { name: "Intro", bars: 2 },
-    { name: "A", bars: 16 },
-    { name: "B", bars: 16 },
-    { name: "A", bars: 16 },
-    { name: "C", bars: 8 },
-    { name: "Outro", bars: 2 },
+    { name: "Intro", bars: 2, chords: [] },
+    { name: "A", bars: 16, chords: [] },
+    { name: "B", bars: 16, chords: [] },
+    { name: "A", bars: 16, chords: [] },
+    { name: "C", bars: 8, chords: [] },
+    { name: "Outro", bars: 2, chords: [] },
   ],
   "Jazz Cafe": [
-    { name: "Intro", bars: 8 },
-    { name: "A", bars: 12 },
-    { name: "B", bars: 12 },
-    { name: "Solo", bars: 8 },
-    { name: "A", bars: 12 },
-    { name: "Outro", bars: 8 },
+    { name: "Intro", bars: 8, chords: [] },
+    { name: "A", bars: 12, chords: [] },
+    { name: "B", bars: 12, chords: [] },
+    { name: "Solo", bars: 8, chords: [] },
+    { name: "A", bars: 12, chords: [] },
+    { name: "Outro", bars: 8, chords: [] },
   ],
   "Midnight Drive": [
-    { name: "Intro", bars: 4 },
-    { name: "Verse", bars: 16 },
-    { name: "Chorus", bars: 8 },
-    { name: "Verse", bars: 16 },
-    { name: "Chorus", bars: 8 },
-    { name: "Bridge", bars: 8 },
-    { name: "Outro", bars: 4 },
+    { name: "Intro", bars: 4, chords: [] },
+    { name: "Verse", bars: 16, chords: [] },
+    { name: "Chorus", bars: 8, chords: [] },
+    { name: "Verse", bars: 16, chords: [] },
+    { name: "Chorus", bars: 8, chords: [] },
+    { name: "Bridge", bars: 8, chords: [] },
+    { name: "Outro", bars: 4, chords: [] },
   ],
   "Rain & Coffee": [
-    { name: "Ambient", bars: 4 },
-    { name: "A", bars: 8 },
-    { name: "A", bars: 8 },
-    { name: "B", bars: 12 },
-    { name: "A", bars: 8 },
-    { name: "Ambient", bars: 4 },
+    { name: "Ambient", bars: 4, chords: [] },
+    { name: "A", bars: 8, chords: [] },
+    { name: "A", bars: 8, chords: [] },
+    { name: "B", bars: 12, chords: [] },
+    { name: "A", bars: 8, chords: [] },
+    { name: "Ambient", bars: 4, chords: [] },
   ],
   "Quick Beat": [
-    { name: "Intro", bars: 2 },
-    { name: "A", bars: 4 },
-    { name: "B", bars: 4 },
-    { name: "Outro", bars: 2 },
+    { name: "Intro", bars: 2, chords: [] },
+    { name: "A", bars: 4, chords: [] },
+    { name: "B", bars: 4, chords: [] },
+    { name: "Outro", bars: 2, chords: [] },
   ],
 };
 
@@ -130,7 +130,18 @@ export default function SongForm() {
     const stored = localStorage.getItem("songTemplates");
     if (stored) {
       try {
-        return { ...PRESET_TEMPLATES, ...JSON.parse(stored) };
+        const parsed = JSON.parse(stored);
+        const sanitized = Object.fromEntries(
+          Object.entries(parsed).map(([k, arr]) => [
+            k,
+            (arr as any[]).map((s) => ({
+              name: s.name,
+              bars: s.bars,
+              chords: s.chords || [],
+            })),
+          ])
+        );
+        return { ...PRESET_TEMPLATES, ...sanitized };
       } catch {
         return PRESET_TEMPLATES;
       }
@@ -481,6 +492,24 @@ export default function SongForm() {
                     setSelectedTemplate("");
                   }}
                   style={S.input}
+                />
+                <input
+                  type="text"
+                  value={sec.chords.join(" ")}
+                  placeholder="Chords"
+                  onChange={(e) => {
+                    const chords = e.target.value
+                      .split(/[\s,]+/)
+                      .map((c) => c.trim())
+                      .filter(Boolean);
+                    setStructure((prev) => {
+                      const copy = [...prev];
+                      copy[i] = { ...copy[i], chords };
+                      return copy;
+                    });
+                    setSelectedTemplate("");
+                  }}
+                  style={{ ...S.input, marginTop: 4 }}
                 />
               </div>
             ))}

@@ -202,6 +202,7 @@ Serde-mapped types (camelCase)
 pub struct Section {
     pub name: String,
     pub bars: u32,
+    pub chords: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
