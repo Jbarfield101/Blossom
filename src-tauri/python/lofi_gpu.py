@@ -589,7 +589,16 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
         c -= mid * 0.15
         amb_mix += c
 
-    mix = 0.66*drums + 0.44*hats + 0.73*keys + 0.49*bass + 0.08*amb_mix*amb_level
+    mix = (
+        0.42 * drums
+        + 0.38 * hats
+        + 0.80 * keys
+        + 0.55 * bass
+        + 0.12 * amb_mix * amb_level
+    )
+    peak = np.max(np.abs(mix))
+    if peak > 0:
+        mix = 0.98 * mix / peak
     mix = mix.astype(np.float32)
     return _np_to_segment(mix)
 
