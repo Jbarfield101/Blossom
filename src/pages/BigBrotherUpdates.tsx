@@ -13,6 +13,7 @@ interface Article {
   link: string;
   pub_date?: string;
   source: string;
+  summary?: string;
 }
 
 export default function BigBrotherUpdates() {
@@ -49,11 +50,21 @@ export default function BigBrotherUpdates() {
           >
             <ListItemText
               primary={article.title}
-              secondary={`${article.source}${
-                article.pub_date
-                  ? ` - ${new Date(article.pub_date).toLocaleString()}`
-                  : ""
-              }`}
+              secondary={
+                <>
+                  {`${article.source}${
+                    article.pub_date
+                      ? ` - ${new Date(article.pub_date).toLocaleString()}`
+                      : ""
+                  }`}
+                  {article.summary && (
+                    <>
+                      <br />
+                      {article.summary}
+                    </>
+                  )}
+                </>
+              }
             />
           </ListItem>
         ))}
