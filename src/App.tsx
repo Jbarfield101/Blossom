@@ -11,6 +11,7 @@ import Assistant from "./pages/Assistant";
 import GeneralChat from "./pages/GeneralChat";
 import Laser from "./pages/Laser";
 import Lofi from "./pages/Lofi";
+import NotFound from "./pages/NotFound";
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
         <Route path="/assistant/general-chat" element={<GeneralChat />} />
         <Route path="/laser" element={<Laser />} />
         <Route path="/lofi" element={<Lofi />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );
