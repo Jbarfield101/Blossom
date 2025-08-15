@@ -195,6 +195,9 @@ def _butter_highpass(x, cutoff_hz):
         prev_x = x[i]
     return y
 
+def _butter_bandpass(x, low_hz, high_hz):
+    return _butter_highpass(_butter_lowpass(x, high_hz), low_hz)
+
 def _kick(ms=160):
     body = _pitch_sweep(90, 45, ms, amp=0.9) * _env_ad(ms*0.9, ms)
     click = _noise(40, 0.2) * _env_ad(20, 40)
@@ -222,6 +225,28 @@ def _process_drums(x: np.ndarray) -> np.ndarray:
     max_val = 2 ** 7 - 1
     y = np.round(y * max_val) / max_val
     y = np.tanh(y * 1.8)
+    return y.astype(np.float32)
+
+def _apply_duck_envelope(buf: np.ndarray, positions_ms: List[float], depth_db=2.0, attack_ms=14, hold_ms=30, release_ms=180):
+    if not positions_ms:
+        return
+    depth = 10 ** (-abs(depth_db) / 20.0)
+    env = np.ones_like(buf, dtype=np.float32)
+    a = int(SR * attack_ms/1000.0)
+    h = int(SR * hold_ms/1000.0)
+    r = int(SR * release_ms/1000.0)
+    for pos in positions_ms:
+        p = int(max(0, pos) * SR / 1000)
+        env[p:p+a] *= np.linspace(1.0, depth, a, endpoint=False)
+        env[p+a:p+a+h] *= depth
+        env[p+a+h:p+a+h+r] *= np.linspace(depth, 1.0, r, endpoint=False)
+    buf *= env
+
+def _process_hats(x: np.ndarray, snare_positions_ms: List[float], variety: int) -> np.ndarray:
+    y = _butter_lowpass(x, 10000)
+    _apply_duck_envelope(y, snare_positions_ms, depth_db=1.0, attack_ms=5, hold_ms=20, release_ms=60)
+    if variety > 70:
+        y *= 10 ** (-0.8 / 20.0)
     return y.astype(np.float32)
 
 def _bar_ms(bpm):
@@ -370,6 +395,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     bass  = np.zeros(n, dtype=np.float32)
     keys  = np.zeros(n, dtype=np.float32)
     hats  = np.zeros(n, dtype=np.float32)
+    snare_positions_ms: List[float] = []
 
     # --- choose drum pattern
     pat_name = motif.get("drum_pattern") or rng.choice(list(DRUM_PATTERNS.keys()))
@@ -396,6 +422,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
             pos = bar_start + beat_idx * beat + frac * beat + _jitter_ms(rng, jitter_std)
             s = _snare(int(rng.uniform(160, 190))) * _vel_scale(rng, mean=1.0)
             _place(s, drums, pos)
+            snare_positions_ms.append(pos)
             # micro-duck hats around snare
             snare_center = pos
             dip_len = int(0.06 * 1000)  # 60ms
@@ -433,6 +460,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
                     _place(r, drums, pos)
 
     drums = _process_drums(drums)
+    hats = _process_hats(hats, snare_positions_ms, variety)
 
     # --- harmony: choose progression + voicing options
     key_letter_raw = motif.get("key")
@@ -544,7 +572,9 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
         amb_mix += r
     if "cafe" in amb_list:
         c = (np.random.rand(n).astype(np.float32)*2-1)*0.0015
-        c = _butter_lowpass(c, 4000)
+        c = _butter_lowpass(c, 3000)
+        mid = _butter_bandpass(c, 1000, 2000)
+        c -= mid * 0.15
         amb_mix += c
 
     mix = 0.72*drums + 0.55*hats + 0.68*keys + 0.52*bass + 0.12*amb_mix*amb_level
