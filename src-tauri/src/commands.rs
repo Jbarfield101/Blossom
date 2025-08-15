@@ -523,6 +523,15 @@ pub async fn start_ollama<R: Runtime>(app: AppHandle<R>, window: Window<R>) -> R
 }
 
 #[tauri::command]
+pub async fn stop_ollama() -> Result<(), String> {
+  let mut lock = OLLAMA_CHILD.get_or_init(|| Mutex::new(None)).lock().unwrap();
+  if let Some(mut child) = lock.take() {
+    let _ = child.kill();
+  }
+  Ok(())
+}
+
+#[tauri::command]
 pub async fn general_chat(messages: Vec<ChatMessage>) -> Result<String, String> {
   let resp = ureq::post("http://127.0.0.1:11434/api/chat")
     .set("Content-Type", "application/json")
