@@ -8,8 +8,10 @@ import {
   MenuItem,
 } from "@mui/material";
 import { useCalendar } from "../features/calendar/useCalendar";
+import { Theme, useTheme } from "../features/theme/ThemeContext";
 
 export default function Settings() {
+  const { theme, setTheme } = useTheme();
   const { events, selectedCountdownId, setSelectedCountdownId } = useCalendar();
   const countdownEvents = events.filter(
     (e) => e.hasCountdown && e.status !== "canceled" && e.status !== "missed"
@@ -21,6 +23,21 @@ export default function Settings() {
         <Typography variant="body2" color="text.secondary">
           Put toggles, theme, and module switches here.
         </Typography>
+        <FormControl fullWidth sx={{ mt: 3 }}>
+          <InputLabel id="theme-label">Theme</InputLabel>
+          <Select
+            labelId="theme-label"
+            label="Theme"
+            value={theme}
+            onChange={(e) => setTheme(e.target.value as Theme)}
+          >
+            <MenuItem value="default">Default</MenuItem>
+            <MenuItem value="ocean">Ocean</MenuItem>
+            <MenuItem value="forest">Forest</MenuItem>
+            <MenuItem value="sunset">Sunset</MenuItem>
+            <MenuItem value="sakura">Sakura</MenuItem>
+          </Select>
+        </FormControl>
         {countdownEvents.length > 0 && (
           <FormControl fullWidth sx={{ mt: 3 }}>
             <InputLabel id="countdown-label">Home Countdown</InputLabel>

@@ -1,13 +1,25 @@
 // src/pages/Home.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Countdown from "../components/Countdown";
 import { useCalendar } from "../features/calendar/useCalendar";
 import HoverCircle from "../components/HoverCircle";
 import FeatureCarousel from "../components/FeatureCarousel";
 import VersionBadge from "../components/VersionBadge";
+import { Theme, useTheme } from "../features/theme/ThemeContext";
 
 export default function Home() {
-  const [hoverColor, setHoverColor] = useState("rgba(255,255,255,0.22)");
+  const { theme } = useTheme();
+  const themeColors: Record<Theme, string> = {
+    default: "rgba(255,255,255,0.22)",
+    ocean: "rgba(0,150,255,0.22)",
+    forest: "rgba(0,255,150,0.22)",
+    sunset: "rgba(255,150,0,0.22)",
+    sakura: "rgba(255,150,200,0.22)",
+  };
+  const [hoverColor, setHoverColor] = useState(themeColors[theme]);
+  useEffect(() => {
+    setHoverColor(themeColors[theme]);
+  }, [theme]);
   const { events, selectedCountdownId } = useCalendar();
   const countdownEvents = events.filter(
     (e) => e.hasCountdown && e.status !== "canceled" && e.status !== "missed"
