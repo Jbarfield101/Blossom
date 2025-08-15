@@ -9,6 +9,7 @@ import Calendar from "./pages/Calendar";
 import Comfy from "./pages/Comfy";
 import Assistant from "./pages/Assistant";
 import GeneralChat from "./pages/GeneralChat";
+import BigBrotherUpdates from "./pages/BigBrotherUpdates";
 import Laser from "./pages/Laser";
 import Lofi from "./pages/Lofi";
 import NotFound from "./pages/NotFound";
@@ -27,6 +28,10 @@ export default function App() {
         <Route path="/comfy" element={<Comfy />} />
         <Route path="/assistant" element={<Assistant />} />
         <Route path="/assistant/general-chat" element={<GeneralChat />} />
+        <Route
+          path="/assistant/big-brother-updates"
+          element={<BigBrotherUpdates />}
+        />
         <Route path="/laser" element={<Laser />} />
         <Route path="/lofi" element={<Lofi />} />
         <Route path="*" element={<NotFound />} />
