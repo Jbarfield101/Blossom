@@ -167,9 +167,9 @@ def enhanced_post_process_chain(audio: AudioSegment, rng=None) -> AudioSegment:
     """Darker, warmer finishing chain for lofi character."""
     a = audio.high_pass_filter(30)
 
-    lpf_base = 7500
+    lpf_base = 7800
     if rng is not None:
-        lpf_base = int(rng.integers(6500, 8500))
+        lpf_base = int(rng.integers(7000, 8500))
     a = a.low_pass_filter(lpf_base + 500)
     a = a.low_pass_filter(lpf_base)
 
@@ -537,10 +537,10 @@ def _swing_offset(eighth_ms, sub_idx, swing=0.58):
 def calculate_mix_levels(mood, section_name):
     """Calculate context-aware mix levels"""
     levels = {
-        "drum_gain": 0.35,
-        "hat_gain": 0.25,
+        "drum_gain": 0.32,
+        "hat_gain": 0.20,
         "key_gain": 1.0,
-        "bass_gain": 0.45,
+        "bass_gain": 0.42,
         "pad_gain": 0.7,
     }
 
@@ -722,7 +722,6 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
         chord_pos += chord_len
 
     if "piano" in instrs:
-        keys = keys * 1.06
         mood = motif.get("mood") or []
         if "calm" in mood or "melancholy" in mood or variety <= 40:
             hp_freq = rng.uniform(800, 1000)
@@ -769,11 +768,12 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     if "rain" in amb_list:
         r = ((rng.random(n).astype(np.float32)*2-1) if rng is not None else (np.random.rand(n).astype(np.float32)*2-1)) * 0.004
         r = _butter_lowpass(r, 1200)
+        r = _butter_highpass(r, 200)
         amb_mix += r
     if "cafe" in amb_list:
         c = ((rng.random(n).astype(np.float32)*2-1) if rng is not None else (np.random.rand(n).astype(np.float32)*2-1)) * 0.0008
         c = _butter_lowpass(c, 3000)
-        mid = _butter_bandpass(c, 1000, 2000)
+        mid = _butter_bandpass(c, 1200, 1800)
         c -= mid * 0.15
         amb_mix += c
 
@@ -818,6 +818,8 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
 
     # final mix (mono bus)
     levels = calculate_mix_levels(mood, section_name)
+    if "piano" in instrs:
+        levels["key_gain"] *= 1.08
     drum_gain = levels["drum_gain"]
     hat_gain = levels["hat_gain"]
     key_gain = levels["key_gain"]

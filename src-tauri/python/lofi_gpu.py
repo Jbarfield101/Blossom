@@ -117,9 +117,9 @@ def enhanced_post_process_chain(audio: AudioSegment, rng=None) -> AudioSegment:
     a = audio.high_pass_filter(30)
 
     # multi-stage low-pass to emulate vintage gear
-    lpf_base = 7500
+    lpf_base = 7800
     if rng is not None:
-        lpf_base = int(rng.integers(6500, 8500))
+        lpf_base = int(rng.integers(7000, 8500))
     a = a.low_pass_filter(lpf_base + 500)
     a = a.low_pass_filter(lpf_base)
 
@@ -573,15 +573,16 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60):
     if "rain" in amb_list:
         r = (np.random.rand(n).astype(np.float32)*2-1)*0.01
         r = _butter_lowpass(r, 1200)
+        r = _butter_highpass(r, 200)
         amb_mix += r
     if "cafe" in amb_list:
         c = (np.random.rand(n).astype(np.float32)*2-1)*0.0015
         c = _butter_lowpass(c, 3000)
-        mid = _butter_bandpass(c, 1000, 2000)
+        mid = _butter_bandpass(c, 1200, 1800)
         c -= mid * 0.15
         amb_mix += c
 
-    mix = 0.72*drums + 0.55*hats + 0.68*keys + 0.52*bass + 0.12*amb_mix*amb_level
+    mix = 0.66*drums + 0.44*hats + 0.73*keys + 0.49*bass + 0.08*amb_mix*amb_level
     mix = mix.astype(np.float32)
     return _np_to_segment(mix)
 
