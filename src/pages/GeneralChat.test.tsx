@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import GeneralChat, { SYSTEM_PROMPT } from './GeneralChat';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
+import { useUsers, defaultModules } from '../features/users/useUsers';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 vi.mock('@tauri-apps/api/event', () => ({ listen: vi.fn() }));
@@ -11,11 +12,23 @@ describe('GeneralChat', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     localStorage.clear();
+    useUsers.setState({
+      users: {
+        test: {
+          id: 'test',
+          name: 'Test User',
+          theme: 'default',
+          modules: { ...defaultModules },
+        },
+      },
+      currentUserId: 'test',
+    });
   });
 
   afterEach(() => {
     cleanup();
     localStorage.clear();
+    useUsers.setState({ users: {}, currentUserId: null });
   });
 
   it('handles message flow', async () => {
@@ -27,6 +40,8 @@ describe('GeneralChat', () => {
     (listen as any).mockImplementation(() => Promise.resolve(() => {}));
 
     render(<GeneralChat />);
+    const systemPromptWithName =
+      SYSTEM_PROMPT + " The user's name is Test User. Address them by name.";
     await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
 
     fireEvent.change(screen.getAllByRole('textbox')[0], { target: { value: 'Hello' } });
@@ -37,7 +52,7 @@ describe('GeneralChat', () => {
       expect(calls).toHaveLength(1);
       expect(calls[0][1]).toEqual({
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'system', content: systemPromptWithName },
           { role: 'user', content: 'Hello' },
         ],
       });
@@ -55,6 +70,8 @@ describe('GeneralChat', () => {
     (listen as any).mockImplementation(() => Promise.resolve(() => {}));
 
     render(<GeneralChat />);
+    const systemPromptWithName =
+      SYSTEM_PROMPT + " The user's name is Test User. Address them by name.";
     await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
 
     // first message
@@ -65,7 +82,7 @@ describe('GeneralChat', () => {
       expect(calls).toHaveLength(1);
       expect(calls[0][1]).toEqual({
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'system', content: systemPromptWithName },
           { role: 'user', content: 'Hi' },
         ],
       });
@@ -80,7 +97,7 @@ describe('GeneralChat', () => {
       expect(calls).toHaveLength(2);
       expect(calls[1][1]).toEqual({
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'system', content: systemPromptWithName },
           { role: 'user', content: 'Hi' },
           { role: 'assistant', content: 'Reply' },
           { role: 'user', content: 'How are you?' },
