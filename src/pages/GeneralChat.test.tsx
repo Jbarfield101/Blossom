@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import GeneralChat from './GeneralChat';
+import GeneralChat, { SYSTEM_PROMPT } from './GeneralChat';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 
@@ -37,7 +37,7 @@ describe('GeneralChat', () => {
       expect(calls).toHaveLength(1);
       expect(calls[0][1]).toEqual({
         messages: [
-          { role: 'system', content: 'You are Blossom, a helpful AI assistant.' },
+          { role: 'system', content: SYSTEM_PROMPT },
           { role: 'user', content: 'Hello' },
         ],
       });
@@ -65,7 +65,7 @@ describe('GeneralChat', () => {
       expect(calls).toHaveLength(1);
       expect(calls[0][1]).toEqual({
         messages: [
-          { role: 'system', content: 'You are Blossom, a helpful AI assistant.' },
+          { role: 'system', content: SYSTEM_PROMPT },
           { role: 'user', content: 'Hi' },
         ],
       });
@@ -80,7 +80,7 @@ describe('GeneralChat', () => {
       expect(calls).toHaveLength(2);
       expect(calls[1][1]).toEqual({
         messages: [
-          { role: 'system', content: 'You are Blossom, a helpful AI assistant.' },
+          { role: 'system', content: SYSTEM_PROMPT },
           { role: 'user', content: 'Hi' },
           { role: 'assistant', content: 'Reply' },
           { role: 'user', content: 'How are you?' },
