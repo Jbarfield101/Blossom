@@ -1,21 +1,8 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import {
-  Box,
-  Button,
-  List,
-  ListItem,
-  ListItemText,
-  Typography,
-} from "@mui/material";
-
-interface Article {
-  title: string;
-  link: string;
-  pub_date?: string;
-  source: string;
-  summary?: string;
-}
+import { Box, Button, Typography } from "@mui/material";
+import { FiRefreshCcw } from "react-icons/fi";
+import ArticleCard, { type Article } from "../components/ArticleCard";
 
 export default function BigBrotherUpdates() {
   const [articles, setArticles] = useState<Article[]>(() => {
@@ -48,51 +35,33 @@ export default function BigBrotherUpdates() {
   }, []);
 
   return (
-    <Box p={2}>
-      <Box display="flex" alignItems="center" mb={2}>
-        <Typography variant="h5" gutterBottom sx={{ flexGrow: 1 }}>
+    <Box sx={{ maxWidth: 1200, mx: "auto", px: 2, py: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 3,
+        }}
+      >
+        <Typography component="h1" variant="h4" fontWeight="bold">
           Big Brother Updates
         </Typography>
         <Button
           variant="contained"
+          startIcon={<FiRefreshCcw />}
           onClick={() => fetchData(true)}
           disabled={loading}
         >
           Refresh
         </Button>
       </Box>
-      <List>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
         {articles.map((article, idx) => (
-          <ListItem key={idx} divider alignItems="flex-start">
-            <ListItemText
-              primary={article.title}
-              secondary={
-                <>
-                  {article.summary && (
-                    <>
-                      {article.summary}
-                      <br />
-                    </>
-                  )}
-                  {`${article.source}${
-                    article.pub_date
-                      ? ` - ${new Date(article.pub_date).toLocaleString()}`
-                      : ""
-                  }`}
-                  <br />
-                  <a
-                    href={article.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Read more
-                  </a>
-                </>
-              }
-            />
-          </ListItem>
+          <ArticleCard key={idx} article={article} />
         ))}
-      </List>
+      </Box>
     </Box>
   );
 }
+
