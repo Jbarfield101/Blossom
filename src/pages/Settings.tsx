@@ -10,6 +10,10 @@ import {
   Switch,
   TextField,
   Button,
+  List,
+  ListItem,
+  ListItemText,
+  IconButton,
 } from "@mui/material";
 import { useState } from "react";
 import { useCalendar } from "../features/calendar/useCalendar";
@@ -19,6 +23,8 @@ import { useUsers } from "../features/users/useUsers";
 import { useComfy } from "../features/comfy/useComfy";
 import { useOutput } from "../features/output/useOutput";
 import { open } from "@tauri-apps/plugin-dialog";
+import { useDocs } from "../features/docs/useDocs";
+import { TrashIcon } from "@heroicons/react/24/outline";
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
@@ -27,6 +33,7 @@ export default function Settings() {
   const { users, currentUserId, addUser, switchUser } = useUsers();
   const { folder: comfyFolder, setFolder: setComfyFolder } = useComfy();
   const { folder: outputFolder, setFolder: setOutputFolder } = useOutput();
+  const { docs, addDoc, removeDoc } = useDocs();
   const [newUser, setNewUser] = useState("");
   const userList = Object.values(users);
   const countdownEvents = events.filter(
@@ -135,6 +142,41 @@ export default function Settings() {
           >
             Browse
           </Button>
+        </Box>
+        <Box sx={{ mt: 3 }}>
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            Documents
+          </Typography>
+          <Button
+            variant="outlined"
+            onClick={async () => {
+              const file = await open({
+                filters: [{ name: "PDF", extensions: ["pdf"] }],
+              });
+              if (typeof file === "string") {
+                addDoc(file);
+              }
+            }}
+          >
+            Add PDF
+          </Button>
+          <List>
+            {docs.map((d) => (
+              <ListItem
+                key={d.doc_id}
+                secondaryAction={
+                  <IconButton edge="end" onClick={() => removeDoc(d.doc_id)}>
+                    <TrashIcon width={20} />
+                  </IconButton>
+                }
+              >
+                <ListItemText
+                  primary={d.title || d.doc_id}
+                  secondary={d.pages ? `Pages: ${d.pages}` : undefined}
+                />
+              </ListItem>
+            ))}
+          </List>
         </Box>
         <FormControl fullWidth sx={{ mt: 3 }}>
           <InputLabel id="theme-label">Theme</InputLabel>

@@ -171,6 +171,96 @@ fn script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
         .join("lofi_gpu_hq.py")
 }
 
+fn pdf_tools_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
+    if let Ok(cwd) = std::env::current_dir() {
+        let dev = cwd.join("src-tauri").join("python").join("pdf_tools.py");
+        if dev.exists() {
+            return dev;
+        }
+    }
+    app.path()
+        .resource_dir()
+        .expect("resource dir")
+        .join("python")
+        .join("pdf_tools.py")
+}
+
+fn run_pdf_tool<R: Runtime>(app: &AppHandle<R>, args: &[&str]) -> Result<String, String> {
+    let py = conda_python();
+    if !py.exists() {
+        return Err(format!("Python not found at {}", py.display()));
+    }
+    let script = pdf_tools_path(app);
+    if !script.exists() {
+        return Err(format!("Script not found at {}", script.display()));
+    }
+    let output = PCommand::new(&py)
+        .arg(&script)
+        .args(args)
+        .output()
+        .map_err(|e| format!("Failed to start python: {e}"))?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!(
+            "Python exited with status {}:\n{}",
+            output.status, stderr
+        ));
+    }
+    Ok(String::from_utf8_lossy(&output.stdout).to_string())
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PdfDoc {
+    pub doc_id: String,
+    pub title: Option<String>,
+    pub pages: Option<u32>,
+    pub created: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PdfSearchHit {
+    pub doc_id: String,
+    pub page_range: [u32; 2],
+    pub text: String,
+    pub score: f32,
+}
+
+#[tauri::command]
+pub async fn pdf_add<R: Runtime>(app: AppHandle<R>, path: String) -> Result<Value, String> {
+    let out = run_pdf_tool(&app, &["add", &path])?;
+    serde_json::from_str(&out).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn pdf_remove<R: Runtime>(app: AppHandle<R>, doc_id: String) -> Result<(), String> {
+    let _ = run_pdf_tool(&app, &["remove", &doc_id])?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn pdf_list<R: Runtime>(app: AppHandle<R>) -> Result<Vec<PdfDoc>, String> {
+    let out = run_pdf_tool(&app, &["list"])?;
+    let v: Value = serde_json::from_str(&out).map_err(|e| e.to_string())?;
+    serde_json::from_value(v["documents"].clone()).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn pdf_search<R: Runtime>(
+    app: AppHandle<R>,
+    query: String,
+    k: Option<u32>,
+) -> Result<Vec<PdfSearchHit>, String> {
+    let mut args = vec!["search".to_string(), query];
+    if let Some(k) = k {
+        args.push("-k".into());
+        args.push(k.to_string());
+    }
+    let arg_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+    let out = run_pdf_tool(&app, &arg_refs)?;
+    let v: Value = serde_json::from_str(&out).map_err(|e| e.to_string())?;
+    serde_json::from_value(v["results"].clone()).map_err(|e| e.to_string())
+}
+
 /* ==============================
 Serde-mapped types (camelCase)
 ============================== */
@@ -468,13 +558,35 @@ pub async fn stop_ollama() -> Result<(), String> {
 }
 
 #[tauri::command]
-pub async fn general_chat(messages: Vec<ChatMessage>) -> Result<String, String> {
+pub async fn general_chat<R: Runtime>(
+    app: AppHandle<R>,
+    messages: Vec<ChatMessage>,
+) -> Result<String, String> {
+    let mut msgs = messages.clone();
+    let query = messages.last().map(|m| m.content.clone()).unwrap_or_default();
+    if !query.is_empty() {
+        if let Ok(results) = pdf_search(app.clone(), query, None).await {
+            if !results.is_empty() {
+                let mut ctx = String::from("Relevant documents:\n");
+                for r in &results {
+                    ctx.push_str(&format!(
+                        "- {} p.{}-{}: {}\n",
+                        r.doc_id, r.page_range[0], r.page_range[1], r.text
+                    ));
+                }
+                msgs.push(ChatMessage {
+                    role: "system".into(),
+                    content: ctx,
+                });
+            }
+        }
+    }
     let resp = ureq::post("http://127.0.0.1:11434/api/chat")
         .set("Content-Type", "application/json")
         .send_json(ureq::json!({
           "model": "gpt-oss:20b",
           "stream": false,
-          "messages": messages,
+          "messages": msgs,
         }))
         .map_err(|e| e.to_string())?;
 
