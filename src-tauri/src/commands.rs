@@ -450,7 +450,7 @@ fn blender_path() -> PathBuf {
 Ollama general chat
 ============================== */
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ChatMessage {
     pub role: String,
     pub content: String,
@@ -563,7 +563,10 @@ pub async fn general_chat<R: Runtime>(
     messages: Vec<ChatMessage>,
 ) -> Result<String, String> {
     let mut msgs = messages.clone();
-    let query = messages.last().map(|m| m.content.clone()).unwrap_or_default();
+    let query = messages
+        .last()
+        .map(|m| m.content.clone())
+        .unwrap_or_default();
     if !query.is_empty() {
         if let Ok(results) = pdf_search(app.clone(), query, None).await {
             if !results.is_empty() {
