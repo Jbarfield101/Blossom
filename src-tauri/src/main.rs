@@ -14,7 +14,6 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::lofi_generate_gpu,
-            commands::lofi_generate_gpu_stream,
             commands::run_lofi_song,
             // ComfyUI:
             commands::comfy_status,

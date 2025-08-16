@@ -177,24 +177,6 @@ fn script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
         .join("lofi_gpu_hq.py")
 }
 
-/// Resolve path to the stream script.
-fn script_stream_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
-    if let Ok(cwd) = std::env::current_dir() {
-        let dev = cwd
-            .join("src-tauri")
-            .join("python")
-            .join("lofi_gpu_stream.py");
-        if dev.exists() {
-            return dev;
-        }
-    }
-    app.path()
-        .resource_dir()
-        .expect("resource dir")
-        .join("python")
-        .join("lofi_gpu_stream.py")
-}
-
 /* ==============================
 Serde-mapped types (camelCase)
 ============================== */
@@ -274,107 +256,6 @@ pub async fn lofi_generate_gpu<R: Runtime>(
         return Err("Python returned no path".into());
     }
     Ok(stdout)
-}
-
-/// Streaming generate (emits "lofi_progress" events). Returns the final wav path.
-#[tauri::command]
-pub async fn lofi_generate_gpu_stream<R: Runtime>(
-    window: Window<R>,
-    app: AppHandle<R>,
-    prompt: String,
-    total_seconds: u32,
-    bpm: Option<u32>,
-    style: Option<String>,
-    seed: Option<u64>,
-    out_dir: Option<String>,
-) -> Result<String, String> {
-    let py = conda_python();
-    if !py.exists() {
-        return Err(format!("Python not found at {}", py.display()));
-    }
-
-    let script = script_stream_path(&app);
-    if !script.exists() {
-        return Err(format!("Script not found at {}", script.display()));
-    }
-
-    // Build the python process
-    let mut cmd = PCommand::new(py);
-    cmd.arg("-u")
-        .arg(&script)
-        .arg("--prompt")
-        .arg(&prompt)
-        .arg("--total-seconds")
-        .arg(total_seconds.to_string())
-        .arg("--seed")
-        .arg(seed.unwrap_or(42).to_string());
-
-    if let Some(b) = bpm {
-        cmd.arg("--bpm").arg(b.to_string());
-    }
-    if let Some(s) = style {
-        if !s.is_empty() {
-            cmd.arg("--style").arg(s);
-        }
-    }
-
-    let mut child = cmd
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| format!("Failed to start python: {e}"))?;
-
-    // Read line-by-line from stdout; emit progress; capture FILE path
-    let mut stdout = BufReader::new(child.stdout.take().unwrap());
-    let mut final_path: Option<String> = None;
-
-    let mut line = String::new();
-    loop {
-        line.clear();
-        let read = stdout.read_line(&mut line).map_err(|e| e.to_string())?;
-        if read == 0 {
-            break;
-        }
-        let t = line.trim();
-
-        if let Some(rest) = t.strip_prefix("PROG ") {
-            if let Ok(p) = rest.parse::<u8>() {
-                let _ = window.emit("lofi_progress", p);
-            }
-        } else if let Some(rest) = t.strip_prefix("FILE ") {
-            final_path = Some(rest.to_string());
-        } else {
-            let _ = window.emit("lofi_progress", t.to_string());
-        }
-    }
-
-    // Drain stderr if needed
-    let mut stderr_s = String::new();
-    if let Some(mut e) = child.stderr.take() {
-        let _ = e.read_to_string(&mut stderr_s);
-    }
-
-    let status = child.wait().map_err(|e| e.to_string())?;
-    if !status.success() {
-        return Err(format!("Python exited with {status}: {stderr_s}"));
-    }
-
-    let mut path = match final_path {
-        Some(p) => PathBuf::from(p),
-        None => return Err("No FILE line received from python".into()),
-    };
-
-    if let Some(dir) = out_dir {
-        let dir_path = PathBuf::from(&dir);
-        fs::create_dir_all(&dir_path).map_err(|e| e.to_string())?;
-        if let Some(name) = path.file_name() {
-            let target = dir_path.join(name);
-            fs::rename(&path, &target).map_err(|e| e.to_string())?;
-            path = target;
-        }
-    }
-
-    Ok(path.to_string_lossy().to_string())
 }
 
 /// Run full-song generation based on a structured spec (typed, camelCase-friendly).
