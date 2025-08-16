@@ -1,7 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-type ModuleKey = 'objects' | 'music' | 'calendar' | 'comfy' | 'assistant' | 'laser';
+type ModuleKey =
+  | 'objects'
+  | 'music'
+  | 'calendar'
+  | 'comfy'
+  | 'assistant'
+  | 'laser'
+  | 'dnd';
 
 type ModulesState = Record<ModuleKey, boolean>;
 
@@ -20,6 +27,7 @@ export const useSettings = create<SettingsState>()(
         comfy: true,
         assistant: true,
         laser: true,
+        dnd: true,
       },
       toggleModule: (key) =>
         set((state) => ({
