@@ -30,18 +30,61 @@ let step = 0;
 let bassStep = 0;
 let chordStep = 0;
 
-const chords = [
-  ['C4', 'E4', 'G4', 'B4'],
-  ['F4', 'A4', 'C5', 'E5'],
-  ['A3', 'C4', 'E4', 'G4'],
-  ['G3', 'B3', 'D4', 'F4'],
+let chords: string[][] = [];
+
+type ChordType = 'maj7' | 'min7' | 'dom7';
+
+function buildChord(root: string, type: ChordType) {
+  const intervals =
+    type === 'maj7'
+      ? [0, 4, 7, 11]
+      : type === 'min7'
+        ? [0, 3, 7, 10]
+        : [0, 4, 7, 10];
+  return intervals.map((i) => Tone.Frequency(root).transpose(i).toNote());
+}
+
+const progressionPatterns: number[][] = [
+  [1, 4, 6, 5],
+  [2, 5, 1, 6],
+  [1, 5, 4, 5],
 ];
 
-function makePattern(seed: number) {
+function chordFromDegree(degree: number, key: string): string[] {
+  const majorScale = [0, 2, 4, 5, 7, 9, 11];
+  const root = Tone.Frequency(`${key}4`).transpose(majorScale[degree - 1]).toNote();
+  let type: ChordType;
+  switch (degree) {
+    case 1:
+    case 4:
+      type = 'maj7';
+      break;
+    case 5:
+      type = 'dom7';
+      break;
+    default:
+      type = 'min7';
+      break;
+  }
+  return buildChord(root, type);
+}
+
+function generateProgression(seed: number, key: string) {
   const rnd = mulberry32(seed);
-  const scale = ['C4', 'D#4', 'F4', 'G4', 'A#4'];
-  melody = Array.from({ length: 8 }, () => scale[Math.floor(rnd() * scale.length)]);
-  bassLine = melody.map((n) => Tone.Frequency(n).transpose(-12).toNote());
+  const pattern = progressionPatterns[Math.floor(rnd() * progressionPatterns.length)];
+  chords = pattern.map((deg) => chordFromDegree(deg, key));
+}
+
+function makePattern(seed: number, key: string) {
+  const rnd = mulberry32(seed);
+  generateProgression(seed, key);
+  melody = [];
+  chords.forEach((ch) => {
+    for (let i = 0; i < 4; i++) {
+      melody.push(ch[Math.floor(rnd() * ch.length)]);
+    }
+  });
+  bassLine = chords.map((ch) => Tone.Frequency(ch[0]).transpose(-12).toNote());
   step = 0;
   bassStep = 0;
   chordStep = 0;
@@ -112,17 +155,19 @@ type Actions = {
   stop: () => void;
   setBpm: (bpm: number) => void;
   setSeed: (seed: number) => void;
+  setKey: (key: string) => void;
 };
 
 export const useLofi = create<LofiState & Actions>((set, get) => ({
   isPlaying: false,
   bpm: 80,
   seed: 0,
+  key: 'C',
 
   play: async () => {
     init();
     const s = get().seed || Math.floor(Math.random() * 1_000_000);
-    makePattern(s);
+    makePattern(s, get().key);
     set({ seed: s });
     await Tone.start();
     loop?.start(0);
@@ -142,7 +187,12 @@ export const useLofi = create<LofiState & Actions>((set, get) => ({
   },
 
   setSeed: (seed) => {
-    makePattern(seed);
+    makePattern(seed, get().key);
     set({ seed });
+  },
+
+  setKey: (key) => {
+    makePattern(get().seed, key);
+    set({ key });
   },
 }));
