@@ -10,7 +10,23 @@ import pdfplumber
 import pytesseract
 
 
-BASE_DIR = Path(__file__).resolve().parents[2] / "Knowledge"
+def _base_dir() -> Path:
+    env_dir = os.environ.get("BLOSSOM_OUTPUT_DIR")
+    if env_dir:
+        return Path(env_dir)
+    settings_file = Path.home() / ".blossom_settings.json"
+    if settings_file.exists():
+        try:
+            data = json.loads(settings_file.read_text())
+            out = data.get("output_folder")
+            if out:
+                return Path(out)
+        except Exception:
+            pass
+    return Path(__file__).resolve().parents[2] / "Knowledge"
+
+
+BASE_DIR = _base_dir()
 PDF_DIR = BASE_DIR / "PDFs"
 INDEX_DIR = BASE_DIR / "Index"
 EMBED_DIM = 512
