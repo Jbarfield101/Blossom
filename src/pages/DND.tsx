@@ -12,7 +12,7 @@ const features: Feature[] = [
   { label: "Journal" },
   { label: "NPC Maker", path: "/dnd/npc-maker" },
   { label: "World Builder", path: "/dnd/world-builder" },
-  { label: "NPC List" },
+  { label: "NPC List", path: "/dnd/npc-list" },
 ];
 
 export default function DND() {
