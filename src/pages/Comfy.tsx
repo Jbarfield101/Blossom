@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useComfy } from "../features/comfy/useComfy";
+import PromptManager from "../components/PromptManager";
 
 export default function Comfy() {
   const [running, setRunning] = useState(false);
@@ -77,6 +78,9 @@ export default function Comfy() {
         </div>
       </div>
 
+      <div style={{ marginBottom: 12 }}>
+        <PromptManager />
+      </div>
       <div style={styles.grid}>
         <div style={styles.left}>
           {running && pingOk ? (
