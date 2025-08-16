@@ -666,6 +666,36 @@ def calculate_mix_levels(mood, section_name):
     return levels
 
 
+def auto_balance_levels(busses: Dict[str, np.ndarray], levels: Dict[str, float]) -> Dict[str, float]:
+    """Auto-balance mix levels by analyzing RMS of each bus.
+
+    Parameters
+    ----------
+    busses: dict
+        Mapping of bus name (e.g. ``"drum"``) to its audio buffer.
+    levels: dict
+        Initial gain levels keyed like ``"<name>_gain"``.
+    """
+    rms_vals = {}
+    for name, buf in busses.items():
+        if buf is None or len(buf) == 0:
+            continue
+        rms_vals[name] = float(np.sqrt(np.mean(np.square(buf))))
+    if not rms_vals:
+        return levels
+
+    reference = float(np.median(list(rms_vals.values())))
+    balanced = levels.copy()
+    for name, rms in rms_vals.items():
+        key = f"{name}_gain"
+        if key not in balanced or rms <= 0:
+            continue
+        adj = reference / rms
+        adj = float(np.clip(adj, 0.5, 2.0))
+        balanced[key] *= adj
+    return balanced
+
+
 def _render_melody(prog_seq, key_letter, bpm, dur_ms, rng):
     """Simple lead line following the key and chord progression."""
 
@@ -992,6 +1022,17 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
     levels = calculate_mix_levels(mood, section_name)
     if "piano" in instrs:
         levels["key_gain"] *= 1.08
+
+    busses = {
+        "drum": drums,
+        "hat": hats,
+        "key": keys,
+        "pad": pads,
+        "melody": melody,
+        "bass": bass,
+    }
+    levels = auto_balance_levels(busses, levels)
+
     drum_gain = levels["drum_gain"]
     hat_gain = levels["hat_gain"]
     key_gain = levels["key_gain"]
