@@ -1194,9 +1194,12 @@ def main():
         amb_lvl = 0.5
 
     try:
-        limiter_drive = float(spec.get("limiter_drive", 1.02))
+        limiter_drive = float(
+            spec.get("limiter_drive", spec.get("limiterDrive", 1.02))
+        )
     except Exception:
         limiter_drive = 1.02
+    limiter_drive = max(0.0, limiter_drive)
 
     motif = {
         "mood": spec.get("mood") or [],

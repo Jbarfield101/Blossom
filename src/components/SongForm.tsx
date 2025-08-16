@@ -19,6 +19,7 @@ type SongSpec = {
   ambienceLevel: number; // 0..1
   seed: number;
   variety: number; // 0..100
+  limiterDrive?: number;
   drum_pattern?: string;
   // NEW HQ feature flags (read by lofi_gpu_hq.py)
   hq_stereo?: boolean;
@@ -172,6 +173,7 @@ export default function SongForm() {
   const [hqReverb, setHqReverb] = useState(true);
   const [hqSidechain, setHqSidechain] = useState(true);
   const [hqChorus, setHqChorus] = useState(true);
+  const [limiterDrive, setLimiterDrive] = useState(1.02);
 
   // UI state
   const [busy, setBusy] = useState(false);
@@ -294,6 +296,7 @@ export default function SongForm() {
   function makeSpecForIndex(i: number): SongSpec {
     const amb = Math.max(0, Math.min(1, ambienceLevel));
     const varPct = Math.max(0, Math.min(100, variety));
+    const drive = Math.max(0, limiterDrive);
 
     return {
       title: buildTitle(i),
@@ -307,6 +310,7 @@ export default function SongForm() {
       ambienceLevel: amb,
       seed: pickSeed(i),
       variety: varPct,
+      limiterDrive: drive,
       drum_pattern: drumPattern === "random" ? undefined : drumPattern,
       // pass-through HQ flags
       hq_stereo: hqStereo,
@@ -663,6 +667,18 @@ export default function SongForm() {
             <div style={S.toggle}>
               <input type="checkbox" checked={hqChorus} onChange={(e) => setHqChorus(e.target.checked)} />
               <span style={S.small}>Chorus</span>
+            </div>
+            <div style={{ marginTop: 8 }}>
+              <label style={S.label}>Limiter Drive</label>
+              <input
+                type="number"
+                min={0}
+                step={0.01}
+                value={limiterDrive}
+                onChange={(e) => setLimiterDrive(Number(e.target.value))}
+                style={{ ...S.input, width: "100%" }}
+              />
+              <div style={S.small}>{limiterDrive.toFixed(2)}× soft clip</div>
             </div>
             <div style={{ ...S.small, marginTop: 6 }}>These map to engine flags in <code>lofi_gpu_hq.py</code>.</div>
           </div>
