@@ -16,12 +16,15 @@ import { useCalendar } from "../features/calendar/useCalendar";
 import { Theme, useTheme } from "../features/theme/ThemeContext";
 import { useSettings } from "../features/settings/useSettings";
 import { useUsers } from "../features/users/useUsers";
+import { useComfy } from "../features/comfy/useComfy";
+import { open } from "@tauri-apps/plugin-dialog";
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
   const { events, selectedCountdownId, setSelectedCountdownId } = useCalendar();
   const { modules, toggleModule } = useSettings();
   const { users, currentUserId, addUser, switchUser } = useUsers();
+  const { folder: comfyFolder, setFolder: setComfyFolder } = useComfy();
   const [newUser, setNewUser] = useState("");
   const userList = Object.values(users);
   const countdownEvents = events.filter(
@@ -94,6 +97,24 @@ export default function Settings() {
               label={label}
             />
           ))}
+        </Box>
+        <Box sx={{ mt: 3 }}>
+          <TextField
+            label="ComfyUI Folder"
+            value={comfyFolder}
+            onChange={(e) => setComfyFolder(e.target.value)}
+            fullWidth
+          />
+          <Button
+            variant="outlined"
+            sx={{ mt: 1 }}
+            onClick={async () => {
+              const dir = await open({ directory: true });
+              if (typeof dir === "string") setComfyFolder(dir);
+            }}
+          >
+            Browse
+          </Button>
         </Box>
         <FormControl fullWidth sx={{ mt: 3 }}>
           <InputLabel id="theme-label">Theme</InputLabel>
