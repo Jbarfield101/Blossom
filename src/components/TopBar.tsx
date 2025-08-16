@@ -1,11 +1,13 @@
 import { IconButton } from "@mui/material";
+import type { SxProps } from "@mui/material";
+import { fixedIconButtonSx } from "./sx";
 import { FaHome, FaWrench } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 
 export default function TopBar() {
   const nav = useNavigate();
   const { pathname } = useLocation();
-  const activeStyles = (p: string) =>
+  const activeSx = (p: string): SxProps =>
     pathname === p
       ? { color: "#000", backgroundColor: "#fff", borderRadius: 4 }
       : { color: "white" };
@@ -14,7 +16,7 @@ export default function TopBar() {
     <>
       <IconButton
         onClick={() => nav("/")}
-        style={{ position: "fixed", top: 12, left: 12, zIndex: 2, ...activeStyles("/") }}
+        sx={{ ...fixedIconButtonSx, left: 12, ...activeSx("/") }}
         aria-label="Home"
         aria-current={pathname === "/" ? "page" : undefined}
       >
@@ -23,7 +25,7 @@ export default function TopBar() {
 
       <IconButton
         onClick={() => nav("/settings")}
-        style={{ position: "fixed", top: 12, right: 12, zIndex: 2, ...activeStyles("/settings") }}
+        sx={{ ...fixedIconButtonSx, right: 12, ...activeSx("/settings") }}
         aria-label="Settings"
         aria-current={pathname === "/settings" ? "page" : undefined}
       >

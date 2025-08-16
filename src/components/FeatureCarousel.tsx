@@ -1,7 +1,7 @@
 
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { IconButton } from "@mui/material";
+import { IconButton, Box } from "@mui/material";
 import {
   FaMusic,
   FaCubes,
@@ -13,6 +13,13 @@ import {
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useSettings } from "../features/settings/useSettings";
+import {
+  carouselContainerSx,
+  carouselItemsWrapperSx,
+  carouselItemSx,
+  carouselIconButtonSx,
+  carouselLabelSx,
+} from "./sx";
 
 import type { ModuleKey } from "../features/settings/useSettings";
 
@@ -65,74 +72,31 @@ export default function FeatureCarousel({
   const SCALE_MID = 1.05; // center scale
   const SCALE_SIDE = 0.7; // side scale
 
-  return (
-    <div
-      onWheel={onWheel}
-      style={{
-        height: "100vh",
-        display: "grid",
-        placeItems: "center",
-        position: "relative",
-        overflow: "hidden",
-        zIndex: 1
-      }}
-    >
-      {/* items */}
-      <div style={{ position: "relative", width: "100%", height: 240 }}>
-        {len > 0 && [-2, -1, 0, 1, 2].map((offset) => {
-          const idx = mod(i + offset, len);
-          const it = enabled[idx];
-          const center = offset === 0;
-          const x = offset * GAP;
+    return (
+      <Box onWheel={onWheel} sx={carouselContainerSx}>
+        {/* items */}
+        <Box sx={carouselItemsWrapperSx}>
+          {len > 0 && [-2, -1, 0, 1, 2].map((offset) => {
+            const idx = mod(i + offset, len);
+            const it = enabled[idx];
+            const center = offset === 0;
 
-          return (
-            <div
-              key={`${idx}-${offset}`}
-              style={{
-                position: "absolute",
-                left: "50%",
-                top: "50%",
-                transform: `translate(-50%, -50%) translateX(${x}px) scale(${center ? SCALE_MID : SCALE_SIDE})`,
-                transition: "transform 280ms ease, opacity 280ms ease, color 180ms ease",
-                textAlign: "center",
-                opacity: center ? 1 : 0.6,
-                userSelect: "none",
-                width: 180,
-              }}
-            >
-              <IconButton
-                sx={{
-                  fontSize: "3rem",
-                  color: center ? ACCENT : "white",
-                  boxShadow: center ? `0 0 20px 6px ${ACCENT}55` : "none",
-                  transition:
-                    "transform 280ms ease, color 180ms ease, box-shadow 180ms ease",
-                  "&:hover": {
-                    color: ACCENT,
-                    transform: "scale(1.05)",
-                    boxShadow: `0 0 20px 6px ${ACCENT}55`,
-                  },
-                }}
-                onMouseEnter={() => onHoverColor(`${ACCENT}55`)}
-                onMouseLeave={() => onHoverColor("rgba(255,255,255,0.22)")}
-                onClick={() => (center ? nav(it.path) : setI(idx))}
-                aria-label={it.label}
-              >
-                {it.icon}
-              </IconButton>
-              <div
-                style={{
-                  color: center ? ACCENT : "white",
-                  marginTop: 12,
-                  fontSize: 14,
-                }}
-              >
-                {it.label}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
+            return (
+              <Box key={`${idx}-${offset}`} sx={carouselItemSx(offset, center, GAP, SCALE_MID, SCALE_SIDE)}>
+                <IconButton
+                  sx={carouselIconButtonSx(center, ACCENT)}
+                  onMouseEnter={() => onHoverColor(`${ACCENT}55`)}
+                  onMouseLeave={() => onHoverColor("rgba(255,255,255,0.22)")}
+                  onClick={() => (center ? nav(it.path) : setI(idx))}
+                  aria-label={it.label}
+                >
+                  {it.icon}
+                </IconButton>
+                <Box sx={carouselLabelSx(center, ACCENT)}>{it.label}</Box>
+              </Box>
+            );
+          })}
+        </Box>
+      </Box>
+    );
 }
