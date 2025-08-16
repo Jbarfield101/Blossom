@@ -6,13 +6,6 @@ mod commands;
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .setup(|app| {
-            let handle = app.handle().clone();
-            tauri::async_runtime::spawn(async move {
-                let _ = commands::fetch_big_brother_summary(handle, Some(true)).await;
-            });
-            Ok(())
-        })
         .invoke_handler(tauri::generate_handler![
             commands::lofi_generate_gpu,
             commands::run_lofi_song,
@@ -31,9 +24,6 @@ fn main() {
             commands::pdf_search,
             // Blender:
             commands::blender_run_script,
-            // News scraping:
-            commands::fetch_big_brother_news,
-            commands::fetch_big_brother_summary,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
