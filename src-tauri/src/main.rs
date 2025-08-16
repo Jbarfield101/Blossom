@@ -31,6 +31,7 @@ fn main() {
             commands::pdf_search,
             // Blender:
             commands::blender_run_script,
+            commands::save_npc,
             // News scraping:
             commands::fetch_big_brother_news,
             commands::fetch_big_brother_summary,
