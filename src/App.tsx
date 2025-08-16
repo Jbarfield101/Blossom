@@ -10,6 +10,7 @@ import Comfy from "./pages/Comfy";
 import Assistant from "./pages/Assistant";
 import GeneralChat from "./pages/GeneralChat";
 import BigBrotherUpdates from "./pages/BigBrotherUpdates";
+import WorldBuilder from "./pages/WorldBuilder";
 import Laser from "./pages/Laser";
 import Lofi from "./pages/Lofi";
 import NotFound from "./pages/NotFound";
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="/comfy" element={<Comfy />} />
         <Route path="/assistant" element={<Assistant />} />
         <Route path="/assistant/general-chat" element={<GeneralChat />} />
+        <Route path="/assistant/world-builder" element={<WorldBuilder />} />
         <Route
           path="/assistant/big-brother-updates"
           element={<BigBrotherUpdates />}
