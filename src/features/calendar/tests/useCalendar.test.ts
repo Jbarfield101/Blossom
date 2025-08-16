@@ -34,6 +34,21 @@ describe('useCalendar store', () => {
     expect(useCalendar.getState().events[0].title).toBe('New');
   });
 
+  it('rejects invalid updates', () => {
+    useCalendar.getState().addEvent({
+      title: 'Original',
+      date: '2024-01-01T09:00',
+      end: '2024-01-01T10:00',
+      tags: [],
+      status: 'scheduled',
+      hasCountdown: false,
+    });
+    const id = useCalendar.getState().events[0].id;
+    useCalendar.getState().updateEvent(id, { end: '2024-01-01T08:00' });
+    const event = useCalendar.getState().events[0];
+    expect(event.end).toBe('2024-01-01T10:00');
+  });
+
   it('removes an event', () => {
     useCalendar.getState().addEvent({
       title: 'Remove',

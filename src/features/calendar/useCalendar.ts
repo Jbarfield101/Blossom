@@ -43,8 +43,15 @@ export const useCalendar = create<CalendarState & Actions>()(
         },
         updateEvent: (id, patch) =>
           set((state) => {
-            const events = state.events.map((ev) =>
-              ev.id === id ? { ...ev, ...patch } : ev
+            const ev = state.events.find((e) => e.id === id);
+            if (!ev) return state;
+            if (patch.end !== undefined) {
+              const start = new Date(patch.date ?? ev.date).getTime();
+              const end = new Date(patch.end).getTime();
+              if (end <= start) return state;
+            }
+            const events = state.events.map((e) =>
+              e.id === id ? { ...e, ...patch } : e
             );
             return { events, tagTotals: recalc(events) };
           }),
