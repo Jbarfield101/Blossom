@@ -450,7 +450,7 @@ fn blender_path() -> PathBuf {
 Ollama general chat
 ============================== */
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ChatMessage {
     pub role: String,
     pub content: String,
