@@ -28,6 +28,23 @@ type SongSpec = {
   limiter_drive?: number;
 };
 
+type TemplateSpec = {
+  structure: Section[];
+  bpm: number;
+  key: string;
+  mood: string[];
+  instruments: string[];
+  ambience: string[];
+  drumPattern: string;
+  variety: number;
+  hqStereo: boolean;
+  hqReverb: boolean;
+  hqSidechain: boolean;
+  hqChorus: boolean;
+  limiterDrive: number;
+  bpmJitterPct: number;
+};
+
 type Job = {
   id: string;
   title: string;
@@ -60,55 +77,144 @@ const DRUM_PATS = [
   "swing",
   "half_time_shuffle",
 ];
-
-const PRESET_TEMPLATES: Record<string, Section[]> = {
-  "Classic Lofi": [
-    { name: "Intro", bars: 4, chords: [] },
-    { name: "A", bars: 8, chords: [] },
-    { name: "B", bars: 8, chords: [] },
-    { name: "A", bars: 8, chords: [] },
-    { name: "B", bars: 8, chords: [] },
-    { name: "Outro", bars: 4, chords: [] },
-  ],
-  "Study Session": [
-    { name: "Intro", bars: 2, chords: [] },
-    { name: "A", bars: 16, chords: [] },
-    { name: "B", bars: 16, chords: [] },
-    { name: "A", bars: 16, chords: [] },
-    { name: "C", bars: 8, chords: [] },
-    { name: "Outro", bars: 2, chords: [] },
-  ],
-  "Jazz Cafe": [
-    { name: "Intro", bars: 8, chords: [] },
-    { name: "A", bars: 12, chords: [] },
-    { name: "B", bars: 12, chords: [] },
-    { name: "Solo", bars: 8, chords: [] },
-    { name: "A", bars: 12, chords: [] },
-    { name: "Outro", bars: 8, chords: [] },
-  ],
-  "Midnight Drive": [
-    { name: "Intro", bars: 4, chords: [] },
-    { name: "Verse", bars: 16, chords: [] },
-    { name: "Chorus", bars: 8, chords: [] },
-    { name: "Verse", bars: 16, chords: [] },
-    { name: "Chorus", bars: 8, chords: [] },
-    { name: "Bridge", bars: 8, chords: [] },
-    { name: "Outro", bars: 4, chords: [] },
-  ],
-  "Rain & Coffee": [
-    { name: "Ambient", bars: 4, chords: [] },
-    { name: "A", bars: 8, chords: [] },
-    { name: "A", bars: 8, chords: [] },
-    { name: "B", bars: 12, chords: [] },
-    { name: "A", bars: 8, chords: [] },
-    { name: "Ambient", bars: 4, chords: [] },
-  ],
-  "Quick Beat": [
-    { name: "Intro", bars: 2, chords: [] },
-    { name: "A", bars: 4, chords: [] },
-    { name: "B", bars: 4, chords: [] },
-    { name: "Outro", bars: 2, chords: [] },
-  ],
+const PRESET_TEMPLATES: Record<string, TemplateSpec> = {
+  "Classic Lofi": {
+    structure: [
+      { name: "Intro", bars: 4, chords: [] },
+      { name: "A", bars: 8, chords: [] },
+      { name: "B", bars: 8, chords: [] },
+      { name: "A", bars: 8, chords: [] },
+      { name: "B", bars: 8, chords: [] },
+      { name: "Outro", bars: 4, chords: [] },
+    ],
+    bpm: 80,
+    key: "Auto",
+    mood: ["calm", "cozy", "nostalgic"],
+    instruments: ["rhodes", "nylon guitar", "upright bass"],
+    ambience: ["rain"],
+    drumPattern: "laidback",
+    variety: 45,
+    hqStereo: true,
+    hqReverb: true,
+    hqSidechain: true,
+    hqChorus: true,
+    limiterDrive: 1.02,
+    bpmJitterPct: 5,
+  },
+  "Study Session": {
+    structure: [
+      { name: "Intro", bars: 2, chords: [] },
+      { name: "A", bars: 16, chords: [] },
+      { name: "B", bars: 16, chords: [] },
+      { name: "A", bars: 16, chords: [] },
+      { name: "C", bars: 8, chords: [] },
+      { name: "Outro", bars: 2, chords: [] },
+    ],
+    bpm: 75,
+    key: "C",
+    mood: ["calm", "cozy"],
+    instruments: ["electric piano", "upright bass", "pads"],
+    ambience: ["cafe"],
+    drumPattern: "boom_bap_A",
+    variety: 30,
+    hqStereo: true,
+    hqReverb: true,
+    hqSidechain: true,
+    hqChorus: true,
+    limiterDrive: 1.01,
+    bpmJitterPct: 3,
+  },
+  "Jazz Cafe": {
+    structure: [
+      { name: "Intro", bars: 8, chords: [] },
+      { name: "A", bars: 12, chords: [] },
+      { name: "B", bars: 12, chords: [] },
+      { name: "Solo", bars: 8, chords: [] },
+      { name: "A", bars: 12, chords: [] },
+      { name: "Outro", bars: 8, chords: [] },
+    ],
+    bpm: 90,
+    key: "F",
+    mood: ["cozy", "nostalgic"],
+    instruments: ["piano", "upright bass", "pads"],
+    ambience: ["cafe"],
+    drumPattern: "swing",
+    variety: 20,
+    hqStereo: true,
+    hqReverb: true,
+    hqSidechain: true,
+    hqChorus: true,
+    limiterDrive: 1.0,
+    bpmJitterPct: 2,
+  },
+  "Midnight Drive": {
+    structure: [
+      { name: "Intro", bars: 4, chords: [] },
+      { name: "Verse", bars: 16, chords: [] },
+      { name: "Chorus", bars: 8, chords: [] },
+      { name: "Verse", bars: 16, chords: [] },
+      { name: "Chorus", bars: 8, chords: [] },
+      { name: "Bridge", bars: 8, chords: [] },
+      { name: "Outro", bars: 4, chords: [] },
+    ],
+    bpm: 85,
+    key: "D",
+    mood: ["melancholy", "nostalgic"],
+    instruments: ["clean electric guitar", "upright bass", "pads"],
+    ambience: ["rain"],
+    drumPattern: "half_time",
+    variety: 50,
+    hqStereo: true,
+    hqReverb: true,
+    hqSidechain: true,
+    hqChorus: true,
+    limiterDrive: 1.2,
+    bpmJitterPct: 4,
+  },
+  "Rain & Coffee": {
+    structure: [
+      { name: "Ambient", bars: 4, chords: [] },
+      { name: "A", bars: 8, chords: [] },
+      { name: "A", bars: 8, chords: [] },
+      { name: "B", bars: 12, chords: [] },
+      { name: "A", bars: 8, chords: [] },
+      { name: "Ambient", bars: 4, chords: [] },
+    ],
+    bpm: 72,
+    key: "G",
+    mood: ["calm", "nostalgic"],
+    instruments: ["rhodes", "piano", "pads"],
+    ambience: ["rain", "cafe"],
+    drumPattern: "laidback",
+    variety: 40,
+    hqStereo: true,
+    hqReverb: true,
+    hqSidechain: true,
+    hqChorus: true,
+    limiterDrive: 1.05,
+    bpmJitterPct: 6,
+  },
+  "Quick Beat": {
+    structure: [
+      { name: "Intro", bars: 2, chords: [] },
+      { name: "A", bars: 4, chords: [] },
+      { name: "B", bars: 4, chords: [] },
+      { name: "Outro", bars: 2, chords: [] },
+    ],
+    bpm: 92,
+    key: "A",
+    mood: ["cozy"],
+    instruments: ["rhodes", "upright bass"],
+    ambience: ["cafe"],
+    drumPattern: "boom_bap_B",
+    variety: 60,
+    hqStereo: true,
+    hqReverb: true,
+    hqSidechain: true,
+    hqChorus: false,
+    limiterDrive: 1.1,
+    bpmJitterPct: 8,
+  },
 };
 
 const SONG_TEMPLATES = PRESET_TEMPLATES;
@@ -129,22 +235,12 @@ export default function SongForm() {
   ]);
   const [ambience, setAmbience] = useState<string[]>(["rain"]);
   const [ambienceLevel, setAmbienceLevel] = useState(0.5);
-  const [templates, setTemplates] = useState<Record<string, Section[]>>(() => {
+  const [templates, setTemplates] = useState<Record<string, TemplateSpec>>(() => {
     const stored = localStorage.getItem("songTemplates");
     if (stored) {
       try {
-        const parsed = JSON.parse(stored);
-        const sanitized = Object.fromEntries(
-          Object.entries(parsed).map(([k, arr]) => [
-            k,
-            (arr as any[]).map((s) => ({
-              name: s.name,
-              bars: s.bars,
-              chords: s.chords || [],
-            })),
-          ])
-        );
-        return { ...PRESET_TEMPLATES, ...sanitized };
+        const parsed = JSON.parse(stored) as Record<string, TemplateSpec>;
+        return { ...PRESET_TEMPLATES, ...parsed };
       } catch {
         return PRESET_TEMPLATES;
       }
@@ -152,9 +248,9 @@ export default function SongForm() {
     return PRESET_TEMPLATES;
   });
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
-  const [structure, setStructure] = useState<Section[]>(() => [
-    ...PRESET_TEMPLATES["Classic Lofi"],
-  ]);
+  const [structure, setStructure] = useState<Section[]>(() =>
+    PRESET_TEMPLATES["Classic Lofi"].structure.map((s) => ({ ...s }))
+  );
   const [newTemplateName, setNewTemplateName] = useState("");
 
   // VARIATION / BATCH
@@ -475,7 +571,21 @@ export default function SongForm() {
               const templateName = e.target.value;
               setSelectedTemplate(templateName);
               if (templateName && SONG_TEMPLATES[templateName]) {
-                setStructure(SONG_TEMPLATES[templateName]);
+                const tpl = SONG_TEMPLATES[templateName];
+                setStructure(tpl.structure.map((s) => ({ ...s })));
+                setBpm(tpl.bpm);
+                setKey(tpl.key);
+                setMood(tpl.mood);
+                setInstruments(tpl.instruments);
+                setAmbience(tpl.ambience);
+                setDrumPattern(tpl.drumPattern);
+                setVariety(tpl.variety);
+                setHqStereo(tpl.hqStereo);
+                setHqReverb(tpl.hqReverb);
+                setHqSidechain(tpl.hqSidechain);
+                setHqChorus(tpl.hqChorus);
+                setLimiterDrive(tpl.limiterDrive);
+                setBpmJitterPct(tpl.bpmJitterPct);
               }
             }}
             style={{ ...S.input, padding: "8px 12px" }}
@@ -540,7 +650,21 @@ export default function SongForm() {
                 const name = e.target.value;
                 setSelectedTemplate(name);
                 if (name && templates[name]) {
-                  setStructure([...templates[name]]);
+                  const tpl = templates[name];
+                  setStructure(tpl.structure.map((s) => ({ ...s })));
+                  setBpm(tpl.bpm);
+                  setKey(tpl.key);
+                  setMood(tpl.mood);
+                  setInstruments(tpl.instruments);
+                  setAmbience(tpl.ambience);
+                  setDrumPattern(tpl.drumPattern);
+                  setVariety(tpl.variety);
+                  setHqStereo(tpl.hqStereo);
+                  setHqReverb(tpl.hqReverb);
+                  setHqSidechain(tpl.hqSidechain);
+                  setHqChorus(tpl.hqChorus);
+                  setLimiterDrive(tpl.limiterDrive);
+                  setBpmJitterPct(tpl.bpmJitterPct);
                 }
               }}
               style={{ ...S.input, padding: "8px 12px" }}
@@ -563,8 +687,24 @@ export default function SongForm() {
               onClick={() => {
                 const nm = newTemplateName.trim();
                 if (!nm) return;
+                const tpl: TemplateSpec = {
+                  structure: structure.map((s) => ({ ...s })),
+                  bpm,
+                  key,
+                  mood,
+                  instruments,
+                  ambience,
+                  drumPattern,
+                  variety,
+                  hqStereo,
+                  hqReverb,
+                  hqSidechain,
+                  hqChorus,
+                  limiterDrive,
+                  bpmJitterPct,
+                };
                 setTemplates((prev) => {
-                  const next = { ...prev, [nm]: structure };
+                  const next = { ...prev, [nm]: tpl };
                   const custom = Object.fromEntries(
                     Object.entries(next).filter(([k]) => !PRESET_TEMPLATES[k])
                   );
