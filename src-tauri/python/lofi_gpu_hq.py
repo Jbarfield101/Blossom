@@ -444,13 +444,32 @@ def _load_ambience_sample(name: str, n: int, rng=None) -> Optional[np.ndarray]:
 SEMITONES = {"C":0,"C#":1,"Db":1,"D":2,"D#":3,"Eb":3,"E":4,"F":5,"F#":6,"Gb":6,"G":7,"G#":8,"Ab":8,"A":9,"A#":10,"Bb":10,"B":11}
 
 def _degree_to_root_semi(deg: str) -> int:
-    return {"I":0,"ii":2,"iii":4,"IV":5,"V":7,"vi":9}.get(deg, 0)
+    """Convert a Roman-numeral degree into a semitone offset."""
+    accidental = 0
+    core = deg
+    if core.startswith("b"):
+        accidental = -1
+        core = core[1:]
+    elif core.startswith("#"):
+        accidental = 1
+        core = core[1:]
+
+    minor_map = {"i":0,"ii":2,"iii":3,"iv":5,"v":7,"vi":8,"vii":10,
+                 "III":3,"VI":8,"VII":10}
+    major_map = {"I":0,"II":2,"III":4,"IV":5,"V":7,"VI":9,"VII":11}
+
+    if core in minor_map and not deg.startswith(("b", "#")):
+        base = minor_map[core]
+    else:
+        base = major_map.get(core.upper(), 0)
+    return (base + accidental) % 12
 
 def _chord_freqs_from_degree(key_letter: str, deg: str, add7=False, add9=False, inversion=0):
     key_off = SEMITONES.get(key_letter, 0)
     root_c = _degree_to_root_semi(deg)
     root_midi = 48 + ((root_c + key_off) % 12)
-    quality = "min" if deg in ("ii","iii","vi") else "maj"
+    core = deg.lstrip('b#')
+    quality = "min" if core in ("ii","iii","vi","i","iv","v") or core.islower() else "maj"
     triad = [root_midi, root_midi + (3 if quality=="min" else 4), root_midi + 7]
     if add7:
         triad.append(root_midi + (10 if quality=="min" else 11))
@@ -542,10 +561,33 @@ DRUM_PATTERNS = {
 }
 
 PROG_BANK_A = [["I","vi","IV","V"], ["I","V","vi","IV"], ["I","iii","vi","IV"], ["I","vi","ii","V"], ["I","IV","ii","V"],
-                ["I","IV","V","IV"], ["I","ii","V","IV"], ["I","V","IV","V"]]
+                ["I","IV","V","IV"], ["I","ii","V","IV"], ["I","V","IV","V"],
+                ["I","bVII","IV","I"], ["I","IV","bVII","I"],
+                ["i","bVII","bVI","bVII"], ["i","iv","bVII","i"], ["i","VI","III","VII"]]
 PROG_BANK_B = [["vi","IV","I","V"], ["ii","V","I","vi"], ["IV","I","V","vi"], ["vi","ii","V","I"], ["IV","vi","ii","V"],
-                ["vi","IV","ii","V"], ["ii","vi","IV","I"], ["vi","V","IV","V"]]
-PROG_BANK_INTRO = [["I","IV"], ["ii","V"], ["I","V"], ["vi","IV"], ["I","ii"], ["I","vi"], ["IV","V"], ["ii","iii"]]
+                ["vi","IV","ii","V"], ["ii","vi","IV","I"], ["vi","V","IV","V"],
+                ["i","iv","i","v"], ["i","VI","III","VII"], ["i","bVII","bVI","bVII"], ["I","bIII","IV","I"], ["vi","bVII","I","V"]]
+PROG_BANK_INTRO = [["I","IV"], ["ii","V"], ["I","V"], ["vi","IV"], ["I","ii"], ["I","vi"], ["IV","V"], ["ii","iii"],
+                   ["i","iv"], ["i","bVII"], ["i","VI"], ["I","bVII"], ["I","bIII"]]
+
+def _stitch_progression(bank, rng, length=None):
+    """Generate a progression using a simple Markov chain over the bank."""
+    rng = rng or np.random.default_rng()
+    if length is None:
+        length = len(rng.choice(bank))
+
+    starts = [p[0] for p in bank if p]
+    trans = {}
+    for prog in bank:
+        for a, b in zip(prog, prog[1:]):
+            trans.setdefault(a, []).append(b)
+
+    seq = [rng.choice(starts)]
+    while len(seq) < length:
+        prev = seq[-1]
+        choices = trans.get(prev, starts)
+        seq.append(rng.choice(choices))
+    return seq
 
 BASS_PATTERNS = ["roots_13", "root5_13", "held_whole"]
 
@@ -740,11 +782,11 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
     if chords:
         prog_seq = [str(c) for c in chords]
     elif section_name.upper().startswith("A"):
-        prog_seq = rng.choice(PROG_BANK_A)
+        prog_seq = _stitch_progression(PROG_BANK_A, rng)
     elif section_name.upper().startswith("B"):
-        prog_seq = rng.choice(PROG_BANK_B)
+        prog_seq = _stitch_progression(PROG_BANK_B, rng)
     else:
-        prog_seq = rng.choice(PROG_BANK_INTRO)
+        prog_seq = _stitch_progression(PROG_BANK_INTRO, rng)
 
     add7 = (rng.random() < add7_prob)
     add9 = (rng.random() < add9_prob)
