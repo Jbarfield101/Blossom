@@ -11,6 +11,7 @@ import Assistant from "./pages/Assistant";
 import GeneralChat from "./pages/GeneralChat";
 import BigBrotherUpdates from "./pages/BigBrotherUpdates";
 import WorldBuilder from "./pages/WorldBuilder";
+import NPCMaker from "./pages/NPCMaker";
 import Laser from "./pages/Laser";
 import Lofi from "./pages/Lofi";
 import NotFound from "./pages/NotFound";
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="/assistant" element={<Assistant />} />
         <Route path="/assistant/general-chat" element={<GeneralChat />} />
         <Route path="/dnd/world-builder" element={<WorldBuilder />} />
+        <Route path="/dnd/npc-maker" element={<NPCMaker />} />
         <Route
           path="/assistant/big-brother-updates"
           element={<BigBrotherUpdates />}
