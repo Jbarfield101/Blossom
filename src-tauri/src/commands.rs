@@ -563,7 +563,10 @@ pub async fn general_chat<R: Runtime>(
     messages: Vec<ChatMessage>,
 ) -> Result<String, String> {
     let mut msgs = messages.clone();
-    let query = messages.last().map(|m| m.content.clone()).unwrap_or_default();
+    let query = messages
+        .last()
+        .map(|m| m.content.clone())
+        .unwrap_or_default();
     if !query.is_empty() {
         if let Ok(results) = pdf_search(app.clone(), query, None).await {
             if !results.is_empty() {
@@ -708,7 +711,10 @@ pub async fn fetch_big_brother_news(force: Option<bool>) -> Result<Vec<NewsArtic
 }
 
 #[tauri::command]
-pub async fn fetch_big_brother_summary(force: Option<bool>) -> Result<String, String> {
+pub async fn fetch_big_brother_summary<R: Runtime>(
+    _app: AppHandle<R>,
+    force: Option<bool>,
+) -> Result<String, String> {
     let force = force.unwrap_or(false);
 
     {
