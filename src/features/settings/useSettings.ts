@@ -1,41 +1,12 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { useUsers, defaultModules, type ModuleKey } from "../users/useUsers";
 
-type ModuleKey =
-  | 'objects'
-  | 'music'
-  | 'calendar'
-  | 'comfy'
-  | 'assistant'
-  | 'laser'
-  | 'dnd';
-
-type ModulesState = Record<ModuleKey, boolean>;
-
-interface SettingsState {
-  modules: ModulesState;
-  toggleModule: (key: ModuleKey) => void;
+export function useSettings() {
+  const modules = useUsers((state) => {
+    const id = state.currentUserId;
+    return id ? state.users[id].modules : defaultModules;
+  });
+  const toggleModule = useUsers((state) => state.toggleModule);
+  return { modules, toggleModule };
 }
-
-export const useSettings = create<SettingsState>()(
-  persist(
-    (set) => ({
-      modules: {
-        objects: true,
-        music: true,
-        calendar: true,
-        comfy: true,
-        assistant: true,
-        laser: true,
-        dnd: true,
-      },
-      toggleModule: (key) =>
-        set((state) => ({
-          modules: { ...state.modules, [key]: !state.modules[key] },
-        })),
-    }),
-    { name: 'settings-store' }
-  )
-);
 
 export type { ModuleKey };
