@@ -70,6 +70,7 @@ describe('SongForm', () => {
       hq_reverb: true,
       hq_sidechain: true,
       hq_chorus: true,
+      limiter_drive: 1.02,
     });
     await waitFor(() => expect(listen).toHaveBeenCalledTimes(2));
 
