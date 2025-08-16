@@ -502,6 +502,7 @@ pub struct NewsArticle {
     pub pub_date: Option<String>,
     pub source: String,
     pub summary: Option<String>,
+    pub tags: Vec<String>,
 }
 
 static NEWS_CACHE: Lazy<Mutex<Option<(Instant, Vec<NewsArticle>)>>> =
@@ -563,6 +564,11 @@ pub async fn fetch_big_brother_news(force: Option<bool>) -> Result<Vec<NewsArtic
             let link = item.link().unwrap_or("").to_string();
             let pub_date = item.pub_date().map(|s| s.to_string());
             let description = item.description().unwrap_or("");
+            let tags = item
+                .categories()
+                .iter()
+                .map(|c| c.name().to_string())
+                .collect::<Vec<_>>();
 
             let prompt = format!(
                 "Summarize this Big Brother article in one or two sentences.\nTitle: {title}\nDescription: {description}"
@@ -584,6 +590,7 @@ pub async fn fetch_big_brother_news(force: Option<bool>) -> Result<Vec<NewsArtic
                 pub_date,
                 source: source.to_string(),
                 summary,
+                tags,
             });
         }
     }
