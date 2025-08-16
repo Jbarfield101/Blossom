@@ -11,6 +11,16 @@ vi.mock('@tauri-apps/api/core', () => ({
   convertFileSrc: (p: string) => p,
 }));
 vi.mock('@tauri-apps/api/event', () => ({ listen: vi.fn() }));
+vi.mock('../features/lofi/useLofiEngine', () => ({
+  useLofi: () => ({
+    isPlaying: false,
+    play: vi.fn(),
+    stop: vi.fn(),
+    setBpm: vi.fn(),
+    setKey: vi.fn(),
+    setSeed: vi.fn(),
+  }),
+}));
 
 describe('SongForm', () => {
   beforeEach(() => {
