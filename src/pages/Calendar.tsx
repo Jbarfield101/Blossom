@@ -80,7 +80,13 @@ export default function Calendar() {
       setTimeError(false);
       return;
     }
-    setTimeError(new Date(end).getTime() <= new Date(date).getTime());
+    const startTime = new Date(date).getTime();
+    const endTime = new Date(end).getTime();
+    if (isNaN(startTime) || isNaN(endTime)) {
+      setTimeError(true);
+      return;
+    }
+    setTimeError(endTime <= startTime);
   }, [date, end]);
 
   const dayEvents = (day: number) => {
