@@ -19,6 +19,7 @@
 #   - Optional vinyl crackle when mood includes "nostalgic"
 #   - Master tone tilt (subtle low warmth + soft high trim)
 #   - Subtle chorus on keys/pads/melody
+#   - Tape saturation and wow/flutter for analog warmth
 #   - Feature flags: hq_stereo / hq_reverb / hq_sidechain / hq_chorus (default True)
 #   - Mood-aware mix & ambience levels
 #   - Optional lofi piano instrument
@@ -142,6 +143,65 @@ def apply_soft_limit(audio: AudioSegment, drive: float = 1.02) -> AudioSegment:
     out = audio._spawn(y.tobytes())
     return out
 
+def apply_tape_saturation(audio: AudioSegment, drive: float = 1.1) -> AudioSegment:
+    """Simple tape-style saturation with gentle high-frequency roll-off."""
+    samples = np.array(audio.get_array_of_samples()).astype(np.float32)
+    channels = audio.channels
+    if channels == 2:
+        samples = samples.reshape((-1, 2))
+    else:
+        samples = samples.reshape((-1, 1))
+    max_int = float(2 ** (8 * audio.sample_width - 1))
+    x = samples / max_int
+    y = np.tanh(x * drive)
+    for ch in range(channels):
+        y[:, ch] = _butter_lowpass(y[:, ch], 12000)
+    y = np.clip(y * max_int, -max_int, max_int - 1).astype(
+        np.int16 if audio.sample_width == 2 else samples.dtype
+    )
+    if channels == 2:
+        y = y.reshape((-1,))
+    return audio._spawn(y.tobytes())
+
+def apply_wow_flutter(
+    audio: AudioSegment,
+    rate_hz: float = 0.3,
+    depth: float = 0.002,
+    flutter_rate: float = 5.0,
+    flutter_depth: float = 0.0005,
+    rng=None,
+) -> AudioSegment:
+    """Apply wow/flutter pitch modulation to emulate analog tape."""
+    if rng is not None:
+        rate_hz = float(rng.uniform(0.2, 0.4))
+        depth = float(rng.uniform(0.001, 0.003))
+        flutter_rate = float(rng.uniform(4.0, 7.0))
+        flutter_depth = float(rng.uniform(0.0001, 0.0005))
+
+    samples = np.array(audio.get_array_of_samples()).astype(np.float32)
+    channels = audio.channels
+    if channels == 2:
+        samples = samples.reshape((-1, 2))
+    else:
+        samples = samples.reshape((-1, 1))
+    n = samples.shape[0]
+    t = np.arange(n) / SR
+    mod = depth * np.sin(2 * np.pi * rate_hz * t)
+    mod += flutter_depth * np.sin(2 * np.pi * flutter_rate * t)
+    idx = np.arange(n) + mod * SR
+    idx = np.clip(idx, 0, n - 1)
+    base = np.arange(n)
+    y = np.zeros_like(samples)
+    for ch in range(channels):
+        y[:, ch] = np.interp(idx, base, samples[:, ch])
+    max_int = float(2 ** (8 * audio.sample_width - 1))
+    y = np.clip(y, -max_int, max_int - 1).astype(
+        np.int16 if audio.sample_width == 2 else samples.dtype
+    )
+    if channels == 2:
+        y = y.reshape((-1,))
+    return audio._spawn(y.tobytes())
+
 def loudness_normalize_lufs(audio: AudioSegment, target_lufs: float = -14.0) -> AudioSegment:
     samples = np.array(audio.get_array_of_samples()).astype(np.float32)
     if audio.channels == 2:
@@ -191,6 +251,8 @@ def enhanced_post_process_chain(audio: AudioSegment, rng=None, drive: float = 1.
     drv = drive
     if drive is None and rng is not None:
         drv = float(rng.uniform(0.98, 1.04))
+    a = apply_wow_flutter(a, rng=rng)
+    a = apply_tape_saturation(a, drive=drv)
     a = apply_soft_limit(a, drive=drv)
 
     try:
