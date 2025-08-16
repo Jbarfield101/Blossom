@@ -126,4 +126,35 @@ describe('Calendar time validation', () => {
       useCalendar.getState().events.some((e) => e.title === 'Updated Meeting')
     ).toBe(true);
   });
+
+  it('switches between month, week, and agenda views', () => {
+    render(<Calendar />);
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+
+    fireEvent.change(screen.getByLabelText('Title'), {
+      target: { value: 'Meeting' },
+    });
+    fireEvent.change(screen.getByTestId('date-input'), {
+      target: { value: `${yyyy}-${mm}-${dd}T09:00` },
+    });
+    fireEvent.change(screen.getByTestId('end-input'), {
+      target: { value: `${yyyy}-${mm}-${dd}T10:00` },
+    });
+    fireEvent.click(screen.getByTestId('add-button'));
+
+    fireEvent.click(screen.getByText('week'));
+    expect(screen.getByTestId('week-view')).toBeInTheDocument();
+    expect(screen.getByText('Meeting')).toBeInTheDocument();
+    expect(screen.queryByTestId(`day-${parseInt(dd, 10)}`)).toBeNull();
+
+    fireEvent.click(screen.getByText('agenda'));
+    expect(screen.getByTestId('agenda-view')).toBeInTheDocument();
+    expect(screen.getByText('Meeting')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('month'));
+    expect(screen.getByTestId(`day-${parseInt(dd, 10)}`)).toBeInTheDocument();
+  });
 });

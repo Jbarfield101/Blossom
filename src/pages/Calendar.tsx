@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import CalendarDay from "../components/CalendarDay";
 import TagStats from "../components/TagStats";
+import WeekView from "../components/WeekView";
+import AgendaView from "../components/AgendaView";
 import { useCalendar } from "../features/calendar/useCalendar";
 import { statusColors } from "../features/calendar/statusColors";
 import type { CalendarEvent } from "../features/calendar/types";
@@ -242,203 +244,209 @@ export default function Calendar() {
       </div>
 
       <div className="md:flex md:gap-6">
-        <div className="flex-1">
-          <div className="grid grid-cols-7 gap-1 mb-8" role="grid">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
-              (d) => (
-                <div
-                  key={d}
-                  className="text-center font-semibold text-gray-700 py-2"
-                >
-                  {d}
-                </div>
-              )
-            )}
-            {cells.map((day, idx) => (
-              <CalendarDay
-                key={idx}
-                day={day}
-                events={day ? dayEvents(day) : []}
-                onDayClick={handleDayClick}
-                onPrefill={prefillDay}
-                isToday={day ? isToday(day) : false}
-                isFocused={focusedDay === day}
-                isSelected={selectedDay === day}
-                holiday={
-                  day
-                    ? HOLIDAYS.find(
-                        (h) => h.month === month && h.day === day
-                      )?.title || null
-                    : null
-                }
-              />
-            ))}
-          </div>
-        </div>
-
-        <aside className="w-full md:w-80 space-y-6">
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <h3 className="text-lg font-semibold mb-4">Agenda</h3>
-            {selectedDay == null ? (
-              <div className="text-sm text-gray-500">Select a day</div>
-            ) : agendaEvents.length === 0 ? (
-              <div className="text-sm text-gray-500">No events yet</div>
-            ) : (
-              <ul className="space-y-1">
-                {agendaEvents.map((ev) => (
-                  <li key={ev.id} className="text-sm flex items-center gap-2">
-                    <span
-                      className={`px-2 py-0.5 rounded text-white text-xs ${statusColors[ev.status]}`}
-                    >
-                      {ev.status}
-                    </span>
-                    <button
-                      type="button"
-                      className="flex-1 text-left"
-                      onClick={() => startEdit(ev)}
-                    >
-                      {ev.title}
-                    </button>
-                    <button
-                      type="button"
-                      aria-label="Delete event"
-                      className="text-red-500"
-                      onClick={() => removeEvent(ev.id)}
-                    >
-                      ×
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">
-              {editingId ? "Edit Event" : "Add Event"}
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="title"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Title
-                </label>
-                <input
-                  id="title"
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Event title..."
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="start"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Start Time
-                </label>
-                <input
-                  id="start"
-                  data-testid="date-input"
-                  type="datetime-local"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="end"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  End Time
-                </label>
-                <input
-                  id="end"
-                  data-testid="end-input"
-                  type="datetime-local"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  value={end}
-                  onChange={(e) => setEnd(e.target.value)}
-                />
-                {timeError && (
+        {view === "month" ? (
+          <>
+            <div className="flex-1">
+              <div className="grid grid-cols-7 gap-1 mb-8" role="grid">
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
                   <div
-                    className="text-red-600 text-sm mt-1"
-                    data-testid="time-error"
+                    key={d}
+                    className="text-center font-semibold text-gray-700 py-2"
                   >
-                    End time must be after start time
+                    {d}
                   </div>
+                ))}
+                {cells.map((day, idx) => (
+                  <CalendarDay
+                    key={idx}
+                    day={day}
+                    events={day ? dayEvents(day) : []}
+                    onDayClick={handleDayClick}
+                    onPrefill={prefillDay}
+                    isToday={day ? isToday(day) : false}
+                    isFocused={focusedDay === day}
+                    isSelected={selectedDay === day}
+                    holiday={
+                      day
+                        ? HOLIDAYS.find(
+                            (h) => h.month === month && h.day === day
+                          )?.title || null
+                        : null
+                    }
+                  />
+                ))}
+              </div>
+            </div>
+
+            <aside className="w-full md:w-80 space-y-6">
+              <div className="bg-white rounded-lg shadow-md p-4">
+                <h3 className="text-lg font-semibold mb-4">Agenda</h3>
+                {selectedDay == null ? (
+                  <div className="text-sm text-gray-500">Select a day</div>
+                ) : agendaEvents.length === 0 ? (
+                  <div className="text-sm text-gray-500">No events yet</div>
+                ) : (
+                  <ul className="space-y-1">
+                    {agendaEvents.map((ev) => (
+                      <li key={ev.id} className="text-sm flex items-center gap-2">
+                        <span
+                          className={`px-2 py-0.5 rounded text-white text-xs ${statusColors[ev.status]}`}
+                        >
+                          {ev.status}
+                        </span>
+                        <button
+                          type="button"
+                          className="flex-1 text-left"
+                          onClick={() => startEdit(ev)}
+                        >
+                          {ev.title}
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Delete event"
+                          className="text-red-500"
+                          onClick={() => removeEvent(ev.id)}
+                        >
+                          ×
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </div>
-              <div>
-                <label
-                  htmlFor="tags"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Tags
-                </label>
-                <input
-                  id="tags"
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="tag1, tag2"
-                  value={tags}
-                  onChange={(e) => setTags(e.target.value)}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="status"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Status
-                </label>
-                <select
-                  id="status"
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="scheduled">Scheduled</option>
-                  <option value="canceled">Canceled</option>
-                  <option value="missed">Missed</option>
-                  <option value="completed">Completed</option>
-                </select>
-              </div>
-              <div className="flex items-center mt-2">
-                <input
-                  id="countdown"
-                  type="checkbox"
-                  className="h-4 w-4 text-blue-600 border-gray-300 rounded"
-                  checked={hasCountdown}
-                  onChange={(e) => setHasCountdown(e.target.checked)}
-                />
-                <label htmlFor="countdown" className="ml-2 text-sm text-gray-700">
-                  Countdown
-                </label>
-              </div>
-            </div>
-            <div className="flex justify-end mt-6">
-              <button
-                onClick={save}
-                disabled={timeError || !title || !date || !end}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                data-testid="add-button"
-              >
-                {editingId ? "Update Event" : "Add Event"}
-              </button>
-            </div>
-          </div>
 
-          <TagStats />
-        </aside>
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-lg font-semibold mb-4">
+                  {editingId ? "Edit Event" : "Add Event"}
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      htmlFor="title"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Title
+                    </label>
+                    <input
+                      id="title"
+                      type="text"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Event title..."
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="start"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Start Time
+                    </label>
+                    <input
+                      id="start"
+                      data-testid="date-input"
+                      type="datetime-local"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="end"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      End Time
+                    </label>
+                    <input
+                      id="end"
+                      data-testid="end-input"
+                      type="datetime-local"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      value={end}
+                      onChange={(e) => setEnd(e.target.value)}
+                    />
+                    {timeError && (
+                      <div
+                        className="text-red-600 text-sm mt-1"
+                        data-testid="time-error"
+                      >
+                        End time must be after start time
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="tags"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Tags
+                    </label>
+                    <input
+                      id="tags"
+                      type="text"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="tag1, tag2"
+                      value={tags}
+                      onChange={(e) => setTags(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="status"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Status
+                    </label>
+                    <select
+                      id="status"
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value as any)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="scheduled">Scheduled</option>
+                      <option value="canceled">Canceled</option>
+                      <option value="missed">Missed</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center mt-2">
+                    <input
+                      id="countdown"
+                      type="checkbox"
+                      className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                      checked={hasCountdown}
+                      onChange={(e) => setHasCountdown(e.target.checked)}
+                    />
+                    <label htmlFor="countdown" className="ml-2 text-sm text-gray-700">
+                      Countdown
+                    </label>
+                  </div>
+                </div>
+                <div className="flex justify-end mt-6">
+                  <button
+                    onClick={save}
+                    disabled={timeError || !title || !date || !end}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    data-testid="add-button"
+                  >
+                    {editingId ? "Update Event" : "Add Event"}
+                  </button>
+                </div>
+              </div>
+
+              <TagStats />
+            </aside>
+          </>
+        ) : view === "week" ? (
+          <WeekView current={current} events={events} />
+        ) : (
+          <AgendaView events={events} />
+        )}
       </div>
 
-      {quickAdd && (
+      {view === "month" && quickAdd && (
         <>
           <div
             className="fixed inset-0 z-10"
