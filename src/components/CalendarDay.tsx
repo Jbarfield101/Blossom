@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { statusColors } from '../features/calendar/statusColors';
 import type { CalendarEvent } from '../features/calendar/types';
 
 interface Props {
@@ -11,13 +12,6 @@ interface Props {
   isSelected: boolean;
   holiday?: string | null;
 }
-
-const statusColors: Record<CalendarEvent['status'], string> = {
-  scheduled: 'bg-blue-500',
-  canceled: 'bg-red-500',
-  missed: 'bg-amber-500',
-  completed: 'bg-emerald-500',
-};
 
 const CalendarDay = React.memo(
   ({
