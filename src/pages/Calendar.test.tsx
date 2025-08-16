@@ -95,4 +95,35 @@ describe('Calendar time validation', () => {
       useCalendar.getState().events.some((e) => e.title === 'Meeting')
     ).toBe(false);
   });
+
+  it('allows editing events', () => {
+    render(<Calendar />);
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    fireEvent.change(screen.getByLabelText('Title'), {
+      target: { value: 'Meeting' },
+    });
+    fireEvent.change(screen.getByTestId('date-input'), {
+      target: { value: `${yyyy}-${mm}-01T09:00` },
+    });
+    fireEvent.change(screen.getByTestId('end-input'), {
+      target: { value: `${yyyy}-${mm}-01T10:00` },
+    });
+    fireEvent.click(screen.getByTestId('add-button'));
+
+    fireEvent.click(screen.getByTestId('day-1'));
+    fireEvent.click(screen.getByTestId('quick-add-overlay'));
+    fireEvent.click(screen.getByText('Meeting'));
+
+    const titleInput = screen.getByLabelText('Title') as HTMLInputElement;
+    expect(titleInput.value).toBe('Meeting');
+
+    fireEvent.change(titleInput, { target: { value: 'Updated Meeting' } });
+    fireEvent.click(screen.getByTestId('add-button'));
+
+    expect(
+      useCalendar.getState().events.some((e) => e.title === 'Updated Meeting')
+    ).toBe(true);
+  });
 });

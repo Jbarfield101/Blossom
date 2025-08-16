@@ -3,6 +3,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import CalendarDay from "../components/CalendarDay";
 import TagStats from "../components/TagStats";
 import { useCalendar } from "../features/calendar/useCalendar";
+import type { CalendarEvent } from "../features/calendar/types";
 
 function pad(n: number) {
   return n.toString().padStart(2, "0");
@@ -42,9 +43,11 @@ export default function Calendar() {
     "scheduled" | "canceled" | "missed" | "completed"
   >("scheduled");
   const [hasCountdown, setHasCountdown] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const events = useCalendar((s) => s.events);
   const addEvent = useCalendar((s) => s.addEvent);
+  const updateEvent = useCalendar((s) => s.updateEvent);
   const removeEvent = useCalendar((s) => s.removeEvent);
   const eventsRef = useRef(events);
   useEffect(() => {
@@ -60,19 +63,31 @@ export default function Calendar() {
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
   while (cells.length % 7 !== 0) cells.push(null);
 
-  const add = () => {
+  const save = () => {
     if (!title || !date || !end || timeError) return;
     const tagsArr = tags
       .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
-    addEvent({ title, date, end, tags: tagsArr, status, hasCountdown });
+    if (editingId) {
+      updateEvent(editingId, {
+        title,
+        date,
+        end,
+        tags: tagsArr,
+        status,
+        hasCountdown,
+      });
+    } else {
+      addEvent({ title, date, end, tags: tagsArr, status, hasCountdown });
+    }
     setTitle("");
     setDate("");
     setEnd("");
     setTags("");
     setStatus("scheduled");
     setHasCountdown(false);
+    setEditingId(null);
   };
 
   useEffect(() => {
@@ -102,6 +117,21 @@ export default function Calendar() {
     setEnd(endTime);
     setSelectedDay(day);
     setFocusedDay(day);
+  };
+
+  const startEdit = (ev: CalendarEvent) => {
+    setTitle(ev.title);
+    setDate(ev.date);
+    setEnd(ev.end);
+    setTags((ev.tags ?? []).join(", "));
+    setStatus(ev.status ?? "scheduled");
+    setHasCountdown(ev.hasCountdown ?? false);
+    setEditingId(ev.id);
+    const d = new Date(ev.date);
+    const day = d.getDate();
+    setSelectedDay(day);
+    setFocusedDay(day);
+    setQuickAdd(null);
   };
 
   const { focusedDay, setFocusedDay } = useKeyboardNavigation(
@@ -268,7 +298,13 @@ export default function Calendar() {
                     >
                       {ev.status}
                     </span>
-                    <span className="flex-1">{ev.title}</span>
+                    <button
+                      type="button"
+                      className="flex-1 text-left"
+                      onClick={() => startEdit(ev)}
+                    >
+                      {ev.title}
+                    </button>
                     <button
                       type="button"
                       aria-label="Delete event"
@@ -284,7 +320,9 @@ export default function Calendar() {
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">Add Event</h3>
+            <h3 className="text-lg font-semibold mb-4">
+              {editingId ? "Edit Event" : "Add Event"}
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label
@@ -392,12 +430,12 @@ export default function Calendar() {
             </div>
             <div className="flex justify-end mt-6">
               <button
-                onClick={add}
+                onClick={save}
                 disabled={timeError || !title || !date || !end}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 data-testid="add-button"
               >
-                Add Event
+                {editingId ? "Update Event" : "Add Event"}
               </button>
             </div>
           </div>
@@ -430,7 +468,13 @@ export default function Calendar() {
                       >
                         {ev.status}
                       </span>
-                      <span className="flex-1">{ev.title}</span>
+                      <button
+                        type="button"
+                        className="flex-1 text-left"
+                        onClick={() => startEdit(ev)}
+                      >
+                        {ev.title}
+                      </button>
                     </li>
                   ))}
                 </ul>
