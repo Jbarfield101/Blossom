@@ -1195,6 +1195,7 @@ def main():
 
     try:
         limiter_drive = float(spec.get("limiter_drive", 1.02))
+        limiter_drive = float(np.clip(limiter_drive, 0.5, 2.0))
     except Exception:
         limiter_drive = 1.02
 

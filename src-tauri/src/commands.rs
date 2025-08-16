@@ -297,6 +297,8 @@ pub struct SongSpec {
     pub hq_sidechain: Option<bool>,
     #[serde(rename = "hq_chorus", skip_serializing_if = "Option::is_none")]
     pub hq_chorus: Option<bool>,
+    #[serde(rename = "limiter_drive", skip_serializing_if = "Option::is_none")]
+    pub limiter_drive: Option<f32>,
 }
 
 /* ==============================

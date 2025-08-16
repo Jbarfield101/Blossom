@@ -25,6 +25,7 @@ type SongSpec = {
   hq_reverb?: boolean;
   hq_sidechain?: boolean;
   hq_chorus?: boolean;
+  limiter_drive?: number;
 };
 
 type Job = {
@@ -172,6 +173,7 @@ export default function SongForm() {
   const [hqReverb, setHqReverb] = useState(true);
   const [hqSidechain, setHqSidechain] = useState(true);
   const [hqChorus, setHqChorus] = useState(true);
+  const [limiterDrive, setLimiterDrive] = useState(1.02);
 
   // UI state
   const [busy, setBusy] = useState(false);
@@ -313,6 +315,7 @@ export default function SongForm() {
       hq_reverb: hqReverb,
       hq_sidechain: hqSidechain,
       hq_chorus: hqChorus,
+      limiter_drive: Math.max(0.5, Math.min(2, limiterDrive)),
     };
   }
 
@@ -665,6 +668,19 @@ export default function SongForm() {
               <span style={S.small}>Chorus</span>
             </div>
             <div style={{ ...S.small, marginTop: 6 }}>These map to engine flags in <code>lofi_gpu_hq.py</code>.</div>
+          </div>
+          <div style={S.panel}>
+            <label style={S.label}>Limiter Drive</label>
+            <input
+              type="range"
+              min={0.5}
+              max={2}
+              step={0.01}
+              value={limiterDrive}
+              onChange={(e) => setLimiterDrive(Number(e.target.value))}
+              style={S.slider}
+            />
+            <div style={S.small}>{limiterDrive.toFixed(2)}× saturation</div>
           </div>
         </div>
 
