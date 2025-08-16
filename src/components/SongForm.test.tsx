@@ -65,6 +65,12 @@ describe('SongForm', () => {
     await waitFor(() => expect(invoke).toHaveBeenCalled());
     const call = (invoke as any).mock.calls.find(([c]: any) => c === 'run_lofi_song');
     expect(call[1].spec.structure[0]).toHaveProperty('chords');
+    expect(call[1].spec).toMatchObject({
+      hq_stereo: true,
+      hq_reverb: true,
+      hq_sidechain: true,
+      hq_chorus: true,
+    });
     await waitFor(() => expect(listen).toHaveBeenCalledTimes(2));
 
     progressCb({ payload: JSON.stringify({ stage: 'render', message: '30%' }) });

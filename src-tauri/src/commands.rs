@@ -287,7 +287,16 @@ pub struct SongSpec {
     pub ambience_level: Option<f32>,
     pub seed: u64,
     pub variety: Option<u32>,
+    #[serde(rename = "drum_pattern", skip_serializing_if = "Option::is_none")]
     pub drum_pattern: Option<String>,
+    #[serde(rename = "hq_stereo", skip_serializing_if = "Option::is_none")]
+    pub hq_stereo: Option<bool>,
+    #[serde(rename = "hq_reverb", skip_serializing_if = "Option::is_none")]
+    pub hq_reverb: Option<bool>,
+    #[serde(rename = "hq_sidechain", skip_serializing_if = "Option::is_none")]
+    pub hq_sidechain: Option<bool>,
+    #[serde(rename = "hq_chorus", skip_serializing_if = "Option::is_none")]
+    pub hq_chorus: Option<bool>,
 }
 
 /* ==============================
