@@ -65,8 +65,8 @@ libraries are missing.
 
 - **Paths:** Edit `comfy_dir()` and `conda_python()` in `src-tauri/src/commands.rs`
   so the app can find ComfyUI and your Python interpreter.
-- **HQ feature flags:** `lofi_gpu_hq.py` supports `hq_stereo`, `hq_reverb`, and
-  `hq_sidechain` flags inside the `motif` object to enable or disable
+- **HQ feature flags:** `lofi_gpu_hq.py` supports `hq_stereo`, `hq_reverb`,
+  `hq_sidechain`, and `hq_chorus` flags inside the `motif` object to enable or disable
   high‑quality processing.
 - **Limiter drive:** Add `limiter_drive` to the song JSON to control soft
   clipping intensity (values around `1.0` keep saturation subtle).
