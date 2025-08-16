@@ -3,6 +3,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import CalendarDay from "../components/CalendarDay";
 import TagStats from "../components/TagStats";
 import { useCalendar } from "../features/calendar/useCalendar";
+import { statusColors } from "../features/calendar/statusColors";
 import type { CalendarEvent } from "../features/calendar/types";
 
 function pad(n: number) {
@@ -15,13 +16,6 @@ const HOLIDAYS = [
   { month: 10, day: 31, title: "Halloween" },
   { month: 11, day: 25, title: "Christmas Day" },
 ];
-
-const statusColors: Record<string, string> = {
-  scheduled: "bg-blue-500",
-  canceled: "bg-red-500",
-  missed: "bg-amber-500",
-  completed: "bg-emerald-500",
-};
 
 export default function Calendar() {
   const [current, setCurrent] = useState(new Date());
