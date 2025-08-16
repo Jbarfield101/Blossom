@@ -345,28 +345,30 @@ def _apply_duck_envelope(buf: np.ndarray, positions_ms: List[float], depth_db=2.
         return
     depth = 10 ** (-abs(depth_db) / 20.0)
     env = np.ones_like(buf, dtype=np.float32)
-    a = int(SR * attack_ms/1000.0)
-    h = int(SR * hold_ms/1000.0)
-    r = int(SR * release_ms/1000.0)
+    a = int(SR * attack_ms / 1000.0)
+    h = int(SR * hold_ms / 1000.0)
+    r = int(SR * release_ms / 1000.0)
+    one_minus = 1.0 - depth
+    attack_curve = 1.0 - np.linspace(0, 1, a, endpoint=False, dtype=np.float32) * one_minus
+    hold_curve = np.full(h, depth, dtype=np.float32)
+    release_curve = depth + np.linspace(0, 1, r, endpoint=False, dtype=np.float32) * one_minus
     for pos in positions_ms:
         p = int(max(0, pos) * SR / 1000)
         # attack
-        for i in range(a):
-            j = p + i
-            if j >= len(env): break
-            t = i / max(1, a)
-            env[j] = min(env[j], 1.0 - t*(1.0-depth))
+        j0 = p
+        j1 = min(p + a, len(env))
+        if j0 < len(env):
+            env[j0:j1] = np.minimum(env[j0:j1], attack_curve[:j1 - j0])
         # hold
-        for i in range(h):
-            j = p + a + i
-            if j >= len(env): break
-            env[j] = min(env[j], depth)
+        j0 = p + a
+        j1 = min(j0 + h, len(env))
+        if j0 < len(env):
+            env[j0:j1] = np.minimum(env[j0:j1], hold_curve[:j1 - j0])
         # release
-        for i in range(r):
-            j = p + a + h + i
-            if j >= len(env): break
-            t = i / max(1, r)
-            env[j] = min(env[j], depth + (1.0-depth)*t)
+        j0 = p + a + h
+        j1 = min(j0 + r, len(env))
+        if j0 < len(env):
+            env[j0:j1] = np.minimum(env[j0:j1], release_curve[:j1 - j0])
     buf *= env
 
 def _schroeder_room(x: np.ndarray, mix=0.12, pre_ms=12, decay=0.35):
