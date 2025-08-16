@@ -1,16 +1,18 @@
 import { useState } from "react";
 import { Button, Stack, TextField } from "@mui/material";
 import Center from "./_Center";
+import { useWorlds } from "../store/worlds";
 
 export default function WorldBuilder() {
-  const [worlds, setWorlds] = useState<string[]>([]);
+  const worlds = useWorlds((s) => s.worlds);
+  const addWorld = useWorlds((s) => s.addWorld);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
 
   function submit() {
     const trimmed = name.trim();
     if (!trimmed) return;
-    setWorlds((prev) => [...prev, trimmed]);
+    addWorld(trimmed);
     setName("");
     setCreating(false);
   }
