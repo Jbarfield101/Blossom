@@ -47,19 +47,8 @@ fn conda_python() -> PathBuf {
 
 ## Running Python scripts
 
-Activate your Python environment first.
-
-### Streaming generator
-
-`lofi_gpu_stream.py` streams progress to stdout and prints the final file path:
-
-```bash
-python src-tauri/python/lofi_gpu_stream.py --prompt "lofi beat" --total-seconds 30
-```
-
-Set the `MUSICGEN_MODEL` environment variable to choose an AudioCraft model for
-GPU generation. The script falls back to a simple sine wave if the required
-libraries are missing.
+Activate your Python environment first. The high‑quality generator lives at
+`src-tauri/python/lofi_gpu_hq.py`.
 
 ## Configuration and optional features
 
@@ -70,6 +59,4 @@ libraries are missing.
   high‑quality processing.
 - **Limiter drive:** Add `limiter_drive` to the song JSON to control soft
   clipping intensity (values around `1.0` keep saturation subtle).
-- **Streaming model:** `lofi_gpu_stream.py` accepts `--chunk`, `--bpm`,
-  `--style`, and `--seed` options and prints `PROG <percent>` while generating.
 
