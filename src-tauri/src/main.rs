@@ -23,6 +23,11 @@ fn main() {
             commands::start_ollama,
             commands::stop_ollama,
             commands::general_chat,
+            // PDF tools:
+            commands::pdf_add,
+            commands::pdf_remove,
+            commands::pdf_list,
+            commands::pdf_search,
             // Blender:
             commands::blender_run_script,
             // News scraping:

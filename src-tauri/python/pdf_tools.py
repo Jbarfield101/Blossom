@@ -217,6 +217,25 @@ def search(query: str, k: int = 3):
     return {"results": results}
 
 
+def list_docs():
+    ensure_dirs()
+    docs = []
+    if INDEX_DIR.exists():
+        for doc_dir in INDEX_DIR.iterdir():
+            if doc_dir.is_dir():
+                info_path = doc_dir / "doc.json"
+                if info_path.exists():
+                    info = json.loads(info_path.read_text())
+                    docs.append(
+                        {
+                            "doc_id": doc_dir.name,
+                            "title": info.get("title"),
+                            "pages": info.get("pages"),
+                            "created": info.get("created"),
+                        }
+                    )
+    return {"documents": docs}
+
 def meta(doc_id: str):
     doc_dir = INDEX_DIR / doc_id
     info = json.loads((doc_dir / "doc.json").read_text())
@@ -234,6 +253,9 @@ def main():
     p.add_argument("-k", type=int, default=3)
     p = sub.add_parser("meta")
     p.add_argument("doc_id")
+    p = sub.add_parser("remove")
+    p.add_argument("doc_id")
+    sub.add_parser("list")
     args = parser.parse_args()
 
     if args.cmd == "add":
@@ -244,6 +266,11 @@ def main():
         out = search(args.query, args.k)
     elif args.cmd == "meta":
         out = meta(args.doc_id)
+    elif args.cmd == "remove":
+        remove_doc(args.doc_id)
+        out = {"removed": args.doc_id}
+    elif args.cmd == "list":
+        out = list_docs()
     else:
         out = {}
     json.dump(out, fp=os.fdopen(1, "w"))
