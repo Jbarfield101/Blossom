@@ -17,6 +17,7 @@ import { Theme, useTheme } from "../features/theme/ThemeContext";
 import { useSettings } from "../features/settings/useSettings";
 import { useUsers } from "../features/users/useUsers";
 import { useComfy } from "../features/comfy/useComfy";
+import { useOutput } from "../features/output/useOutput";
 import { open } from "@tauri-apps/plugin-dialog";
 
 export default function Settings() {
@@ -25,6 +26,7 @@ export default function Settings() {
   const { modules, toggleModule } = useSettings();
   const { users, currentUserId, addUser, switchUser } = useUsers();
   const { folder: comfyFolder, setFolder: setComfyFolder } = useComfy();
+  const { folder: outputFolder, setFolder: setOutputFolder } = useOutput();
   const [newUser, setNewUser] = useState("");
   const userList = Object.values(users);
   const countdownEvents = events.filter(
@@ -111,6 +113,24 @@ export default function Settings() {
             onClick={async () => {
               const dir = await open({ directory: true });
               if (typeof dir === "string") setComfyFolder(dir);
+            }}
+          >
+            Browse
+          </Button>
+        </Box>
+        <Box sx={{ mt: 3 }}>
+          <TextField
+            label="Output Folder"
+            value={outputFolder}
+            onChange={(e) => setOutputFolder(e.target.value)}
+            fullWidth
+          />
+          <Button
+            variant="outlined"
+            sx={{ mt: 1 }}
+            onClick={async () => {
+              const dir = await open({ directory: true });
+              if (typeof dir === "string") setOutputFolder(dir);
             }}
           >
             Browse
