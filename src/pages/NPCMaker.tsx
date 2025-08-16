@@ -61,16 +61,21 @@ export default function NPCMaker() {
     setNpc((prev) => ({ ...prev, [field]: value }));
   }
 
-  function save() {
-    addNPC(npc);
-    setNpc({
-      name: '',
-      race: '',
-      class: '',
-      personality: '',
-      background: '',
-      appearance: '',
-    });
+  async function save() {
+    try {
+      await invoke('save_npc', { npc });
+      addNPC(npc);
+      setNpc({
+        name: '',
+        race: '',
+        class: '',
+        personality: '',
+        background: '',
+        appearance: '',
+      });
+    } catch (e) {
+      setError(String(e));
+    }
   }
 
   return (

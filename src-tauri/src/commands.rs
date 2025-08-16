@@ -458,6 +458,44 @@ fn blender_path() -> PathBuf {
 }
 
 /* ==============================
+NPC storage
+============================== */
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct NPCData {
+    pub name: String,
+    pub race: String,
+    pub class: String,
+    pub personality: String,
+    pub background: String,
+    pub appearance: String,
+}
+
+fn npc_storage_dir<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|_| "app data dir".to_string())?
+        .join("npc-storage");
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    Ok(dir)
+}
+
+#[tauri::command]
+pub async fn save_npc<R: Runtime>(app: AppHandle<R>, npc: NPCData) -> Result<(), String> {
+    let dir = npc_storage_dir(&app)?;
+    let file_name = format!(
+        "{}_{}.json",
+        npc.name.replace(' ', "_"),
+        Local::now().format("%Y%m%d%H%M%S")
+    );
+    let path = dir.join(file_name);
+    let json = serde_json::to_string_pretty(&npc).map_err(|e| e.to_string())?;
+    fs::write(path, json).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/* ==============================
 Ollama general chat
 ============================== */
 
