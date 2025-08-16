@@ -10,7 +10,7 @@ interface Feature {
 const features: Feature[] = [
   { label: "Lore" },
   { label: "Journal" },
-  { label: "NPC Maker" },
+  { label: "NPC Maker", path: "/dnd/npc-maker" },
   { label: "World Builder", path: "/dnd/world-builder" },
   { label: "NPC List" },
 ];
