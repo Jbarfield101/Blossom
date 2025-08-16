@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { useLofi } from "../features/lofi/useLofiEngine";
 
 type Section = { name: string; bars: number; chords: string[] };
 
@@ -178,6 +179,14 @@ export default function SongForm() {
   const [globalStatus, setGlobalStatus] = useState<string>("");
   const [err, setErr] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const {
+    isPlaying: previewPlaying,
+    play: previewPlay,
+    stop: previewStop,
+    setBpm: setPreviewBpm,
+    setKey: setPreviewKey,
+    setSeed: setPreviewSeed,
+  } = useLofi();
 
   // one audio element
   useEffect(() => {
@@ -688,6 +697,22 @@ export default function SongForm() {
         <div style={S.actions}>
           <button style={S.btn} disabled={busy || !outDir || !titleBase} onClick={renderBatch}>
             {busy ? "Rendering batch…" : "Render Songs"}
+          </button>
+
+          <button
+            style={S.playBtn}
+            onClick={async () => {
+              if (previewPlaying) {
+                previewStop();
+              } else {
+                setPreviewBpm(bpm);
+                setPreviewKey(key === "Auto" ? "C" : key);
+                setPreviewSeed(seedBase);
+                await previewPlay();
+              }
+            }}
+          >
+            {previewPlaying ? "Stop preview" : "Preview in browser"}
           </button>
 
           <button
