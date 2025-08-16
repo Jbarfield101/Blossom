@@ -13,6 +13,7 @@ export interface NPC {
 interface NPCState {
   npcs: NPC[];
   addNPC: (npc: NPC) => void;
+  removeNPC: (index: number) => void;
 }
 
 export const useNPCs = create<NPCState>()(
@@ -20,6 +21,8 @@ export const useNPCs = create<NPCState>()(
     (set) => ({
       npcs: [],
       addNPC: (npc) => set((state) => ({ npcs: [...state.npcs, npc] })),
+      removeNPC: (index) =>
+        set((state) => ({ npcs: state.npcs.filter((_, i) => i !== index) })),
     }),
     { name: 'npc-store' }
   )
