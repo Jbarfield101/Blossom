@@ -1,6 +1,6 @@
 
 import type { ReactNode } from "react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { IconButton } from "@mui/material";
 import {
   FaMusic,
@@ -11,33 +11,42 @@ import {
   FaCalendarAlt,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useSettings } from "../features/settings/useSettings";
 
-type Item = { icon: ReactNode; label: string; path: string };
+import type { ModuleKey } from "../features/settings/useSettings";
+
+type Item = { key: ModuleKey; icon: ReactNode; label: string; path: string };
 export default function FeatureCarousel({
   onHoverColor,
 }: { onHoverColor: (c: string) => void }) {
   const nav = useNavigate();
+  const { modules } = useSettings();
 
   const ACCENT = "#00bcd4";
 
   const items: Item[] = useMemo(
     () => [
-      { icon: <FaCubes />, label: "3D Object", path: "/objects" },
-      { icon: <FaMusic />, label: "Lo‑Fi Music", path: "/music" },
-      { icon: <FaCalendarAlt />, label: "Calendar", path: "/calendar" },
-      { icon: <FaCameraRetro />, label: "ComfyUI", path: "/comfy" },
-      { icon: <FaRobot />, label: "AI Assistant", path: "/assistant" },
-      { icon: <FaBolt />, label: "Laser Lab", path: "/laser" },
+      { key: "objects", icon: <FaCubes />, label: "3D Object", path: "/objects" },
+      { key: "music", icon: <FaMusic />, label: "Lo‑Fi Music", path: "/music" },
+      { key: "calendar", icon: <FaCalendarAlt />, label: "Calendar", path: "/calendar" },
+      { key: "comfy", icon: <FaCameraRetro />, label: "ComfyUI", path: "/comfy" },
+      { key: "assistant", icon: <FaRobot />, label: "AI Assistant", path: "/assistant" },
+      { key: "laser", icon: <FaBolt />, label: "Laser Lab", path: "/laser" },
     ],
     []
   );
+  const enabled = items.filter((it) => modules[it.key]);
 
   // index of the centered item
   const [i, setI] = useState(0);
-  const len = items.length;
+  const len = enabled.length;
   const mod = (n:number, m:number) => ((n % m) + m) % m;
 
   const go = (dir: 1 | -1) => setI(v => mod(v + dir, len));
+
+  useEffect(() => {
+    if (i >= len) setI(0);
+  }, [len, i]);
 
   const wheelLock = useRef(0);
   // scroll with mouse wheel (throttle to one item per tick)
@@ -68,9 +77,9 @@ export default function FeatureCarousel({
     >
       {/* items */}
       <div style={{ position: "relative", width: "100%", height: 240 }}>
-        {[-2, -1, 0, 1, 2].map((offset) => {
+        {len > 0 && [-2, -1, 0, 1, 2].map((offset) => {
           const idx = mod(i + offset, len);
-          const it = items[idx];
+          const it = enabled[idx];
           const center = offset === 0;
           const x = offset * GAP;
 
