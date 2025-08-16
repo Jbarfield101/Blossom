@@ -116,10 +116,19 @@ export default function GeneralChat() {
     if (!input.trim() || !currentChat) return;
     const userMsg: Message = { role: "user", content: input, ts: Date.now() };
     let name = currentChat.name;
-    if (currentChat.messages.length === 0) {
+    const existing = messages;
+    if (existing.filter((m) => m.role !== "system").length === 0) {
       name = input.trim().slice(0, 20) || name;
     }
-    const newMessages = [...messages, userMsg];
+    let newMessages = [...existing, userMsg];
+    if (!newMessages.some((m) => m.role === "system")) {
+      const systemMsg: Message = {
+        role: "system",
+        content: "You are Blossom, a helpful AI assistant.",
+        ts: Date.now(),
+      };
+      newMessages = [systemMsg, ...newMessages];
+    }
     updateChat(currentChat.id, newMessages, name);
     setInput("");
     setLoading(true);
