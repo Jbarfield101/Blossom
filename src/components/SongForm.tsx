@@ -252,6 +252,8 @@ export default function SongForm() {
     PRESET_TEMPLATES["Classic Lofi"].structure.map((s) => ({ ...s }))
   );
   const [newTemplateName, setNewTemplateName] = useState("");
+  const [genTitleLoading, setGenTitleLoading] = useState(false);
+  const [creatingTemplate, setCreatingTemplate] = useState(false);
 
   // VARIATION / BATCH
   const [numSongs, setNumSongs] = useState(1);
@@ -355,6 +357,29 @@ export default function SongForm() {
       }
     } catch (e: any) {
       setErr(e?.message || String(e));
+    }
+  }
+
+  async function generateTitle() {
+    try {
+      setGenTitleLoading(true);
+      await invoke("start_ollama");
+      const reply: string = await invoke("general_chat", {
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a creative assistant that suggests short, catchy lofi song titles. Respond with only the title.",
+          },
+          { role: "user", content: "Give me a lofi song title." },
+        ],
+      });
+      const line = reply.split("\n")[0].replace(/^['\"]|['\"]$/g, "").trim();
+      if (line) setTitleBase(line);
+    } catch (e: any) {
+      setErr(e?.message || String(e));
+    } finally {
+      setGenTitleLoading(false);
     }
   }
 
@@ -512,6 +537,9 @@ export default function SongForm() {
             value={titleBase}
             onChange={(e) => setTitleBase(e.target.value)}
           />
+          <button style={S.btn} onClick={generateTitle} disabled={genTitleLoading}>
+            {genTitleLoading ? "Generating..." : "Generate Title"}
+          </button>
           <button style={S.btn} onClick={pickFolder}>
             {outDir ? "Change folder" : "Choose folder"}
           </button>
@@ -602,6 +630,98 @@ export default function SongForm() {
 
         {/* structure editor */}
         <div style={{ ...S.panel, marginTop: 12 }}>
+          <div style={{ ...S.row, marginBottom: 8 }}>
+            <select
+              value={selectedTemplate}
+              onChange={(e) => {
+                const name = e.target.value;
+                setSelectedTemplate(name);
+                setCreatingTemplate(false);
+                if (name && templates[name]) {
+                  const tpl = templates[name];
+                  setStructure(tpl.structure.map((s) => ({ ...s })));
+                  setBpm(tpl.bpm);
+                  setKey(tpl.key);
+                  setMood(tpl.mood);
+                  setInstruments(tpl.instruments);
+                  setAmbience(tpl.ambience);
+                  setDrumPattern(tpl.drumPattern);
+                  setVariety(tpl.variety);
+                  setHqStereo(tpl.hqStereo);
+                  setHqReverb(tpl.hqReverb);
+                  setHqSidechain(tpl.hqSidechain);
+                  setHqChorus(tpl.hqChorus);
+                  setLimiterDrive(tpl.limiterDrive);
+                  setBpmJitterPct(tpl.bpmJitterPct);
+                }
+              }}
+              style={{ ...S.input, padding: "8px 12px" }}
+            >
+              <option value="">Custom</option>
+              {Object.keys(templates).map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+            {creatingTemplate ? (
+              <>
+                <input
+                  style={S.input}
+                  placeholder="Template name"
+                  value={newTemplateName}
+                  onChange={(e) => setNewTemplateName(e.target.value)}
+                />
+                <button
+                  style={S.btn}
+                  onClick={() => {
+                    const nm = newTemplateName.trim();
+                    if (!nm) return;
+                    const tpl: TemplateSpec = {
+                      structure: structure.map((s) => ({ ...s })),
+                      bpm,
+                      key,
+                      mood,
+                      instruments,
+                      ambience,
+                      drumPattern,
+                      variety,
+                      hqStereo,
+                      hqReverb,
+                      hqSidechain,
+                      hqChorus,
+                      limiterDrive,
+                      bpmJitterPct,
+                    };
+                    setTemplates((prev) => {
+                      const next = { ...prev, [nm]: tpl };
+                      const custom = Object.fromEntries(
+                        Object.entries(next).filter(([k]) => !PRESET_TEMPLATES[k])
+                      );
+                      localStorage.setItem("songTemplates", JSON.stringify(custom));
+                      return next;
+                    });
+                    setSelectedTemplate(nm);
+                    setNewTemplateName("");
+                    setCreatingTemplate(false);
+                  }}
+                >
+                  Save
+                </button>
+              </>
+            ) : (
+              <button
+                style={S.btn}
+                onClick={() => {
+                  setSelectedTemplate("");
+                  setCreatingTemplate(true);
+                  setNewTemplateName("");
+                }}
+              >
+                New Template
+              </button>
+            )}
+          </div>
           <label style={S.label}>Structure (bars)</label>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {structure.map((sec, i) => (
@@ -642,81 +762,6 @@ export default function SongForm() {
                 />
               </div>
             ))}
-          </div>
-          <div style={{ ...S.row, marginTop: 8 }}>
-            <select
-              value={selectedTemplate}
-              onChange={(e) => {
-                const name = e.target.value;
-                setSelectedTemplate(name);
-                if (name && templates[name]) {
-                  const tpl = templates[name];
-                  setStructure(tpl.structure.map((s) => ({ ...s })));
-                  setBpm(tpl.bpm);
-                  setKey(tpl.key);
-                  setMood(tpl.mood);
-                  setInstruments(tpl.instruments);
-                  setAmbience(tpl.ambience);
-                  setDrumPattern(tpl.drumPattern);
-                  setVariety(tpl.variety);
-                  setHqStereo(tpl.hqStereo);
-                  setHqReverb(tpl.hqReverb);
-                  setHqSidechain(tpl.hqSidechain);
-                  setHqChorus(tpl.hqChorus);
-                  setLimiterDrive(tpl.limiterDrive);
-                  setBpmJitterPct(tpl.bpmJitterPct);
-                }
-              }}
-              style={{ ...S.input, padding: "8px 12px" }}
-            >
-              <option value="">Custom</option>
-              {Object.keys(templates).map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
-            <input
-              style={S.input}
-              placeholder="Template name"
-              value={newTemplateName}
-              onChange={(e) => setNewTemplateName(e.target.value)}
-            />
-            <button
-              style={S.btn}
-              onClick={() => {
-                const nm = newTemplateName.trim();
-                if (!nm) return;
-                const tpl: TemplateSpec = {
-                  structure: structure.map((s) => ({ ...s })),
-                  bpm,
-                  key,
-                  mood,
-                  instruments,
-                  ambience,
-                  drumPattern,
-                  variety,
-                  hqStereo,
-                  hqReverb,
-                  hqSidechain,
-                  hqChorus,
-                  limiterDrive,
-                  bpmJitterPct,
-                };
-                setTemplates((prev) => {
-                  const next = { ...prev, [nm]: tpl };
-                  const custom = Object.fromEntries(
-                    Object.entries(next).filter(([k]) => !PRESET_TEMPLATES[k])
-                  );
-                  localStorage.setItem("songTemplates", JSON.stringify(custom));
-                  return next;
-                });
-                setSelectedTemplate(nm);
-                setNewTemplateName("");
-              }}
-            >
-              Save
-            </button>
           </div>
         </div>
 

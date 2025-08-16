@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor, cleanup } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import SongForm from './SongForm';
 import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
@@ -34,6 +34,10 @@ describe('SongForm', () => {
       configurable: true,
       value: vi.fn(),
     });
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('adds a job and shows progress', async () => {
@@ -80,6 +84,30 @@ describe('SongForm', () => {
     resolveRun!('/tmp/out/song.wav');
     expect(await screen.findByText('done')).toBeInTheDocument();
     expect(screen.getByText('Play')).toBeInTheDocument();
+  });
+
+  it('generates a title with ollama', async () => {
+    (invoke as any).mockImplementation((cmd: string) => {
+      if (cmd === 'start_ollama') return Promise.resolve();
+      if (cmd === 'general_chat') return Promise.resolve('Morning Chill');
+      return Promise.resolve('');
+    });
+
+    render(<SongForm />);
+
+    fireEvent.click(screen.getByText(/generate title/i));
+
+    await waitFor(() => {
+      const calls = (invoke as any).mock.calls.map(([c]: any) => c);
+      expect(calls).toContain('start_ollama');
+      expect(calls).toContain('general_chat');
+    });
+
+    await waitFor(() =>
+      expect(
+        (screen.getByPlaceholderText(/song title base/i) as HTMLInputElement).value
+      ).toBe('Morning Chill')
+    );
   });
 });
 
