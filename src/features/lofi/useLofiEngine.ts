@@ -33,6 +33,7 @@ let chordStep = 0;
 let chords: string[][] = [];
 
 type ChordType = 'maj7' | 'min7' | 'dom7';
+type Degree = number | `b${number}` | `#${number}`;
 
 export function buildChord(root: string, type: ChordType) {
   const intervals =
@@ -44,29 +45,84 @@ export function buildChord(root: string, type: ChordType) {
   return intervals.map((i) => Tone.Frequency(root).transpose(i).toNote());
 }
 
-const progressionPatterns: number[][] = [
+let patternIndex = 0;
+const progressionPatterns: Degree[][] = [
   [1, 4, 6, 5],
   [2, 5, 1, 6],
   [1, 5, 4, 5],
   [2, 5, 1, 4],
   [6, 2, 5, 1],
+  // minor key progressions
+  [1, 4, 5, 4],
+  [1, 6, 7, 6],
+  [1, 3, 4, 6],
+  // modal interchange examples
+  [1, 'b7', 4, 'b7'],
+  [1, 'b6', 'b7', 4],
+  // longer sequences
+  [1, 4, 6, 5, 3, 4, 1, 5],
+  [1, 5, 6, 3, 4, 1],
 ];
 
-export function chordFromDegree(degree: number, key: string): string[] {
+export function chordFromDegree(degree: Degree, key: string): string[] {
+  const isMinor = key.toLowerCase().endsWith('m');
+  const baseKey = isMinor ? key.slice(0, -1) : key;
+  let accidental = 0;
+  let degNum: number;
+  if (typeof degree === 'string') {
+    if (degree.startsWith('b')) {
+      accidental = -1;
+      degNum = parseInt(degree.slice(1), 10);
+    } else if (degree.startsWith('#')) {
+      accidental = 1;
+      degNum = parseInt(degree.slice(1), 10);
+    } else {
+      degNum = parseInt(degree, 10);
+    }
+  } else {
+    degNum = degree;
+  }
   const majorScale = [0, 2, 4, 5, 7, 9, 11];
-  const root = Tone.Frequency(`${key}4`).transpose(majorScale[degree - 1]).toNote();
+  const minorScale = [0, 2, 3, 5, 7, 8, 10];
+  const scale = isMinor ? minorScale : majorScale;
+  const root = Tone.Frequency(`${baseKey}4`)
+    .transpose(scale[degNum - 1] + accidental)
+    .toNote();
   let type: ChordType;
-  switch (degree) {
-    case 1:
-    case 4:
+  if (isMinor) {
+    switch (degNum) {
+      case 1:
+      case 4:
+        type = 'min7';
+        break;
+      case 5:
+        type = 'dom7';
+        break;
+      case 3:
+      case 6:
+      case 7:
+        type = 'maj7';
+        break;
+      default:
+        type = 'min7';
+        break;
+    }
+  } else {
+    switch (degNum) {
+      case 1:
+      case 4:
+        type = 'maj7';
+        break;
+      case 5:
+        type = 'dom7';
+        break;
+      default:
+        type = 'min7';
+        break;
+    }
+    if (accidental === -1 && [3, 6, 7].includes(degNum)) {
       type = 'maj7';
-      break;
-    case 5:
-      type = 'dom7';
-      break;
-    default:
-      type = 'min7';
-      break;
+    }
   }
   return buildChord(root, type);
 }
@@ -98,15 +154,32 @@ export function voiceLeadChords(chs: string[][]): string[][] {
   return voiced;
 }
 
-function generateProgression(seed: number, key: string) {
-  const rnd = mulberry32(seed);
-  const pattern = progressionPatterns[Math.floor(rnd() * progressionPatterns.length)];
+function generateProgression(
+  seed: number,
+  key: string,
+  patterns?: Degree[][],
+  mode: 'random' | 'cycle' = 'random',
+) {
+  const list = patterns && patterns.length > 0 ? patterns : progressionPatterns;
+  let pattern: Degree[];
+  if (mode === 'cycle') {
+    pattern = list[patternIndex % list.length];
+    patternIndex++;
+  } else {
+    const rnd = mulberry32(seed);
+    pattern = list[Math.floor(rnd() * list.length)];
+  }
   chords = voiceLeadChords(pattern.map((deg) => chordFromDegree(deg, key)));
 }
 
-function makePattern(seed: number, key: string) {
+function makePattern(
+  seed: number,
+  key: string,
+  patterns?: Degree[][],
+  mode: 'random' | 'cycle' = 'random',
+) {
   const rnd = mulberry32(seed);
-  generateProgression(seed, key);
+  generateProgression(seed, key, patterns, mode);
   melody = [];
   chords.forEach((ch) => {
     for (let i = 0; i < 4; i++) {
@@ -185,6 +258,9 @@ type Actions = {
   setBpm: (bpm: number) => void;
   setSeed: (seed: number) => void;
   setKey: (key: string) => void;
+  setPatterns: (patterns: Degree[][]) => void;
+  setPatternGenerator: (fn: (seed: number, key: string) => Degree[][]) => void;
+  setPatternMode: (mode: 'random' | 'cycle') => void;
 };
 
 export const useLofi = create<LofiState & Actions>((set, get) => ({
@@ -192,11 +268,15 @@ export const useLofi = create<LofiState & Actions>((set, get) => ({
   bpm: 80,
   seed: 0,
   key: 'C',
+  patterns: undefined,
+  patternGenerator: undefined,
+  patternMode: 'random',
 
   play: async () => {
     init();
     const s = get().seed || Math.floor(Math.random() * 1_000_000);
-    makePattern(s, get().key);
+    const patts = get().patterns || get().patternGenerator?.(s, get().key);
+    makePattern(s, get().key, patts, get().patternMode);
     set({ seed: s });
     await Tone.start();
     loop?.start(0);
@@ -216,12 +296,19 @@ export const useLofi = create<LofiState & Actions>((set, get) => ({
   },
 
   setSeed: (seed) => {
-    makePattern(seed, get().key);
+    const patts = get().patterns || get().patternGenerator?.(seed, get().key);
+    makePattern(seed, get().key, patts, get().patternMode);
     set({ seed });
   },
 
   setKey: (key) => {
-    makePattern(get().seed, key);
+    const s = get().seed;
+    const patts = get().patterns || get().patternGenerator?.(s, key);
+    makePattern(s, key, patts, get().patternMode);
     set({ key });
   },
+
+  setPatterns: (patterns) => set({ patterns }),
+  setPatternGenerator: (patternGenerator) => set({ patternGenerator }),
+  setPatternMode: (mode) => set({ patternMode: mode }),
 }));
