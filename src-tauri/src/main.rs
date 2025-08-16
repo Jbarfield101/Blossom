@@ -25,6 +25,11 @@ fn main() {
             commands::general_chat,
             // Blender:
             commands::blender_run_script,
+            // PDF tools:
+            commands::pdf_add,
+            commands::pdf_remove,
+            commands::pdf_list,
+            commands::pdf_search,
             // News scraping:
             commands::fetch_big_brother_news,
             commands::fetch_big_brother_summary,

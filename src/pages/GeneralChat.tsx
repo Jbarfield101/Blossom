@@ -25,6 +25,13 @@ interface Message {
   ts: number;
 }
 
+interface PdfSearchResult {
+  doc_id: string;
+  page_range: [number, number];
+  text: string;
+  score: number;
+}
+
 interface Chat {
   id: string;
   name: string;
@@ -142,8 +149,21 @@ export default function GeneralChat() {
     setInput("");
     setLoading(true);
     try {
+      const docs: PdfSearchResult[] = await invoke("pdf_search", {
+        query: input,
+      });
+      const context = docs
+        .map(
+          (d) =>
+            `(Doc ${d.doc_id} p.${d.page_range[0]}-${d.page_range[1]}) ${d.text}`
+        )
+        .join("\n");
+      const apiMessages = [
+        ...newMessages.map(({ role, content }) => ({ role, content })),
+        ...(context ? [{ role: "system", content: context }] : []),
+      ];
       const reply: string = await invoke("general_chat", {
-        messages: newMessages.map(({ role, content }) => ({ role, content })),
+        messages: apiMessages,
       });
       const asst: Message = { role: "assistant", content: reply, ts: Date.now() };
       updateChat(currentChat.id, [...newMessages, asst]);

@@ -154,6 +154,8 @@ def remove_doc(doc_id: str):
     conn.execute("DELETE FROM embeddings WHERE doc_id=?", (doc_id,))
     conn.commit()
 
+    return {"removed": doc_id}
+
 
 def reindex():
     ensure_dirs()
@@ -207,6 +209,23 @@ def meta(doc_id: str):
     return {"title": info.get("title"), "pages": info.get("pages"), "created": info.get("created")}
 
 
+def list_docs():
+    ensure_dirs()
+    docs = []
+    for doc_dir in INDEX_DIR.glob("*"):
+        if doc_dir.is_dir() and (doc_dir / "doc.json").exists():
+            info = json.loads((doc_dir / "doc.json").read_text())
+            docs.append(
+                {
+                    "doc_id": doc_dir.name,
+                    "title": info.get("title"),
+                    "pages": info.get("pages"),
+                    "created": info.get("created"),
+                }
+            )
+    return {"docs": docs}
+
+
 def main():
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -218,6 +237,9 @@ def main():
     p.add_argument("-k", type=int, default=3)
     p = sub.add_parser("meta")
     p.add_argument("doc_id")
+    p = sub.add_parser("remove")
+    p.add_argument("doc_id")
+    sub.add_parser("list")
     args = parser.parse_args()
 
     if args.cmd == "add":
@@ -228,6 +250,10 @@ def main():
         out = search(args.query, args.k)
     elif args.cmd == "meta":
         out = meta(args.doc_id)
+    elif args.cmd == "remove":
+        out = remove_doc(args.doc_id)
+    elif args.cmd == "list":
+        out = list_docs()
     else:
         out = {}
     json.dump(out, fp=os.fdopen(1, "w"))

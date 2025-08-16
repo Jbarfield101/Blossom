@@ -171,6 +171,20 @@ fn script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
         .join("lofi_gpu_hq.py")
 }
 
+fn pdf_tools_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
+    if let Ok(cwd) = std::env::current_dir() {
+        let dev = cwd.join("src-tauri").join("python").join("pdf_tools.py");
+        if dev.exists() {
+            return dev;
+        }
+    }
+    app.path()
+        .resource_dir()
+        .expect("resource dir")
+        .join("python")
+        .join("pdf_tools.py")
+}
+
 /* ==============================
 Serde-mapped types (camelCase)
 ============================== */
@@ -364,6 +378,144 @@ Ollama general chat
 pub struct ChatMessage {
     pub role: String,
     pub content: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct DocAddResult {
+    pub doc_id: String,
+    pub pages: u32,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct DocMeta {
+    pub doc_id: String,
+    pub title: Option<String>,
+    pub pages: Option<u32>,
+    pub created: Option<String>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct PdfSearchResult {
+    pub doc_id: String,
+    pub page_range: [i32; 2],
+    pub text: String,
+    pub score: f32,
+}
+
+/* ==============================
+PDF document tools
+============================== */
+
+#[tauri::command]
+pub async fn pdf_add<R: Runtime>(app: AppHandle<R>, path: String) -> Result<DocAddResult, String> {
+    let py = conda_python();
+    if !py.exists() {
+        return Err(format!("Python not found at {}", py.display()));
+    }
+    let script = pdf_tools_path(&app);
+    if !script.exists() {
+        return Err(format!("Script not found at {}", script.display()));
+    }
+    let output = PCommand::new(&py)
+        .arg("-u")
+        .arg(&script)
+        .arg("add")
+        .arg(&path)
+        .output()
+        .map_err(|e| format!("Failed to start python: {e}"))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("Python exited with status {}:\n{}", output.status, stderr));
+    }
+
+    let res: DocAddResult = serde_json::from_slice(&output.stdout)
+        .map_err(|e| format!("Invalid JSON: {e}"))?;
+    Ok(res)
+}
+
+#[tauri::command]
+pub async fn pdf_remove<R: Runtime>(app: AppHandle<R>, doc_id: String) -> Result<(), String> {
+    let py = conda_python();
+    if !py.exists() {
+        return Err(format!("Python not found at {}", py.display()));
+    }
+    let script = pdf_tools_path(&app);
+    if !script.exists() {
+        return Err(format!("Script not found at {}", script.display()));
+    }
+    let output = PCommand::new(&py)
+        .arg("-u")
+        .arg(&script)
+        .arg("remove")
+        .arg(&doc_id)
+        .output()
+        .map_err(|e| format!("Failed to start python: {e}"))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("Python exited with status {}:\n{}", output.status, stderr));
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn pdf_list<R: Runtime>(app: AppHandle<R>) -> Result<Vec<DocMeta>, String> {
+    let py = conda_python();
+    if !py.exists() {
+        return Err(format!("Python not found at {}", py.display()));
+    }
+    let script = pdf_tools_path(&app);
+    if !script.exists() {
+        return Err(format!("Script not found at {}", script.display()));
+    }
+    let output = PCommand::new(&py)
+        .arg("-u")
+        .arg(&script)
+        .arg("list")
+        .output()
+        .map_err(|e| format!("Failed to start python: {e}"))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("Python exited with status {}:\n{}", output.status, stderr));
+    }
+
+    let val: serde_json::Value = serde_json::from_slice(&output.stdout)
+        .map_err(|e| format!("Invalid JSON: {e}"))?;
+    let docs: Vec<DocMeta> = serde_json::from_value(val["docs"].clone())
+        .map_err(|e| format!("Invalid docs: {e}"))?;
+    Ok(docs)
+}
+
+#[tauri::command]
+pub async fn pdf_search<R: Runtime>(app: AppHandle<R>, query: String) -> Result<Vec<PdfSearchResult>, String> {
+    let py = conda_python();
+    if !py.exists() {
+        return Err(format!("Python not found at {}", py.display()));
+    }
+    let script = pdf_tools_path(&app);
+    if !script.exists() {
+        return Err(format!("Script not found at {}", script.display()));
+    }
+    let output = PCommand::new(&py)
+        .arg("-u")
+        .arg(&script)
+        .arg("search")
+        .arg(&query)
+        .output()
+        .map_err(|e| format!("Failed to start python: {e}"))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("Python exited with status {}:\n{}", output.status, stderr));
+    }
+
+    let val: serde_json::Value = serde_json::from_slice(&output.stdout)
+        .map_err(|e| format!("Invalid JSON: {e}"))?;
+    let results: Vec<PdfSearchResult> = serde_json::from_value(val["results"].clone())
+        .map_err(|e| format!("Invalid results: {e}"))?;
+    Ok(results)
 }
 
 fn models_dir<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {

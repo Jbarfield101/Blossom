@@ -21,6 +21,7 @@ describe('GeneralChat', () => {
   it('handles message flow', async () => {
     (invoke as any).mockImplementation((cmd: string) => {
       if (cmd === 'start_ollama') return Promise.resolve();
+      if (cmd === 'pdf_search') return Promise.resolve([]);
       if (cmd === 'general_chat') return Promise.resolve('Reply');
       return Promise.resolve();
     });
@@ -33,6 +34,9 @@ describe('GeneralChat', () => {
     fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
 
     await waitFor(() => {
+      const searchCalls = (invoke as any).mock.calls.filter(([cmd]: [string]) => cmd === 'pdf_search');
+      expect(searchCalls).toHaveLength(1);
+      expect(searchCalls[0][1]).toEqual({ query: 'Hello' });
       const calls = (invoke as any).mock.calls.filter(([cmd]: [string]) => cmd === 'general_chat');
       expect(calls).toHaveLength(1);
       expect(calls[0][1]).toEqual({
@@ -49,6 +53,7 @@ describe('GeneralChat', () => {
   it('inserts system prompt only once', async () => {
     (invoke as any).mockImplementation((cmd: string) => {
       if (cmd === 'start_ollama') return Promise.resolve();
+      if (cmd === 'pdf_search') return Promise.resolve([]);
       if (cmd === 'general_chat') return Promise.resolve('Reply');
       return Promise.resolve();
     });
@@ -61,6 +66,8 @@ describe('GeneralChat', () => {
     fireEvent.change(screen.getAllByRole('textbox')[0], { target: { value: 'Hi' } });
     fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
     await waitFor(() => {
+      const searchCalls = (invoke as any).mock.calls.filter(([cmd]: [string]) => cmd === 'pdf_search');
+      expect(searchCalls).toHaveLength(1);
       const calls = (invoke as any).mock.calls.filter(([cmd]: [string]) => cmd === 'general_chat');
       expect(calls).toHaveLength(1);
       expect(calls[0][1]).toEqual({
@@ -76,6 +83,8 @@ describe('GeneralChat', () => {
     fireEvent.change(screen.getAllByRole('textbox')[0], { target: { value: 'How are you?' } });
     fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
     await waitFor(() => {
+      const searchCalls = (invoke as any).mock.calls.filter(([cmd]: [string]) => cmd === 'pdf_search');
+      expect(searchCalls).toHaveLength(2);
       const calls = (invoke as any).mock.calls.filter(([cmd]: [string]) => cmd === 'general_chat');
       expect(calls).toHaveLength(2);
       expect(calls[1][1]).toEqual({
@@ -92,6 +101,7 @@ describe('GeneralChat', () => {
   it('shows error when send fails', async () => {
     (invoke as any).mockImplementation((cmd: string) => {
       if (cmd === 'start_ollama') return Promise.resolve();
+      if (cmd === 'pdf_search') return Promise.resolve([]);
       if (cmd === 'general_chat') return Promise.reject('fail');
       return Promise.resolve();
     });

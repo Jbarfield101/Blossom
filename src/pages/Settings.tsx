@@ -10,14 +10,23 @@ import {
   Switch,
   TextField,
   Button,
+  Stack,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCalendar } from "../features/calendar/useCalendar";
 import { Theme, useTheme } from "../features/theme/ThemeContext";
 import { useSettings } from "../features/settings/useSettings";
 import { useUsers } from "../features/users/useUsers";
 import { useComfy } from "../features/comfy/useComfy";
 import { open } from "@tauri-apps/plugin-dialog";
+import { invoke } from "@tauri-apps/api/core";
+
+interface DocMeta {
+  doc_id: string;
+  title?: string;
+  pages?: number;
+  created?: string;
+}
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
@@ -26,10 +35,38 @@ export default function Settings() {
   const { users, currentUserId, addUser, switchUser } = useUsers();
   const { folder: comfyFolder, setFolder: setComfyFolder } = useComfy();
   const [newUser, setNewUser] = useState("");
+  const [docs, setDocs] = useState<DocMeta[]>([]);
   const userList = Object.values(users);
   const countdownEvents = events.filter(
     (e) => e.hasCountdown && e.status !== "canceled" && e.status !== "missed"
   );
+
+  useEffect(() => {
+    loadDocs();
+  }, []);
+
+  async function loadDocs() {
+    try {
+      const list: DocMeta[] = await invoke("pdf_list");
+      setDocs(list);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error(e);
+    }
+  }
+
+  async function addPdf() {
+    const file = await open({ filters: [{ name: "PDF", extensions: ["pdf"] }] });
+    if (typeof file === "string") {
+      await invoke("pdf_add", { path: file });
+      await loadDocs();
+    }
+  }
+
+  async function removePdf(id: string) {
+    await invoke("pdf_remove", { doc_id: id });
+    await loadDocs();
+  }
   return (
     <Box sx={{ height: "100vh", display: "grid", placeItems: "center" }}>
       <Paper elevation={3} sx={{ p: 4, borderRadius: 3, minWidth: 360 }}>
@@ -115,6 +152,41 @@ export default function Settings() {
           >
             Browse
           </Button>
+        </Box>
+        <Box sx={{ mt: 3 }}>
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            Documents
+          </Typography>
+          <Button variant="outlined" onClick={addPdf} sx={{ mb: 2 }}>
+            Add PDF
+          </Button>
+          <Stack spacing={1}>
+            {docs.map((d) => (
+              <Box
+                key={d.doc_id}
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  border: "1px solid",
+                  borderColor: "divider",
+                  p: 1,
+                  borderRadius: 1,
+                }}
+              >
+                <Typography>
+                  {d.title || d.doc_id} ({d.pages ?? 0}p)
+                </Typography>
+                <Button
+                  size="small"
+                  color="error"
+                  onClick={() => removePdf(d.doc_id)}
+                >
+                  Remove
+                </Button>
+              </Box>
+            ))}
+          </Stack>
         </Box>
         <FormControl fullWidth sx={{ mt: 3 }}>
           <InputLabel id="theme-label">Theme</InputLabel>
