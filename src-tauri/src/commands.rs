@@ -618,7 +618,10 @@ static BIG_BROTHER_SUMMARY_CACHE: Lazy<Mutex<Option<(Instant, String)>>> =
     Lazy::new(|| Mutex::new(None));
 
 #[tauri::command]
-pub async fn fetch_big_brother_news(force: Option<bool>) -> Result<Vec<NewsArticle>, String> {
+pub async fn fetch_big_brother_news<R: Runtime>(
+    app: AppHandle<R>,
+    force: Option<bool>,
+) -> Result<Vec<NewsArticle>, String> {
     let force = force.unwrap_or(false);
 
     {
@@ -680,7 +683,7 @@ pub async fn fetch_big_brother_news(force: Option<bool>) -> Result<Vec<NewsArtic
                 "Summarize this Big Brother article in one or two sentences.\nTitle: {title}\nDescription: {description}"
             );
 
-            let summary = match general_chat(vec![ChatMessage {
+            let summary = match general_chat(app.clone(), vec![ChatMessage {
                 role: "user".into(),
                 content: prompt,
             }])
@@ -708,7 +711,10 @@ pub async fn fetch_big_brother_news(force: Option<bool>) -> Result<Vec<NewsArtic
 }
 
 #[tauri::command]
-pub async fn fetch_big_brother_summary(force: Option<bool>) -> Result<String, String> {
+pub async fn fetch_big_brother_summary<R: Runtime>(
+    app: AppHandle<R>,
+    force: Option<bool>,
+) -> Result<String, String> {
     let force = force.unwrap_or(false);
 
     {
@@ -722,7 +728,7 @@ pub async fn fetch_big_brother_summary(force: Option<bool>) -> Result<String, St
         }
     }
 
-    let articles = fetch_big_brother_news(Some(force)).await?;
+    let articles = fetch_big_brother_news(app.clone(), Some(force)).await?;
 
     let mut prompt = String::from(
         "Provide a concise daily summary of the latest Big Brother developments based on these article summaries:\n",
@@ -736,7 +742,7 @@ pub async fn fetch_big_brother_summary(force: Option<bool>) -> Result<String, St
     }
     prompt.push_str("\nSummary:");
 
-    let summary = general_chat(vec![ChatMessage {
+    let summary = general_chat(app, vec![ChatMessage {
         role: "user".into(),
         content: prompt,
     }])

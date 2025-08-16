@@ -6,9 +6,10 @@ mod commands;
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .setup(|_app| {
-            tauri::async_runtime::spawn(async {
-                let _ = commands::fetch_big_brother_summary(Some(true)).await;
+        .setup(|app| {
+            let handle = app.handle();
+            tauri::async_runtime::spawn(async move {
+                let _ = commands::fetch_big_brother_summary(handle, Some(true)).await;
             });
             Ok(())
         })
