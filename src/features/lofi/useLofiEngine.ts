@@ -25,6 +25,7 @@ let chain: {
 } | null = null;
 
 let melody: string[] = [];
+let rhythm: RhythmCell[] = [];
 let bassLine: string[] = [];
 let step = 0;
 let bassStep = 0;
@@ -33,6 +34,7 @@ let chordStep = 0;
 let chords: string[][] = [];
 
 type ChordType = 'maj7' | 'min7' | 'dom7';
+type RhythmCell = 'on' | 'rest' | 'sync';
 
 export function buildChord(root: string, type: ChordType) {
   const intervals =
@@ -50,6 +52,18 @@ const progressionPatterns: number[][] = [
   [1, 5, 4, 5],
   [2, 5, 1, 4],
   [6, 2, 5, 1],
+];
+
+const motifs: number[][] = [
+  [0, 1, 0, -1],
+  [0, -1, -2, 1],
+  [0, 2, 1, -2],
+];
+
+const rhythmTemplates: RhythmCell[][] = [
+  ['on', 'rest', 'on', 'on'],
+  ['on', 'on', 'rest', 'sync'],
+  ['on', 'sync', 'on', 'rest'],
 ];
 
 export function chordFromDegree(degree: number, key: string): string[] {
@@ -98,6 +112,77 @@ export function voiceLeadChords(chs: string[][]): string[][] {
   return voiced;
 }
 
+function weightedChoice<T>(items: T[], weights: number[], rnd: () => number): T {
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = rnd() * total;
+  for (let i = 0; i < items.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return items[i];
+  }
+  return items[items.length - 1];
+}
+
+const scaleSteps = [0, 2, 4, 5, 7, 9, 11];
+
+function buildScale(key: string, octaves = 3) {
+  const base = Tone.Frequency(`${key}3`).toMidi();
+  const res: number[] = [];
+  for (let o = 0; o < octaves; o++) {
+    for (const s of scaleSteps) res.push(base + s + 12 * o);
+  }
+  return res;
+}
+
+function closestIndex(scale: number[], midi: number) {
+  let best = 0;
+  let min = Infinity;
+  scale.forEach((m, i) => {
+    const d = Math.abs(m - midi);
+    if (d < min) {
+      min = d;
+      best = i;
+    }
+  });
+  return best;
+}
+
+function generateMelodyForChord(
+  chord: string[],
+  key: string,
+  motif: number[],
+  rnd: () => number,
+): string[] {
+  const scale = buildScale(key);
+  const chordIndices = Array.from(
+    new Set(
+      chord.map((n) => closestIndex(scale, Tone.Frequency(n).toMidi())),
+    ),
+  );
+  const passingIndices = scale
+    .map((_, i) => i)
+    .filter((i) => !chordIndices.includes(i));
+  const start = weightedChoice(
+    [...chordIndices, ...passingIndices],
+    [
+      ...chordIndices.map(() => 4),
+      ...passingIndices.map(() => 1),
+    ],
+    rnd,
+  );
+  const idxs = [start];
+  for (let i = 1; i < motif.length; i++) {
+    const center = idxs[i - 1] + motif[i];
+    const candidates = [center];
+    if (center - 1 >= 0) candidates.push(center - 1);
+    if (center + 1 < scale.length) candidates.push(center + 1);
+    const weights = candidates.map((ci) =>
+      chordIndices.includes(ci) ? 4 : 1,
+    );
+    idxs.push(weightedChoice(candidates, weights, rnd));
+  }
+  return idxs.map((i) => Tone.Frequency(scale[i], 'midi').toNote());
+}
+
 function generateProgression(seed: number, key: string) {
   const rnd = mulberry32(seed);
   const pattern = progressionPatterns[Math.floor(rnd() * progressionPatterns.length)];
@@ -108,10 +193,13 @@ function makePattern(seed: number, key: string) {
   const rnd = mulberry32(seed);
   generateProgression(seed, key);
   melody = [];
+  rhythm = [];
   chords.forEach((ch) => {
-    for (let i = 0; i < 4; i++) {
-      melody.push(ch[Math.floor(rnd() * ch.length)]);
-    }
+    const motif = motifs[Math.floor(rnd() * motifs.length)];
+    const rPat = rhythmTemplates[Math.floor(rnd() * rhythmTemplates.length)];
+    const notes = generateMelodyForChord(ch, key, motif, rnd);
+    melody.push(...notes);
+    rhythm.push(...rPat);
   });
   bassLine = chords.map((ch) => Tone.Frequency(ch[0]).transpose(-12).toNote());
   step = 0;
@@ -155,7 +243,11 @@ function init() {
     if (!chain) return;
     if (melody.length === 0) return;
     const note = melody[step % melody.length];
-    chain.lead.triggerAttackRelease(note, '8n', time);
+    const r = rhythm[step % rhythm.length];
+    if (r !== 'rest') {
+      const t = r === 'sync' ? time + Tone.Time('8n') : time;
+      chain.lead.triggerAttackRelease(note, '8n', t);
+    }
     if (step % 2 === 0) {
       chain.hat.triggerAttackRelease('16n', time);
     }
