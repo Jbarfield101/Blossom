@@ -34,13 +34,13 @@ let chords: string[][] = [];
 
 type ChordType = 'maj7' | 'min7' | 'dom7';
 
-function buildChord(root: string, type: ChordType) {
+export function buildChord(root: string, type: ChordType) {
   const intervals =
     type === 'maj7'
-      ? [0, 4, 7, 11]
+      ? [0, 4, 7, 11, 14]
       : type === 'min7'
-        ? [0, 3, 7, 10]
-        : [0, 4, 7, 10];
+        ? [0, 3, 7, 10, 14]
+        : [0, 4, 7, 10, 14];
   return intervals.map((i) => Tone.Frequency(root).transpose(i).toNote());
 }
 
@@ -48,9 +48,11 @@ const progressionPatterns: number[][] = [
   [1, 4, 6, 5],
   [2, 5, 1, 6],
   [1, 5, 4, 5],
+  [2, 5, 1, 4],
+  [6, 2, 5, 1],
 ];
 
-function chordFromDegree(degree: number, key: string): string[] {
+export function chordFromDegree(degree: number, key: string): string[] {
   const majorScale = [0, 2, 4, 5, 7, 9, 11];
   const root = Tone.Frequency(`${key}4`).transpose(majorScale[degree - 1]).toNote();
   let type: ChordType;
@@ -69,10 +71,37 @@ function chordFromDegree(degree: number, key: string): string[] {
   return buildChord(root, type);
 }
 
+function rotate(arr: number[], n: number) {
+  return arr.slice(n).concat(arr.slice(0, n).map((v) => v + 12));
+}
+
+export function voiceLeadChords(chs: string[][]): string[][] {
+  if (chs.length === 0) return [];
+  const voiced: string[][] = [chs[0]];
+  for (let i = 1; i < chs.length; i++) {
+    const prevRoot = Tone.Frequency(voiced[i - 1][0]).toMidi();
+    const chordMidi = chs[i].map((n) => Tone.Frequency(n).toMidi());
+    let best = chordMidi;
+    let min = Infinity;
+    for (let inv = 0; inv < chordMidi.length; inv++) {
+      const rotated = rotate(chordMidi, inv);
+      const shift = Math.round((prevRoot - rotated[0]) / 12) * 12;
+      const shifted = rotated.map((v) => v + shift);
+      const dist = Math.abs(shifted[0] - prevRoot);
+      if (dist < min) {
+        min = dist;
+        best = shifted;
+      }
+    }
+    voiced.push(best.map((m) => Tone.Frequency(m, 'midi').toNote()));
+  }
+  return voiced;
+}
+
 function generateProgression(seed: number, key: string) {
   const rnd = mulberry32(seed);
   const pattern = progressionPatterns[Math.floor(rnd() * progressionPatterns.length)];
-  chords = pattern.map((deg) => chordFromDegree(deg, key));
+  chords = voiceLeadChords(pattern.map((deg) => chordFromDegree(deg, key)));
 }
 
 function makePattern(seed: number, key: string) {

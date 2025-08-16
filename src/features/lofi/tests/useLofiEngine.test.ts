@@ -26,7 +26,11 @@ describe('useLofi engine', () => {
       const Loop = vi
         .fn()
         .mockImplementation(() => ({ start: vi.fn(), stop: vi.fn() }));
-      const Frequency = (n: string) => ({ transpose: () => ({ toNote: () => n }) });
+      const Frequency = (n: any) => ({
+        transpose: () => ({ toNote: () => n }),
+        toMidi: () => (typeof n === 'number' ? n : 60),
+        toNote: () => (typeof n === 'number' ? 'C4' : n),
+      });
       const Synth = vi.fn();
       return {
         start,
