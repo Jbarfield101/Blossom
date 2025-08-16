@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { useLofi } from "../features/lofi/useLofiEngine";
+import { useLofi } from "../features/lofi/SongForm";
 
 type Section = { name: string; bars: number; chords: string[] };
 
