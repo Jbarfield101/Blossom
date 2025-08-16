@@ -30,7 +30,7 @@ export default function App() {
         <Route path="/comfy" element={<Comfy />} />
         <Route path="/assistant" element={<Assistant />} />
         <Route path="/assistant/general-chat" element={<GeneralChat />} />
-        <Route path="/assistant/world-builder" element={<WorldBuilder />} />
+        <Route path="/dnd/world-builder" element={<WorldBuilder />} />
         <Route
           path="/assistant/big-brother-updates"
           element={<BigBrotherUpdates />}

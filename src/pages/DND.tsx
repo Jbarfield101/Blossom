@@ -11,7 +11,7 @@ const features: Feature[] = [
   { label: "Lore" },
   { label: "Journal" },
   { label: "NPC Maker" },
-  { label: "World Builder" },
+  { label: "World Builder", path: "/dnd/world-builder" },
   { label: "NPC List" },
 ];
 
