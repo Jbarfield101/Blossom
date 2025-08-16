@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect } from "react";
+import { useUsers } from "../users/useUsers";
 
 export type Theme = "default" | "ocean" | "forest" | "sunset" | "sakura";
 
@@ -10,19 +11,16 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    const stored = localStorage.getItem("theme");
-    if (stored === "ocean" || stored === "forest" || stored === "sunset" || stored === "sakura") {
-      return stored;
-    }
-    return "default";
+  const theme = useUsers((state) => {
+    const id = state.currentUserId;
+    return id ? state.users[id].theme : "default";
   });
+  const setTheme = useUsers((state) => state.setTheme);
 
   useEffect(() => {
     const classes = ["theme-default", "theme-ocean", "theme-forest", "theme-sunset", "theme-sakura"];
     document.body.classList.remove(...classes);
     document.body.classList.add(`theme-${theme}`);
-    localStorage.setItem("theme", theme);
   }, [theme]);
 
   return (

@@ -8,15 +8,22 @@ import {
   MenuItem,
   FormControlLabel,
   Switch,
+  TextField,
+  Button,
 } from "@mui/material";
+import { useState } from "react";
 import { useCalendar } from "../features/calendar/useCalendar";
 import { Theme, useTheme } from "../features/theme/ThemeContext";
 import { useSettings } from "../features/settings/useSettings";
+import { useUsers } from "../features/users/useUsers";
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
   const { events, selectedCountdownId, setSelectedCountdownId } = useCalendar();
   const { modules, toggleModule } = useSettings();
+  const { users, currentUserId, addUser, switchUser } = useUsers();
+  const [newUser, setNewUser] = useState("");
+  const userList = Object.values(users);
   const countdownEvents = events.filter(
     (e) => e.hasCountdown && e.status !== "canceled" && e.status !== "missed"
   );
@@ -27,6 +34,42 @@ export default function Settings() {
         <Typography variant="body2" color="text.secondary">
           Put toggles, theme, and module switches here.
         </Typography>
+
+        <FormControl fullWidth sx={{ mt: 2 }}>
+          <InputLabel id="user-label">User</InputLabel>
+          <Select
+            labelId="user-label"
+            label="User"
+            value={currentUserId ?? ""}
+            onChange={(e) => switchUser(e.target.value as string)}
+          >
+            {userList.map((u) => (
+              <MenuItem key={u.id} value={u.id}>
+                {u.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <Box sx={{ display: "flex", gap: 1, mt: 2 }}>
+          <TextField
+            label="New User"
+            value={newUser}
+            onChange={(e) => setNewUser(e.target.value)}
+            fullWidth
+          />
+          <Button
+            variant="contained"
+            onClick={() => {
+              const name = newUser.trim();
+              if (name) {
+                addUser(name);
+                setNewUser("");
+              }
+            }}
+          >
+            Add
+          </Button>
+        </Box>
 
         <Box sx={{ mt: 2 }}>
           {(
