@@ -67,5 +67,10 @@ describe('useLofi engine', () => {
     await useLofi.getState().play();
     expect(useLofi.getState().seed).toBe(42);
   });
+
+  it('handles key changes', () => {
+    useLofi.getState().setKey('D');
+    expect(useLofi.getState().key).toBe('D');
+  });
 });
 
