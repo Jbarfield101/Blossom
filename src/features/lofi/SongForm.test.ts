@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { chordFromDegree, voiceLeadChords } from './useLofiEngine';
+import { chordFromDegree, voiceLeadChords } from './SongForm';
 import * as Tone from 'tone';
 
 describe('chordFromDegree', () => {

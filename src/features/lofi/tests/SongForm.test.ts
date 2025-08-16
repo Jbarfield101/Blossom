@@ -4,7 +4,7 @@ import type { Mock } from 'vitest';
 let useLofi: any;
 let tone: any;
 
-describe('useLofi engine', () => {
+describe('Song form hook', () => {
   beforeEach(async () => {
     vi.resetModules();
     vi.doMock('tone', () => {
@@ -47,7 +47,7 @@ describe('useLofi engine', () => {
         Synth,
       };
     });
-    ({ useLofi } = await import('../useLofiEngine'));
+    ({ useLofi } = await import('../SongForm'));
     tone = await import('tone');
   });
 
