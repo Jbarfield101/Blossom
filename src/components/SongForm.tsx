@@ -182,10 +182,14 @@ export default function SongForm() {
   // one audio element
   useEffect(() => {
     const a = new Audio();
-    a.addEventListener("ended", () => setIsPlaying(false));
-    a.addEventListener("error", () => setErr("Audio playback error"));
+    const handleEnded = () => setIsPlaying(false);
+    const handleError = () => setErr("Audio playback error");
+    a.addEventListener("ended", handleEnded);
+    a.addEventListener("error", handleError);
     audioRef.current = a;
     return () => {
+      a.removeEventListener("ended", handleEnded);
+      a.removeEventListener("error", handleError);
       a.pause();
       audioRef.current = null;
     };
