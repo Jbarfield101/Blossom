@@ -9,6 +9,7 @@ import {
   FaRobot,
   FaBolt,
   FaCalendarAlt,
+  FaDiceD20,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useSettings } from "../features/settings/useSettings";
@@ -32,6 +33,7 @@ export default function FeatureCarousel({
       { key: "comfy", icon: <FaCameraRetro />, label: "ComfyUI", path: "/comfy" },
       { key: "assistant", icon: <FaRobot />, label: "AI Assistant", path: "/assistant" },
       { key: "laser", icon: <FaBolt />, label: "Laser Lab", path: "/laser" },
+      { key: "dnd", icon: <FaDiceD20 />, label: "DND", path: "/dnd" },
     ],
     []
   );

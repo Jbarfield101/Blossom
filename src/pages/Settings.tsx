@@ -37,6 +37,7 @@ export default function Settings() {
               ["comfy", "ComfyUI"],
               ["assistant", "AI Assistant"],
               ["laser", "Laser Lab"],
+              ["dnd", "DND"],
             ] as const
           ).map(([key, label]) => (
             <FormControlLabel
