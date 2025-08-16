@@ -59,4 +59,6 @@ Activate your Python environment first. The high‑quality generator lives at
   high‑quality processing.
 - **Limiter drive:** Add `limiter_drive` to the song JSON to control soft
   clipping intensity (values around `1.0` keep saturation subtle).
+- **Analog polish:** Finishing chain adds tape-style saturation and subtle
+  wow/flutter for vintage warmth.
 
