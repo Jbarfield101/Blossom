@@ -621,7 +621,10 @@ static BIG_BROTHER_SUMMARY_CACHE: Lazy<Mutex<Option<(Instant, String)>>> =
     Lazy::new(|| Mutex::new(None));
 
 #[tauri::command]
-pub async fn fetch_big_brother_news(force: Option<bool>) -> Result<Vec<NewsArticle>, String> {
+pub async fn fetch_big_brother_news<R: Runtime>(
+    app: AppHandle<R>,
+    force: Option<bool>,
+) -> Result<Vec<NewsArticle>, String> {
     let force = force.unwrap_or(false);
 
     {
@@ -683,10 +686,13 @@ pub async fn fetch_big_brother_news(force: Option<bool>) -> Result<Vec<NewsArtic
                 "Summarize this Big Brother article in one or two sentences.\nTitle: {title}\nDescription: {description}"
             );
 
-            let summary = match general_chat(vec![ChatMessage {
-                role: "user".into(),
-                content: prompt,
-            }])
+            let summary = match general_chat(
+                app.clone(),
+                vec![ChatMessage {
+                    role: "user".into(),
+                    content: prompt,
+                }],
+            )
             .await
             {
                 Ok(s) => Some(s.trim().to_string()),
@@ -712,7 +718,7 @@ pub async fn fetch_big_brother_news(force: Option<bool>) -> Result<Vec<NewsArtic
 
 #[tauri::command]
 pub async fn fetch_big_brother_summary<R: Runtime>(
-    _app: AppHandle<R>,
+    app: AppHandle<R>,
     force: Option<bool>,
 ) -> Result<String, String> {
     let force = force.unwrap_or(false);
@@ -728,7 +734,7 @@ pub async fn fetch_big_brother_summary<R: Runtime>(
         }
     }
 
-    let articles = fetch_big_brother_news(Some(force)).await?;
+    let articles = fetch_big_brother_news(app.clone(), Some(force)).await?;
 
     let mut prompt = String::from(
         "Provide a concise daily summary of the latest Big Brother developments based on these article summaries:\n",
@@ -742,10 +748,13 @@ pub async fn fetch_big_brother_summary<R: Runtime>(
     }
     prompt.push_str("\nSummary:");
 
-    let summary = general_chat(vec![ChatMessage {
-        role: "user".into(),
-        content: prompt,
-    }])
+    let summary = general_chat(
+        app.clone(),
+        vec![ChatMessage {
+            role: "user".into(),
+            content: prompt,
+        }],
+    )
     .await
     .unwrap_or_else(|_| "No summary available.".into());
 

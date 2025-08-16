@@ -7,7 +7,7 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
-            let handle = app.handle();
+            let handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
                 let _ = commands::fetch_big_brother_summary(handle, Some(true)).await;
             });
