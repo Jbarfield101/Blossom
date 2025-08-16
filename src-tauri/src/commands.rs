@@ -626,6 +626,9 @@ pub struct NewsArticle {
 static NEWS_CACHE: Lazy<Mutex<Option<(Instant, Vec<NewsArticle>)>>> =
     Lazy::new(|| Mutex::new(None));
 
+static BIG_BROTHER_SUMMARY_CACHE: Lazy<Mutex<Option<(Instant, String)>>> =
+    Lazy::new(|| Mutex::new(None));
+
 #[tauri::command]
 pub async fn fetch_big_brother_news(force: Option<bool>) -> Result<Vec<NewsArticle>, String> {
     let force = force.unwrap_or(false);
@@ -708,4 +711,48 @@ pub async fn fetch_big_brother_news(force: Option<bool>) -> Result<Vec<NewsArtic
     *cache = Some((Instant::now(), articles.clone()));
 
     Ok(articles)
+}
+
+#[tauri::command]
+pub async fn fetch_big_brother_summary(force: Option<bool>) -> Result<String, String> {
+    let force = force.unwrap_or(false);
+
+    {
+        let cache = BIG_BROTHER_SUMMARY_CACHE.lock().unwrap();
+        if !force {
+            if let Some((last_fetch, data)) = &*cache {
+                if last_fetch.elapsed() < Duration::from_secs(86400) {
+                    return Ok(data.clone());
+                }
+            }
+        }
+    }
+
+    let articles = fetch_big_brother_news(Some(force)).await?;
+
+    let mut prompt = String::from(
+        "Provide a concise daily summary of the latest Big Brother developments based on these article summaries:\n",
+    );
+    for a in &articles {
+        if let Some(sum) = &a.summary {
+            prompt.push_str(&format!("- {}: {}\n", a.title, sum));
+        } else {
+            prompt.push_str(&format!("- {}\n", a.title));
+        }
+    }
+    prompt.push_str("\nSummary:");
+
+    let summary = general_chat(vec![ChatMessage {
+        role: "user".into(),
+        content: prompt,
+    }])
+    .await
+    .unwrap_or_else(|_| "No summary available.".into());
+
+    {
+        let mut cache = BIG_BROTHER_SUMMARY_CACHE.lock().unwrap();
+        *cache = Some((Instant::now(), summary.clone()));
+    }
+
+    Ok(summary)
 }
