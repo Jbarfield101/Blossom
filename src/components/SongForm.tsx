@@ -23,6 +23,7 @@ type SongSpec = {
   hq_stereo?: boolean;
   hq_reverb?: boolean;
   hq_sidechain?: boolean;
+  hq_chorus?: boolean;
 };
 
 type Job = {
@@ -169,6 +170,7 @@ export default function SongForm() {
   const [hqStereo, setHqStereo] = useState(true);
   const [hqReverb, setHqReverb] = useState(true);
   const [hqSidechain, setHqSidechain] = useState(true);
+  const [hqChorus, setHqChorus] = useState(true);
 
   // UI state
   const [busy, setBusy] = useState(false);
@@ -297,6 +299,7 @@ export default function SongForm() {
       hq_stereo: hqStereo,
       hq_reverb: hqReverb,
       hq_sidechain: hqSidechain,
+      hq_chorus: hqChorus,
     };
   }
 
@@ -643,6 +646,10 @@ export default function SongForm() {
             <div style={S.toggle}>
               <input type="checkbox" checked={hqSidechain} onChange={(e) => setHqSidechain(e.target.checked)} />
               <span style={S.small}>Sidechain (kick)</span>
+            </div>
+            <div style={S.toggle}>
+              <input type="checkbox" checked={hqChorus} onChange={(e) => setHqChorus(e.target.checked)} />
+              <span style={S.small}>Chorus</span>
             </div>
             <div style={{ ...S.small, marginTop: 6 }}>These map to engine flags in <code>lofi_gpu_hq.py</code>.</div>
           </div>

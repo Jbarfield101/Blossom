@@ -18,7 +18,8 @@
 #   - Small room reverb sends (hats/snare + light keys)
 #   - Optional vinyl crackle when mood includes "nostalgic"
 #   - Master tone tilt (subtle low warmth + soft high trim)
-#   - Feature flags: hq_stereo / hq_reverb / hq_sidechain (default True)
+#   - Subtle chorus on keys/pads/melody
+#   - Feature flags: hq_stereo / hq_reverb / hq_sidechain / hq_chorus (default True)
 #   - Mood-aware mix & ambience levels
 #   - Optional lofi piano instrument
 
@@ -397,6 +398,23 @@ def _schroeder_room(x: np.ndarray, mix=0.12, pre_ms=12, decay=0.35):
     wet = allpass(wet, 7, 0.65)
     wet = allpass(wet, 3, 0.70)
     return (1.0 - mix) * dry + mix * wet
+
+def apply_chorus_np(x: np.ndarray, depth_ms: float = 8.0, rate_hz: float = 0.3, mix: float = 0.4, rng=None) -> np.ndarray:
+    """Simple chorus using modulated delay line."""
+    if mix <= 0:
+        return x
+    if rng is not None:
+        depth_ms = float(rng.uniform(6.0, 10.0))
+        rate_hz = float(rng.uniform(0.15, 0.35))
+    n = len(x)
+    t = np.arange(n) / SR
+    lfo = np.sin(2 * np.pi * rate_hz * t)
+    delay = (depth_ms / 1000.0) * SR * (lfo + 1.0) * 0.5
+    idx = np.arange(n) - delay
+    idx = np.clip(idx, 0, n - 1).astype(int)
+    delayed = x[idx]
+    y = (x + mix * delayed) / (1.0 + mix)
+    return y.astype(np.float32)
 
 def _vinyl_crackle(n: int, density=0.0015, ticky=0.003, rng=None) -> np.ndarray:
     if rng is None:
@@ -922,6 +940,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
         "hq_stereo": True,
         "hq_reverb": True,
         "hq_sidechain": True,
+        "hq_chorus": True,
     }
     for k in list(flags.keys()):
         if k in motif:
@@ -929,6 +948,11 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
                 flags[k] = bool(motif.get(k))
             except Exception:
                 pass
+    # chorus on harmonic elements
+    if flags.get("hq_chorus", True):
+        keys = apply_chorus_np(keys, rng=rng)
+        pads = apply_chorus_np(pads, rng=rng)
+        melody = apply_chorus_np(melody, rng=rng)
 
     # light room reverb sends
     if flags.get("hq_reverb", True):
@@ -1080,6 +1104,7 @@ def main():
         "hq_stereo": spec.get("hq_stereo", True),
         "hq_reverb": spec.get("hq_reverb", True),
         "hq_sidechain": spec.get("hq_sidechain", True),
+        "hq_chorus": spec.get("hq_chorus", True),
         "limiter_drive": limiter_drive,
     }
 
