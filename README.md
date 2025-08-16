@@ -30,15 +30,11 @@ npm run tauri dev    # start the app in development mode
 npm run tauri build  # build a release bundle
 ```
 
-The Rust backend can launch local tools such as ComfyUI and Ollama. Update the
-paths in `src-tauri/src/commands.rs` to match your environment:
+The Rust backend can launch local tools such as ComfyUI and Ollama. Set the
+ComfyUI folder location in the app's Settings page and update the Python path in
+`src-tauri/src/commands.rs` if needed:
 
 ```rust
-fn comfy_dir() -> PathBuf {
-    // Path to your ComfyUI repository
-    PathBuf::from(r"C:\\Comfy\\ComfyUI")
-}
-
 fn conda_python() -> PathBuf {
     // Python interpreter to run the bundled scripts
     PathBuf::from(r"C:\\Users\\Owner\\.conda\\envs\\blossom-ml\\python.exe")
@@ -52,8 +48,9 @@ Activate your Python environment first. The high‑quality generator lives at
 
 ## Configuration and optional features
 
-- **Paths:** Edit `comfy_dir()` and `conda_python()` in `src-tauri/src/commands.rs`
-  so the app can find ComfyUI and your Python interpreter.
+- **Paths:** Set the ComfyUI directory in the Settings page and edit
+  `conda_python()` in `src-tauri/src/commands.rs` so the app can find your Python
+  interpreter.
 - **HQ feature flags:** `lofi_gpu_hq.py` supports `hq_stereo`, `hq_reverb`,
   `hq_sidechain`, and `hq_chorus` flags inside the `motif` object to enable or disable
   high‑quality processing.

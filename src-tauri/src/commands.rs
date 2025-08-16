@@ -23,12 +23,6 @@ ComfyUI launcher (no extra crate)
 static COMFY_CHILD: OnceLock<Mutex<Option<Child>>> = OnceLock::new();
 static OLLAMA_CHILD: OnceLock<Mutex<Option<Child>>> = OnceLock::new();
 
-fn comfy_dir() -> PathBuf {
-    // TODO: put your ComfyUI repo folder here
-    // e.g.: PathBuf::from(r"C:\dev\ComfyUI")
-    PathBuf::from(r"C:\Comfy\ComfyUI")
-}
-
 // Reuse our python path from below
 fn comfy_python() -> PathBuf {
     conda_python()
@@ -108,7 +102,7 @@ pub async fn comfy_status() -> Result<bool, String> {
 }
 
 #[tauri::command]
-pub async fn comfy_start<R: Runtime>(window: Window<R>) -> Result<(), String> {
+pub async fn comfy_start<R: Runtime>(window: Window<R>, dir: String) -> Result<(), String> {
     {
         let lock = COMFY_CHILD.get_or_init(|| Mutex::new(None)).lock().unwrap();
         if lock.is_some() {
@@ -116,7 +110,7 @@ pub async fn comfy_start<R: Runtime>(window: Window<R>) -> Result<(), String> {
         }
     }
 
-    let dir = comfy_dir();
+    let dir = PathBuf::from(dir);
     if !dir.exists() {
         return Err(format!("ComfyUI folder not found at {}", dir.display()));
     }
