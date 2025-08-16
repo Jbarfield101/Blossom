@@ -2,34 +2,29 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Box, Button, Typography } from "@mui/material";
 import { FiRefreshCcw } from "react-icons/fi";
-import ArticleCard, { type Article } from "../components/ArticleCard";
 
 export default function BigBrotherUpdates() {
-  const [articles, setArticles] = useState<Article[]>(() => {
-    const cached = localStorage.getItem("bigBrotherUpdates");
-    return cached ? JSON.parse(cached) : [];
+  const [summary, setSummary] = useState(() => {
+    return localStorage.getItem("bigBrotherSummary") || "";
   });
   const [loading, setLoading] = useState(false);
 
   const fetchData = async (force = false) => {
     setLoading(true);
     try {
-      const data = await invoke<Article[]>("fetch_big_brother_news", { force });
-      setArticles(data);
-      localStorage.setItem("bigBrotherUpdates", JSON.stringify(data));
-      localStorage.setItem(
-        "bigBrotherUpdatesTimestamp",
-        Date.now().toString()
-      );
+      const data = await invoke<string>("fetch_big_brother_summary", { force });
+      setSummary(data);
+      localStorage.setItem("bigBrotherSummary", data);
+      localStorage.setItem("bigBrotherSummaryTimestamp", Date.now().toString());
     } catch (err) {
-      console.error("Failed to fetch updates", err);
+      console.error("Failed to fetch summary", err);
     }
     setLoading(false);
   };
 
   useEffect(() => {
-    const last = localStorage.getItem("bigBrotherUpdatesTimestamp");
-    if (!last || Date.now() - parseInt(last, 10) > 3600 * 1000) {
+    const last = localStorage.getItem("bigBrotherSummaryTimestamp");
+    if (!last || Date.now() - parseInt(last, 10) > 86400 * 1000) {
       fetchData();
     }
   }, []);
@@ -56,11 +51,22 @@ export default function BigBrotherUpdates() {
           Refresh
         </Button>
       </Box>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        {articles.map((article, idx) => (
-          <ArticleCard key={idx} article={article} />
-        ))}
-      </Box>
+      {summary && (
+        <Box
+          sx={{
+            p: 2,
+            borderRadius: 3,
+            bgcolor: "background.paper",
+            color: "text.primary",
+            border: 1,
+            borderColor: "divider",
+          }}
+        >
+          <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>
+            {summary}
+          </Typography>
+        </Box>
+      )}
     </Box>
   );
 }

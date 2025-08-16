@@ -8,7 +8,7 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .setup(|_app| {
             tauri::async_runtime::spawn(async {
-                let _ = commands::fetch_big_brother_news(Some(true)).await;
+                let _ = commands::fetch_big_brother_summary(Some(true)).await;
             });
             Ok(())
         })
@@ -28,6 +28,7 @@ fn main() {
             commands::blender_run_script,
             // News scraping:
             commands::fetch_big_brother_news,
+            commands::fetch_big_brother_summary,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
