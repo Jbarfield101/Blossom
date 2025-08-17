@@ -92,7 +92,25 @@ def crossfade_concat(sections: List[AudioSegment], ms: int = 120) -> AudioSegmen
         out = out.append(seg, crossfade=ms)
     return out
 
-def ensure_wav_bitdepth(audio: AudioSegment, sample_width: int = 2) -> AudioSegment:
+def apply_dither(audio: AudioSegment, sample_width: int, amount: float = 1.0) -> AudioSegment:
+    """Add low-level triangular dither prior to bit depth reduction."""
+    if amount <= 0:
+        return audio
+    samples = np.array(audio.get_array_of_samples())
+    max_int = float(2 ** (8 * audio.sample_width - 1))
+    floats = samples.astype(np.float32) / max_int
+    lsb = 1.0 / (2 ** (8 * sample_width - 1))
+    noise = (np.random.random(floats.shape) - np.random.random(floats.shape)) * lsb * float(amount)
+    floats = np.clip(floats + noise, -1.0, 1.0)
+    dithered = (floats * max_int).astype(samples.dtype)
+    return audio._spawn(dithered.tobytes())
+
+def ensure_wav_bitdepth(
+    audio: AudioSegment, sample_width: int = 2, dither_amount: float = 1.0
+) -> AudioSegment:
+    """Reduce bit depth with optional TPDF dithering."""
+    if audio.sample_width > sample_width:
+        audio = apply_dither(audio, sample_width, amount=dither_amount)
     return audio.set_sample_width(sample_width)
 
 
@@ -233,8 +251,13 @@ def loudness_normalize_lufs(audio: AudioSegment, target_lufs: float = -14.0) -> 
     gain_needed = target_lufs - loudness - headroom
     return audio.apply_gain(gain_needed)
 
-def enhanced_post_process_chain(audio: AudioSegment, rng=None, drive: float = 1.02) -> AudioSegment:
-    """Darker, warmer finishing chain for lofi character."""
+def enhanced_post_process_chain(
+    audio: AudioSegment, rng=None, drive: float = 1.02, dither_amount: float = 1.0
+) -> AudioSegment:
+    """Darker, warmer finishing chain for lofi character.
+
+    dither_amount controls final triangular dithering level (1.0 = 1 LSB).
+    """
     a = audio.high_pass_filter(30)
 
     lpf_base = 7800
@@ -269,7 +292,7 @@ def enhanced_post_process_chain(audio: AudioSegment, rng=None, drive: float = 1.
         pass
 
     a = loudness_normalize_lufs(a, target_lufs=-16.0)
-    a = ensure_wav_bitdepth(a, sample_width=2)
+    a = ensure_wav_bitdepth(a, sample_width=2, dither_amount=dither_amount)
     return a
 
 # ---------- DSP building blocks ----------
@@ -1199,6 +1222,11 @@ def main():
     except Exception:
         limiter_drive = 1.02
 
+    try:
+        dither_amt = float(spec.get("dither_amount", 1.0))
+    except Exception:
+        dither_amt = 1.0
+
     motif = {
         "mood": spec.get("mood") or [],
         "instruments": spec.get("instruments") or [],
@@ -1219,7 +1247,9 @@ def main():
 
     print(json.dumps({"stage": "post", "message": "cleaning audio"}))
     post_rng = np.random.default_rng((seed ^ 0x5A5A5A5A) & 0xFFFFFFFF)
-    song = enhanced_post_process_chain(song, rng=post_rng, drive=limiter_drive)
+    song = enhanced_post_process_chain(
+        song, rng=post_rng, drive=limiter_drive, dither_amount=dither_amt
+    )
 
     out_path = args.out
     os.makedirs(os.path.dirname(out_path), exist_ok=True)

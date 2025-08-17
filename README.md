@@ -58,4 +58,7 @@ Activate your Python environment first. The high‑quality generator lives at
   clipping intensity (values around `1.0` keep saturation subtle).
 - **Analog polish:** Finishing chain adds tape-style saturation and subtle
   wow/flutter for vintage warmth.
+- **Dithering:** Exported 16‑bit WAVs now include low-level triangular dither.
+  Tune the noise floor with an optional `dither_amount` value in the song JSON
+  (`1.0` for standard dithering, `0` to disable).
 
