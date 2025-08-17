@@ -31,6 +31,7 @@ import random
 import sys
 import hashlib
 import warnings
+import re
 from typing import List, Dict, Tuple, Any, Optional
 
 import numpy as np
@@ -597,20 +598,55 @@ def _degree_to_root_semi(deg: str) -> int:
     return (base + accidental) % 12
 
 def _chord_freqs_from_degree(key_letter: str, deg: str, add7=False, add9=False, inversion=0):
+    match = re.match(r'^([b#]?)([ivIV]+)(.*)$', deg)
+    if match:
+        accidental, core, suffix = match.groups()
+        deg_core = f"{accidental}{core}"
+    else:
+        deg_core, suffix = deg, ""
+        core = deg.lstrip("b#")
+    suffix_l = suffix.lower()
+
     key_off = SEMITONES.get(key_letter, 0)
-    root_c = _degree_to_root_semi(deg)
+    root_c = _degree_to_root_semi(deg_core)
     root_midi = 48 + ((root_c + key_off) % 12)
-    core = deg.lstrip('b#')
+
     quality = "min" if core in ("ii","iii","vi","i","iv","v") or core.islower() else "maj"
-    triad = [root_midi, root_midi + (3 if quality=="min" else 4), root_midi + 7]
-    if add7:
-        triad.append(root_midi + (10 if quality=="min" else 11))
-    if add9:
-        triad.append(root_midi + 14)
+
+    if "sus2" in suffix_l:
+        notes = [root_midi, root_midi + 2, root_midi + 7]
+    elif "sus4" in suffix_l or "sus" in suffix_l:
+        notes = [root_midi, root_midi + 5, root_midi + 7]
+    else:
+        third = 3 if quality == "min" else 4
+        notes = [root_midi, root_midi + third, root_midi + 7]
+
+    if "maj9" in suffix_l:
+        notes.append(root_midi + 11)
+        notes.append(root_midi + 14)
+    elif "min9" in suffix_l:
+        notes.append(root_midi + 10)
+        notes.append(root_midi + 14)
+    else:
+        if "maj7" in suffix_l:
+            notes.append(root_midi + 11)
+        elif "min7" in suffix_l:
+            notes.append(root_midi + 10)
+        elif "dom7" in suffix_l or ("7" in suffix_l and "maj7" not in suffix_l and "min7" not in suffix_l):
+            notes.append(root_midi + 10)
+        elif add7:
+            notes.append(root_midi + (11 if quality == "maj" else 10))
+
+        if "add9" in suffix_l:
+            notes.append(root_midi + 14)
+        elif add9:
+            notes.append(root_midi + 14)
+
     for _ in range(inversion):
-        triad[0] += 12
-        triad.sort()
-    return [440.0 * (2 ** ((m - 69)/12.0)) for m in triad]
+        notes[0] += 12
+        notes.sort()
+
+    return [440.0 * (2 ** ((m - 69) / 12.0)) for m in notes]
 
 def _lofi_rhodes_chord(freqs, ms, amp=0.12, rng=None):
     env = _env_ad(ms*0.85, ms)
