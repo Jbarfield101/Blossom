@@ -28,8 +28,8 @@ export default function NPCList() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {npcs.map((npc, index) => (
-                  <TableRow key={index}>
+                {npcs.map((npc) => (
+                  <TableRow key={npc.id}>
                     <TableCell>{npc.name}</TableCell>
                     <TableCell>{npc.race}</TableCell>
                     <TableCell>{npc.class}</TableCell>
@@ -37,7 +37,7 @@ export default function NPCList() {
                     <TableCell>{npc.background}</TableCell>
                     <TableCell>{npc.appearance}</TableCell>
                     <TableCell>
-                      <IconButton onClick={() => removeNPC(index)}>
+                      <IconButton onClick={() => removeNPC(npc.id)}>
                         <TrashIcon className="h-5 w-5" />
                       </IconButton>
                     </TableCell>
