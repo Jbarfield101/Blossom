@@ -77,6 +77,9 @@ const INSTR = [
   "string squeaks",
   "key clicks",
   "breath noise",
+  "harp",
+  "lute",
+  "pan flute",
 ];
 const AMBI = ["rain", "cafe"];
 const DRUM_PATS = [
