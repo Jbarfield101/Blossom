@@ -2,7 +2,7 @@ import { useCalendar } from "../features/calendar/useCalendar";
 
 export default function TagStats() {
   const { tagTotals } = useCalendar();
-  const entries = Object.entries(tagTotals);
+  const entries = Object.entries(tagTotals).sort((a, b) => b[1] - a[1]);
 
   if (entries.length === 0) return null;
 
