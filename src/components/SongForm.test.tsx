@@ -134,5 +134,29 @@ describe('SongForm', () => {
     render(<SongForm />);
     expect(screen.getByText('fantasy')).toBeInTheDocument();
   });
+
+  it('passes selected instruments in spec', async () => {
+    (open as any).mockResolvedValue('/tmp/out');
+    (invoke as any).mockResolvedValue('');
+    (listen as any).mockResolvedValue(() => {});
+
+    render(<SongForm />);
+
+    fireEvent.click(screen.getByText(/choose folder/i));
+    await screen.findByText('/tmp/out');
+
+    ['rhodes', 'nylon guitar', 'upright bass'].forEach((name) =>
+      fireEvent.click(screen.getByText(name))
+    );
+    ['harp', 'lute', 'pan flute'].forEach((name) =>
+      fireEvent.click(screen.getByText(name))
+    );
+
+    fireEvent.click(screen.getByText(/render songs/i));
+
+    await waitFor(() => expect(invoke).toHaveBeenCalled());
+    const call = (invoke as any).mock.calls.find(([c]: any) => c === 'run_lofi_song');
+    expect(call[1].spec.instruments).toEqual(['harp', 'lute', 'pan flute']);
+  });
 });
 
