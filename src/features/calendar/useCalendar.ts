@@ -33,11 +33,14 @@ export const useCalendar = create<CalendarState & Actions>()(
         selectedCountdownId: null,
         tagTotals: {},
         addEvent: (e) => {
-          const start = new Date(e.date).getTime();
-          const end = new Date(e.end).getTime();
-          if (end <= start) return;
+          if (!e.title || !e.date || !e.end) return;
+          const start = Date.parse(e.date);
+          const end = Date.parse(e.end);
+          if (Number.isNaN(start) || Number.isNaN(end) || end <= start) return;
           set((state) => {
-            const events = [...state.events, { id: crypto.randomUUID(), ...e }];
+            const events = [...state.events, { id: crypto.randomUUID(), ...e }].sort(
+              (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+            );
             return { events, tagTotals: recalc(events) };
           });
         },
@@ -45,14 +48,15 @@ export const useCalendar = create<CalendarState & Actions>()(
           set((state) => {
             const ev = state.events.find((e) => e.id === id);
             if (!ev) return state;
-            if (patch.end !== undefined) {
-              const start = new Date(patch.date ?? ev.date).getTime();
-              const end = new Date(patch.end).getTime();
-              if (end <= start) return state;
-            }
-            const events = state.events.map((e) =>
-              e.id === id ? { ...e, ...patch } : e
-            );
+            const next = { ...ev, ...patch };
+            if (!next.title || !next.date || !next.end) return state;
+            const start = Date.parse(next.date);
+            const end = Date.parse(next.end);
+            if (Number.isNaN(start) || Number.isNaN(end) || end <= start)
+              return state;
+            const events = state.events
+              .map((e) => (e.id === id ? next : e))
+              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
             return { events, tagTotals: recalc(events) };
           }),
         removeEvent: (id) =>
