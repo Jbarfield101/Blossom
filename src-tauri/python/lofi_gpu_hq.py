@@ -906,6 +906,10 @@ def _apply_melody_timbre(x, instrs):
         return _butter_bandpass(x, 300, 5000)
     if "trumpet" in instrs:
         return _butter_bandpass(x, 500, 7000)
+    if "harp" in instrs or "lute" in instrs:
+        return _butter_highpass(_butter_lowpass(x, 7000), 400)
+    if "pan flute" in instrs:
+        return _butter_highpass(_butter_lowpass(x, 6000), 800)
     if "synth lead" in instrs:
         return _butter_highpass(_butter_lowpass(x, 10000), 500)
     return x
@@ -1026,6 +1030,12 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
     inv_cycle = int(rng.integers(0, 3))
 
     instrs = _normalize_instruments(motif.get("instruments"))
+    mood = motif.get("mood") or []
+    if "fantasy" in mood:
+        fantasy_instrs = _normalize_instruments(["harp", "lute", "pan flute"])
+        for inst in fantasy_instrs:
+            if inst not in instrs:
+                instrs.append(inst)
     print(json.dumps({"stage": "debug", "section": section_name, "instruments": instrs}))
 
     use_electric = ("electric piano" in instrs)
@@ -1041,6 +1051,9 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
         "clean electric guitar",
         "nylon guitar",
         "airy pads",
+        "harp",
+        "lute",
+        "pan flute",
     }
     add_rhodes_default = not any(src in instrs for src in melodic_sources)
 
@@ -1084,7 +1097,6 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
         chord_pos += chord_len
 
     if "piano" in instrs:
-        mood = motif.get("mood") or []
         if "calm" in mood or "melancholy" in mood or variety <= 40:
             hp_freq = rng.uniform(800, 1000)
             mix_amt = rng.uniform(0.05, 0.08)
@@ -1166,10 +1178,14 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
         if bn is not None:
             amb_mix += bn
 
-    # more pronounced vinyl character for nostalgic mood
-    if "nostalgic" in (motif.get("mood") or []):
+    # mood-specific ambience tweaks
+    if "nostalgic" in mood:
         amb_mix += 0.6 * _vinyl_crackle(n, density=0.0012, ticky=0.006, rng=rng)
         amb_mix += _analog_noise_floor(n, level=0.0003, rng=rng)
+    if "fantasy" in mood:
+        fa = _load_ambience_sample("forest", n, rng=rng)
+        if fa is not None:
+            amb_mix += fa
 
     # --- feature flags (can be passed via motif; default True)
     flags = {
@@ -1204,8 +1220,11 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
         keys  = 0.95*keys + 0.18*wet_keys
         pads  = 0.95*pads + 0.18*wet_pads
         melody = 0.95*melody + 0.18*wet_mel
-
-    mood = motif.get("mood") or []
+        if "fantasy" in mood:
+            extra_wet = _schroeder_room(pads + melody, mix=0.15, pre_ms=20, decay=0.5)
+            pads = 0.9*pads + 0.2*extra_wet
+            melody = 0.9*melody + 0.2*extra_wet
+            amb_mix = 0.9*amb_mix + 0.2*_schroeder_room(amb_mix, mix=0.1, pre_ms=25, decay=0.6)
 
     # sidechain ducking to kick (subtle)
     if flags.get("hq_sidechain", True):
