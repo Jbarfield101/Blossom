@@ -670,63 +670,64 @@ export default function SongForm() {
                 </option>
               ))}
             </select>
-            {creatingTemplate ? (
-              <>
-                <input
-                  style={S.input}
-                  placeholder="Template name"
-                  value={newTemplateName}
-                  onChange={(e) => setNewTemplateName(e.target.value)}
-                />
+            {selectedTemplate === "" &&
+              (creatingTemplate ? (
+                <>
+                  <input
+                    style={S.input}
+                    placeholder="Template name"
+                    value={newTemplateName}
+                    onChange={(e) => setNewTemplateName(e.target.value)}
+                  />
+                  <button
+                    style={S.btn}
+                    onClick={() => {
+                      const nm = newTemplateName.trim();
+                      if (!nm) return;
+                      const tpl: TemplateSpec = {
+                        structure: structure.map((s) => ({ ...s })),
+                        bpm,
+                        key,
+                        mood,
+                        instruments,
+                        ambience,
+                        drumPattern,
+                        variety,
+                        hqStereo,
+                        hqReverb,
+                        hqSidechain,
+                        hqChorus,
+                        limiterDrive,
+                        bpmJitterPct,
+                      };
+                      setTemplates((prev) => {
+                        const next = { ...prev, [nm]: tpl };
+                        const custom = Object.fromEntries(
+                          Object.entries(next).filter(([k]) => !PRESET_TEMPLATES[k])
+                        );
+                        localStorage.setItem("songTemplates", JSON.stringify(custom));
+                        return next;
+                      });
+                      setSelectedTemplate(nm);
+                      setNewTemplateName("");
+                      setCreatingTemplate(false);
+                    }}
+                  >
+                    Save
+                  </button>
+                </>
+              ) : (
                 <button
                   style={S.btn}
                   onClick={() => {
-                    const nm = newTemplateName.trim();
-                    if (!nm) return;
-                    const tpl: TemplateSpec = {
-                      structure: structure.map((s) => ({ ...s })),
-                      bpm,
-                      key,
-                      mood,
-                      instruments,
-                      ambience,
-                      drumPattern,
-                      variety,
-                      hqStereo,
-                      hqReverb,
-                      hqSidechain,
-                      hqChorus,
-                      limiterDrive,
-                      bpmJitterPct,
-                    };
-                    setTemplates((prev) => {
-                      const next = { ...prev, [nm]: tpl };
-                      const custom = Object.fromEntries(
-                        Object.entries(next).filter(([k]) => !PRESET_TEMPLATES[k])
-                      );
-                      localStorage.setItem("songTemplates", JSON.stringify(custom));
-                      return next;
-                    });
-                    setSelectedTemplate(nm);
+                    setSelectedTemplate("");
+                    setCreatingTemplate(true);
                     setNewTemplateName("");
-                    setCreatingTemplate(false);
                   }}
                 >
-                  Save
+                  New Template
                 </button>
-              </>
-            ) : (
-              <button
-                style={S.btn}
-                onClick={() => {
-                  setSelectedTemplate("");
-                  setCreatingTemplate(true);
-                  setNewTemplateName("");
-                }}
-              >
-                New Template
-              </button>
-            )}
+              ))}
           </div>
           <label style={S.label}>Structure (bars)</label>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
