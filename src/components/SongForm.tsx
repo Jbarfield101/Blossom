@@ -255,6 +255,37 @@ export default function SongForm() {
   const [genTitleLoading, setGenTitleLoading] = useState(false);
   const [creatingTemplate, setCreatingTemplate] = useState(false);
 
+  function applyTemplate(tpl: TemplateSpec) {
+    setStructure(tpl.structure.map((s) => ({ ...s })));
+    setBpm(tpl.bpm);
+    setKey(tpl.key);
+    setMood(tpl.mood);
+    setInstruments(tpl.instruments);
+    setAmbience(tpl.ambience);
+    setDrumPattern(tpl.drumPattern);
+    setVariety(tpl.variety);
+    setHqStereo(tpl.hqStereo);
+    setHqReverb(tpl.hqReverb);
+    setHqSidechain(tpl.hqSidechain);
+    setHqChorus(tpl.hqChorus);
+    setLimiterDrive(tpl.limiterDrive);
+    setBpmJitterPct(tpl.bpmJitterPct);
+  }
+
+  useEffect(() => {
+    const last = localStorage.getItem("lastSongTemplate");
+    if (last && templates[last]) {
+      setSelectedTemplate(last);
+      applyTemplate(templates[last]);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedTemplate) {
+      localStorage.setItem("lastSongTemplate", selectedTemplate);
+    }
+  }, [selectedTemplate]);
+
   // VARIATION / BATCH
   const [numSongs, setNumSongs] = useState(1);
   const [titleSuffixMode, setTitleSuffixMode] = useState<"number" | "timestamp">("number");
@@ -529,6 +560,31 @@ export default function SongForm() {
       <div style={S.card}>
         <div style={S.h1}>Blossom — Song Builder (Batch + Vibes)</div>
 
+        {/* template selector */}
+        <div style={S.panel}>
+          <label style={S.label}>Song Templates</label>
+          <select
+            aria-label="Song Templates"
+            value={selectedTemplate}
+            onChange={(e) => {
+              const templateName = e.target.value;
+              setSelectedTemplate(templateName);
+              if (templateName && SONG_TEMPLATES[templateName]) {
+                applyTemplate(SONG_TEMPLATES[templateName]);
+              }
+            }}
+            style={{ ...S.input, padding: "8px 12px" }}
+          >
+            <option value="">Custom Structure</option>
+            <option value="Classic Lofi">Classic Lofi</option>
+            <option value="Study Session">Study Session</option>
+            <option value="Jazz Cafe">Jazz Cafe</option>
+            <option value="Midnight Drive">Midnight Drive</option>
+            <option value="Rain & Coffee">Rain & Coffee</option>
+            <option value="Quick Beat">Quick Beat</option>
+          </select>
+        </div>
+
         {/* title + output folder */}
         <div style={S.row}>
           <input
@@ -549,12 +605,14 @@ export default function SongForm() {
         {/* core knobs */}
         <div style={S.grid3}>
           <div style={S.panel}>
-            <label style={S.label}>BPM</label>
+            <label style={S.label}>BPM: {bpm}</label>
             <input
-              type="number"
+              type="range"
+              min={60}
+              max={200}
               value={bpm}
-              onChange={(e) => setBpm(Number(e.target.value || 80))}
-              style={S.input}
+              onChange={(e) => setBpm(Number(e.target.value))}
+              style={{ ...S.input, padding: 0 }}
             />
           </div>
           <div style={S.panel}>
@@ -590,44 +648,6 @@ export default function SongForm() {
           </div>
         </div>
 
-        {/* template selector */}
-        <div style={S.panel}>
-          <label style={S.label}>Song Templates</label>
-          <select
-            value={selectedTemplate}
-            onChange={(e) => {
-              const templateName = e.target.value;
-              setSelectedTemplate(templateName);
-              if (templateName && SONG_TEMPLATES[templateName]) {
-                const tpl = SONG_TEMPLATES[templateName];
-                setStructure(tpl.structure.map((s) => ({ ...s })));
-                setBpm(tpl.bpm);
-                setKey(tpl.key);
-                setMood(tpl.mood);
-                setInstruments(tpl.instruments);
-                setAmbience(tpl.ambience);
-                setDrumPattern(tpl.drumPattern);
-                setVariety(tpl.variety);
-                setHqStereo(tpl.hqStereo);
-                setHqReverb(tpl.hqReverb);
-                setHqSidechain(tpl.hqSidechain);
-                setHqChorus(tpl.hqChorus);
-                setLimiterDrive(tpl.limiterDrive);
-                setBpmJitterPct(tpl.bpmJitterPct);
-              }
-            }}
-            style={{ ...S.input, padding: "8px 12px" }}
-          >
-            <option value="">Custom Structure</option>
-            <option value="Classic Lofi">Classic Lofi</option>
-            <option value="Study Session">Study Session</option>
-            <option value="Jazz Cafe">Jazz Cafe</option>
-            <option value="Midnight Drive">Midnight Drive</option>
-            <option value="Rain & Coffee">Rain & Coffee</option>
-            <option value="Quick Beat">Quick Beat</option>
-          </select>
-        </div>
-
         {/* structure editor */}
         <div style={{ ...S.panel, marginTop: 12 }}>
           <div style={{ ...S.row, marginBottom: 8 }}>
@@ -638,21 +658,7 @@ export default function SongForm() {
                 setSelectedTemplate(name);
                 setCreatingTemplate(false);
                 if (name && templates[name]) {
-                  const tpl = templates[name];
-                  setStructure(tpl.structure.map((s) => ({ ...s })));
-                  setBpm(tpl.bpm);
-                  setKey(tpl.key);
-                  setMood(tpl.mood);
-                  setInstruments(tpl.instruments);
-                  setAmbience(tpl.ambience);
-                  setDrumPattern(tpl.drumPattern);
-                  setVariety(tpl.variety);
-                  setHqStereo(tpl.hqStereo);
-                  setHqReverb(tpl.hqReverb);
-                  setHqSidechain(tpl.hqSidechain);
-                  setHqChorus(tpl.hqChorus);
-                  setLimiterDrive(tpl.limiterDrive);
-                  setBpmJitterPct(tpl.bpmJitterPct);
+                  applyTemplate(templates[name]);
                 }
               }}
               style={{ ...S.input, padding: "8px 12px" }}

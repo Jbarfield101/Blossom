@@ -109,5 +109,17 @@ describe('SongForm', () => {
       ).toBe('Morning Chill')
     );
   });
+
+  it('remembers last used template', () => {
+    render(<SongForm />);
+    const select = screen.getByLabelText(/song templates/i) as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: 'Study Session' } });
+    expect(select.value).toBe('Study Session');
+    cleanup();
+    render(<SongForm />);
+    expect(
+      (screen.getByLabelText(/song templates/i) as HTMLSelectElement).value
+    ).toBe('Study Session');
+  });
 });
 
