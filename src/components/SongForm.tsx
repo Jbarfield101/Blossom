@@ -74,6 +74,9 @@ const INSTR = [
   "saxophone",
   "trumpet",
   "synth lead",
+  "string squeaks",
+  "key clicks",
+  "breath noise",
 ];
 const AMBI = ["rain", "cafe"];
 const DRUM_PATS = [
