@@ -56,7 +56,7 @@ type Job = {
 
 const KEYS_BASE = ["C", "D", "E", "F", "G", "A", "B"];
 const KEYS = ["Auto", ...KEYS_BASE];
-const MOODS = ["calm", "melancholy", "cozy", "nostalgic"];
+const MOODS = ["calm", "melancholy", "cozy", "nostalgic", "fantasy"];
 const INSTR = [
   "rhodes",
   "nylon guitar",
@@ -238,7 +238,7 @@ const PRESET_TEMPLATES: Record<string, TemplateSpec> = {
     ],
     bpm: 78,
     key: "E",
-    mood: ["nostalgic", "melancholy"],
+    mood: ["fantasy", "nostalgic", "melancholy"],
     instruments: ["flute", "piano", "upright bass"],
     ambience: ["rain"],
     drumPattern: "swing",
