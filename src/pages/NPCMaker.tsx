@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Button, Stack, TextField, Typography, Alert, CircularProgress } from '@mui/material';
-import { CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
 import Center from './_Center';
 import { useNPCs, NPC } from '../store/npcs';
 
@@ -85,10 +86,10 @@ export default function NPCMaker() {
           <Typography variant="h4">NPC Maker</Typography>
           {status === 'loading' && <CircularProgress size={24} />}
           {status === 'success' && (
-            <CheckCircleIcon className="h-6 w-6 text-green-500" />
+            <CheckCircleIcon color="success" fontSize="small" />
           )}
           {status === 'error' && (
-            <ExclamationCircleIcon className="h-6 w-6 text-red-500" />
+            <ErrorIcon color="error" fontSize="small" />
           )}
         </Stack>
         {error && <Alert severity="error">{error}</Alert>}
