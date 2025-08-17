@@ -1152,6 +1152,19 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
     if "vinyl sounds" in instrs:
         amb_mix += 0.5 * _vinyl_crackle(n, density=0.0015, ticky=0.004, rng=rng)
 
+    if "string squeaks" in instrs:
+        sq = _load_ambience_sample("string_squeaks", n, rng=rng)
+        if sq is not None:
+            amb_mix += sq
+    if "key clicks" in instrs:
+        kc = _load_ambience_sample("key_clicks", n, rng=rng)
+        if kc is not None:
+            amb_mix += kc
+    if "breath noise" in instrs:
+        bn = _load_ambience_sample("breath_noise", n, rng=rng)
+        if bn is not None:
+            amb_mix += bn
+
     # more pronounced vinyl character for nostalgic mood
     if "nostalgic" in (motif.get("mood") or []):
         amb_mix += 0.6 * _vinyl_crackle(n, density=0.0012, ticky=0.006, rng=rng)
