@@ -14,15 +14,40 @@ describe('Song form hook', () => {
         start: vi.fn(),
         stop: vi.fn(),
       };
-      const mkSynth = () =>
-        ({ toDestination: () => ({ connect: () => ({}) }), connect: () => ({}), triggerAttackRelease: vi.fn() });
+      const mkSynth = () => {
+        const obj: any = {
+          toDestination: vi.fn().mockReturnThis(),
+          connect: vi.fn().mockReturnThis(),
+          triggerAttackRelease: vi.fn(),
+        };
+        return obj;
+      };
       const MonoSynth = vi.fn().mockImplementation(() => mkSynth());
       const NoiseSynth = vi.fn().mockImplementation(() => mkSynth());
       const MembraneSynth = vi.fn().mockImplementation(() => mkSynth());
       const PolySynth = vi.fn().mockImplementation(() => mkSynth());
-      const Reverb = vi.fn().mockImplementation(() => ({ toDestination: () => ({ connect: () => ({}) }) }));
-      const Volume = vi.fn().mockImplementation(() => ({ connect: vi.fn() }));
-      const Filter = vi.fn().mockImplementation(() => ({ connect: vi.fn() }));
+      const Reverb = vi.fn().mockImplementation(() => {
+        const obj: any = {
+          connect: vi.fn().mockReturnThis(),
+          toDestination: vi.fn().mockReturnThis(),
+        };
+        return obj;
+      });
+      const Volume = vi.fn().mockImplementation(() => {
+        const obj: any = { connect: vi.fn().mockReturnThis() };
+        return obj;
+      });
+      const Filter = vi.fn().mockImplementation(() => {
+        const obj: any = { connect: vi.fn().mockReturnThis() };
+        return obj;
+      });
+      const Gain = vi.fn().mockImplementation(() => {
+        const obj: any = {
+          connect: vi.fn().mockReturnThis(),
+          toDestination: vi.fn().mockReturnThis(),
+        };
+        return obj;
+      });
       const Loop = vi
         .fn()
         .mockImplementation(() => ({ start: vi.fn(), stop: vi.fn() }));
@@ -42,6 +67,7 @@ describe('Song form hook', () => {
         Reverb,
         Volume,
         Filter,
+        Gain,
         Loop,
         Frequency,
         Synth,
