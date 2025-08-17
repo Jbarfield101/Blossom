@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { invoke } from '@tauri-apps/api/core';
 
 export interface NPC {
   id: string;
@@ -15,6 +16,7 @@ interface NPCState {
   npcs: NPC[];
   addNPC: (npc: Omit<NPC, 'id'>) => void;
   removeNPC: (id: string) => void;
+  loadNPCs: () => Promise<void>;
 }
 
 export const useNPCs = create<NPCState>()(
@@ -27,6 +29,10 @@ export const useNPCs = create<NPCState>()(
         })),
       removeNPC: (id) =>
         set((state) => ({ npcs: state.npcs.filter((npc) => npc.id !== id) })),
+      loadNPCs: async () => {
+        const npcs = await invoke<NPC[]>('list_npcs');
+        set({ npcs });
+      },
     }),
     { name: 'npc-store' }
   )

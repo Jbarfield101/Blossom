@@ -495,6 +495,49 @@ pub async fn save_npc<R: Runtime>(app: AppHandle<R>, npc: NPCData) -> Result<(),
     Ok(())
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct NPC {
+    pub id: String,
+    pub name: String,
+    pub race: String,
+    pub class: String,
+    pub personality: String,
+    pub background: String,
+    pub appearance: String,
+}
+
+#[tauri::command]
+pub async fn list_npcs<R: Runtime>(app: AppHandle<R>) -> Result<Vec<NPC>, String> {
+    let dir = npc_storage_dir(&app)?;
+    let mut npcs = Vec::new();
+    let entries = fs::read_dir(&dir).map_err(|e| e.to_string())?;
+
+    for entry in entries {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let path = entry.path();
+        if path.extension().and_then(|s| s.to_str()) == Some("json") {
+            let contents = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+            let data: NPCData = serde_json::from_str(&contents).map_err(|e| e.to_string())?;
+            let id = path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or_default()
+                .to_string();
+            npcs.push(NPC {
+                id,
+                name: data.name,
+                race: data.race,
+                class: data.class,
+                personality: data.personality,
+                background: data.background,
+                appearance: data.appearance,
+            });
+        }
+    }
+
+    Ok(npcs)
+}
+
 /* ==============================
 Ollama general chat
 ============================== */
