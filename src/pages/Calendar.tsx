@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -32,7 +32,14 @@ export default function Calendar() {
     { day: number; top: number; left: number } | null
   >(null);
   const [quickTitle, setQuickTitle] = useState("");
+  const [quickTime, setQuickTime] = useState("09:00");
   const [quickDuration, setQuickDuration] = useState(60);
+  const quickTitleRef = useRef<HTMLInputElement>(null);
+  const lastFocusedDayRef = useRef<HTMLDivElement | null>(null);
+  const closeQuickAdd = useCallback(() => {
+    setQuickAdd(null);
+    lastFocusedDayRef.current?.focus();
+  }, []);
 
   // add-event form state
   const [title, setTitle] = useState("");
@@ -151,12 +158,14 @@ export default function Calendar() {
     e: React.MouseEvent<HTMLDivElement>
   ) => {
     const rect = e.currentTarget.getBoundingClientRect();
+    lastFocusedDayRef.current = e.currentTarget;
     setQuickAdd({
       day,
       top: rect.bottom + window.scrollY,
       left: rect.left + window.scrollX,
     });
     setQuickTitle("");
+    setQuickTime("09:00");
     setQuickDuration(60);
     setSelectedDay(day);
     setFocusedDay(day);
@@ -165,7 +174,7 @@ export default function Calendar() {
   const addQuick = () => {
     if (!quickAdd || !quickTitle) return;
     const dayStr = `${year}-${pad(month + 1)}-${pad(quickAdd.day)}`;
-    const start = new Date(`${dayStr}T09:00`);
+    const start = new Date(`${dayStr}T${quickTime}`);
     const endTime = new Date(start.getTime() + quickDuration * 60000);
     addEvent({
       title: quickTitle,
@@ -175,9 +184,19 @@ export default function Calendar() {
       status: "scheduled",
       hasCountdown: false,
     });
-    setQuickAdd(null);
+    closeQuickAdd();
     setQuickTitle("");
   };
+
+  useEffect(() => {
+    if (!quickAdd) return;
+    quickTitleRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeQuickAdd();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [quickAdd, closeQuickAdd]);
 
   const agendaEvents = selectedDay ? dayEvents(selectedDay) : [];
 
@@ -458,7 +477,7 @@ export default function Calendar() {
           <div
             className="fixed inset-0 z-10"
             data-testid="quick-add-overlay"
-            onClick={() => setQuickAdd(null)}
+            onClick={closeQuickAdd}
           />
           <div
             className="absolute z-20 bg-white border rounded-lg shadow-md p-4 w-56"
@@ -489,26 +508,33 @@ export default function Calendar() {
                 </ul>
               )}
               <input
+                ref={quickTitleRef}
                 type="text"
                 className="w-full px-2 py-1 border rounded mb-2"
                 placeholder="Title"
                 value={quickTitle}
                 onChange={(e) => setQuickTitle(e.target.value)}
               />
-              <div className="flex gap-2 mb-2">
-                <button
-                  className="flex-1 px-2 py-1 border rounded"
-                  onClick={() => setQuickDuration(30)}
-                >
-                  +30m
-                </button>
-                <button
-                  className="flex-1 px-2 py-1 border rounded"
-                  onClick={() => setQuickDuration(60)}
-                >
-                  +1h
-                </button>
-              </div>
+              <input
+                type="time"
+                aria-label="Start time"
+                data-testid="quick-time"
+                className="w-full px-2 py-1 border rounded mb-2"
+                value={quickTime}
+                onChange={(e) => setQuickTime(e.target.value)}
+              />
+              <select
+                aria-label="Duration"
+                data-testid="quick-duration"
+                className="w-full px-2 py-1 border rounded mb-2"
+                value={quickDuration}
+                onChange={(e) => setQuickDuration(parseInt(e.target.value))}
+              >
+                <option value={30}>30m</option>
+                <option value={60}>1h</option>
+                <option value={90}>1h 30m</option>
+                <option value={120}>2h</option>
+              </select>
               <button
                 className="w-full bg-blue-600 text-white py-1 rounded"
                 onClick={addQuick}

@@ -71,6 +71,41 @@ describe('Calendar time validation', () => {
     expect(endInput.value).toMatch(/T10:00/);
   });
 
+  it('adds quick events with custom time and duration', () => {
+    render(<Calendar />);
+    const day1 = screen.getByTestId('day-1');
+    fireEvent.click(day1);
+    fireEvent.change(screen.getByPlaceholderText('Title'), {
+      target: { value: 'Quick Meeting' },
+    });
+    fireEvent.change(screen.getByTestId('quick-time'), {
+      target: { value: '13:30' },
+    });
+    fireEvent.change(screen.getByTestId('quick-duration'), {
+      target: { value: '90' },
+    });
+    fireEvent.click(screen.getByText('Add'));
+    const ev = useCalendar
+      .getState()
+      .events.find((e) => e.title === 'Quick Meeting');
+    expect(ev).toBeTruthy();
+    expect(ev && ev.date).toContain('T13:30');
+    expect(
+      ev && (new Date(ev.end).getTime() - new Date(ev.date).getTime()) / 60000
+    ).toBe(90);
+  });
+
+  it('closes quick add with Escape key and restores focus', () => {
+    render(<Calendar />);
+    const day1 = screen.getByTestId('day-1');
+    fireEvent.click(day1);
+    const titleInput = screen.getByPlaceholderText('Title');
+    expect(titleInput).toHaveFocus();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByPlaceholderText('Title')).toBeNull();
+    expect(day1).toHaveFocus();
+  });
+
   it('allows deleting events', () => {
     render(<Calendar />);
     const now = new Date();
