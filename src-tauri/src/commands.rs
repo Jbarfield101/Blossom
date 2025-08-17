@@ -695,6 +695,45 @@ pub async fn general_chat<R: Runtime>(
 
 use once_cell::sync::Lazy;
 use std::time::{Duration, Instant};
+use std::collections::HashMap;
+
+static STOCK_CACHE: Lazy<Mutex<HashMap<String, (Instant, f64)>>> =
+    Lazy::new(|| Mutex::new(HashMap::new()));
+
+#[tauri::command]
+pub async fn fetch_stock_quote(symbol: String, force: Option<bool>) -> Result<f64, String> {
+    let symbol = symbol.to_uppercase();
+    let force = force.unwrap_or(false);
+
+    {
+        let cache = STOCK_CACHE.lock().unwrap();
+        if !force {
+            if let Some((last, price)) = cache.get(&symbol) {
+                if last.elapsed() < Duration::from_secs(60) {
+                    return Ok(*price);
+                }
+            }
+        }
+    }
+
+    let url = format!(
+        "https://query1.finance.yahoo.com/v7/finance/quote?symbols={}",
+        symbol
+    );
+    let resp = ureq::get(&url).call().map_err(|e| e.to_string())?;
+    let json: Value = resp.into_json().map_err(|e| e.to_string())?;
+    let price = json["quoteResponse"]["result"]
+        .get(0)
+        .and_then(|v| v["regularMarketPrice"].as_f64())
+        .ok_or_else(|| "price not found".to_string())?;
+
+    {
+        let mut cache = STOCK_CACHE.lock().unwrap();
+        cache.insert(symbol.clone(), (Instant::now(), price));
+    }
+
+    Ok(price)
+}
 
 #[derive(Serialize, Clone)]
 pub struct NewsArticle {
