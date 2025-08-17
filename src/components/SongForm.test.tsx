@@ -129,5 +129,10 @@ describe('SongForm', () => {
     const values = Array.from(select.options).map((o) => o.value);
     expect(values).toContain('no_drums');
   });
+
+  it('shows fantasy mood option', () => {
+    render(<SongForm />);
+    expect(screen.getByText('fantasy')).toBeInTheDocument();
+  });
 });
 
