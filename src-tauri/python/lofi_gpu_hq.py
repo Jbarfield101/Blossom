@@ -120,6 +120,11 @@ def _normalize_instruments(instrs):
         "pads": "airy pads",
         "vinyl": "vinyl sounds",
         "acoustic": "acoustic guitar",
+        "harps": "harp",
+        "lutes": "lute",
+        "panflute": "pan flute",
+        "pan pipes": "pan flute",
+        "panpipes": "pan flute",
     }
     canon = [
         "electric piano",
@@ -138,6 +143,9 @@ def _normalize_instruments(instrs):
         "saxophone",
         "trumpet",
         "synth lead",
+        "harp",
+        "lute",
+        "pan flute",
     ]
     out = []
     for s in (instrs or []):
