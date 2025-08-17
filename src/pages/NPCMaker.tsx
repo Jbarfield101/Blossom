@@ -46,12 +46,48 @@ export default function NPCMaker() {
           { role: 'user', content: 'Generate a random NPC.' },
         ],
       });
-      const jsonMatch = reply.match(/```json\n([\s\S]*?)```/);
-      const data = JSON.parse(jsonMatch ? jsonMatch[1] : reply);
+
+      let data: Partial<NPC> | null = null;
+
+      try {
+        data = JSON.parse(reply);
+      } catch {
+        const keys: (keyof Omit<NPC, 'id'>)[] = [
+          'name',
+          'race',
+          'class',
+          'personality',
+          'background',
+          'appearance',
+        ];
+
+        const fallback: Partial<NPC> = {};
+        for (const key of keys) {
+          const keyIndex = reply.indexOf(`"${key}"`);
+          if (keyIndex === -1) continue;
+          const colon = reply.indexOf(':', keyIndex);
+          const valueStart = reply.indexOf('"', colon);
+          const valueEnd = reply.indexOf('"', valueStart + 1);
+          if (colon === -1 || valueStart === -1 || valueEnd === -1) continue;
+          fallback[key] = reply.slice(valueStart + 1, valueEnd);
+        }
+        if (Object.keys(fallback).length) {
+          data = fallback;
+        }
+      }
+
+      if (!data) {
+        throw new Error('parse');
+      }
+
       setNpc((prev) => ({ ...prev, ...data }));
       setStatus('success');
     } catch (e) {
-      setError(String(e));
+      setError(
+        e instanceof Error && e.message === 'parse'
+          ? 'Failed to parse NPC data. Please try again.'
+          : String(e)
+      );
       setStatus('error');
     } finally {
       setLoading(false);
