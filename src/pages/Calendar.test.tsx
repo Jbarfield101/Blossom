@@ -114,7 +114,7 @@ describe('Calendar time validation', () => {
 
     fireEvent.click(screen.getByTestId('day-1'));
     fireEvent.click(screen.getByTestId('quick-add-overlay'));
-    fireEvent.click(screen.getByText('Meeting'));
+    fireEvent.click(screen.getByLabelText('Edit event'));
 
     const titleInput = screen.getByLabelText('Title') as HTMLInputElement;
     expect(titleInput.value).toBe('Meeting');

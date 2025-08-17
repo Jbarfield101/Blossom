@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  PencilIcon,
+  TrashIcon,
+} from "@heroicons/react/24/solid";
 import CalendarDay from "../components/CalendarDay";
 import TagStats from "../components/TagStats";
 import WeekView from "../components/WeekView";
@@ -294,12 +299,14 @@ export default function Calendar() {
                         >
                           {ev.status}
                         </span>
+                        <span className="flex-1">{ev.title}</span>
                         <button
                           type="button"
-                          className="flex-1 text-left"
+                          aria-label="Edit event"
+                          className="text-blue-500"
                           onClick={() => startEdit(ev)}
                         >
-                          {ev.title}
+                          <PencilIcon className="w-4 h-4" />
                         </button>
                         <button
                           type="button"
@@ -307,7 +314,7 @@ export default function Calendar() {
                           className="text-red-500"
                           onClick={() => removeEvent(ev.id)}
                         >
-                          ×
+                          <TrashIcon className="w-4 h-4" />
                         </button>
                       </li>
                     ))}
