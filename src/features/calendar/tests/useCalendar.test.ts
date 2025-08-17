@@ -1,4 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { createElement } from 'react';
+import TagStats from '../../../components/TagStats';
 import { useCalendar } from '../useCalendar';
 
 describe('useCalendar store', () => {
@@ -97,6 +100,14 @@ describe('useCalendar store', () => {
       hasCountdown: false,
     });
     expect(useCalendar.getState().events).toHaveLength(0);
+  });
+
+  it('renders tag stats sorted by duration', () => {
+    useCalendar.setState({ tagTotals: { short: 1, long: 2 } });
+    render(createElement(TagStats));
+    const items = screen.getAllByRole('listitem');
+    expect(items[0]).toHaveTextContent(/^long:/);
+    expect(items[1]).toHaveTextContent(/^short:/);
   });
 });
 
