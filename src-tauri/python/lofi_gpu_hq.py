@@ -115,7 +115,11 @@ def ensure_wav_bitdepth(
 
 
 def _normalize_instruments(instrs):
-    alias = {"pads": "airy pads"}
+    alias = {
+        "pads": "airy pads",
+        "vinyl": "vinyl sounds",
+        "acoustic": "acoustic guitar",
+    }
     canon = [
         "electric piano",
         "upright bass",
@@ -125,6 +129,14 @@ def _normalize_instruments(instrs):
         "piano",
         "rhodes",
         "bass",
+        "vinyl sounds",
+        "acoustic guitar",
+        "violin",
+        "cello",
+        "flute",
+        "saxophone",
+        "trumpet",
+        "synth lead",
     ]
     out = []
     for s in (instrs or []):
@@ -625,6 +637,17 @@ def _nylon_chord(freqs, ms, amp=0.1):
     out *= env * amp / max(1, len(freqs))
     return out
 
+def _acoustic_chord(freqs, ms, amp=0.1):
+    env = _env_ad(ms*0.7, ms)
+    t = np.arange(int(ms * SR / 1000)) / SR
+    out = np.zeros_like(t, dtype=np.float32)
+    for f in freqs:
+        out += np.sin(2*np.pi*f*t)
+    out = _butter_highpass(out, 500)
+    out = _butter_lowpass(out, 5000)
+    out *= env * amp / max(1, len(freqs))
+    return out
+
 def _electric_piano_chord(freqs, ms, amp=0.1):
     env = _env_ad(ms*0.8, ms)
     t = np.arange(int(ms * SR / 1000)) / SR
@@ -827,6 +850,21 @@ def _render_melody(prog_seq, key_letter, bpm, dur_ms, rng):
 
     return out
 
+def _apply_melody_timbre(x, instrs):
+    if "violin" in instrs:
+        return _butter_lowpass(x, 6000)
+    if "cello" in instrs:
+        return _butter_lowpass(x, 2000)
+    if "flute" in instrs:
+        return _butter_highpass(_butter_lowpass(x, 8000), 1000)
+    if "saxophone" in instrs:
+        return _butter_bandpass(x, 300, 5000)
+    if "trumpet" in instrs:
+        return _butter_bandpass(x, 500, 7000)
+    if "synth lead" in instrs:
+        return _butter_highpass(_butter_lowpass(x, 10000), 500)
+    return x
+
 # ---------- Section renderer ----------
 def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None):
     # Variety mapping (0..100)
@@ -977,6 +1015,10 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
             nylon = _nylon_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.1) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(nylon))
             keys[i0:i1] += nylon[: i1 - i0]
+        if "acoustic guitar" in instrs:
+            ac = _acoustic_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.1) * vel
+            i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(ac))
+            keys[i0:i1] += ac[: i1 - i0]
         if use_electric:
             ep = _electric_piano_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.18) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(ep))
@@ -1033,6 +1075,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
                             _place(fifth, bass, pos5)
 
     melody = _render_melody(prog_seq, key_letter, bpm, dur_ms, rng)
+    melody = _apply_melody_timbre(melody, instrs)
 
     # --- ambience rotation
     amb_list = motif.get("ambience") or []
@@ -1061,6 +1104,9 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
         s = _load_ambience_sample("street", n, rng=rng)
         if s is not None:
             amb_mix += s
+
+    if "vinyl sounds" in instrs:
+        amb_mix += 0.5 * _vinyl_crackle(n, density=0.0015, ticky=0.004, rng=rng)
 
     # more pronounced vinyl character for nostalgic mood
     if "nostalgic" in (motif.get("mood") or []):
