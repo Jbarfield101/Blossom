@@ -1,4 +1,5 @@
 import { Table, TableHead, TableBody, TableRow, TableCell, TableContainer, Paper, IconButton, Stack, Typography } from '@mui/material';
+import { useEffect } from 'react';
 import { TrashIcon } from '@heroicons/react/24/outline';
 import Center from './_Center';
 import { useNPCs } from '../store/npcs';
@@ -6,6 +7,11 @@ import { useNPCs } from '../store/npcs';
 export default function NPCList() {
   const npcs = useNPCs((s) => s.npcs);
   const removeNPC = useNPCs((s) => s.removeNPC);
+  const loadNPCs = useNPCs((s) => s.loadNPCs);
+
+  useEffect(() => {
+    loadNPCs();
+  }, [loadNPCs]);
 
   return (
     <Center>

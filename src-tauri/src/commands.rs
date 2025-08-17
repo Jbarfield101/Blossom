@@ -482,6 +482,24 @@ fn npc_storage_dir<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
 }
 
 #[tauri::command]
+pub async fn list_npcs<R: Runtime>(app: AppHandle<R>) -> Result<Vec<NPCData>, String> {
+    let dir = npc_storage_dir(&app)?;
+    let mut npcs = Vec::new();
+
+    for entry in fs::read_dir(&dir).map_err(|e| e.to_string())? {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let path = entry.path();
+        if path.extension().and_then(|s| s.to_str()) == Some("json") {
+            let data = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+            let npc: NPCData = serde_json::from_str(&data).map_err(|e| e.to_string())?;
+            npcs.push(npc);
+        }
+    }
+
+    Ok(npcs)
+}
+
+#[tauri::command]
 pub async fn save_npc<R: Runtime>(app: AppHandle<R>, npc: NPCData) -> Result<(), String> {
     let dir = npc_storage_dir(&app)?;
     let file_name = format!(
