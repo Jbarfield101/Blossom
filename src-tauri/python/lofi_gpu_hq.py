@@ -36,7 +36,7 @@ from typing import List, Dict, Tuple, Any, Optional
 import numpy as np
 from pydub import AudioSegment, effects
 from pydub.utils import which
-from scipy.signal import butter, filtfilt
+from scipy.signal import butter, filtfilt, resample_poly
 
 warnings.filterwarnings("ignore", message="Couldn't find ffmpeg or avconv")
 
@@ -145,7 +145,7 @@ def soft_clip_np(x: np.ndarray, drive: float = 1.0) -> np.ndarray:
     x = x * drive
     return x / (1.0 + np.abs(x))
 
-def apply_soft_limit(audio: AudioSegment, drive: float = 1.02) -> AudioSegment:
+def apply_soft_limit(audio: AudioSegment, drive: float = 1.02, oversample: int = 2) -> AudioSegment:
     samples = np.array(audio.get_array_of_samples()).astype(np.float32)
     channels = audio.channels
     if channels == 2:
@@ -154,14 +154,20 @@ def apply_soft_limit(audio: AudioSegment, drive: float = 1.02) -> AudioSegment:
         samples = samples.reshape((-1, 1))
     max_int = float(2 ** (8 * audio.sample_width - 1))
     x = samples / max_int
+    if oversample > 1:
+        x = resample_poly(x, oversample, 1, axis=0)
     y = soft_clip_np(x, drive=drive)
-    y = np.clip(y * max_int, -max_int, max_int - 1).astype(np.int16 if audio.sample_width == 2 else samples.dtype)
+    if oversample > 1:
+        y = resample_poly(y, 1, oversample, axis=0)
+    y = np.clip(y * max_int, -max_int, max_int - 1).astype(
+        np.int16 if audio.sample_width == 2 else samples.dtype
+    )
     if channels == 2:
         y = y.reshape((-1,))
     out = audio._spawn(y.tobytes())
     return out
 
-def apply_tape_saturation(audio: AudioSegment, drive: float = 1.1) -> AudioSegment:
+def apply_tape_saturation(audio: AudioSegment, drive: float = 1.1, oversample: int = 2) -> AudioSegment:
     """Simple tape-style saturation with gentle high-frequency roll-off."""
     samples = np.array(audio.get_array_of_samples()).astype(np.float32)
     channels = audio.channels
@@ -171,7 +177,11 @@ def apply_tape_saturation(audio: AudioSegment, drive: float = 1.1) -> AudioSegme
         samples = samples.reshape((-1, 1))
     max_int = float(2 ** (8 * audio.sample_width - 1))
     x = samples / max_int
+    if oversample > 1:
+        x = resample_poly(x, oversample, 1, axis=0)
     y = np.tanh(x * drive)
+    if oversample > 1:
+        y = resample_poly(y, 1, oversample, axis=0)
     for ch in range(channels):
         y[:, ch] = _butter_lowpass(y[:, ch], 12000)
     y = np.clip(y * max_int, -max_int, max_int - 1).astype(
@@ -229,10 +239,15 @@ def loudness_normalize_lufs(audio: AudioSegment, target_lufs: float = -14.0) -> 
     headroom = 0.0
     try:
         import pyloudnorm as pyln
+
         meter = pyln.Meter(audio.frame_rate)
         loudness = meter.integrated_loudness(x)
     except ImportError:
-        rms = np.sqrt(np.mean(np.square(x)))
+        abs_x = np.abs(x)
+        gate = abs_x > 10 ** (-60.0 / 20.0)
+        if not np.any(gate):
+            return audio
+        rms = np.sqrt(np.mean(np.square(x[gate])))
         if rms <= 0:
             return audio
         loudness = 20 * np.log10(rms)
@@ -241,7 +256,7 @@ def loudness_normalize_lufs(audio: AudioSegment, target_lufs: float = -14.0) -> 
             json.dumps(
                 {
                     "stage": "warn",
-                    "message": "pyloudnorm missing, using RMS loudness estimate with 3 dB headroom",
+                    "message": "pyloudnorm missing, using gated RMS loudness estimate with 3 dB headroom",
                 }
             )
         )
