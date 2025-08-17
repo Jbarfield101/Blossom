@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { Button, Stack, TextField, Typography, Alert, CircularProgress } from '@mui/material';
+import { Button, Stack, TextField, Typography, Alert, CircularProgress, Snackbar } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import Center from './_Center';
@@ -21,6 +21,7 @@ export default function NPCMaker() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   const addNPC = useNPCs((s) => s.addNPC);
 
@@ -99,6 +100,21 @@ export default function NPCMaker() {
   }
 
   async function save() {
+    setError('');
+    const required: (keyof Omit<NPC, 'id'>)[] = [
+      'name',
+      'race',
+      'class',
+      'personality',
+      'background',
+      'appearance',
+    ];
+    for (const field of required) {
+      if (!npc[field].trim()) {
+        setError('Please fill in all fields before saving.');
+        return;
+      }
+    }
     try {
       await invoke('save_npc', { npc });
       addNPC(npc);
@@ -110,6 +126,7 @@ export default function NPCMaker() {
         background: '',
         appearance: '',
       });
+      setSnackbarOpen(true);
     } catch (e) {
       setError(String(e));
     }
@@ -174,6 +191,19 @@ export default function NPCMaker() {
         <Button variant="contained" onClick={save} disabled={loading}>
           Save NPC
         </Button>
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={4000}
+          onClose={() => setSnackbarOpen(false)}
+        >
+          <Alert
+            onClose={() => setSnackbarOpen(false)}
+            severity="success"
+            sx={{ width: '100%' }}
+          >
+            NPC saved successfully!
+          </Alert>
+        </Snackbar>
       </Stack>
     </Center>
   );
