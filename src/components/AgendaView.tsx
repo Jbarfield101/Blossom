@@ -15,11 +15,24 @@ export default function AgendaView({ events }: Props) {
         <div className="text-sm text-gray-500">No events</div>
       ) : (
         <ul className="space-y-1">
-          {sorted.map((ev) => (
-            <li key={ev.id} className="text-sm">
-              {ev.title}
-            </li>
-          ))}
+          {sorted.map((ev) => {
+            const start = new Date(ev.date);
+            const end = new Date(ev.end);
+            const dateStr = start.toLocaleDateString("en-US");
+            const startStr = start.toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+            });
+            const endStr = end.toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+            });
+            return (
+              <li key={ev.id} className="text-sm">
+                {`${dateStr} ${startStr} - ${endStr} ${ev.title}`}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
