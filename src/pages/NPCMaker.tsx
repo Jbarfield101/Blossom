@@ -9,7 +9,7 @@ const systemPrompt =
   'You are a creative assistant that generates random D&D NPCs. Respond only with JSON having keys name, race, class, personality, background, appearance.';
 
 export default function NPCMaker() {
-  const [npc, setNpc] = useState<NPC>({
+  const [npc, setNpc] = useState<Omit<NPC, 'id'>>({
     name: '',
     race: '',
     class: '',
@@ -57,7 +57,7 @@ export default function NPCMaker() {
     }
   }
 
-  function handleChange(field: keyof NPC, value: string) {
+  function handleChange(field: keyof Omit<NPC, 'id'>, value: string) {
     setNpc((prev) => ({ ...prev, [field]: value }));
   }
 
