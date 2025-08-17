@@ -3,10 +3,9 @@ import { chordFromDegree, voiceLeadChords } from './SongForm';
 import * as Tone from 'tone';
 
 describe('chordFromDegree', () => {
-  it('adds a 9th extension for richer harmony', () => {
+  it('builds a maj7 chord for the I degree', () => {
     const chord = chordFromDegree(1, 'C');
-    expect(chord.length).toBe(5);
-    expect(chord[4]).toBe('D5');
+    expect(chord).toEqual(['C4', 'E4', 'G4', 'B4']);
   });
 });
 

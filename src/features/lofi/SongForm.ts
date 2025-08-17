@@ -33,16 +33,34 @@ let chordStep = 0;
 
 let chords: string[][] = [];
 
-type ChordType = 'maj7' | 'min7' | 'dom7';
+type ChordType =
+  | 'maj7'
+  | 'min7'
+  | 'dom7'
+  | 'maj9'
+  | 'min9'
+  | 'add9'
+  | 'sus2'
+  | 'sus4';
 type RhythmCell = 'on' | 'rest' | 'sync';
 
 export function buildChord(root: string, type: ChordType) {
   const intervals =
     type === 'maj7'
-      ? [0, 4, 7, 11, 14]
+      ? [0, 4, 7, 11]
       : type === 'min7'
-        ? [0, 3, 7, 10, 14]
-        : [0, 4, 7, 10, 14];
+        ? [0, 3, 7, 10]
+        : type === 'dom7'
+          ? [0, 4, 7, 10]
+          : type === 'maj9'
+            ? [0, 4, 7, 11, 14]
+            : type === 'min9'
+              ? [0, 3, 7, 10, 14]
+              : type === 'add9'
+                ? [0, 4, 7, 14]
+                : type === 'sus2'
+                  ? [0, 2, 7]
+                  : [0, 5, 7];
   return intervals.map((i) => Tone.Frequency(root).transpose(i).toNote());
 }
 
