@@ -101,7 +101,7 @@ describe('useCalendar store', () => {
     expect(useCalendar.getState().events).toHaveLength(0);
   });
 
-  it('calculates tag totals', () => {
+  it('updates tag totals when events are added', () => {
     const add = useCalendar.getState().addEvent;
     add({
       title: 'A',
@@ -111,6 +111,8 @@ describe('useCalendar store', () => {
       status: 'completed',
       hasCountdown: false,
     });
+    const hour = 60 * 60 * 1000;
+    expect(useCalendar.getState().tagTotals.work).toBe(1 * hour);
     add({
       title: 'B',
       date: '2024-01-02T09:00',
@@ -119,10 +121,45 @@ describe('useCalendar store', () => {
       status: 'scheduled',
       hasCountdown: false,
     });
-    const hour = 60 * 60 * 1000;
     const totals = useCalendar.getState().tagTotals;
     expect(totals.work).toBe(1.5 * hour);
     expect(totals.play).toBe(0.5 * hour);
+  });
+
+  it('updates tag totals when an event is updated', () => {
+    const add = useCalendar.getState().addEvent;
+    add({
+      title: 'A',
+      date: '2024-01-01T09:00',
+      end: '2024-01-01T10:00',
+      tags: ['work'],
+      status: 'scheduled',
+      hasCountdown: false,
+    });
+    const id = useCalendar.getState().events[0].id;
+    useCalendar.getState().updateEvent(id, {
+      tags: ['play'],
+      end: '2024-01-01T11:00',
+    });
+    const hour = 60 * 60 * 1000;
+    const totals = useCalendar.getState().tagTotals;
+    expect(totals.work).toBeUndefined();
+    expect(totals.play).toBe(2 * hour);
+  });
+
+  it('updates tag totals when an event is removed', () => {
+    const add = useCalendar.getState().addEvent;
+    add({
+      title: 'A',
+      date: '2024-01-01T09:00',
+      end: '2024-01-01T10:00',
+      tags: ['work'],
+      status: 'scheduled',
+      hasCountdown: false,
+    });
+    const id = useCalendar.getState().events[0].id;
+    useCalendar.getState().removeEvent(id);
+    expect(useCalendar.getState().tagTotals).toEqual({});
   });
 
   it('rejects events where end is not after start', () => {
