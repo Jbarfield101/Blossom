@@ -121,5 +121,13 @@ describe('SongForm', () => {
       (screen.getByLabelText(/song templates/i) as HTMLSelectElement).value
     ).toBe('Study Session');
   });
+
+  it('offers a no drums option', () => {
+    render(<SongForm />);
+    const label = screen.getByText('Drum Pattern');
+    const select = label.parentElement!.querySelector('select') as HTMLSelectElement;
+    const values = Array.from(select.options).map((o) => o.value);
+    expect(values).toContain('no_drums');
+  });
 });
 
