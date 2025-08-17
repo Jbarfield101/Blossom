@@ -23,6 +23,35 @@ describe('useCalendar store', () => {
     expect(state.events[0].title).toBe('Test');
   });
 
+  it('rejects invalid additions', () => {
+    const add = useCalendar.getState().addEvent;
+    add({
+      title: '',
+      date: '2024-01-01T09:00',
+      end: '2024-01-01T10:00',
+      tags: [],
+      status: 'scheduled',
+      hasCountdown: false,
+    });
+    add({
+      title: 'Bad date',
+      date: 'not-a-date',
+      end: '2024-01-01T10:00',
+      tags: [],
+      status: 'scheduled',
+      hasCountdown: false,
+    });
+    add({
+      title: 'Bad end',
+      date: '2024-01-01T09:00',
+      end: 'nope',
+      tags: [],
+      status: 'scheduled',
+      hasCountdown: false,
+    });
+    expect(useCalendar.getState().events).toHaveLength(0);
+  });
+
   it('updates an event', () => {
     useCalendar.getState().addEvent({
       title: 'Old',
@@ -48,8 +77,14 @@ describe('useCalendar store', () => {
     });
     const id = useCalendar.getState().events[0].id;
     useCalendar.getState().updateEvent(id, { end: '2024-01-01T08:00' });
+    useCalendar.getState().updateEvent(id, { date: 'invalid' });
+    useCalendar.getState().updateEvent(id, { title: '' });
     const event = useCalendar.getState().events[0];
-    expect(event.end).toBe('2024-01-01T10:00');
+    expect(event).toMatchObject({
+      title: 'Original',
+      date: '2024-01-01T09:00',
+      end: '2024-01-01T10:00',
+    });
   });
 
   it('removes an event', () => {
@@ -100,6 +135,55 @@ describe('useCalendar store', () => {
       hasCountdown: false,
     });
     expect(useCalendar.getState().events).toHaveLength(0);
+  });
+
+  it('sorts events after adding', () => {
+    const add = useCalendar.getState().addEvent;
+    add({
+      title: 'B',
+      date: '2024-01-02T09:00',
+      end: '2024-01-02T10:00',
+      tags: [],
+      status: 'scheduled',
+      hasCountdown: false,
+    });
+    add({
+      title: 'A',
+      date: '2024-01-01T09:00',
+      end: '2024-01-01T10:00',
+      tags: [],
+      status: 'scheduled',
+      hasCountdown: false,
+    });
+    const titles = useCalendar.getState().events.map((e) => e.title);
+    expect(titles).toEqual(['A', 'B']);
+  });
+
+  it('sorts events after updating', () => {
+    const add = useCalendar.getState().addEvent;
+    add({
+      title: 'A',
+      date: '2024-01-02T09:00',
+      end: '2024-01-02T10:00',
+      tags: [],
+      status: 'scheduled',
+      hasCountdown: false,
+    });
+    add({
+      title: 'B',
+      date: '2024-01-03T09:00',
+      end: '2024-01-03T10:00',
+      tags: [],
+      status: 'scheduled',
+      hasCountdown: false,
+    });
+    const id = useCalendar.getState().events[1].id;
+    useCalendar.getState().updateEvent(id, {
+      date: '2024-01-01T09:00',
+      end: '2024-01-01T10:00',
+    });
+    const titles = useCalendar.getState().events.map((e) => e.title);
+    expect(titles).toEqual(['B', 'A']);
   });
 
   it('renders tag stats sorted by duration', () => {
