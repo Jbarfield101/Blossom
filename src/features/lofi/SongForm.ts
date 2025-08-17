@@ -209,32 +209,45 @@ function makePattern(seed: number, key: string) {
 
 function init() {
   if (initialized) return;
-  const rev = new Tone.Reverb({ decay: 3, wet: 0.25 }).toDestination();
+
+  // route instruments through a master bus and use a parallel reverb send
+  const master = new Tone.Gain().toDestination();
+  const rev = new Tone.Reverb({ decay: 3, wet: 1 }).connect(master);
+  const addSend = (node: Tone.ToneAudioNode, level = 0.2) => {
+    const send = new Tone.Gain(level).connect(rev);
+    node.connect(send);
+  };
 
   const lead = new Tone.MonoSynth({
     oscillator: { type: 'triangle' },
     envelope: { attack: 0.01, decay: 0.2, sustain: 0.3, release: 1.2 },
-  }).connect(rev);
+  }).connect(master);
+  addSend(lead, 0.3);
 
   const bass = new Tone.MonoSynth({
     oscillator: { type: 'sawtooth' },
     filter: { type: 'lowpass', frequency: 200 },
     envelope: { attack: 0.01, decay: 0.3, sustain: 0.4, release: 1.0 },
-  }).connect(rev);
+  }).connect(master);
+  addSend(bass, 0.15);
 
   const hat = new Tone.NoiseSynth({
     envelope: { attack: 0.001, decay: 0.05, sustain: 0 },
   });
-  const hatVol = new Tone.Volume(-12).connect(rev);
+  const hatVol = new Tone.Volume(-12).connect(master);
   hat.connect(hatVol);
+  addSend(hatVol, 0.1);
 
-  const kick = new Tone.MembraneSynth().connect(rev);
+  const kick = new Tone.MembraneSynth().connect(master);
+
   const snare = new Tone.NoiseSynth({
     envelope: { attack: 0.001, decay: 0.2, sustain: 0 },
-  }).connect(rev);
+  }).connect(master);
+  addSend(snare, 0.2);
 
-  const padFilter = new Tone.Filter({ type: 'lowpass', frequency: 500 }).connect(rev);
+  const padFilter = new Tone.Filter({ type: 'lowpass', frequency: 500 }).connect(master);
   const pad = new Tone.PolySynth(Tone.Synth).connect(padFilter);
+  addSend(padFilter, 0.4);
 
   chain = { lead, bass, hat, kick, snare, pad, rev };
   Tone.Transport.bpm.value = 80;
