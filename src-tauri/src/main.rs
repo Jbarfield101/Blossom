@@ -38,6 +38,7 @@ fn main() {
             commands::fetch_big_brother_summary,
             // Stocks:
             commands::fetch_stock_quote,
+            commands::stock_forecast,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

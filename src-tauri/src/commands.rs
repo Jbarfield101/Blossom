@@ -7,7 +7,7 @@ use std::{
     sync::{Mutex, OnceLock},
 };
 
-use chrono::Local;
+use chrono::{Local, NaiveDateTime};
 use robotstxt::DefaultMatcher;
 use rss::Channel;
 use serde::{Deserialize, Serialize};
@@ -733,6 +733,49 @@ pub async fn fetch_stock_quote(symbol: String, force: Option<bool>) -> Result<f6
     }
 
     Ok(price)
+}
+
+#[tauri::command]
+pub async fn stock_forecast<R: Runtime>(
+    app: AppHandle<R>,
+    symbol: String,
+) -> Result<String, String> {
+    let sym = symbol.to_uppercase();
+    let url = format!(
+        "https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=5d&interval=1d"
+    );
+    let resp = ureq::get(&url).call().map_err(|e| e.to_string())?;
+    let json: Value = resp.into_json().map_err(|e| e.to_string())?;
+    let result = json["chart"]["result"]
+        .get(0)
+        .ok_or_else(|| "chart result missing".to_string())?;
+    let timestamps = result["timestamp"].as_array().ok_or("timestamps missing")?;
+    let closes = result["indicators"]["quote"]
+        .get(0)
+        .and_then(|q| q["close"].as_array())
+        .ok_or("closes missing")?;
+    let mut parts = Vec::new();
+    for (ts, close) in timestamps.iter().zip(closes.iter()) {
+        if let (Some(ts), Some(price)) = (ts.as_i64(), close.as_f64()) {
+            if let Some(dt) = NaiveDateTime::from_timestamp_opt(ts, 0) {
+                let date = dt.format("%Y-%m-%d").to_string();
+                parts.push(format!("{date}: {:.2}", price));
+            }
+        }
+    }
+    let summary = parts.join(", ");
+    let prompt = format!(
+        "Here are recent closing prices for {sym}: {summary}. Provide a brief forecast for {sym}'s price trend over the next week."
+    );
+    let reply = general_chat(
+        app,
+        vec![ChatMessage {
+            role: "user".into(),
+            content: prompt,
+        }],
+    )
+    .await?;
+    Ok(reply)
 }
 
 #[derive(Serialize, Clone)]
