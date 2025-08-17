@@ -145,14 +145,30 @@ describe('Calendar time validation', () => {
     });
     fireEvent.click(screen.getByTestId('add-button'));
 
+    const startDate = new Date(`${yyyy}-${mm}-${dd}T09:00`);
+    const endDate = new Date(`${yyyy}-${mm}-${dd}T10:00`);
+    const startStr = startDate.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+    const endStr = endDate.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+    const dateStr = startDate.toLocaleDateString('en-US');
+
     fireEvent.click(screen.getByText('week'));
     expect(screen.getByTestId('week-view')).toBeInTheDocument();
-    expect(screen.getByText('Meeting')).toBeInTheDocument();
+    expect(
+      screen.getByText(`${startStr} - ${endStr} Meeting`)
+    ).toBeInTheDocument();
     expect(screen.queryByTestId(`day-${parseInt(dd, 10)}`)).toBeNull();
 
     fireEvent.click(screen.getByText('agenda'));
     expect(screen.getByTestId('agenda-view')).toBeInTheDocument();
-    expect(screen.getByText('Meeting')).toBeInTheDocument();
+    expect(
+      screen.getByText(`${dateStr} ${startStr} - ${endStr} Meeting`)
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('month'));
     expect(screen.getByTestId(`day-${parseInt(dd, 10)}`)).toBeInTheDocument();
