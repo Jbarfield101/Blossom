@@ -66,6 +66,14 @@ const INSTR = [
   "piano",
   "clean electric guitar",
   "airy pads",
+  "vinyl sounds",
+  "acoustic guitar",
+  "violin",
+  "cello",
+  "flute",
+  "saxophone",
+  "trumpet",
+  "synth lead",
 ];
 const AMBI = ["rain", "cafe"];
 const DRUM_PATS = [
