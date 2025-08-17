@@ -1,17 +1,20 @@
 import { useState } from "react";
-import { Button, Stack, TextField } from "@mui/material";
+import { Button, Stack, TextField, IconButton } from "@mui/material";
 import Center from "./_Center";
 import { useWorlds } from "../store/worlds";
+import { TrashIcon } from "@heroicons/react/24/outline";
 
 export default function WorldBuilder() {
   const worlds = useWorlds((s) => s.worlds);
   const addWorld = useWorlds((s) => s.addWorld);
+  const removeWorld = useWorlds((s) => s.removeWorld);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
 
   function submit() {
     const trimmed = name.trim();
     if (!trimmed) return;
+    if (worlds.some((w) => w.toLowerCase() === trimmed.toLowerCase())) return;
     addWorld(trimmed);
     setName("");
     setCreating(false);
@@ -21,9 +24,14 @@ export default function WorldBuilder() {
     <Center>
       <Stack spacing={2} sx={{ width: "100%", maxWidth: 400 }}>
         {worlds.map((w) => (
-          <Button key={w} variant="outlined">
-            {w}
-          </Button>
+          <Stack direction="row" spacing={1} key={w}>
+            <Button variant="outlined" sx={{ flexGrow: 1 }}>
+              {w}
+            </Button>
+            <IconButton onClick={() => removeWorld(w)}>
+              <TrashIcon className="h-5 w-5" />
+            </IconButton>
+          </Stack>
         ))}
         {creating ? (
           <>
