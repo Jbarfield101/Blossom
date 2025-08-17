@@ -34,4 +34,11 @@ describe('useStocks store', () => {
     store.stopPolling('MSFT');
     expect(invoke).toHaveBeenCalledTimes(4);
   });
+
+  it('requests a forecast from the backend', async () => {
+    (invoke as any).mockResolvedValue('Uptrend');
+    const result = await useStocks.getState().forecast('goog');
+    expect(result).toBe('Uptrend');
+    expect(invoke).toHaveBeenCalledWith('stock_forecast', { symbol: 'GOOG' });
+  });
 });

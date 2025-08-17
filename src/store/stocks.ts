@@ -12,6 +12,7 @@ interface StockState {
   fetchQuote: (symbol: string, force?: boolean) => Promise<number>;
   startPolling: (symbol: string, interval?: number) => void;
   stopPolling: (symbol: string) => void;
+  forecast: (symbol: string) => Promise<string>;
 }
 
 export const useStocks = create<StockState>((set, get) => ({
@@ -48,6 +49,10 @@ export const useStocks = create<StockState>((set, get) => ({
       const { [sym]: _, ...rest } = state.pollers;
       return { pollers: rest };
     });
+  },
+  forecast: async (symbol) => {
+    const sym = symbol.toUpperCase();
+    return invoke<string>('stock_forecast', { symbol: sym });
   },
 }));
 
