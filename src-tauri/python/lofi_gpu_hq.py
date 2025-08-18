@@ -963,7 +963,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
     # --- ambience rotation
     amb_list = motif.get("ambience") or []
     if not amb_list:
-        amb_list = random.choice([["rain"], ["cafe"], ["rain","cafe"], ["vinyl"], ["street"]])
+        amb_list = rng.choice([["rain"], ["cafe"], ["rain","cafe"], ["vinyl"], ["street"]])
 
     amb_level = float(np.clip(motif.get("ambience_level", 0.5), 0.0, 1.0))
 
@@ -1116,7 +1116,6 @@ def model_generate_audio(bars: int, bpm: int, seed: int, section: str, motif: Di
     sec = _stable_hash_int(section)
     full_seed = (seed ^ sec) & 0xFFFFFFFF
     rng = np.random.default_rng(full_seed)
-    random.seed(full_seed)
     return _render_section(bars, bpm, section, motif, rng=rng, variety=variety, chords=chords)
 def build_song(sections: List[Tuple[str, int, Optional[List[str]]]], bpm: int, seed: int, motif: Dict[str, Any], variety: int) -> AudioSegment:
     parts: List[AudioSegment] = []
