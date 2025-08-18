@@ -245,18 +245,19 @@ def apply_wow_flutter(
         samples = samples.reshape((-1, 2))
     else:
         samples = samples.reshape((-1, 1))
-    n = samples.shape[0]
+    max_int = float(2 ** (8 * audio.sample_width - 1))
+    x = samples / max_int
+    n = x.shape[0]
     t = np.arange(n) / SR
     mod = depth * np.sin(2 * np.pi * rate_hz * t)
     mod += flutter_depth * np.sin(2 * np.pi * flutter_rate * t)
     idx = np.arange(n) + mod * SR
     idx = np.clip(idx, 0, n - 1)
     base = np.arange(n)
-    y = np.zeros_like(samples)
+    y = np.zeros_like(x)
     for ch in range(channels):
-        y[:, ch] = np.interp(idx, base, samples[:, ch])
-    max_int = float(2 ** (8 * audio.sample_width - 1))
-    y = np.clip(y, -max_int, max_int - 1).astype(
+        y[:, ch] = np.interp(idx, base, x[:, ch])
+    y = np.clip(y * max_int, -max_int, max_int - 1).astype(
         np.int16 if audio.sample_width == 2 else samples.dtype
     )
     if channels == 2:
