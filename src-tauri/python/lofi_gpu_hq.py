@@ -35,9 +35,22 @@ import re
 from typing import List, Dict, Tuple, Any, Optional
 
 import numpy as np
-from pydub import AudioSegment, effects
+from pydub import AudioSegment
 from pydub.utils import which
-from scipy.signal import butter, filtfilt, resample_poly
+
+from effects import (
+    SR,
+    _butter_lowpass,
+    _butter_highpass,
+    _butter_bandpass,
+    apply_soft_limit,
+    apply_tape_saturation,
+    apply_wow_flutter,
+    stereoize_np,
+    apply_chorus_np,
+    _apply_duck_envelope,
+    _schroeder_room,
+)
 
 warnings.filterwarnings("ignore", message="Couldn't find ffmpeg or avconv")
 
@@ -73,8 +86,6 @@ def _set_ffmpeg_paths():
         print(json.dumps({"stage": "warn", "message": "ffmpeg not found; pydub exports will fail"}))
 _set_ffmpeg_paths()
 # -----------------------------------
-
-SR = 44100
 
 # ---------- Small helpers ----------
 def _stable_hash_int(s: str) -> int:
@@ -375,24 +386,6 @@ def _noise(ms, amp=0.3, rng=None):
         r = (np.random.rand(n).astype(np.float32) * 2 - 1)
     return (amp * r).astype(np.float32)
 
-def _butter_lowpass(x, cutoff_hz):
-    nyq = 0.5 * SR
-    norm = min(cutoff_hz / nyq, 0.999)
-    b, a = butter(4, norm, btype="low")
-    return filtfilt(b, a, x).astype(np.float32)
-
-def _butter_highpass(x, cutoff_hz):
-    nyq = 0.5 * SR
-    norm = min(cutoff_hz / nyq, 0.999)
-    b, a = butter(4, norm, btype="high")
-    return filtfilt(b, a, x).astype(np.float32)
-
-def _butter_bandpass(x, low_hz, high_hz):
-    nyq = 0.5 * SR
-    low = max(0.0, low_hz / nyq)
-    high = min(high_hz / nyq, 0.999)
-    b, a = butter(2, [low, high], btype="band")
-    return filtfilt(b, a, x).astype(np.float32)
 
 def _kick(ms=160, rng=None):
     body = _pitch_sweep(90, 45, ms, amp=0.9) * _env_ad(ms*0.9, ms)
@@ -441,103 +434,7 @@ def _beats_ms(bpm):
     sixteenth = beat // 4
     return beat, eighth, sixteenth
 
-# ---------- Stereo & mix polish helpers ----------
-def _shift_ms(x: np.ndarray, ms: float) -> np.ndarray:
-    nshift = int(SR * (ms / 1000.0))
-    if nshift == 0:
-        return x
-    if nshift > 0:
-        return np.concatenate([np.zeros(nshift, dtype=x.dtype), x[:-nshift]])
-    nshift = -nshift
-    return np.concatenate([x[nshift:], np.zeros(nshift, dtype=x.dtype)])
-
-def stereoize_np(x: np.ndarray) -> np.ndarray:
-    """Tasteful widening: Haas micro-delay on a tiny HF component."""
-    hf = _butter_highpass(x, 2500) * 0.06
-    left  = x + _shift_ms(hf, -0.9)
-    right = x + _shift_ms(hf,  0.9)
-    haas = np.stack([left, right], axis=-1)
-    dry  = np.stack([x, x], axis=-1)
-    stereo = 0.75 * dry + 0.25 * haas
-    return stereo.astype(np.float32)
-
-def _apply_duck_envelope(buf: np.ndarray, positions_ms: List[float], depth_db=2.0, attack_ms=14, hold_ms=30, release_ms=180):
-    if not positions_ms:
-        return
-    depth = 10 ** (-abs(depth_db) / 20.0)
-    env = np.ones_like(buf, dtype=np.float32)
-    a = int(SR * attack_ms / 1000.0)
-    h = int(SR * hold_ms / 1000.0)
-    r = int(SR * release_ms / 1000.0)
-    one_minus = 1.0 - depth
-    attack_curve = 1.0 - np.linspace(0, 1, a, endpoint=False, dtype=np.float32) * one_minus
-    hold_curve = np.full(h, depth, dtype=np.float32)
-    release_curve = depth + np.linspace(0, 1, r, endpoint=False, dtype=np.float32) * one_minus
-    for pos in positions_ms:
-        p = int(max(0, pos) * SR / 1000)
-        # attack
-        j0 = p
-        j1 = min(p + a, len(env))
-        if j0 < len(env):
-            env[j0:j1] = np.minimum(env[j0:j1], attack_curve[:j1 - j0])
-        # hold
-        j0 = p + a
-        j1 = min(j0 + h, len(env))
-        if j0 < len(env):
-            env[j0:j1] = np.minimum(env[j0:j1], hold_curve[:j1 - j0])
-        # release
-        j0 = p + a + h
-        j1 = min(j0 + r, len(env))
-        if j0 < len(env):
-            env[j0:j1] = np.minimum(env[j0:j1], release_curve[:j1 - j0])
-    buf *= env
-
-def _schroeder_room(x: np.ndarray, mix=0.12, pre_ms=12, decay=0.35):
-    if mix <= 0:
-        return x
-    def comb(sig, d_ms, fb):
-        d = max(1, int(SR * d_ms/1000.0))
-        y = np.zeros_like(sig, dtype=np.float32)
-        for i in range(len(sig)):
-            y[i] = sig[i] + (y[i-d] * fb if i >= d else 0.0)
-        return y
-    def allpass(sig, d_ms, g):
-        d = max(1, int(SR * d_ms/1000.0))
-        y = np.zeros_like(sig, dtype=np.float32)
-        for i in range(len(sig)):
-            xn = sig[i]
-            xnd = sig[i-d] if i >= d else 0.0
-            ynd = y[i-d] if i >= d else 0.0
-            y[i] = -g * xn + xnd + g * ynd
-        return y
-    dry = x
-    x = _shift_ms(x, pre_ms)
-    wet = (
-        comb(x, 29, decay*0.70) +
-        comb(x, 37, decay*0.66) +
-        comb(x, 41, decay*0.62) +
-        comb(x, 53, decay*0.58)
-    ) * 0.25
-    wet = allpass(wet, 7, 0.65)
-    wet = allpass(wet, 3, 0.70)
-    return (1.0 - mix) * dry + mix * wet
-
-def apply_chorus_np(x: np.ndarray, depth_ms: float = 8.0, rate_hz: float = 0.3, mix: float = 0.4, rng=None) -> np.ndarray:
-    """Simple chorus using modulated delay line."""
-    if mix <= 0:
-        return x
-    if rng is not None:
-        depth_ms = float(rng.uniform(6.0, 10.0))
-        rate_hz = float(rng.uniform(0.15, 0.35))
-    n = len(x)
-    t = np.arange(n) / SR
-    lfo = np.sin(2 * np.pi * rate_hz * t)
-    delay = (depth_ms / 1000.0) * SR * (lfo + 1.0) * 0.5
-    idx = np.arange(n) - delay
-    idx = np.clip(idx, 0, n - 1).astype(int)
-    delayed = x[idx]
-    y = (x + mix * delayed) / (1.0 + mix)
-    return y.astype(np.float32)
+# Stereo and mix polish helpers reside in effects.py
 
 def _vinyl_crackle(n: int, density=0.0015, ticky=0.003, rng=None) -> np.ndarray:
     if rng is None:
