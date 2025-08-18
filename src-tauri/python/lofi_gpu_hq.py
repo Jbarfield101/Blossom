@@ -37,6 +37,7 @@ from typing import List, Dict, Tuple, Any, Optional
 import numpy as np
 from pydub import AudioSegment
 from pydub.utils import which
+from scipy.signal import resample_poly
 
 from effects import (
     SR,
