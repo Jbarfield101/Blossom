@@ -5,6 +5,22 @@ from scipy.signal import butter, filtfilt, resample_poly
 
 SR = 44100
 
+# Explicitly export functions used by other modules.
+__all__ = [
+    "SR",
+    "_butter_lowpass",
+    "_butter_highpass",
+    "_butter_bandpass",
+    "soft_clip_np",
+    "apply_soft_limit",
+    "apply_tape_saturation",
+    "apply_wow_flutter",
+    "stereoize_np",
+    "apply_chorus_np",
+    "_apply_duck_envelope",
+    "_schroeder_room",
+]
+
 def _butter_lowpass(x, cutoff_hz):
     nyq = 0.5 * SR
     norm = min(cutoff_hz / nyq, 0.999)
