@@ -27,7 +27,7 @@ import { useDocs } from "../features/docs/useDocs";
 import { TrashIcon } from "@heroicons/react/24/outline";
 
 export default function Settings() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, mode, setMode } = useTheme();
   const { events, selectedCountdownId, setSelectedCountdownId } = useCalendar();
   const { modules, toggleModule } = useSettings();
   const { users, currentUserId, addUser, switchUser } = useUsers();
@@ -197,6 +197,16 @@ export default function Settings() {
             ))}
           </List>
         </Box>
+        <FormControlLabel
+          sx={{ mt: 3 }}
+          control={
+            <Switch
+              checked={mode === "dark"}
+              onChange={(e) => setMode(e.target.checked ? "dark" : "light")}
+            />
+          }
+          label="Dark Mode"
+        />
         <FormControl fullWidth sx={{ mt: 3 }}>
           <InputLabel id="theme-label">Theme</InputLabel>
           <Select
@@ -210,6 +220,7 @@ export default function Settings() {
             <MenuItem value="forest">Forest</MenuItem>
             <MenuItem value="sunset">Sunset</MenuItem>
             <MenuItem value="sakura">Sakura</MenuItem>
+            <MenuItem value="studio">Studio</MenuItem>
           </Select>
         </FormControl>
         {countdownEvents.length > 0 && (
