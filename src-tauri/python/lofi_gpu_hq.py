@@ -1104,6 +1104,16 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
     if peak > 1.0:
         mix *= 0.9 / peak
 
+    # Auto-tuck ambience under the music based on RMS so it never overpowers
+    amb_component = amb_gain * amb_mix
+    music_only = mix - amb_component
+    music_rms = float(np.sqrt(np.mean(np.square(music_only))))
+    amb_rms = float(np.sqrt(np.mean(np.square(amb_component))))
+    if amb_rms > 0 and music_rms > 0:
+        target = music_rms * 0.3
+        tuck = float(np.clip(target / amb_rms, 0.0, 1.0))
+        mix = music_only + amb_component * tuck
+
     # stereoize
     if flags.get("hq_stereo", True):
         stereo = stereoize_np(mix)
