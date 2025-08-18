@@ -13,6 +13,7 @@ describe('Song form hook', () => {
         bpm: { value: 80, rampTo: vi.fn() },
         start: vi.fn(),
         stop: vi.fn(),
+        scheduleRepeat: vi.fn(),
       };
       const mkSynth = () => {
         const obj: any = {
@@ -48,6 +49,16 @@ describe('Song form hook', () => {
         };
         return obj;
       });
+      const Player = vi.fn().mockImplementation(() => {
+        const obj: any = {
+          connect: vi.fn().mockReturnThis(),
+          chain: vi.fn().mockReturnThis(),
+          buffer: { length: 0 },
+        };
+        return obj;
+      });
+      const BitCrusher = vi.fn().mockImplementation(() => ({ connect: vi.fn().mockReturnThis() }));
+      const Vibrato = vi.fn().mockImplementation(() => ({ connect: vi.fn().mockReturnThis() }));
       const Loop = vi
         .fn()
         .mockImplementation(() => ({ start: vi.fn(), stop: vi.fn() }));
@@ -68,6 +79,9 @@ describe('Song form hook', () => {
         Volume,
         Filter,
         Gain,
+        Player,
+        BitCrusher,
+        Vibrato,
         Loop,
         Frequency,
         Synth,
