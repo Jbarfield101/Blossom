@@ -380,6 +380,22 @@ pub struct SongSpec {
     pub limiter_drive: Option<f32>,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub struct AlbumRequest {
+    pub track_count: u32,
+    #[serde(alias = "title_base", skip_serializing_if = "Option::is_none")]
+    pub title_base: Option<String>,
+    #[serde(alias = "out_dir", skip_serializing_if = "Option::is_none")]
+    pub out_dir: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub struct AlbumMeta {
+    pub track_count: u32,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -539,6 +555,18 @@ pub async fn run_lofi_song<R: Runtime>(
         .emit("lofi_progress", r#"{"stage":"done","message":"saved"}"#)
         .ok();
     Ok(out_path.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+pub async fn generate_album(meta: AlbumRequest) -> Result<AlbumMeta, String> {
+    Ok(AlbumMeta {
+        track_count: meta.track_count,
+    })
+}
+
+#[tauri::command]
+pub async fn cancel_album(_job_id: String) -> Result<(), String> {
+    Ok(())
 }
 
 /* ==============================
