@@ -4,6 +4,7 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useLofi } from "../features/lofi/SongForm";
+import Waveform from "./Waveform";
 
 type Section = { name: string; bars: number; chords: string[] };
 
@@ -52,6 +53,7 @@ type Job = {
   status: string;
   outPath?: string;
   error?: string;
+  progress?: number;
 };
 
 const KEYS_BASE = ["C", "D", "E", "F", "G", "A", "B"];
@@ -369,6 +371,7 @@ export default function SongForm() {
   const [globalStatus, setGlobalStatus] = useState<string>("");
   const [err, setErr] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
   const {
     isPlaying: previewPlaying,
     play: previewPlay,
@@ -413,10 +416,24 @@ export default function SongForm() {
         try {
           const raw = typeof e.payload === "string" ? e.payload : JSON.stringify(e.payload);
           let pretty = raw;
+          let pct: number | undefined;
           try {
             const obj = JSON.parse(raw);
-            if (obj && obj.stage && obj.message) pretty = `${obj.stage}: ${obj.message}`;
+            if (obj && obj.stage && obj.message) {
+              pretty = `${obj.stage}: ${obj.message}`;
+              const map: Record<string, number> = { start: 10, generate: 60, post: 90, done: 100 };
+              if (typeof obj.progress === "number") pct = obj.progress * 100;
+              else if (map[obj.stage] !== undefined) pct = map[obj.stage];
+            }
           } catch {}
+          if (pct !== undefined) {
+            setProgress(pct);
+            if (runningJobId) {
+              setJobs((prev) =>
+                prev.map((j) => (j.id === runningJobId ? { ...j, progress: pct } : j))
+              );
+            }
+          }
           if (runningJobId) {
             setJobs((prev) =>
               prev.map((j) => (j.id === runningJobId ? { ...j, status: pretty } : j))
@@ -534,6 +551,7 @@ export default function SongForm() {
     setErr(null);
     setGlobalStatus("");
     setIsPlaying(false);
+    setProgress(0);
 
     if (!titleBase || !outDir) {
       setErr("Please set a title and choose an output folder.");
@@ -555,14 +573,21 @@ export default function SongForm() {
     try {
       for (let i = 0; i < newJobs.length; i++) {
         const job = newJobs[i];
-        setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, status: "starting…" } : j)));
+        setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, status: "starting…", progress: 0 } : j)));
+        setProgress(0);
         try {
           const outPath = await invoke<string>("run_lofi_song", { spec: job.spec });
-          setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, outPath, status: "done" } : j)));
+          setJobs((prev) =>
+            prev.map((j) => (j.id === job.id ? { ...j, outPath, status: "done", progress: 100 } : j))
+          );
+          setProgress(100);
         } catch (e: any) {
           const message = e?.message || String(e);
           console.error("run_lofi_song failed:", e);
-          setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, status: "error", error: message } : j)));
+          setJobs((prev) =>
+            prev.map((j) => (j.id === job.id ? { ...j, status: "error", error: message, progress: 100 } : j))
+          );
+          setProgress(100);
         }
       }
 
@@ -600,18 +625,19 @@ export default function SongForm() {
     grid2: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: 12, marginTop: 12 },
     panel: { background: "#0e0f12", borderRadius: 10, padding: 12 },
     label: { fontSize: 12, opacity: 0.8, marginBottom: 6, display: "block" },
-    chips: { display: "flex", gap: 12, flexWrap: "wrap" },
     actions: { marginTop: 12, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" },
     status: { marginTop: 10, fontSize: 12, opacity: 0.8 },
     err: { marginTop: 8, color: "#ff7b7b", fontSize: 12 },
     table: { width: "100%", marginTop: 12, borderCollapse: "collapse", fontSize: 13 },
     th: { textAlign: "left", padding: "8px 6px", borderBottom: "1px solid #2b2e33", opacity: 0.8 },
     td: { padding: "8px 6px", borderBottom: "1px solid #1e2025" },
-    chipBtn: { border: "1px solid #2b2e33", padding: "6px 10px", borderRadius: 999, cursor: "pointer", background: "transparent", color: "#e7e7ea" },
-    chipOn: { border: "1px solid #3a82f6", background: "#3a82f6", color: "#fff" },
+    optionGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px,1fr))", gap: 8 },
+    optionCard: { background: "#17191d", borderRadius: 8, padding: "8px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" },
     toggle: { display: "flex", gap: 8, alignItems: "center" },
     slider: { width: "100%" },
     playBtn: { padding: "10px 14px", borderRadius: 10, border: "1px solid #2b2e33", background: "transparent", color: "#e7e7ea", cursor: "pointer", minWidth: 120 },
+    progressOuter: { height: 6, background: "#2b2e33", borderRadius: 3, overflow: "hidden", marginTop: 8 },
+    progressInner: { height: "100%", background: "#3a82f6", width: "0%", transition: "width 0.3s" },
   };
 
   return (
@@ -835,46 +861,60 @@ export default function SongForm() {
         <div style={S.grid3}>
           <div style={S.panel}>
             <label style={S.label}>Mood</label>
-            <div style={S.chips}>
-              {MOODS.map((m) => {
-                const on = mood.includes(m);
-                return (
-                  <button key={m} onClick={() => setMood((prev) => toggle(prev, m))} style={{ ...S.chipBtn, ...(on ? S.chipOn : {}) }}>
-                    {m}
-                  </button>
-                );
-              })}
+            <div style={S.optionGrid}>
+              {MOODS.map((m) => (
+                <label key={m} style={S.optionCard}>
+                  <span>{m}</span>
+                  <input
+                    type="checkbox"
+                    checked={mood.includes(m)}
+                    onChange={() => setMood((prev) => toggle(prev, m))}
+                  />
+                </label>
+              ))}
             </div>
           </div>
 
           <div style={S.panel}>
             <label style={S.label}>Instruments</label>
-            <div style={S.chips}>
-              {INSTR.map((i) => {
-                const on = instruments.includes(i);
-                return (
-                  <button key={i} onClick={() => setInstruments((prev) => toggle(prev, i))} style={{ ...S.chipBtn, ...(on ? S.chipOn : {}) }}>
-                    {i}
-                  </button>
-                );
-              })}
+            <div style={S.optionGrid}>
+              {INSTR.map((i) => (
+                <label key={i} style={S.optionCard}>
+                  <span>{i}</span>
+                  <input
+                    type="checkbox"
+                    checked={instruments.includes(i)}
+                    onChange={() => setInstruments((prev) => toggle(prev, i))}
+                  />
+                </label>
+              ))}
             </div>
             <div style={S.small}>Drums are synthesized automatically.</div>
           </div>
 
           <div style={S.panel}>
             <label style={S.label}>Ambience</label>
-            <div style={S.chips}>
-              {AMBI.map((a) => {
-                const on = ambience.includes(a);
-                return (
-                  <button key={a} onClick={() => setAmbience((prev) => toggle(prev, a))} style={{ ...S.chipBtn, ...(on ? S.chipOn : {}) }}>
-                    {a}
-                  </button>
-                );
-              })}
+            <div style={S.optionGrid}>
+              {AMBI.map((a) => (
+                <label key={a} style={S.optionCard}>
+                  <span>{a}</span>
+                  <input
+                    type="checkbox"
+                    checked={ambience.includes(a)}
+                    onChange={() => setAmbience((prev) => toggle(prev, a))}
+                  />
+                </label>
+              ))}
             </div>
-            <input type="range" min={0} max={1} step={0.01} value={ambienceLevel} onChange={(e) => setAmbienceLevel(Number(e.target.value))} style={S.slider} />
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={ambienceLevel}
+              onChange={(e) => setAmbienceLevel(Number(e.target.value))}
+              style={S.slider}
+            />
             <div style={S.small}>{Math.round(ambienceLevel * 100)}% intensity</div>
           </div>
         </div>
@@ -902,21 +942,23 @@ export default function SongForm() {
         <div style={S.grid3}>
           <div style={S.panel}>
             <label style={S.label}>Mix Polish</label>
-            <div style={S.toggle}>
-              <input type="checkbox" checked={hqStereo} onChange={(e) => setHqStereo(e.target.checked)} />
-              <span style={S.small}>Stereo widen</span>
-            </div>
-            <div style={S.toggle}>
-              <input type="checkbox" checked={hqReverb} onChange={(e) => setHqReverb(e.target.checked)} />
-              <span style={S.small}>Room reverb</span>
-            </div>
-            <div style={S.toggle}>
-              <input type="checkbox" checked={hqSidechain} onChange={(e) => setHqSidechain(e.target.checked)} />
-              <span style={S.small}>Sidechain (kick)</span>
-            </div>
-            <div style={S.toggle}>
-              <input type="checkbox" checked={hqChorus} onChange={(e) => setHqChorus(e.target.checked)} />
-              <span style={S.small}>Chorus</span>
+            <div style={S.optionGrid}>
+              <label style={S.optionCard}>
+                <span>Stereo widen</span>
+                <input type="checkbox" checked={hqStereo} onChange={(e) => setHqStereo(e.target.checked)} />
+              </label>
+              <label style={S.optionCard}>
+                <span>Room reverb</span>
+                <input type="checkbox" checked={hqReverb} onChange={(e) => setHqReverb(e.target.checked)} />
+              </label>
+              <label style={S.optionCard}>
+                <span>Sidechain (kick)</span>
+                <input type="checkbox" checked={hqSidechain} onChange={(e) => setHqSidechain(e.target.checked)} />
+              </label>
+              <label style={S.optionCard}>
+                <span>Chorus</span>
+                <input type="checkbox" checked={hqChorus} onChange={(e) => setHqChorus(e.target.checked)} />
+              </label>
             </div>
             <div style={{ ...S.small, marginTop: 6 }}>These map to engine flags in <code>lofi_gpu_hq.py</code>.</div>
           </div>
@@ -1001,6 +1043,11 @@ export default function SongForm() {
         </div>
 
         {globalStatus && <div style={S.status}>Status: {globalStatus}</div>}
+        {busy && (
+          <div style={S.progressOuter}>
+            <div style={{ ...S.progressInner, width: `${progress}%` }} />
+          </div>
+        )}
         {err && <div style={S.err}>Error: {err}</div>}
 
         {jobs.length > 0 && (
@@ -1033,20 +1080,23 @@ export default function SongForm() {
                   </td>
                   <td style={S.td}>
                     {j.outPath ? (
-                      <button
-                        style={S.playBtn}
-                        onClick={async () => {
-                          const url = convertFileSrc(j.outPath!.replace(/\\/g, "/"));
-                          const a = audioRef.current!;
-                          a.pause();
-                          a.src = url;
-                          a.load();
-                          await a.play();
-                          setIsPlaying(true);
-                        }}
-                      >
-                        Play
-                      </button>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <Waveform src={convertFileSrc(j.outPath!.replace(/\\/g, "/"))} />
+                        <button
+                          style={S.playBtn}
+                          onClick={async () => {
+                            const url = convertFileSrc(j.outPath!.replace(/\\/g, "/"));
+                            const a = audioRef.current!;
+                            a.pause();
+                            a.src = url;
+                            a.load();
+                            await a.play();
+                            setIsPlaying(true);
+                          }}
+                        >
+                          Play
+                        </button>
+                      </div>
                     ) : (
                       "—"
                     )}
