@@ -104,7 +104,12 @@ def crossfade_concat(sections: List[AudioSegment], ms: int = 120) -> AudioSegmen
         out = out.append(seg, crossfade=ms)
     return out
 
-def apply_dither(audio: AudioSegment, sample_width: int, amount: float = 1.0) -> AudioSegment:
+def apply_dither(
+    audio: AudioSegment,
+    sample_width: int,
+    amount: float = 1.0,
+    rng: Optional[np.random.Generator] = None,
+) -> AudioSegment:
     """Add low-level triangular dither prior to bit depth reduction."""
     if amount <= 0:
         return audio
@@ -112,17 +117,27 @@ def apply_dither(audio: AudioSegment, sample_width: int, amount: float = 1.0) ->
     max_int = float(2 ** (8 * audio.sample_width - 1))
     floats = samples.astype(np.float32) / max_int
     lsb = 1.0 / (2 ** (8 * sample_width - 1))
-    noise = (np.random.random(floats.shape) - np.random.random(floats.shape)) * lsb * float(amount)
+    # use seeded RNG when available
+    if rng is not None:
+        r1 = rng.random(floats.shape)
+        r2 = rng.random(floats.shape)
+    else:
+        r1 = np.random.random(floats.shape)
+        r2 = np.random.random(floats.shape)
+    noise = (r1 - r2) * lsb * float(amount)
     floats = np.clip(floats + noise, -1.0, 1.0)
     dithered = (floats * max_int).astype(samples.dtype)
     return audio._spawn(dithered.tobytes())
 
 def ensure_wav_bitdepth(
-    audio: AudioSegment, sample_width: int = 2, dither_amount: float = 1.0
+    audio: AudioSegment,
+    sample_width: int = 2,
+    dither_amount: float = 1.0,
+    rng: Optional[np.random.Generator] = None,
 ) -> AudioSegment:
     """Reduce bit depth with optional TPDF dithering."""
     if audio.sample_width > sample_width:
-        audio = apply_dither(audio, sample_width, amount=dither_amount)
+        audio = apply_dither(audio, sample_width, amount=dither_amount, rng=rng)
     return audio.set_sample_width(sample_width)
 
 
@@ -251,7 +266,9 @@ def enhanced_post_process_chain(
         pass
 
     a = loudness_normalize_lufs(a, target_lufs=-16.0)
-    a = ensure_wav_bitdepth(a, sample_width=2, dither_amount=dither_amount)
+    a = ensure_wav_bitdepth(
+        a, sample_width=2, dither_amount=dither_amount, rng=rng
+    )
     return a
 
 # ---------- DSP building blocks ----------
