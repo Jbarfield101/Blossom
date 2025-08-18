@@ -1,6 +1,6 @@
 import { Box, IconButton } from "@mui/material";
 import {
-  FaMusic, FaCubes, FaCameraRetro, FaRobot, FaBolt, FaCalendarAlt
+  FaMusic, FaCubes, FaCameraRetro, FaRobot, FaBolt, FaCalendarAlt, FaFilm
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
@@ -14,6 +14,7 @@ export default function DashboardIcons({ onHoverColor }:{ onHoverColor:(c:string
     { icon:<FaCameraRetro/>, label:"ComfyUI",       color:"rgba(255,213,165,0.55)", path:"/comfy" },
     { icon:<FaRobot/>,       label:"AI Assistant",  color:"rgba(175,245,215,0.55)", path:"/assistant" },
     { icon:<FaBolt/>,        label:"Laser Lab",     color:"rgba(255,180,180,0.55)", path:"/laser" },
+    { icon:<FaFilm/>,       label:"Shorts",        color:"rgba(200,200,200,0.55)", path:"/shorts" },
   ];
 
   return (
