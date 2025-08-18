@@ -3,6 +3,8 @@ import { invoke } from '@tauri-apps/api/core';
 
 interface Quote {
   price: number;
+  changePercent: number;
+  history: number[];
   lastFetched: number;
 }
 
@@ -24,13 +26,26 @@ export const useStocks = create<StockState>((set, get) => ({
   symbols: [],
   fetchQuote: async (symbol, force = false) => {
     const sym = symbol.toUpperCase();
+    const map: Record<string, string> = { BTC: 'BTC-USD', ETH: 'ETH-USD' };
+    const fetchSym = map[sym] ?? sym;
     const existing = get().quotes[sym];
     if (!force && existing && Date.now() - existing.lastFetched < 60000) {
       return existing.price;
     }
-    const price = await invoke<number>('fetch_stock_quote', { symbol: sym, force });
+    const { price, change_percent, history } = await invoke<{ price: number; change_percent: number; history: number[] }>(
+      'fetch_stock_quote',
+      { symbol: fetchSym, force }
+    );
     set((state) => ({
-      quotes: { ...state.quotes, [sym]: { price, lastFetched: Date.now() } },
+      quotes: {
+        ...state.quotes,
+        [sym]: {
+          price,
+          changePercent: change_percent,
+          history,
+          lastFetched: Date.now(),
+        },
+      },
     }));
     return price;
   },

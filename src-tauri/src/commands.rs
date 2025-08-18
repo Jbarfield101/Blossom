@@ -808,42 +808,73 @@ use once_cell::sync::Lazy;
 use std::time::{Duration, Instant};
 use std::collections::HashMap;
 
-static STOCK_CACHE: Lazy<Mutex<HashMap<String, (Instant, f64)>>> =
+#[derive(serde::Serialize, Clone)]
+pub struct StockInfo {
+    price: f64,
+    change_percent: f64,
+    history: Vec<f64>,
+}
+
+static STOCK_CACHE: Lazy<Mutex<HashMap<String, (Instant, StockInfo)>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
 #[tauri::command]
-pub async fn fetch_stock_quote(symbol: String, force: Option<bool>) -> Result<f64, String> {
+pub async fn fetch_stock_quote(symbol: String, force: Option<bool>) -> Result<StockInfo, String> {
     let symbol = symbol.to_uppercase();
     let force = force.unwrap_or(false);
 
     {
         let cache = STOCK_CACHE.lock().unwrap();
         if !force {
-            if let Some((last, price)) = cache.get(&symbol) {
+            if let Some((last, info)) = cache.get(&symbol) {
                 if last.elapsed() < Duration::from_secs(60) {
-                    return Ok(*price);
+                    return Ok(info.clone());
                 }
             }
         }
     }
 
-    let url = format!(
+    let quote_url = format!(
         "https://query1.finance.yahoo.com/v7/finance/quote?symbols={}",
         symbol
     );
-    let resp = ureq::get(&url).call().map_err(|e| e.to_string())?;
-    let json: Value = resp.into_json().map_err(|e| e.to_string())?;
-    let price = json["quoteResponse"]["result"]
+    let quote_resp = ureq::get(&quote_url).call().map_err(|e| e.to_string())?;
+    let quote_json: Value = quote_resp.into_json().map_err(|e| e.to_string())?;
+    let result = quote_json["quoteResponse"]["result"]
         .get(0)
-        .and_then(|v| v["regularMarketPrice"].as_f64())
+        .ok_or_else(|| "quote result missing".to_string())?;
+    let price = result["regularMarketPrice"]
+        .as_f64()
         .ok_or_else(|| "price not found".to_string())?;
+    let change_percent = result["regularMarketChangePercent"].as_f64().unwrap_or(0.0);
+
+    let chart_url = format!(
+        "https://query1.finance.yahoo.com/v8/finance/chart/{}?range=1d&interval=5m",
+        symbol
+    );
+    let chart_resp = ureq::get(&chart_url).call().map_err(|e| e.to_string())?;
+    let chart_json: Value = chart_resp.into_json().map_err(|e| e.to_string())?;
+    let history = chart_json["chart"]["result"]
+        .get(0)
+        .and_then(|v| v["indicators"]["quote"].get(0))
+        .and_then(|v| v["close"].as_array())
+        .ok_or_else(|| "history not found".to_string())?
+        .iter()
+        .filter_map(|v| v.as_f64())
+        .collect::<Vec<f64>>();
+
+    let info = StockInfo {
+        price,
+        change_percent,
+        history,
+    };
 
     {
         let mut cache = STOCK_CACHE.lock().unwrap();
-        cache.insert(symbol.clone(), (Instant::now(), price));
+        cache.insert(symbol.clone(), (Instant::now(), info.clone()));
     }
 
-    Ok(price)
+    Ok(info)
 }
 
 #[tauri::command]
