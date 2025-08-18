@@ -17,6 +17,7 @@ use serde_json::Value;
 use tauri::{AppHandle, Emitter, Manager, Runtime, Window};
 use ureq;
 use url::Url;
+use which::which;
 
 /* ==============================
 ComfyUI launcher (no extra crate)
@@ -193,11 +194,17 @@ fn save_config(cfg: &AppConfig) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn load_paths() -> Result<AppConfig, String> {
-    Ok(load_config())
+    let path = resolve_python_path();
+    let mut cfg = load_config();
+    cfg.python_path = Some(path.to_string_lossy().to_string());
+    Ok(cfg)
 }
 
 #[tauri::command]
-pub async fn save_paths(python_path: Option<String>, comfy_path: Option<String>) -> Result<(), String> {
+pub async fn save_paths(
+    python_path: Option<String>,
+    comfy_path: Option<String>,
+) -> Result<(), String> {
     let mut cfg = load_config();
     if python_path.is_some() {
         cfg.python_path = python_path;
@@ -216,15 +223,46 @@ fn default_python() -> PathBuf {
     }
 }
 
-/// Absolute path to python. Falls back to system default if unset.
-fn conda_python() -> PathBuf {
-    let cfg = load_config();
-    if let Some(p) = cfg.python_path {
+/// Resolve the python interpreter path.
+/// Priority: user setting -> env var -> PATH search -> default.
+fn resolve_python_path() -> PathBuf {
+    let mut cfg = load_config();
+
+    if let Some(p) = &cfg.python_path {
         if !p.trim().is_empty() {
             return PathBuf::from(p);
         }
     }
+
+    if let Ok(env_p) = std::env::var("BLOSSOM_PYTHON_PATH").or_else(|_| std::env::var("PYTHON")) {
+        if !env_p.trim().is_empty() {
+            let path = PathBuf::from(env_p);
+            cfg.python_path = Some(path.to_string_lossy().to_string());
+            let _ = save_config(&cfg);
+            return path;
+        }
+    }
+
+    let candidates = if cfg!(windows) {
+        ["python.exe", "python3.exe", "py.exe"]
+    } else {
+        ["python3", "python"]
+    };
+
+    for cand in candidates {
+        if let Ok(found) = which(cand) {
+            cfg.python_path = Some(found.to_string_lossy().to_string());
+            let _ = save_config(&cfg);
+            return found;
+        }
+    }
+
     default_python()
+}
+
+/// Absolute path to python. Falls back to system default if unset.
+fn conda_python() -> PathBuf {
+    resolve_python_path()
 }
 
 fn default_comfy_path() -> PathBuf {
@@ -833,8 +871,8 @@ pub async fn general_chat<R: Runtime>(
 }
 
 use once_cell::sync::Lazy;
-use std::time::{Duration, Instant};
 use std::collections::HashMap;
+use std::time::{Duration, Instant};
 
 #[derive(serde::Serialize, Clone)]
 pub struct StockInfo {
@@ -911,9 +949,8 @@ pub async fn stock_forecast<R: Runtime>(
     symbol: String,
 ) -> Result<String, String> {
     let sym = symbol.to_uppercase();
-    let url = format!(
-        "https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=5d&interval=1d"
-    );
+    let url =
+        format!("https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=5d&interval=1d");
     let resp = ureq::get(&url).call().map_err(|e| e.to_string())?;
     let json: Value = resp.into_json().map_err(|e| e.to_string())?;
     let result = json["chart"]["result"]
