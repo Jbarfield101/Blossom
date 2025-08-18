@@ -7,6 +7,8 @@ use std::{
     sync::{Mutex, OnceLock},
 };
 
+use dirs;
+
 use chrono::{Local, NaiveDateTime};
 use robotstxt::DefaultMatcher;
 use rss::Channel;
@@ -110,7 +112,16 @@ pub async fn comfy_start<R: Runtime>(window: Window<R>, dir: String) -> Result<(
         }
     }
 
-    let dir = PathBuf::from(dir);
+    let dir = if dir.trim().is_empty() {
+        let cfg = load_config();
+        if let Some(p) = cfg.comfy_path {
+            PathBuf::from(p)
+        } else {
+            default_comfy_path()
+        }
+    } else {
+        PathBuf::from(dir)
+    };
     if !dir.exists() {
         return Err(format!("ComfyUI folder not found at {}", dir.display()));
     }
@@ -151,9 +162,75 @@ pub async fn comfy_stop() -> Result<(), String> {
 Python paths
 ============================== */
 
-/// Absolute path to your conda env's python.exe.
+#[derive(Default, Serialize, Deserialize, Debug)]
+pub struct AppConfig {
+    pub python_path: Option<String>,
+    pub comfy_path: Option<String>,
+}
+
+fn config_path() -> PathBuf {
+    let mut dir = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+    dir.push(".blossom");
+    let _ = fs::create_dir_all(&dir);
+    dir.push("config.json");
+    dir
+}
+
+fn load_config() -> AppConfig {
+    let path = config_path();
+    if let Ok(data) = fs::read_to_string(path) {
+        serde_json::from_str(&data).unwrap_or_default()
+    } else {
+        AppConfig::default()
+    }
+}
+
+fn save_config(cfg: &AppConfig) -> Result<(), String> {
+    let path = config_path();
+    let data = serde_json::to_string_pretty(cfg).map_err(|e| e.to_string())?;
+    fs::write(path, data).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn load_paths() -> Result<AppConfig, String> {
+    Ok(load_config())
+}
+
+#[tauri::command]
+pub async fn save_paths(python_path: Option<String>, comfy_path: Option<String>) -> Result<(), String> {
+    let mut cfg = load_config();
+    if python_path.is_some() {
+        cfg.python_path = python_path;
+    }
+    if comfy_path.is_some() {
+        cfg.comfy_path = comfy_path;
+    }
+    save_config(&cfg)
+}
+
+fn default_python() -> PathBuf {
+    if cfg!(windows) {
+        PathBuf::from("python.exe")
+    } else {
+        PathBuf::from("python3")
+    }
+}
+
+/// Absolute path to python. Falls back to system default if unset.
 fn conda_python() -> PathBuf {
-    PathBuf::from(r"C:\Users\Owner\.conda\envs\blossom-ml\python.exe")
+    let cfg = load_config();
+    if let Some(p) = cfg.python_path {
+        if !p.trim().is_empty() {
+            return PathBuf::from(p);
+        }
+    }
+    default_python()
+}
+
+fn default_comfy_path() -> PathBuf {
+    dirs::home_dir()
+        .unwrap_or_else(|| PathBuf::from("."))
+        .join("ComfyUI")
 }
 
 /// Resolve path to the HQ non-stream script (dev -> repo path; prod -> Resources).

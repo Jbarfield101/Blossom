@@ -2,14 +2,14 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { useComfy } from "../features/comfy/useComfy";
+import { usePaths } from "../features/paths/usePaths";
 import PromptManager from "../components/PromptManager";
 
 export default function Comfy() {
   const [running, setRunning] = useState(false);
   const [log, setLog] = useState<string[]>([]);
   const [pingOk, setPingOk] = useState(false);
-  const { folder: comfyFolder } = useComfy();
+  const { comfyPath } = usePaths();
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -40,12 +40,12 @@ export default function Comfy() {
   }, [running]);
 
   const start = async () => {
-    if (!comfyFolder) {
-      setLog((prev) => [...prev, "Set ComfyUI folder in Settings first."]);
+    if (!comfyPath) {
+      setLog((prev) => [...prev, "Set ComfyUI folder in Settings first."]); 
       return;
     }
     try {
-      await invoke("comfy_start", { dir: comfyFolder });
+      await invoke("comfy_start", { dir: comfyPath });
       setRunning(true);
       setTimeout(() => setPingOk(true), 2000);
     } catch (e: any) {
