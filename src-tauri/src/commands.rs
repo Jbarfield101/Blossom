@@ -266,7 +266,7 @@ Serde-mapped types (camelCase)
 ============================== */
 
 #[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "snake_case")]
 pub struct Section {
     pub name: String,
     pub bars: u32,
@@ -274,31 +274,65 @@ pub struct Section {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")] // outDir -> out_dir, etc
+#[serde(rename_all = "snake_case")] // serialize to Python-friendly keys
 pub struct SongSpec {
-    pub title: String,
+    #[serde(alias = "outDir")]
     pub out_dir: String,
+    pub title: String,
     pub bpm: u32,
     pub key: String,
     pub structure: Vec<Section>,
     pub mood: Vec<String>,
     pub instruments: Vec<String>,
     pub ambience: Vec<String>,
+    #[serde(alias = "ambienceLevel")]
     pub ambience_level: Option<f32>,
     pub seed: u64,
     pub variety: Option<u32>,
-    #[serde(rename = "drum_pattern", skip_serializing_if = "Option::is_none")]
+    #[serde(alias = "drumPattern", skip_serializing_if = "Option::is_none")]
     pub drum_pattern: Option<String>,
-    #[serde(rename = "hq_stereo", skip_serializing_if = "Option::is_none")]
+    #[serde(alias = "hqStereo", skip_serializing_if = "Option::is_none")]
     pub hq_stereo: Option<bool>,
-    #[serde(rename = "hq_reverb", skip_serializing_if = "Option::is_none")]
+    #[serde(alias = "hqReverb", skip_serializing_if = "Option::is_none")]
     pub hq_reverb: Option<bool>,
-    #[serde(rename = "hq_sidechain", skip_serializing_if = "Option::is_none")]
+    #[serde(alias = "hqSidechain", skip_serializing_if = "Option::is_none")]
     pub hq_sidechain: Option<bool>,
-    #[serde(rename = "hq_chorus", skip_serializing_if = "Option::is_none")]
+    #[serde(alias = "hqChorus", skip_serializing_if = "Option::is_none")]
     pub hq_chorus: Option<bool>,
-    #[serde(rename = "limiter_drive", skip_serializing_if = "Option::is_none")]
+    #[serde(alias = "limiterDrive", skip_serializing_if = "Option::is_none")]
     pub limiter_drive: Option<f32>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn song_spec_serializes_to_snake_case() {
+        let spec = SongSpec {
+            out_dir: "out".into(),
+            title: "t".into(),
+            bpm: 80,
+            key: "C".into(),
+            structure: vec![],
+            mood: vec![],
+            instruments: vec![],
+            ambience: vec![],
+            ambience_level: Some(0.5),
+            seed: 1,
+            variety: Some(10),
+            drum_pattern: None,
+            hq_stereo: None,
+            hq_reverb: None,
+            hq_sidechain: None,
+            hq_chorus: None,
+            limiter_drive: None,
+        };
+        let v = serde_json::to_value(&spec).unwrap();
+        assert!(v.get("ambience_level").is_some());
+        assert!(v.get("out_dir").is_some());
+        assert!(v.get("ambienceLevel").is_none());
+    }
 }
 
 /* ==============================
