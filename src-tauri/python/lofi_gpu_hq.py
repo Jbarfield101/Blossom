@@ -1205,27 +1205,17 @@ def build_song(sections: List[Tuple[str, int, Optional[List[str]]]], bpm: int, s
     song = crossfade_concat(parts, ms=120)
     return song
 
-# ---------- Main ----------
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--song-json", required=True, help="JSON blob from Tauri SongSpec")
-    parser.add_argument("--out", required=True, help="Output WAV path")
-    args = parser.parse_args()
-
-    spec = json.loads(args.song_json)
-
-    # BPM / Seed
+def render_from_spec(spec: Dict[str, Any]) -> Tuple[AudioSegment, int]:
+    """Build a song from a SongSpec dict and return the audio and BPM."""
     bpm = int(spec.get("bpm", 80))
     seed = int(spec.get("seed", 12345))
 
-    # Variety (0..100) safe
     try:
         v = spec.get("variety", 60)
         variety = 60 if v is None else int(v)
     except Exception:
         variety = 60
 
-    # Structure
     structure = spec.get("structure")
     if not structure:
         structure = [
@@ -1240,7 +1230,6 @@ def main():
         for s in structure
     ]
 
-    # Motif & defaults
     key_val = spec.get("key")
     if key_val is None or str(key_val).lower() == "auto":
         rng_key = np.random.default_rng((seed ^ 0xA5A5A5A5) & 0xFFFFFFFF)
@@ -1269,7 +1258,6 @@ def main():
         "ambience_level": amb_lvl,
         "key": key_val,
         "drum_pattern": spec.get("drum_pattern"),
-        # optional HQ flags from UI (default True if omitted)
         "hq_stereo": spec.get("hq_stereo", True),
         "hq_reverb": spec.get("hq_reverb", True),
         "hq_sidechain": spec.get("hq_sidechain", True),
@@ -1277,14 +1265,25 @@ def main():
         "limiter_drive": limiter_drive,
     }
 
-    print(json.dumps({"stage": "generate", "message": "building sections"}))
     song = build_song(sections, bpm=bpm, seed=seed, motif=motif, variety=variety)
-
     print(json.dumps({"stage": "post", "message": "cleaning audio"}))
     post_rng = np.random.default_rng((seed ^ 0x5A5A5A5A) & 0xFFFFFFFF)
     song = enhanced_post_process_chain(
         song, rng=post_rng, drive=limiter_drive, dither_amount=dither_amt
     )
+    return song, bpm
+
+# ---------- Main ----------
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--song-json", required=True, help="JSON blob from Tauri SongSpec")
+    parser.add_argument("--out", required=True, help="Output WAV path")
+    args = parser.parse_args()
+
+    spec = json.loads(args.song_json)
+
+    print(json.dumps({"stage": "generate", "message": "building sections"}))
+    song, _ = render_from_spec(spec)
 
     out_path = args.out
     os.makedirs(os.path.dirname(out_path), exist_ok=True)

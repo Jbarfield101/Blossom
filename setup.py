@@ -8,5 +8,6 @@ setup(
         'pyloudnorm>=0.1.0',
         'numpy>=1.21.0',
         'pydub>=0.25.0',
+        'gTTS>=2.5.1',
     ],
 )
