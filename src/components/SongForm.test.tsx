@@ -160,5 +160,24 @@ describe('SongForm', () => {
     const call = (invoke as any).mock.calls.find(([c]: any) => c === 'run_lofi_song');
     expect(call[1].spec.instruments).toEqual(['harp', 'lute', 'pan flute']);
   });
+
+  it('calls generate_album when album mode enabled', async () => {
+    (open as any).mockResolvedValue('/tmp/out');
+    (invoke as any).mockResolvedValue({});
+    (listen as any).mockResolvedValue(() => {});
+
+    render(<SongForm />);
+
+    fireEvent.click(screen.getByText(/choose folder/i));
+    await screen.findByText('/tmp/out');
+
+    fireEvent.click(screen.getByLabelText(/album mode/i));
+    fireEvent.click(screen.getByText(/create album/i));
+
+    await waitFor(() => {
+      const calls = (invoke as any).mock.calls.map(([c]: any) => c);
+      expect(calls).toContain('generate_album');
+    });
+  });
 });
 

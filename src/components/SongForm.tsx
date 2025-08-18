@@ -356,6 +356,10 @@ export default function SongForm() {
     }
   }, [selectedTemplate]);
 
+  // Album mode
+  const [albumMode, setAlbumMode] = useState(false);
+  const [trackCount, setTrackCount] = useState(6);
+
   // VARIATION / BATCH
   const [numSongs, setNumSongs] = useState(1);
   const [titleSuffixMode, setTitleSuffixMode] = useState<"number" | "timestamp">("number");
@@ -613,6 +617,29 @@ export default function SongForm() {
           setIsPlaying(true);
         }
       }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function createAlbum() {
+    setErr(null);
+    setGlobalStatus("");
+    setProgress(0);
+
+    if (!titleBase || !outDir) {
+      setErr("Please set a title and choose an output folder.");
+      return;
+    }
+
+    try {
+      setBusy(true);
+      await invoke("generate_album", {
+        meta: { track_count: trackCount, title_base: titleBase, out_dir: outDir },
+      });
+    } catch (e: any) {
+      const message = e?.message || String(e);
+      setErr(message);
     } finally {
       setBusy(false);
     }
@@ -971,8 +998,8 @@ export default function SongForm() {
             </div>
             <div style={{ ...S.small, marginTop: 6 }}>These map to engine flags in <code>lofi_gpu_hq.py</code>.</div>
           </div>
-          <div style={S.panel}>
-            <label style={S.label}>Limiter Drive</label>
+        <div style={S.panel}>
+          <label style={S.label}>Limiter Drive</label>
             <input
               type="range"
               min={0.5}
@@ -984,6 +1011,30 @@ export default function SongForm() {
             />
             <div style={S.small}>{limiterDrive.toFixed(2)}× saturation</div>
           </div>
+        </div>
+        {/* album mode toggle */}
+        <div style={S.panel}>
+          <label style={S.toggle}>
+            <input type="checkbox" checked={albumMode} onChange={(e) => setAlbumMode(e.target.checked)} />
+            <span style={S.small}>Album mode</span>
+          </label>
+          {albumMode && (
+            <>
+              <label style={S.label}>Track Count</label>
+              <input
+                type="number"
+                min={3}
+                max={12}
+                value={trackCount}
+                onChange={(e) =>
+                  setTrackCount(
+                    Math.max(3, Math.min(12, Number(e.target.value || 3)))
+                  )
+                }
+                style={S.input}
+              />
+            </>
+          )}
         </div>
 
         {/* batch + variation */}
@@ -1013,8 +1064,18 @@ export default function SongForm() {
 
         {/* actions */}
         <div style={S.actions}>
-          <button style={S.btn} disabled={busy || !outDir || !titleBase} onClick={renderBatch}>
-            {busy ? "Rendering batch…" : "Render Songs"}
+          <button
+            style={S.btn}
+            disabled={busy || !outDir || !titleBase}
+            onClick={albumMode ? createAlbum : renderBatch}
+          >
+            {albumMode
+              ? busy
+                ? "Creating album…"
+                : "Create Album"
+              : busy
+                ? "Rendering batch…"
+                : "Render Songs"}
           </button>
 
           <button
