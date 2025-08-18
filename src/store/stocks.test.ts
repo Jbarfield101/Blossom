@@ -7,12 +7,13 @@ vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 describe('useStocks store', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useStocks.setState({ quotes: {}, pollers: {} });
+    useStocks.setState({ quotes: {}, pollers: {}, symbols: [] });
   });
 
   afterEach(() => {
     const { pollers, stopPolling } = useStocks.getState();
     Object.keys(pollers).forEach((s) => stopPolling(s));
+    useStocks.setState({ symbols: [] });
     vi.useRealTimers();
   });
 
@@ -40,5 +41,19 @@ describe('useStocks store', () => {
     const result = await useStocks.getState().forecast('goog');
     expect(result).toBe('Uptrend');
     expect(invoke).toHaveBeenCalledWith('stock_forecast', { symbol: 'GOOG' });
+  });
+
+  it('adds and removes symbols', () => {
+    const origStart = useStocks.getState().startPolling;
+    const origStop = useStocks.getState().stopPolling;
+    useStocks.setState({ startPolling: vi.fn(), stopPolling: vi.fn() } as any);
+    const store = useStocks.getState();
+    store.addStock('msft');
+    expect(useStocks.getState().symbols).toContain('MSFT');
+    expect((store.startPolling as any)).toHaveBeenCalledWith('MSFT');
+    store.removeStock('msft');
+    expect(useStocks.getState().symbols).not.toContain('MSFT');
+    expect((store.stopPolling as any)).toHaveBeenCalledWith('MSFT');
+    useStocks.setState({ startPolling: origStart, stopPolling: origStop } as any);
   });
 });
