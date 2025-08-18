@@ -18,7 +18,7 @@ describe('useStocks store', () => {
   });
 
   it('caches quotes for 60 seconds', async () => {
-    (invoke as any).mockResolvedValue(123);
+    (invoke as any).mockResolvedValue({ price: 123, change_percent: 1, history: [1, 2, 3] });
     const price1 = await useStocks.getState().fetchQuote('AAPL');
     const price2 = await useStocks.getState().fetchQuote('AAPL');
     expect(price1).toBe(123);
@@ -28,7 +28,7 @@ describe('useStocks store', () => {
 
   it('polls for updates when started', async () => {
     vi.useFakeTimers();
-    (invoke as any).mockResolvedValue(100);
+    (invoke as any).mockResolvedValue({ price: 100, change_percent: 0, history: [100] });
     const store = useStocks.getState();
     store.startPolling('MSFT', 1000);
     await vi.advanceTimersByTimeAsync(3100);

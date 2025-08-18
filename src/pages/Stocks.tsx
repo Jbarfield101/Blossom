@@ -5,10 +5,11 @@ import {
   TextField,
   List,
   ListItem,
-  ListItemText,
   IconButton,
+  Typography,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import Sparkline from "../components/Sparkline";
 import { useStocks } from "../store/stocks";
 
 export default function Stocks() {
@@ -30,24 +31,41 @@ export default function Stocks() {
           label="Symbol"
           value={symbol}
           onChange={(e) => setSymbol(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
         />
         <Button variant="contained" onClick={handleAdd}>
           Add
         </Button>
       </Box>
       <List>
-        {symbols.map((s) => (
-          <ListItem
-            key={s}
-            secondaryAction={
-              <IconButton edge="end" onClick={() => removeStock(s)}>
-                <DeleteIcon />
-              </IconButton>
-            }
-          >
-            <ListItemText primary={`${s}: ${quotes[s]?.price ?? "..."}`} />
-          </ListItem>
-        ))}
+        {symbols.map((s) => {
+          const q = quotes[s];
+          const color = q && q.changePercent < 0 ? "#ff5252" : "#4caf50";
+          return (
+            <ListItem
+              key={s}
+              secondaryAction={
+                <IconButton edge="end" onClick={() => removeStock(s)}>
+                  <DeleteIcon />
+                </IconButton>
+              }
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2, width: "100%" }}>
+                <Typography sx={{ width: 80 }}>{s}</Typography>
+                {q ? (
+                  <>
+                    <Typography sx={{ width: 120, color }}>
+                      {q.price.toFixed(2)} ({q.changePercent.toFixed(2)}%)
+                    </Typography>
+                    <Sparkline data={q.history} color={color} />
+                  </>
+                ) : (
+                  <Typography sx={{ width: 120 }}>...</Typography>
+                )}
+              </Box>
+            </ListItem>
+          );
+        })}
       </List>
     </Box>
   );
