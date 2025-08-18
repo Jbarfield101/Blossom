@@ -93,6 +93,7 @@ export default function Settings() {
               ["assistant", "AI Assistant"],
               ["laser", "Laser Lab"],
               ["dnd", "DND"],
+              ["stocks", "Stocks"],
             ] as const
           ).map(([key, label]) => (
             <FormControlLabel

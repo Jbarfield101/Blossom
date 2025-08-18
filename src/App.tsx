@@ -17,6 +17,7 @@ import Laser from "./pages/Laser";
 import Lofi from "./pages/Lofi";
 import NotFound from "./pages/NotFound";
 import DND from "./pages/DND";
+import Stocks from "./pages/Stocks";
 
 export default function App() {
   return (
@@ -41,6 +42,7 @@ export default function App() {
         />
         <Route path="/laser" element={<Laser />} />
         <Route path="/lofi" element={<Lofi />} />
+        <Route path="/stocks" element={<Stocks />} />
         <Route path="/dnd" element={<DND />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

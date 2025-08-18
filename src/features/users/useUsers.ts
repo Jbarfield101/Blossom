@@ -9,7 +9,8 @@ type ModuleKey =
   | 'comfy'
   | 'assistant'
   | 'laser'
-  | 'dnd';
+  | 'dnd'
+  | 'stocks';
 
 type ModulesState = Record<ModuleKey, boolean>;
 
@@ -21,6 +22,7 @@ const defaultModules: ModulesState = {
   assistant: true,
   laser: true,
   dnd: true,
+  stocks: true,
 };
 
 interface User {
