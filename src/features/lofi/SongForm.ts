@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import * as Tone from 'tone';
 import type { LofiState } from './types';
+import {
+  renderSpokenWord,
+  fileToBuffer,
+  applyVinylEffect,
+  scheduleSpokenWord,
+} from './spokenWord';
 
 // small deterministic PRNG for pattern variation
 function mulberry32(a: number) {
@@ -22,6 +28,7 @@ let chain: {
   snare: Tone.NoiseSynth;
   pad: Tone.PolySynth;
   rev: Tone.Reverb;
+  voice: Tone.Player;
 } | null = null;
 
 let melody: string[] = [];
@@ -128,6 +135,18 @@ export function voiceLeadChords(chs: string[][]): string[][] {
     voiced.push(best.map((m) => Tone.Frequency(m, 'midi').toNote()));
   }
   return voiced;
+}
+
+export async function setSpokenText(text: string) {
+  if (!chain?.voice) return;
+  const buf = await renderSpokenWord(text);
+  chain.voice.buffer = buf;
+}
+
+export async function setSpokenFile(file: File) {
+  if (!chain?.voice) return;
+  const buf = await fileToBuffer(file);
+  chain.voice.buffer = buf;
 }
 
 function weightedChoice<T>(items: T[], weights: number[], rnd: () => number): T {
@@ -267,7 +286,12 @@ function init() {
   const pad = new Tone.PolySynth(Tone.Synth).connect(padFilter);
   addSend(padFilter, 0.4);
 
-  chain = { lead, bass, hat, kick, snare, pad, rev };
+  const voice = new Tone.Player();
+  applyVinylEffect(voice).connect(master);
+  addSend(voice, 0.3);
+  scheduleSpokenWord(voice, 8);
+
+  chain = { lead, bass, hat, kick, snare, pad, rev, voice };
   Tone.Transport.bpm.value = 80;
 
   loop = new Tone.Loop((time) => {
