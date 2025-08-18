@@ -3,10 +3,13 @@ import type { SxProps } from "@mui/material";
 import { fixedIconButtonSx } from "./sx";
 import { FaHome, FaWrench } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
+import SettingsDrawer from "./SettingsDrawer";
 
 export default function TopBar() {
   const nav = useNavigate();
   const { pathname } = useLocation();
+  const [open, setOpen] = useState(false);
   const activeSx = (p: string): SxProps =>
     pathname === p
       ? { color: "#000", backgroundColor: "#fff", borderRadius: 4 }
@@ -24,13 +27,20 @@ export default function TopBar() {
       </IconButton>
 
       <IconButton
-        onClick={() => nav("/settings")}
-        sx={{ ...fixedIconButtonSx, right: 12, ...activeSx("/settings") }}
+        onClick={() => setOpen(true)}
+        sx={{
+          ...fixedIconButtonSx,
+          right: 12,
+          ...(open
+            ? { color: "#000", backgroundColor: "#fff", borderRadius: 4 }
+            : { color: "white" }),
+        }}
         aria-label="Settings"
-        aria-current={pathname === "/settings" ? "page" : undefined}
+        aria-expanded={open}
       >
         <FaWrench />
       </IconButton>
+      <SettingsDrawer open={open} onClose={() => setOpen(false)} />
     </>
   );
 }

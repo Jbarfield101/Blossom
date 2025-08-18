@@ -1,5 +1,6 @@
 // src/components/SongForm.tsx — HQ wiring for lofi_gpu_hq
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useAudioDefaults } from "../features/audioDefaults/useAudioDefaults";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -282,12 +283,20 @@ const SONG_TEMPLATES = PRESET_TEMPLATES;
 
 export default function SongForm() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const {
+    bpm: defaultBpm,
+    key: defaultKey,
+    hqStereo: defaultHqStereo,
+    hqReverb: defaultHqReverb,
+    hqSidechain: defaultHqSidechain,
+    hqChorus: defaultHqChorus,
+  } = useAudioDefaults();
 
   // THEME (applies to all songs)
   const [titleBase, setTitleBase] = useState("Midnight Coffee");
   const [outDir, setOutDir] = useState(localStorage.getItem("outDir") ?? "");
-  const [bpm, setBpm] = useState(80);
-  const [key, setKey] = useState<string>("Auto");
+  const [bpm, setBpm] = useState(defaultBpm);
+  const [key, setKey] = useState<string>(defaultKey);
   const [mood, setMood] = useState<string[]>(["calm", "cozy", "nostalgic"]);
   const [instruments, setInstruments] = useState<string[]>([
     "rhodes",
@@ -359,10 +368,10 @@ export default function SongForm() {
   const [variety, setVariety] = useState(45);
 
   // NEW: Mix polish toggles mapping to engine flags
-  const [hqStereo, setHqStereo] = useState(true);
-  const [hqReverb, setHqReverb] = useState(true);
-  const [hqSidechain, setHqSidechain] = useState(true);
-  const [hqChorus, setHqChorus] = useState(true);
+  const [hqStereo, setHqStereo] = useState(defaultHqStereo);
+  const [hqReverb, setHqReverb] = useState(defaultHqReverb);
+  const [hqSidechain, setHqSidechain] = useState(defaultHqSidechain);
+  const [hqChorus, setHqChorus] = useState(defaultHqChorus);
   const [limiterDrive, setLimiterDrive] = useState(1.02);
 
   // UI state

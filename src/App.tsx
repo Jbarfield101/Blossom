@@ -1,7 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import TopBar from "./components/TopBar";
 import Home from "./pages/Home";
-import Settings from "./pages/Settings";
 import Objects from "./pages/Objects";
 import Blender from "./pages/Blender";
 import Music from "./pages/Music";
@@ -25,7 +24,6 @@ export default function App() {
       <TopBar />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/settings" element={<Settings />} />
         <Route path="/objects" element={<Objects />} />
         <Route path="/objects/blender" element={<Blender />} />
         <Route path="/music" element={<Music />} />
