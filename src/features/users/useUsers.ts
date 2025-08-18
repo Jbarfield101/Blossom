@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Theme } from '../theme/ThemeContext';
+import type { PaletteMode } from '@mui/material';
 
 type ModuleKey =
   | 'objects'
@@ -29,6 +30,7 @@ interface User {
   id: string;
   name: string;
   theme: Theme;
+  mode: PaletteMode;
   modules: ModulesState;
 }
 
@@ -38,6 +40,7 @@ interface UsersState {
   addUser: (name: string) => void;
   switchUser: (id: string) => void;
   setTheme: (theme: Theme) => void;
+  setMode: (mode: PaletteMode) => void;
   toggleModule: (key: ModuleKey) => void;
 }
 
@@ -51,7 +54,13 @@ export const useUsers = create<UsersState>()(
         set((state) => ({
           users: {
             ...state.users,
-            [id]: { id, name, theme: 'default', modules: { ...defaultModules } },
+            [id]: {
+              id,
+              name,
+              theme: 'default',
+              mode: 'dark',
+              modules: { ...defaultModules },
+            },
           },
           currentUserId: id,
         }));
@@ -64,6 +73,16 @@ export const useUsers = create<UsersState>()(
           users: {
             ...state.users,
             [id]: { ...state.users[id], theme },
+          },
+        }));
+      },
+      setMode: (mode) => {
+        const id = get().currentUserId;
+        if (!id) return;
+        set((state) => ({
+          users: {
+            ...state.users,
+            [id]: { ...state.users[id], mode },
           },
         }));
       },
