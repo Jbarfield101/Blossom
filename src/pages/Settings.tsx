@@ -20,7 +20,7 @@ import { useCalendar } from "../features/calendar/useCalendar";
 import { Theme, useTheme } from "../features/theme/ThemeContext";
 import { useSettings } from "../features/settings/useSettings";
 import { useUsers } from "../features/users/useUsers";
-import { useComfy } from "../features/comfy/useComfy";
+import { usePaths } from "../features/paths/usePaths";
 import { useOutput } from "../features/output/useOutput";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useDocs } from "../features/docs/useDocs";
@@ -31,7 +31,7 @@ export default function Settings() {
   const { events, selectedCountdownId, setSelectedCountdownId } = useCalendar();
   const { modules, toggleModule } = useSettings();
   const { users, currentUserId, addUser, switchUser } = useUsers();
-  const { folder: comfyFolder, setFolder: setComfyFolder } = useComfy();
+  const { pythonPath, setPythonPath, comfyPath, setComfyPath } = usePaths();
   const { folder: outputFolder, setFolder: setOutputFolder } = useOutput();
   const { docs, addDoc, removeDoc } = useDocs();
   const [newUser, setNewUser] = useState("");
@@ -110,9 +110,27 @@ export default function Settings() {
         </Box>
         <Box sx={{ mt: 3 }}>
           <TextField
+            label="Python Path"
+            value={pythonPath}
+            onChange={(e) => setPythonPath(e.target.value)}
+            fullWidth
+          />
+          <Button
+            variant="outlined"
+            sx={{ mt: 1 }}
+            onClick={async () => {
+              const file = await open({});
+              if (typeof file === "string") setPythonPath(file);
+            }}
+          >
+            Browse
+          </Button>
+        </Box>
+        <Box sx={{ mt: 3 }}>
+          <TextField
             label="ComfyUI Folder"
-            value={comfyFolder}
-            onChange={(e) => setComfyFolder(e.target.value)}
+            value={comfyPath}
+            onChange={(e) => setComfyPath(e.target.value)}
             fullWidth
           />
           <Button
@@ -120,7 +138,7 @@ export default function Settings() {
             sx={{ mt: 1 }}
             onClick={async () => {
               const dir = await open({ directory: true });
-              if (typeof dir === "string") setComfyFolder(dir);
+              if (typeof dir === "string") setComfyPath(dir);
             }}
           >
             Browse
