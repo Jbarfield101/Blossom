@@ -1,35 +1,22 @@
-import { Button, Stack } from "@mui/material";
-import { useNavigate } from "react-router-dom";
-import Center from "./_Center";
-
-interface Feature {
-  label: string;
-  path?: string;
-}
-
-const features: Feature[] = [
-  { label: "Lore" },
-  { label: "Journal" },
-  { label: "NPC Maker", path: "/dnd/npc-maker" },
-  { label: "World Builder", path: "/dnd/world-builder" },
-  { label: "NPC List", path: "/dnd/npc-list" },
-];
+import { Box, Tab, Tabs } from "@mui/material";
+import { SyntheticEvent, useState } from "react";
+import NpcForm from "../features/dnd/NpcForm";
+import QuestForm from "../features/dnd/QuestForm";
+import EncounterForm from "../features/dnd/EncounterForm";
 
 export default function DND() {
-  const navigate = useNavigate();
+  const [tab, setTab] = useState(0);
+  const handleChange = (_e: SyntheticEvent, v: number) => setTab(v);
   return (
-    <Center>
-      <Stack spacing={2} sx={{ width: "100%", maxWidth: 400 }}>
-        {features.map((feature) => (
-          <Button
-            key={feature.label}
-            variant="contained"
-            onClick={() => feature.path && navigate(feature.path)}
-          >
-            {feature.label}
-          </Button>
-        ))}
-      </Stack>
-    </Center>
+    <Box sx={{ p: 2 }}>
+      <Tabs value={tab} onChange={handleChange}>
+        <Tab label="NPC" />
+        <Tab label="Quest" />
+        <Tab label="Encounter" />
+      </Tabs>
+      {tab === 0 && <NpcForm />}
+      {tab === 1 && <QuestForm />}
+      {tab === 2 && <EncounterForm />}
+    </Box>
   );
 }
