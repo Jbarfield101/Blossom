@@ -42,6 +42,10 @@ fn main() {
             // Stocks:
             commands::fetch_stock_quote,
             commands::stock_forecast,
+            // Shorts:
+            commands::load_shorts,
+            commands::save_shorts,
+            commands::generate_short,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

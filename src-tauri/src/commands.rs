@@ -1081,3 +1081,49 @@ pub async fn fetch_big_brother_summary<R: Runtime>(
 
     Ok(summary)
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ShortSpec {
+    pub id: String,
+    pub title: String,
+    pub script: String,
+    pub audio_path: Option<String>,
+    pub visual_path: Option<String>,
+    pub export_path: Option<String>,
+    pub status: String,
+    pub created_at: String,
+}
+
+fn shorts_path() -> PathBuf {
+    let mut dir = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+    dir.push(".blossom");
+    let _ = fs::create_dir_all(&dir);
+    dir.push("shorts.json");
+    dir
+}
+
+#[tauri::command]
+pub async fn load_shorts() -> Result<Vec<ShortSpec>, String> {
+    let path = shorts_path();
+    if let Ok(data) = fs::read_to_string(path) {
+        serde_json::from_str(&data).map_err(|e| e.to_string())
+    } else {
+        Ok(vec![])
+    }
+}
+
+#[tauri::command]
+pub async fn save_shorts(specs: Vec<ShortSpec>) -> Result<(), String> {
+    let path = shorts_path();
+    if let Some(parent) = path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    let data = serde_json::to_string_pretty(&specs).map_err(|e| e.to_string())?;
+    fs::write(path, data).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn generate_short(spec: ShortSpec) -> Result<String, String> {
+    println!("Generating short: {:?}", spec);
+    Ok("ok".into())
+}
