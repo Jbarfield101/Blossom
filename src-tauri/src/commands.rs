@@ -402,6 +402,8 @@ pub struct SongSpec {
     pub structure: Option<Vec<Section>>,
     pub mood: Vec<String>,
     pub instruments: Vec<String>,
+    #[serde(alias = "leadInstrument", skip_serializing_if = "Option::is_none")]
+    pub lead_instrument: Option<String>,
     pub ambience: Vec<String>,
     #[serde(alias = "ambienceLevel")]
     pub ambience_level: Option<f32>,
@@ -454,6 +456,7 @@ mod tests {
             structure: None,
             mood: vec![],
             instruments: vec![],
+            lead_instrument: None,
             ambience: vec![],
             ambience_level: Some(0.5),
             seed: 1,

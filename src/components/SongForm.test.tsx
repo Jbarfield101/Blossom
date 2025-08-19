@@ -73,6 +73,7 @@ describe('SongForm', () => {
     expect(call[1].spec).toMatchObject({
       ambience: ['rain'],
       ambience_level: 0.5,
+      lead_instrument: 'synth lead',
       hq_stereo: true,
       hq_reverb: true,
       hq_sidechain: true,
@@ -138,6 +139,11 @@ describe('SongForm', () => {
     expect(screen.getByText('fantasy')).toBeInTheDocument();
   });
 
+  it('shows street ambience option', () => {
+    render(<SongForm />);
+    expect(screen.getByText('street')).toBeInTheDocument();
+  });
+
   it('passes selected instruments in spec', async () => {
     (open as any).mockResolvedValue('/tmp/out');
     (invoke as any).mockResolvedValue('');
@@ -160,6 +166,25 @@ describe('SongForm', () => {
     await waitFor(() => expect(invoke).toHaveBeenCalled());
     const call = (invoke as any).mock.calls.find(([c]: any) => c === 'run_lofi_song');
     expect(call[1].spec.instruments).toEqual(['harp', 'lute', 'pan flute']);
+  });
+
+  it('passes lead instrument in spec', async () => {
+    (open as any).mockResolvedValue('/tmp/out');
+    (invoke as any).mockResolvedValue('');
+    (listen as any).mockResolvedValue(() => {});
+
+    render(<SongForm />);
+
+    fireEvent.click(screen.getByText(/choose folder/i));
+    await screen.findByText('/tmp/out');
+
+    fireEvent.click(screen.getByRole('radio', { name: 'flute' }));
+
+    fireEvent.click(screen.getByText(/render songs/i));
+
+    await waitFor(() => expect(invoke).toHaveBeenCalled());
+    const call = (invoke as any).mock.calls.find(([c]: any) => c === 'run_lofi_song');
+    expect(call[1].spec.lead_instrument).toBe('flute');
   });
 
   it('calls generate_album when album mode enabled', async () => {
