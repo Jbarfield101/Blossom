@@ -7,7 +7,7 @@ import { listen } from "@tauri-apps/api/event";
 import { useLofi } from "../features/lofi/SongForm";
 import Waveform from "./Waveform";
 
-type Section = { name: string; bars: number; chords: string[] };
+type Section = { name: string; bars: number; chords: string[]; barsStr?: string };
 
 type SongSpec = {
   title: string;
@@ -30,6 +30,7 @@ type SongSpec = {
   hq_sidechain?: boolean;
   hq_chorus?: boolean;
   limiter_drive?: number;
+  dither_amount?: number;
 };
 
 type TemplateSpec = {
@@ -47,6 +48,7 @@ type TemplateSpec = {
   hqSidechain: boolean;
   hqChorus: boolean;
   limiterDrive: number;
+  dither: boolean;
   bpmJitterPct: number;
 };
 
@@ -98,6 +100,28 @@ const DRUM_PATS = [
   "swing",
   "half_time_shuffle",
 ];
+
+const SECTION_PRESETS: Record<string, Section[]> = {
+  "Intro(4)-A(8)-B(8)-Break(4)-A(8)-Outro(4)": [
+    { name: "Intro", bars: 4, chords: [] },
+    { name: "A", bars: 8, chords: [] },
+    { name: "B", bars: 8, chords: [] },
+    { name: "Break", bars: 4, chords: [] },
+    { name: "A", bars: 8, chords: [] },
+    { name: "Outro", bars: 4, chords: [] },
+  ],
+  "A(16)-B(16)-Outro(8)": [
+    { name: "A", bars: 16, chords: [] },
+    { name: "B", bars: 16, chords: [] },
+    { name: "Outro", bars: 8, chords: [] },
+  ],
+  "A(8)x4": [
+    { name: "A", bars: 8, chords: [] },
+    { name: "A", bars: 8, chords: [] },
+    { name: "A", bars: 8, chords: [] },
+    { name: "A", bars: 8, chords: [] },
+  ],
+};
 const PRESET_TEMPLATES: Record<string, TemplateSpec> = {
   "Classic Lofi": {
     structure: [
@@ -120,6 +144,7 @@ const PRESET_TEMPLATES: Record<string, TemplateSpec> = {
     hqSidechain: true,
     hqChorus: true,
     limiterDrive: 1.02,
+    dither: true,
     bpmJitterPct: 5,
   },
   "Study Session": {
@@ -143,6 +168,7 @@ const PRESET_TEMPLATES: Record<string, TemplateSpec> = {
     hqSidechain: true,
     hqChorus: true,
     limiterDrive: 1.01,
+    dither: true,
     bpmJitterPct: 3,
   },
   "Jazz Cafe": {
@@ -166,6 +192,7 @@ const PRESET_TEMPLATES: Record<string, TemplateSpec> = {
     hqSidechain: true,
     hqChorus: true,
     limiterDrive: 1.0,
+    dither: true,
     bpmJitterPct: 2,
   },
   "Midnight Drive": {
@@ -190,6 +217,7 @@ const PRESET_TEMPLATES: Record<string, TemplateSpec> = {
     hqSidechain: true,
     hqChorus: true,
     limiterDrive: 1.2,
+    dither: true,
     bpmJitterPct: 4,
   },
   "Rain & Coffee": {
@@ -213,6 +241,7 @@ const PRESET_TEMPLATES: Record<string, TemplateSpec> = {
     hqSidechain: true,
     hqChorus: true,
     limiterDrive: 1.05,
+    dither: true,
     bpmJitterPct: 6,
   },
   "Quick Beat": {
@@ -234,6 +263,7 @@ const PRESET_TEMPLATES: Record<string, TemplateSpec> = {
     hqSidechain: true,
     hqChorus: false,
     limiterDrive: 1.1,
+    dither: true,
     bpmJitterPct: 8,
   },
   "New Fantasy": {
@@ -257,6 +287,7 @@ const PRESET_TEMPLATES: Record<string, TemplateSpec> = {
     hqSidechain: true,
     hqChorus: true,
     limiterDrive: 1.05,
+    dither: true,
     bpmJitterPct: 4,
   },
   "Sleep": {
@@ -278,6 +309,7 @@ const PRESET_TEMPLATES: Record<string, TemplateSpec> = {
     hqSidechain: true,
     hqChorus: false,
     limiterDrive: 0.98,
+    dither: true,
     bpmJitterPct: 2,
   },
 };
@@ -321,15 +353,16 @@ export default function SongForm() {
     return PRESET_TEMPLATES;
   });
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+  const [sectionPreset, setSectionPreset] = useState<string>("");
   const [structure, setStructure] = useState<Section[]>(() =>
-    PRESET_TEMPLATES["Classic Lofi"].structure.map((s) => ({ ...s }))
+    PRESET_TEMPLATES["Classic Lofi"].structure.map((s) => ({ ...s, barsStr: String(s.bars) }))
   );
   const [newTemplateName, setNewTemplateName] = useState("");
   const [genTitleLoading, setGenTitleLoading] = useState(false);
   const [creatingTemplate, setCreatingTemplate] = useState(false);
 
   function applyTemplate(tpl: TemplateSpec) {
-    setStructure(tpl.structure.map((s) => ({ ...s })));
+    setStructure(tpl.structure.map((s) => ({ ...s, barsStr: String(s.bars) })));
     setBpm(tpl.bpm);
     setKey(tpl.key);
     setMood(tpl.mood);
@@ -343,6 +376,7 @@ export default function SongForm() {
     setHqSidechain(tpl.hqSidechain);
     setHqChorus(tpl.hqChorus);
     setLimiterDrive(tpl.limiterDrive);
+    setDither(tpl.dither ?? true);
     setBpmJitterPct(tpl.bpmJitterPct);
   }
 
@@ -381,7 +415,14 @@ export default function SongForm() {
   const [hqReverb, setHqReverb] = useState(defaultHqReverb);
   const [hqSidechain, setHqSidechain] = useState(defaultHqSidechain);
   const [hqChorus, setHqChorus] = useState(defaultHqChorus);
-  const [limiterDrive, setLimiterDrive] = useState(1.02);
+  const [limiterDrive, setLimiterDrive] = useState(() => {
+    const stored = localStorage.getItem("limiterDrive");
+    return stored ? Number(stored) : 1.02;
+  });
+  const [dither, setDither] = useState(() => {
+    const stored = localStorage.getItem("dither");
+    return stored === null ? true : stored === "true";
+  });
 
   // UI state
   const [busy, setBusy] = useState(false);
@@ -421,6 +462,14 @@ export default function SongForm() {
       localStorage.setItem("outDir", outDir);
     };
   }, [outDir]);
+
+  useEffect(() => {
+    localStorage.setItem("limiterDrive", String(limiterDrive));
+  }, [limiterDrive]);
+
+  useEffect(() => {
+    localStorage.setItem("dither", String(dither));
+  }, [dither]);
 
   const runningJobId = useMemo(
     () => jobs.find((j) => !j.error && !j.outPath)?.id,
@@ -472,6 +521,35 @@ export default function SongForm() {
   function toggle(list: string[], val: string) {
     return list.includes(val) ? list.filter((x) => x !== val) : [...list, val];
   }
+
+  const hasInvalidBars = useMemo(
+    () =>
+      structure.some((s) => {
+        const val = s.barsStr ?? String(s.bars);
+        const n = parseInt(val, 10);
+        return !(val && /^\d+$/.test(val) && n >= 1);
+      }),
+    [structure]
+  );
+
+  const totalBars = useMemo(
+    () =>
+      structure.reduce((sum, s) => {
+        const val = s.barsStr ?? String(s.bars);
+        const n = parseInt(val, 10);
+        return Number.isFinite(n) && n >= 1 ? sum + n : sum;
+      }, 0),
+    [structure]
+  );
+
+  const estSeconds = useMemo(
+    () => (bpm > 0 ? (totalBars * 4 * 60) / bpm : 0),
+    [totalBars, bpm]
+  );
+  const estMinutes = Math.floor(estSeconds / 60);
+  const estSecs = Math.floor(estSeconds % 60)
+    .toString()
+    .padStart(2, "0");
 
   async function pickFolder() {
     try {
@@ -548,7 +626,7 @@ export default function SongForm() {
       outDir,
       bpm: jitterBpm(i),
       key: pickKey(i),
-      structure,
+      structure: structure.map(({ name, bars, chords }) => ({ name, bars, chords })),
       mood,
       instruments,
       ambience,
@@ -563,6 +641,7 @@ export default function SongForm() {
       hq_sidechain: hqSidechain,
       hq_chorus: hqChorus,
       limiter_drive: Math.max(0.5, Math.min(2, limiterDrive)),
+      dither_amount: dither ? 1 : 0,
     };
   }
 
@@ -783,6 +862,7 @@ export default function SongForm() {
               onChange={(e) => {
                 const name = e.target.value;
                 setSelectedTemplate(name);
+                setSectionPreset("");
                 setCreatingTemplate(false);
                 if (name && templates[name]) {
                   applyTemplate(templates[name]);
@@ -812,7 +892,7 @@ export default function SongForm() {
                       const nm = newTemplateName.trim();
                       if (!nm) return;
                       const tpl: TemplateSpec = {
-                        structure: structure.map((s) => ({ ...s })),
+                        structure: structure.map(({ name, bars, chords }) => ({ name, bars, chords })),
                         bpm,
                         key,
                         mood,
@@ -826,6 +906,7 @@ export default function SongForm() {
                         hqSidechain,
                         hqChorus,
                         limiterDrive,
+                        dither,
                         bpmJitterPct,
                       };
                       setTemplates((prev) => {
@@ -857,6 +938,27 @@ export default function SongForm() {
                 </button>
               ))}
           </div>
+          <div style={{ ...S.row, marginBottom: 8 }}>
+            <select
+              value={sectionPreset}
+              onChange={(e) => {
+                const name = e.target.value;
+                setSectionPreset(name);
+                if (name && SECTION_PRESETS[name]) {
+                  setStructure(SECTION_PRESETS[name].map((s) => ({ ...s, barsStr: String(s.bars) })));
+                  setSelectedTemplate("");
+                }
+              }}
+              style={{ ...S.input, padding: "8px 12px" }}
+            >
+              <option value="">Preset layout…</option>
+              {Object.keys(SECTION_PRESETS).map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </div>
           <label style={S.label}>Structure (bars)</label>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {structure.map((sec, i) => (
@@ -864,19 +966,35 @@ export default function SongForm() {
                 <div style={S.small}>{sec.name}</div>
                 <input
                   type="number"
-                  value={sec.bars}
-                  min={1}
+                  value={sec.barsStr ?? String(sec.bars)}
                   onChange={(e) => {
-                    const bars = Math.max(1, Number(e.target.value || 1));
+                    const val = e.target.value;
                     setStructure((prev) => {
                       const copy = [...prev];
-                      copy[i] = { ...copy[i], bars };
+                      const parsed = parseInt(val, 10);
+                      copy[i] = {
+                        ...copy[i],
+                        bars: !isNaN(parsed) && parsed >= 1 ? parsed : copy[i].bars,
+                        barsStr: val,
+                      };
                       return copy;
                     });
                     setSelectedTemplate("");
+                    setSectionPreset("");
                   }}
-                  style={S.input}
+                  style={{
+                    ...S.input,
+                    border:
+                      !/^[0-9]+$/.test(sec.barsStr ?? String(sec.bars)) ||
+                      parseInt(sec.barsStr ?? String(sec.bars), 10) < 1
+                        ? "1px solid #ff7b7b"
+                        : undefined,
+                  }}
                 />
+                {!/^[0-9]+$/.test(sec.barsStr ?? String(sec.bars)) ||
+                parseInt(sec.barsStr ?? String(sec.bars), 10) < 1 ? (
+                  <div style={S.err}>Enter bars ≥1</div>
+                ) : null}
                 <input
                   type="text"
                   value={sec.chords.join(" ")}
@@ -892,11 +1010,15 @@ export default function SongForm() {
                       return copy;
                     });
                     setSelectedTemplate("");
+                    setSectionPreset("");
                   }}
                   style={{ ...S.input, marginTop: 4 }}
                 />
               </div>
             ))}
+          </div>
+          <div style={S.small}>
+            Total Bars: {totalBars} — Est. Time: {estMinutes}:{estSecs}
           </div>
         </div>
 
@@ -994,43 +1116,51 @@ export default function SongForm() {
           </div>
         </div>
 
-        {/* mix polish (HQ flags) */}
-        <div style={S.grid3}>
-          <div style={S.panel}>
-            <label style={S.label}>Mix Polish</label>
-            <div style={S.optionGrid}>
-              <label style={S.optionCard}>
-                <span>Stereo widen</span>
-                <input type="checkbox" checked={hqStereo} onChange={(e) => setHqStereo(e.target.checked)} />
-              </label>
-              <label style={S.optionCard}>
-                <span>Room reverb</span>
-                <input type="checkbox" checked={hqReverb} onChange={(e) => setHqReverb(e.target.checked)} />
-              </label>
-              <label style={S.optionCard}>
-                <span>Sidechain (kick)</span>
-                <input type="checkbox" checked={hqSidechain} onChange={(e) => setHqSidechain(e.target.checked)} />
-              </label>
-              <label style={S.optionCard}>
-                <span>Chorus</span>
-                <input type="checkbox" checked={hqChorus} onChange={(e) => setHqChorus(e.target.checked)} />
-              </label>
+        {/* polish accordion */}
+        <div style={{ ...S.panel, marginTop: 12 }}>
+          <details open>
+            <summary style={{ cursor: "pointer", fontSize: 12, opacity: 0.8 }}>Polish</summary>
+            <div style={{ marginTop: 8 }}>
+              <div style={S.optionGrid}>
+                <label style={S.optionCard}>
+                  <span>Stereo widen</span>
+                  <input type="checkbox" checked={hqStereo} onChange={(e) => setHqStereo(e.target.checked)} />
+                </label>
+                <label style={S.optionCard}>
+                  <span>Room reverb</span>
+                  <input type="checkbox" checked={hqReverb} onChange={(e) => setHqReverb(e.target.checked)} />
+                </label>
+                <label style={S.optionCard}>
+                  <span>Sidechain (kick)</span>
+                  <input type="checkbox" checked={hqSidechain} onChange={(e) => setHqSidechain(e.target.checked)} />
+                </label>
+                <label style={S.optionCard}>
+                  <span>Chorus</span>
+                  <input type="checkbox" checked={hqChorus} onChange={(e) => setHqChorus(e.target.checked)} />
+                </label>
+              </div>
+              <details style={{ marginTop: 8 }}>
+                <summary style={{ cursor: "pointer", fontSize: 12, opacity: 0.8 }}>Advanced</summary>
+                <div style={{ marginTop: 8 }}>
+                  <label style={S.label}>Limiter Drive</label>
+                  <input
+                    type="range"
+                    min={0.5}
+                    max={2}
+                    step={0.01}
+                    value={limiterDrive}
+                    onChange={(e) => setLimiterDrive(Number(e.target.value))}
+                    style={S.slider}
+                  />
+                  <div style={S.small}>{limiterDrive.toFixed(2)}× saturation</div>
+                  <div style={{ ...S.toggle, marginTop: 8 }}>
+                    <input type="checkbox" checked={dither} onChange={(e) => setDither(e.target.checked)} />
+                    <span style={S.small}>Dither</span>
+                  </div>
+                </div>
+              </details>
             </div>
-            <div style={{ ...S.small, marginTop: 6 }}>These map to engine flags in <code>lofi_gpu_hq.py</code>.</div>
-          </div>
-        <div style={S.panel}>
-          <label style={S.label}>Limiter Drive</label>
-            <input
-              type="range"
-              min={0.5}
-              max={2}
-              step={0.01}
-              value={limiterDrive}
-              onChange={(e) => setLimiterDrive(Number(e.target.value))}
-              style={S.slider}
-            />
-            <div style={S.small}>{limiterDrive.toFixed(2)}× saturation</div>
-          </div>
+          </details>
         </div>
         {/* album mode toggle */}
         <div style={S.panel}>
@@ -1086,7 +1216,7 @@ export default function SongForm() {
         <div style={S.actions}>
           <button
             style={S.btn}
-            disabled={busy || !outDir || !titleBase}
+            disabled={busy || !outDir || !titleBase || hasInvalidBars}
             onClick={albumMode ? createAlbum : renderBatch}
           >
             {albumMode
