@@ -17,6 +17,7 @@ export default function NpcForm() {
   const [voicePreset, setVoicePreset] = useState("");
   const [portrait, setPortrait] = useState("");
   const [statblock, setStatblock] = useState("{}");
+  const [statblockError, setStatblockError] = useState<string | null>(null);
   const [tags, setTags] = useState("");
   const [result, setResult] = useState<NpcData | null>(null);
 
@@ -25,8 +26,10 @@ export default function NpcForm() {
     let parsedStatblock: Record<string, unknown> = {};
     try {
       parsedStatblock = JSON.parse(statblock || "{}");
+      setStatblockError(null);
     } catch {
-      // keep empty object
+      setStatblockError("Invalid JSON");
+      return;
     }
 
     const data: NpcData = {
@@ -143,10 +146,15 @@ export default function NpcForm() {
       <TextField
         label="Statblock JSON"
         value={statblock}
-        onChange={(e) => setStatblock(e.target.value)}
+        onChange={(e) => {
+          setStatblock(e.target.value);
+          setStatblockError(null);
+        }}
         fullWidth
         margin="normal"
         multiline
+        error={Boolean(statblockError)}
+        helperText={statblockError}
       />
       <TextField
         label="Tags (comma separated)"
