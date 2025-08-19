@@ -581,6 +581,7 @@ PROG_BANK_A = [["I","vi","IV","V"], ["I","V","vi","IV"], ["I","iii","vi","IV"], 
 PROG_BANK_B = [["vi","IV","I","V"], ["ii","V","I","vi"], ["IV","I","V","vi"], ["vi","ii","V","I"], ["IV","vi","ii","V"],
                 ["vi","IV","ii","V"], ["ii","vi","IV","I"], ["vi","V","IV","V"],
                 ["i","iv","i","v"], ["i","VI","III","VII"], ["i","bVII","bVI","bVII"], ["I","bIII","IV","I"], ["vi","bVII","I","V"]]
+PROG_BANK_C = [prog[:-1] + ["I"] for prog in PROG_BANK_B]
 PROG_BANK_INTRO = [["I","IV"], ["ii","V"], ["I","V"], ["vi","IV"], ["I","ii"], ["I","vi"], ["IV","V"], ["ii","iii"],
                    ["i","iv"], ["i","bVII"], ["i","VI"], ["I","bVII"], ["I","bIII"]]
 
@@ -747,7 +748,7 @@ def _render_melody(
     motif_events = motif_store.get(motif_key)
 
     # Create motif on first A section
-    if section_name.upper().startswith("A") and motif_events is None:
+    if (section_name.lower().startswith("a") or section_name.lower().startswith("verse")) and motif_events is None:
         motif_events = []
         for bar in range(min(2, bars_total)):
             choices = bar_choices[bar]
@@ -844,8 +845,10 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
     add7_prob = 0.3 + 0.5*t
     add9_prob = 0.1 + 0.35*t
 
-    is_intro_outro = section_name.lower() in ["intro", "outro"]
-    if is_intro_outro:
+    sn = section_name.lower()
+    is_intro_outro = sn in ["intro", "outro"]
+    is_break_ambient = sn in ["break", "ambient"]
+    if is_intro_outro or is_break_ambient:
         ghost_prob *= 0.5
         fill_prob *= 0.5
         hat_prob *= 0.5
@@ -865,6 +868,8 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
 
     # --- choose drum pattern
     pat_name = motif.get("drum_pattern") or rng.choice(list(DRUM_PATTERNS.keys()))
+    if is_break_ambient and rng.random() < 0.5:
+        pat_name = "no_drums"
     pat = DRUM_PATTERNS[pat_name]
 
     # subtle timing wow for hats (per section)
@@ -945,10 +950,12 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
 
     if chords:
         prog_seq = [str(c) for c in chords]
-    elif section_name.upper().startswith("A"):
+    elif sn.startswith("a") or sn.startswith("verse"):
         prog_seq = _stitch_progression(PROG_BANK_A, rng)
-    elif section_name.upper().startswith("B"):
+    elif sn.startswith("b") or sn.startswith("chorus"):
         prog_seq = _stitch_progression(PROG_BANK_B, rng)
+    elif sn.startswith("c") or sn in ("bridge", "solo"):
+        prog_seq = _stitch_progression(PROG_BANK_C, rng)
     else:
         prog_seq = _stitch_progression(PROG_BANK_INTRO, rng)
 

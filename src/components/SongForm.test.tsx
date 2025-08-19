@@ -72,7 +72,7 @@ describe('SongForm', () => {
     expect(call[1].spec.chord_span_beats).toBe(4);
     expect(call[1].spec).toMatchObject({
       ambience: ['rain'],
-      ambienceLevel: 0.5,
+      ambience_level: 0.5,
       hq_stereo: true,
       hq_reverb: true,
       hq_sidechain: true,
