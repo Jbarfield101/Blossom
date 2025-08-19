@@ -6,6 +6,7 @@ use std::time::{Duration, Instant};
 use async_trait::async_trait;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
+use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::{Row, SqlitePool};
 use tauri::async_runtime::Mutex;
 use tauri::{AppHandle, Runtime};
@@ -260,49 +261,60 @@ async fn sweep_cache() {
 // SQLite helpers
 // ========================
 
-async fn get_pool() -> Result<SqlitePool, sqlx::Error> {
-    SqlitePool::connect("sqlite:stocks.db").await
+static DB_POOL: Lazy<SqlitePool> = Lazy::new(|| {
+    SqlitePoolOptions::new()
+        .connect_lazy("sqlite:stocks.db")
+        .expect("failed to create sqlite pool")
+});
+
+fn get_pool() -> &'static SqlitePool {
+    &DB_POOL
 }
 
-async fn load_quote_db(ticker: &str) -> Option<Quote> {
-    let pool = get_pool().await.ok()?;
+async fn load_quote_db(pool: &SqlitePool, ticker: &str) -> Option<Quote> {
     let row = sqlx::query("SELECT data FROM stock_quotes WHERE ticker = ?")
         .bind(ticker)
-        .fetch_optional(&pool)
+        .fetch_optional(pool)
         .await
         .ok()?;
     let data: String = row?.get(0);
     serde_json::from_str(&data).ok()
 }
 
-async fn save_quote_db(q: &Quote) -> Result<(), String> {
-    let pool = get_pool().await.map_err(|e| e.to_string())?;
+async fn save_quote_db(pool: &SqlitePool, q: &Quote) -> Result<(), String> {
     let data = serde_json::to_string(q).map_err(|e| e.to_string())?;
     let ts = Utc::now().timestamp();
     sqlx::query("INSERT OR REPLACE INTO stock_quotes (ticker, data, ts) VALUES (?,?,?)")
         .bind(&q.ticker)
         .bind(data)
         .bind(ts)
-        .execute(&pool)
+        .execute(pool)
         .await
         .map_err(|e| e.to_string())?;
     Ok(())
 }
 
-async fn load_series_db(ticker: &str, range: &Range) -> Option<Vec<SeriesPoint>> {
-    let pool = get_pool().await.ok()?;
+async fn load_series_db(
+    pool: &SqlitePool,
+    ticker: &str,
+    range: &Range,
+) -> Option<Vec<SeriesPoint>> {
     let row = sqlx::query("SELECT data FROM stock_series WHERE ticker = ? AND range = ?")
         .bind(ticker)
         .bind(range.as_str())
-        .fetch_optional(&pool)
+        .fetch_optional(pool)
         .await
         .ok()?;
     let data: String = row?.get(0);
     serde_json::from_str(&data).ok()
 }
 
-async fn save_series_db(ticker: &str, range: &Range, points: &[SeriesPoint]) -> Result<(), String> {
-    let pool = get_pool().await.map_err(|e| e.to_string())?;
+async fn save_series_db(
+    pool: &SqlitePool,
+    ticker: &str,
+    range: &Range,
+    points: &[SeriesPoint],
+) -> Result<(), String> {
     let data = serde_json::to_string(points).map_err(|e| e.to_string())?;
     let ts = Utc::now().timestamp();
     sqlx::query("INSERT OR REPLACE INTO stock_series (ticker, range, data, ts) VALUES (?,?,?,?)")
@@ -310,7 +322,7 @@ async fn save_series_db(ticker: &str, range: &Range, points: &[SeriesPoint]) -> 
         .bind(range.as_str())
         .bind(data)
         .bind(ts)
-        .execute(&pool)
+        .execute(pool)
         .await
         .map_err(|e| e.to_string())?;
     Ok(())
@@ -409,6 +421,7 @@ pub async fn stocks_fetch<R: Runtime>(
 
     sweep_cache().await;
     let provider = provider_from_env();
+    let pool = get_pool();
 
     let mut quotes = Vec::new();
     let mut series_vec = Vec::new();
@@ -458,12 +471,12 @@ pub async fn stocks_fetch<R: Runtime>(
                     let fetched = provider.fetch_quote(&ticker).await;
                     let q = match fetched {
                         Ok(q) => {
-                            let _ = save_quote_db(&q).await;
+                            let _ = save_quote_db(pool, &q).await;
                             q
                         }
                         Err(e) => {
                             stale_bundle = true;
-                            load_quote_db(&ticker).await.unwrap_or(Quote {
+                            load_quote_db(pool, &ticker).await.unwrap_or(Quote {
                                 ticker: ticker.clone(),
                                 price: 0.0,
                                 change_percent: 0.0,
@@ -532,7 +545,7 @@ pub async fn stocks_fetch<R: Runtime>(
                     let res = provider.fetch_series(&ticker, &range).await;
                     let p = match res {
                         Ok(p) => {
-                            let _ = save_series_db(&ticker, &range, &p).await;
+                            let _ = save_series_db(pool, &ticker, &range, &p).await;
                             {
                                 let mut cache = SERIES_CACHE.lock().await;
                                 cache.insert(key.clone(), (p.clone(), Instant::now()));
@@ -541,10 +554,12 @@ pub async fn stocks_fetch<R: Runtime>(
                         }
                         Err(e) => {
                             stale_bundle = true;
-                            load_series_db(&ticker, &range).await.unwrap_or_else(|| {
-                                println!("series {} error {}", ticker, e);
-                                Vec::new()
-                            })
+                            load_series_db(pool, &ticker, &range)
+                                .await
+                                .unwrap_or_else(|| {
+                                    println!("series {} error {}", ticker, e);
+                                    Vec::new()
+                                })
                         }
                     };
                     let ms = fetch_start.elapsed().as_millis() as u64;
