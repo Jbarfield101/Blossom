@@ -16,6 +16,31 @@ import { usePaths } from "../features/paths/usePaths";
 import { useOutput } from "../features/output/useOutput";
 import { useAudioDefaults } from "../features/audioDefaults/useAudioDefaults";
 
+const KEY_OPTIONS = [
+  "Auto",
+  "C",
+  "C#",
+  "Db",
+  "D",
+  "D#",
+  "Eb",
+  "E",
+  "F",
+  "F#",
+  "Gb",
+  "G",
+  "G#",
+  "Ab",
+  "A",
+  "A#",
+  "Bb",
+  "B",
+  "Am",
+  "Em",
+  "Dm",
+];
+const displayKey = (k: string) => k.replace("#", "♯").replace("b", "♭");
+
 interface SettingsDrawerProps {
   open: boolean;
   onClose: () => void;
@@ -103,18 +128,9 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
               value={key}
               onChange={(e) => setKey(e.target.value as string)}
             >
-              {[
-                "Auto",
-                "C",
-                "D",
-                "E",
-                "F",
-                "G",
-                "A",
-                "B",
-              ].map((k) => (
+              {KEY_OPTIONS.map((k) => (
                 <MenuItem key={k} value={k}>
-                  {k}
+                  {displayKey(k)}
                 </MenuItem>
               ))}
             </Select>

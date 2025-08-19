@@ -13,7 +13,7 @@ type SongSpec = {
   title: string;
   outDir: string;
   bpm: number;
-  key: string; // "C".."B" or "Auto"
+  key: string | { key: string; mode: string }; // support minor mode
   structure?: Section[];
   form?: string;
   mood: string[];
@@ -62,8 +62,25 @@ type Job = {
   progress?: number;
 };
 
-const KEYS_BASE = ["C", "D", "E", "F", "G", "A", "B"];
-const KEYS = ["Auto", ...KEYS_BASE];
+const KEYS_BASE = [
+  "C",
+  "C#",
+  "D",
+  "D#",
+  "E",
+  "F",
+  "F#",
+  "G",
+  "G#",
+  "A",
+  "A#",
+  "B",
+];
+const EXTRA_KEYS = ["Db", "Eb", "Gb", "Ab", "Bb", "Am", "Em", "Dm"];
+const KEYS = ["Auto", ...KEYS_BASE, ...EXTRA_KEYS];
+const displayKey = (k: string) => k.replace("#", "♯").replace("b", "♭");
+const showKey = (k: SongSpec["key"]) =>
+  typeof k === "string" ? displayKey(k) : displayKey(k.key + (k.mode === "minor" ? "m" : ""));
 const MOODS = ["calm", "melancholy", "cozy", "nostalgic", "fantasy"];
 const INSTR = [
   "rhodes",
@@ -617,6 +634,13 @@ export default function SongForm() {
     return seedBase + i;
   }
 
+  function formatSpecKey(k: string): string | { key: string; mode: string } {
+    const norm = k.replace("♭", "b").replace("♯", "#");
+    if (norm === "Auto") return "Auto";
+    if (norm.endsWith("m")) return { key: norm.slice(0, -1), mode: "minor" };
+    return norm;
+  }
+
   function makeSpecForIndex(i: number): SongSpec {
     const amb = Math.max(0, Math.min(1, ambienceLevel));
     const varPct = Math.max(0, Math.min(100, variety));
@@ -625,7 +649,7 @@ export default function SongForm() {
       title: buildTitle(i),
       outDir,
       bpm: jitterBpm(i),
-      key: pickKey(i),
+      key: formatSpecKey(pickKey(i)),
       structure: structure.map(({ name, bars, chords }) => ({ name, bars, chords })),
       mood,
       instruments,
@@ -826,7 +850,7 @@ export default function SongForm() {
             <div style={S.row}>
               <select value={key} onChange={(e) => setKey(e.target.value)} style={{ ...S.input, padding: "8px 12px" }}>
                 {KEYS.map((k) => (
-                  <option key={k} value={k}>{k}</option>
+                  <option key={k} value={k}>{displayKey(k)}</option>
                 ))}
               </select>
             </div>
@@ -1286,7 +1310,7 @@ export default function SongForm() {
               {jobs.map((j) => (
                 <tr key={j.id}>
                   <td style={S.td}>{j.title}</td>
-                  <td style={S.td}>{j.spec.key}</td>
+                  <td style={S.td}>{showKey(j.spec.key)}</td>
                   <td style={S.td}>{j.spec.bpm}</td>
                   <td style={S.td}>{j.spec.seed}</td>
                   <td style={S.td}>
