@@ -19,7 +19,7 @@ type SongSpec = {
   mood: string[];
   instruments: string[];
   ambience: string[];
-  ambienceLevel: number; // 0..1
+  ambience_level: number; // 0..1
   seed: number;
   variety: number; // 0..100
   chord_span_beats?: number;
@@ -630,7 +630,7 @@ export default function SongForm() {
       mood,
       instruments,
       ambience,
-      ambienceLevel: amb,
+      ambience_level: amb,
       seed: pickSeed(i),
       variety: varPct,
       chord_span_beats: chordSpanBeats,
