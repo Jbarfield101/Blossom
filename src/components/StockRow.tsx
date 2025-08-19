@@ -21,13 +21,19 @@ function StockRow({ symbol }: { symbol: string }) {
       <Box sx={{ display: "flex", alignItems: "center", gap: 2, width: "100%" }}>
         <Typography sx={{ width: 80 }}>{symbol}</Typography>
         {quote ? (
-          <>
-            <Typography sx={{ width: 120, color }}>
-              {quote.price.toFixed(2)} ({quote.changePercent.toFixed(2)}%)
+          quote.error ? (
+            <Typography sx={{ width: 120, color: "#ff5252" }}>
+              {quote.error}
             </Typography>
-            <Typography sx={{ width: 80 }}>{quote.marketStatus}</Typography>
-            <Sparkline data={quote.history} color={color} />
-          </>
+          ) : (
+            <>
+              <Typography sx={{ width: 120, color }}>
+                {quote.price.toFixed(2)} ({quote.changePercent.toFixed(2)}%)
+              </Typography>
+              <Typography sx={{ width: 80 }}>{quote.marketStatus}</Typography>
+              <Sparkline data={quote.history} color={color} />
+            </>
+          )
         ) : (
           <Typography sx={{ width: 120 }}>...</Typography>
         )}
