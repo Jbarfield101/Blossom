@@ -404,6 +404,8 @@ pub struct SongSpec {
     pub ambience_level: Option<f32>,
     pub seed: u64,
     pub variety: Option<u32>,
+    #[serde(alias = "chordSpanBeats", skip_serializing_if = "Option::is_none")]
+    pub chord_span_beats: Option<u32>,
     #[serde(alias = "drumPattern", skip_serializing_if = "Option::is_none")]
     pub drum_pattern: Option<String>,
     #[serde(alias = "hqStereo", skip_serializing_if = "Option::is_none")]
@@ -452,6 +454,7 @@ mod tests {
             ambience_level: Some(0.5),
             seed: 1,
             variety: Some(10),
+            chord_span_beats: None,
             drum_pattern: None,
             hq_stereo: None,
             hq_reverb: None,
