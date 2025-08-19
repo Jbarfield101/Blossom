@@ -1,7 +1,7 @@
 import { IconButton } from "@mui/material";
 import type { SxProps } from "@mui/material";
 import { fixedIconButtonSx } from "./sx";
-import { FaHome, FaWrench } from "react-icons/fa";
+import { FaHome, FaWrench, FaUser } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import SettingsDrawer from "./SettingsDrawer";
@@ -24,6 +24,15 @@ export default function TopBar() {
         aria-current={pathname === "/" ? "page" : undefined}
       >
         <FaHome />
+      </IconButton>
+
+      <IconButton
+        onClick={() => nav("/user")}
+        sx={{ ...fixedIconButtonSx, left: 60, ...activeSx("/user") }}
+        aria-label="User"
+        aria-current={pathname === "/user" ? "page" : undefined}
+      >
+        <FaUser />
       </IconButton>
 
       <IconButton
