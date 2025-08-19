@@ -1,0 +1,60 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`StockRow > renders quote data 1`] = `
+<DocumentFragment>
+  <li
+    class="MuiListItem-root MuiListItem-gutters MuiListItem-padding css-1p4qrhw-MuiListItem-root"
+  >
+    <div
+      class="MuiBox-root css-1lq4uud"
+    >
+      <p
+        class="MuiTypography-root MuiTypography-body1 css-1019lio-MuiTypography-root"
+      >
+        AAPL
+      </p>
+      <p
+        class="MuiTypography-root MuiTypography-body1 css-tsexvv-MuiTypography-root"
+      >
+        123.00 (1.00%)
+      </p>
+      <p
+        class="MuiTypography-root MuiTypography-body1 css-1019lio-MuiTypography-root"
+      >
+        OPEN
+      </p>
+      <svg
+        class="MuiBox-root css-1bayzp8"
+      >
+        <polyline
+          fill="none"
+          points="0,30 50,15 100,0"
+          stroke="#4caf50"
+          stroke-width="2"
+        />
+      </svg>
+    </div>
+    <div
+      class="MuiListItemSecondaryAction-root css-zezwi5-MuiListItemSecondaryAction-root"
+    >
+      <button
+        class="MuiButtonBase-root MuiIconButton-root MuiIconButton-edgeEnd MuiIconButton-sizeMedium css-1ysp02-MuiButtonBase-root-MuiIconButton-root"
+        tabindex="0"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-1umw9bq-MuiSvgIcon-root"
+          data-testid="DeleteIcon"
+          focusable="false"
+          viewBox="0 0 24 24"
+        >
+          <path
+            d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6zM19 4h-3.5l-1-1h-5l-1 1H5v2h14z"
+          />
+        </svg>
+      </button>
+    </div>
+  </li>
+</DocumentFragment>
+`;

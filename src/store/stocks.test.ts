@@ -29,6 +29,13 @@ describe('useStocks store', () => {
     expect(invoke).toHaveBeenCalledWith('stocks_fetch', { tickers: ['AAPL'], range: '1d' });
   });
 
+  it('stores an error when backend call fails', async () => {
+    (invoke as any).mockRejectedValue(new Error('boom'));
+    const price = await useStocks.getState().fetchQuote('AAPL');
+    expect(Number.isNaN(price)).toBe(true);
+    expect(useStocks.getState().quotes['AAPL'].error).toBe('boom');
+  });
+
   it('polls for updates when started', async () => {
     vi.useFakeTimers();
     (invoke as any).mockResolvedValue({
@@ -42,6 +49,22 @@ describe('useStocks store', () => {
     await vi.advanceTimersByTimeAsync(3100);
     store.stopPolling('MSFT');
     expect(invoke).toHaveBeenCalledTimes(4);
+  });
+
+  it('ignores duplicate polling requests', async () => {
+    vi.useFakeTimers();
+    (invoke as any).mockResolvedValue({
+      quotes: [{ price: 100, change_percent: 0, status: 'CLOSED' }],
+      series: [{ points: [{ close: 100 }] }],
+      market: { phase: 'CLOSED' },
+      stale: false,
+    });
+    const store = useStocks.getState();
+    store.startPolling('MSFT', 1000);
+    store.startPolling('MSFT', 1000);
+    await vi.advanceTimersByTimeAsync(2100);
+    store.stopPolling('MSFT');
+    expect(invoke).toHaveBeenCalledTimes(3);
   });
 
   it('requests a forecast from the backend', async () => {
