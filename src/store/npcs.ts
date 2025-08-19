@@ -7,9 +7,19 @@ export interface NPC {
   name: string;
   race: string;
   class: string;
+  role?: string;
+  cr?: number;
+  locale?: string;
+  tags?: string[];
   personality: string;
   background: string;
   appearance: string;
+  portrait?: string;
+  hooks?: string[];
+  quirks?: string[];
+  secrets?: string[];
+  stats?: Record<string, string | number>;
+  skills?: Record<string, string | number>;
 }
 
 interface NPCState {

@@ -1,12 +1,41 @@
-.npc {
-  font-family: serif;
-  margin: 1rem;
+@page {
+  size: A4;
+  margin: 1in;
 }
+
+body {
+  font-family: serif;
+}
+
+.npc {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .portrait {
-  max-width: 200px;
+  width: 150px;
   height: auto;
 }
-.stats {
+
+.quick-stats ul,
+.hooks ul,
+.secrets ul,
+.statblock ul,
+.skills ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
+
+.statblock,
+.skills {
+  page-break-inside: avoid;
+}
+

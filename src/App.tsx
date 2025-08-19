@@ -34,7 +34,7 @@ export default function App() {
         <Route path="/assistant/general-chat" element={<GeneralChat />} />
         <Route path="/dnd/world-builder" element={<WorldBuilder />} />
         <Route path="/dnd/npc-maker" element={<NPCMaker />} />
-        <Route path="/dnd/npc-list" element={<NPCList />} />
+        <Route path="/dnd/npc-library" element={<NPCList />} />
         <Route
           path="/assistant/big-brother-updates"
           element={<BigBrotherUpdates />}
