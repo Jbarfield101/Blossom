@@ -35,13 +35,6 @@ fn main() {
                 )
                 .build(),
         )
-        .setup(|app| {
-            let handle = app.handle().clone();
-            tauri::async_runtime::spawn(async move {
-                let _ = commands::fetch_big_brother_summary(handle, Some(true)).await;
-            });
-            Ok(())
-        })
         .invoke_handler(tauri::generate_handler![
             commands::lofi_generate_gpu,
             commands::run_lofi_song,
@@ -67,9 +60,6 @@ fn main() {
             // Paths:
             commands::load_paths,
             commands::save_paths,
-            // News scraping:
-            commands::fetch_big_brother_news,
-            commands::fetch_big_brother_summary,
             // Stocks:
             commands::stocks_fetch,
             commands::stock_forecast,

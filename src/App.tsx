@@ -8,7 +8,6 @@ import Calendar from "./pages/Calendar";
 import Comfy from "./pages/Comfy";
 import Assistant from "./pages/Assistant";
 import GeneralChat from "./pages/GeneralChat";
-import BigBrotherUpdates from "./pages/BigBrotherUpdates";
 import WorldBuilder from "./pages/WorldBuilder";
 import NPCMaker from "./pages/NPCMaker";
 import NPCList from "./pages/NPCList";
@@ -36,10 +35,6 @@ export default function App() {
         <Route path="/dnd/world-builder" element={<WorldBuilder />} />
         <Route path="/dnd/npc-maker" element={<NPCMaker />} />
         <Route path="/dnd/npc-library" element={<NPCList />} />
-        <Route
-          path="/assistant/big-brother-updates"
-          element={<BigBrotherUpdates />}
-        />
         <Route path="/laser" element={<Laser />} />
         <Route path="/lofi" element={<Lofi />} />
         <Route path="/stocks" element={<Stocks />} />
