@@ -706,8 +706,17 @@ def auto_balance_levels(busses: Dict[str, np.ndarray], levels: Dict[str, float])
     return balanced
 
 
-def _render_melody(prog_seq, key_letter, bpm, dur_ms, rng, chord_span_beats=4):
-    """Simple lead line following the key and chord progression."""
+def _render_melody(
+    prog_seq,
+    key_letter,
+    bpm,
+    dur_ms,
+    rng,
+    chord_span_beats=4,
+    section_name="",
+    motif_store=None,
+):
+    """Lead line with 2-bar motif and minimum note density."""
 
     def _mel_note(freq, ms):
         x = _sine(freq, ms, amp=0.22)
@@ -716,19 +725,86 @@ def _render_melody(prog_seq, key_letter, bpm, dur_ms, rng, chord_span_beats=4):
         return x
 
     beat, eighth, sixteenth = _beats_ms(bpm)
+    bar_ms = _bar_ms(bpm)
     chord_len = chord_span_beats * beat
     n = int(dur_ms * SR / 1000)
     out = np.zeros(n, dtype=np.float32)
 
-    for chord_idx in range(int(np.ceil(dur_ms / chord_len))):
+    bars_total = int(np.ceil(dur_ms / bar_ms))
+
+    # Pre-compute chord choices per bar
+    bar_choices = []
+    for bar in range(bars_total):
+        chord_idx = int((bar * bar_ms) // chord_len)
         deg = prog_seq[chord_idx % len(prog_seq)]
         freqs = _chord_freqs_from_degree(key_letter, deg, add7=False, add9=False)
-        choices = [f * 2 for f in freqs]
-        for sub in range(4):  # 8th-note grid within each chord
-            if rng.random() < 0.5:
-                pos = chord_idx * chord_len + sub * eighth
-                if pos >= dur_ms:
-                    break
+        bar_choices.append([f * 2 for f in freqs])
+
+    if motif_store is None:
+        motif_store = {}
+
+    motif_key = "melody_motif"
+    motif_events = motif_store.get(motif_key)
+
+    # Create motif on first A section
+    if section_name.upper().startswith("A") and motif_events is None:
+        motif_events = []
+        for bar in range(min(2, bars_total)):
+            choices = bar_choices[bar]
+            subs = list(range(8))
+            rng.shuffle(subs)
+            selected = subs[:2]
+            for sub in subs[2:]:
+                if rng.random() < 0.5:
+                    selected.append(sub)
+            selected.sort()
+            for sub in selected:
+                pos = bar * bar_ms + sub * eighth
+                freq = float(rng.choice(choices))
+                dur = int(rng.choice([eighth, sixteenth * 3, beat]))
+                motif_events.append((pos, freq, dur))
+        motif_store[motif_key] = motif_events
+
+    variation_prob = rng.uniform(0.1, 0.2)
+
+    if motif_events:
+        repeats = int(np.ceil(bars_total / 2))
+        for rep in range(repeats):
+            offset = rep * 2 * bar_ms
+            for base_pos, base_freq, base_dur in motif_events:
+                start = base_pos + offset
+                if start >= dur_ms:
+                    continue
+                freq = base_freq
+                pos = start
+                if rep > 0 and rng.random() < variation_prob:
+                    choice = int(rng.integers(0, 3))
+                    if choice == 0:  # octave flip
+                        freq = base_freq * (2 if rng.random() < 0.5 else 0.5)
+                    elif choice == 1:  # note swap
+                        bar_idx = int(pos // bar_ms)
+                        opts = bar_choices[bar_idx % len(bar_choices)]
+                        freq = float(rng.choice(opts))
+                    else:  # rhythm shift
+                        pos += _jitter_ms(rng, sixteenth * 0.5)
+                        if pos < 0:
+                            pos = 0
+                note = _mel_note(freq, base_dur)
+                note *= _vel_scale(rng, mean=1.0, std=0.05, lo=0.8, hi=1.2)
+                _place(note, out, pos + _jitter_ms(rng, 4.0))
+    else:
+        # Fallback: random notes but ensure >=2 per bar
+        for bar in range(bars_total):
+            choices = bar_choices[bar]
+            subs = list(range(8))
+            rng.shuffle(subs)
+            selected = subs[:2]
+            for sub in subs[2:]:
+                if rng.random() < 0.5:
+                    selected.append(sub)
+            selected.sort()
+            for sub in selected:
+                pos = bar * bar_ms + sub * eighth
                 freq = float(rng.choice(choices))
                 dur = int(rng.choice([eighth, sixteenth * 3, beat]))
                 note = _mel_note(freq, dur)
@@ -969,23 +1045,48 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
                 bar_start = bar * _bar_ms(bpm)
                 if bass_pat == "held_whole":
                     pos = bar_start
-                    b = _bass_note(root_hz, int(beat*3.8), amp=0.16) * _vel_scale(rng, mean=0.95)
+                    freq_root = root_hz
+                    if rng.random() < 0.25:
+                        freq_root *= 2  # octave pop
+                    b = _bass_note(freq_root, int(beat * 3.8), amp=0.16) * _vel_scale(rng, mean=0.95)
+                    if pos - sixteenth > 0:
+                        step = rng.choice([-2, -1, 1, 2]) / 12.0
+                        app_freq = root_hz * (2 ** step)
+                        app = _bass_note(app_freq, int(beat * 0.45), amp=0.12) * _vel_scale(rng, mean=0.9)
+                        _place(app, bass, pos - sixteenth)
                     _place(b, bass, pos + _jitter_ms(rng, jitter_std))
                 else:
                     for beat_idx in [0, 2]:
                         pos = bar_start + beat_idx * beat + _jitter_ms(rng, jitter_std)
-                        root = _bass_note(root_hz, int(beat*0.9), amp=0.18) * _vel_scale(rng)
+                        freq_root = root_hz
+                        if beat_idx == 0 and rng.random() < 0.25:
+                            freq_root *= 2  # octave pop on bar start
+                        root = _bass_note(freq_root, int(beat * 0.9), amp=0.18) * _vel_scale(rng)
+                        if pos - sixteenth > 0:
+                            step = rng.choice([-2, -1, 1, 2]) / 12.0
+                            app_freq = root_hz * (2 ** step)
+                            app = _bass_note(app_freq, int(beat * 0.45), amp=0.12) * _vel_scale(rng, mean=0.9)
+                            _place(app, bass, pos - sixteenth)
                         _place(root, bass, pos)
                         if bass_pat == "root5_13" and rng.random() < 0.7:
-                            pos5 = pos + beat*0.5 + _jitter_ms(rng, jitter_std*0.7)
-                            fifth = _bass_note(root_hz*2**(7/12), int(beat*0.45), amp=0.14) * _vel_scale(rng, mean=0.9)
+                            pos5 = pos + beat * 0.5 + _jitter_ms(rng, jitter_std * 0.7)
+                            fifth = _bass_note(root_hz * 2 ** (7 / 12), int(beat * 0.45), amp=0.14) * _vel_scale(rng, mean=0.9)
                             _place(fifth, bass, pos5)
 
     melody_active = True
     if is_intro_outro and rng.random() < 0.5:
         melody_active = False
     if melody_active:
-        melody = _render_melody(prog_seq, key_letter, bpm, dur_ms, rng, chord_span_beats)
+        melody = _render_melody(
+            prog_seq,
+            key_letter,
+            bpm,
+            dur_ms,
+            rng,
+            chord_span_beats,
+            section_name=section_name,
+            motif_store=motif,
+        )
         melody = _apply_melody_timbre(melody, instrs)
     else:
         melody = np.zeros(n, dtype=np.float32)
@@ -1119,30 +1220,26 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
     bass_gain = levels["bass_gain"]
     melody_gain = levels["melody_gain"]
     amb_gain = 0.12 * amb_level
-
-    mix = (
-        drum_gain*drums
-        + hat_gain*hats
-        + key_gain*keys
-        + pad_gain*pads
-        + melody_gain*melody
-        + bass_gain*bass
-        + amb_gain*amb_mix
+    mix_music = (
+        drum_gain * drums
+        + hat_gain * hats
+        + key_gain * keys
+        + pad_gain * pads
+        + melody_gain * melody
+        + bass_gain * bass
     )
+    amb_component = amb_gain * amb_mix
+    music_rms = float(np.sqrt(np.mean(np.square(mix_music))))
+    amb_rms = float(np.sqrt(np.mean(np.square(amb_component))))
+    if amb_rms > 0 and music_rms > 0:
+        target = music_rms * 0.6
+        amb_component *= float(np.clip(target / amb_rms, 0.0, 1.0))
+
+    mix = mix_music + amb_component
     mix = mix.astype(np.float32)
     peak = float(np.max(np.abs(mix)))
     if peak > 1.0:
         mix *= 0.9 / peak
-
-    # Auto-tuck ambience under the music based on RMS so it never overpowers
-    amb_component = amb_gain * amb_mix
-    music_only = mix - amb_component
-    music_rms = float(np.sqrt(np.mean(np.square(music_only))))
-    amb_rms = float(np.sqrt(np.mean(np.square(amb_component))))
-    if amb_rms > 0 and music_rms > 0:
-        target = music_rms * 0.3
-        tuck = float(np.clip(target / amb_rms, 0.0, 1.0))
-        mix = music_only + amb_component * tuck
 
     # stereoize
     if flags.get("hq_stereo", True):
