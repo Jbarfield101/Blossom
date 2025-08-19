@@ -1,6 +1,11 @@
 import { create } from 'zustand';
 import { invoke } from '@tauri-apps/api/core';
 
+const SYMBOL_MAP: Record<string, string> = {
+  BTC: 'BTC-USD',
+  ETH: 'ETH-USD',
+};
+
 interface Quote {
   price: number;
   changePercent: number;
@@ -28,8 +33,7 @@ export const useStocks = create<StockState>((set, get) => ({
   symbols: [],
   fetchQuote: async (symbol) => {
     const sym = symbol.toUpperCase();
-    const map: Record<string, string> = { BTC: 'BTC-USD', ETH: 'ETH-USD' };
-    const fetchSym = map[sym] ?? sym;
+    const fetchSym = SYMBOL_MAP[sym] ?? sym;
     try {
       const bundle = await invoke<{
         quotes: { price: number; change_percent: number; status: string }[];
@@ -98,7 +102,11 @@ export const useStocks = create<StockState>((set, get) => ({
   },
   forecast: async (symbol) => {
     const sym = symbol.toUpperCase();
-    return invoke<string>('stock_forecast', { symbol: sym });
+    try {
+      return await invoke<string>('stock_forecast', { symbol: sym });
+    } catch {
+      return 'Forecast currently unavailable.';
+    }
   },
   addStock: (symbol) => {
     const sym = symbol.toUpperCase();
