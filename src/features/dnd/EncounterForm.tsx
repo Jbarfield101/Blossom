@@ -25,7 +25,7 @@ export default function EncounterForm() {
     const data: EncounterData = {
       id: crypto.randomUUID(),
       name,
-      level,
+      level: Number(level),
       creatures: creatures.split(",").map((c) => c.trim()).filter(Boolean),
       tactics,
       terrain,

@@ -46,11 +46,11 @@ export const zLore = z.object({
 });
 
 export const zQuest = zDndBase.extend({
-  tier: z.string(),
+  tier: z.number(),
   summary: z.string(),
   beats: z.array(z.string()),
   rewards: z.object({
-    gp: z.string().optional(),
+    gp: z.number().optional(),
     items: z.string().optional(),
     favors: z.string().optional(),
   }),
@@ -59,7 +59,7 @@ export const zQuest = zDndBase.extend({
 });
 
 export const zEncounter = zDndBase.extend({
-  level: z.string(),
+  level: z.number(),
   creatures: z.array(z.string()),
   tactics: z.string(),
   terrain: z.string(),

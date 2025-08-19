@@ -26,11 +26,11 @@ export default function QuestForm() {
     const data: QuestData = {
       id: crypto.randomUUID(),
       name,
-      tier,
+      tier: Number(tier),
       summary,
       beats: beats.split(",").map((b) => b.trim()).filter(Boolean),
       rewards: {
-        gp: gp || undefined,
+        gp: gp ? Number(gp) : undefined,
         items: items || undefined,
         favors: favors || undefined,
       },
