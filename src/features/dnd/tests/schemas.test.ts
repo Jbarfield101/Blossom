@@ -17,6 +17,21 @@ describe("dnd schemas", () => {
     expect(zNpc.parse(npc)).toEqual(npc);
   });
 
+  it("rejects NPCs with empty voice fields", () => {
+    const npc = {
+      id: "1",
+      name: "Goblin Scout",
+      species: "Goblinoid",
+      role: "Scout",
+      alignment: "CE",
+      hooks: ["steal"],
+      voice: { style: "", provider: "", preset: "" },
+      statblock: {},
+      tags: ["monster"],
+    };
+    expect(() => zNpc.parse(npc)).toThrowError();
+  });
+
   it("parses Lore data", () => {
     const lore = {
       id: "l1",

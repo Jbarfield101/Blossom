@@ -12,9 +12,9 @@ export const zDndTheme = z.enum(["Parchment", "Ink", "Minimal"]);
  * Designed to keep downstream consumers consistent and predictable.
  */
 export const zVoice = z.object({
-  style: z.string(),
-  provider: z.string(),
-  preset: z.string(),
+  style: z.string().min(1),
+  provider: z.string().min(1),
+  preset: z.string().min(1),
 });
 
 export const zNpc = z.object({
