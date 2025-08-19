@@ -1,20 +1,14 @@
 import { useState } from "react";
-import {
-  Box,
-  Button,
-  TextField,
-  List,
-  ListItem,
-  IconButton,
-  Typography,
-} from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
-import Sparkline from "../components/Sparkline";
+import { Box, Button, TextField, List } from "@mui/material";
+import { useShallow } from "zustand/react/shallow";
+import StockRow from "../components/StockRow";
 import { useStocks } from "../store/stocks";
 
 export default function Stocks() {
   const [symbol, setSymbol] = useState("");
-  const { symbols, quotes, addStock, removeStock } = useStocks();
+  const { symbols, addStock } = useStocks(
+    useShallow((state) => ({ symbols: state.symbols, addStock: state.addStock }))
+  );
 
   const handleAdd = () => {
     const sym = symbol.trim();
@@ -38,35 +32,9 @@ export default function Stocks() {
         </Button>
       </Box>
       <List>
-        {symbols.map((s) => {
-          const q = quotes[s];
-          const color = q && q.changePercent < 0 ? "#ff5252" : "#4caf50";
-          return (
-            <ListItem
-              key={s}
-              secondaryAction={
-                <IconButton edge="end" onClick={() => removeStock(s)}>
-                  <DeleteIcon />
-                </IconButton>
-              }
-            >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2, width: "100%" }}>
-                <Typography sx={{ width: 80 }}>{s}</Typography>
-                {q ? (
-                  <>
-                    <Typography sx={{ width: 120, color }}>
-                      {q.price.toFixed(2)} ({q.changePercent.toFixed(2)}%)
-                    </Typography>
-                    <Typography sx={{ width: 80 }}>{q.marketStatus}</Typography>
-                    <Sparkline data={q.history} color={color} />
-                  </>
-                ) : (
-                  <Typography sx={{ width: 120 }}>...</Typography>
-                )}
-              </Box>
-            </ListItem>
-          );
-        })}
+        {symbols.map((s) => (
+          <StockRow key={s} symbol={s} />
+        ))}
       </List>
     </Box>
   );
