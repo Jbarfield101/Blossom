@@ -113,8 +113,12 @@ describe('Song form hook', () => {
   });
 
   it('handles key changes', () => {
-    useLofi.getState().setKey('D');
-    expect(useLofi.getState().key).toBe('D');
+    useLofi.getState().setKey('F#');
+    expect(useLofi.getState().key).toBe('F#');
+    useLofi.getState().setKey('Bb');
+    expect(useLofi.getState().key).toBe('Bb');
+    useLofi.getState().setKey('Am');
+    expect(useLofi.getState().key).toBe('Am');
   });
 });
 

@@ -410,7 +410,7 @@ def _load_ambience_sample(name: str, n: int, rng=None) -> Optional[np.ndarray]:
 # ---------- Harmony helpers ----------
 SEMITONES = {"C":0,"C#":1,"Db":1,"D":2,"D#":3,"Eb":3,"E":4,"F":5,"F#":6,"Gb":6,"G":7,"G#":8,"Ab":8,"A":9,"A#":10,"Bb":10,"B":11}
 
-def _degree_to_root_semi(deg: str) -> int:
+def _degree_to_root_semi(deg: str, mode: str = "major") -> int:
     """Convert a Roman-numeral degree into a semitone offset."""
     accidental = 0
     core = deg
@@ -425,13 +425,16 @@ def _degree_to_root_semi(deg: str) -> int:
                  "III":3,"VI":8,"VII":10}
     major_map = {"I":0,"II":2,"III":4,"IV":5,"V":7,"VI":9,"VII":11}
 
-    if core in minor_map and not deg.startswith(("b", "#")):
-        base = minor_map[core]
+    if mode == "minor":
+        base = minor_map.get(core.lower(), 0)
     else:
-        base = major_map.get(core.upper(), 0)
+        if core in minor_map and not deg.startswith(("b", "#")):
+            base = minor_map[core]
+        else:
+            base = major_map.get(core.upper(), 0)
     return (base + accidental) % 12
 
-def _chord_freqs_from_degree(key_letter: str, deg: str, add7=False, add9=False, inversion=0):
+def _chord_freqs_from_degree(key_letter: str, deg: str, add7=False, add9=False, inversion=0, mode="major"):
     match = re.match(r'^([b#]?)([ivIV]+)(.*)$', deg)
     if match:
         accidental, core, suffix = match.groups()
@@ -442,10 +445,15 @@ def _chord_freqs_from_degree(key_letter: str, deg: str, add7=False, add9=False, 
     suffix_l = suffix.lower()
 
     key_off = SEMITONES.get(key_letter, 0)
-    root_c = _degree_to_root_semi(deg_core)
+    root_c = _degree_to_root_semi(deg_core, mode)
     root_midi = 48 + ((root_c + key_off) % 12)
 
-    quality = "min" if core in ("ii","iii","vi","i","iv","v") or core.islower() else "maj"
+    if mode == "minor":
+        minor_degs = {"i", "iv", "v", "ii", "vii"}
+        quality = "min" if core.lower() in minor_degs or core.islower() else "maj"
+    else:
+        minor_degs = {"ii", "iii", "vi"}
+        quality = "min" if core.lower() in minor_degs or core.islower() else "maj"
 
     if "sus2" in suffix_l:
         notes = [root_midi, root_midi + 2, root_midi + 7]
@@ -581,7 +589,7 @@ PROG_BANK_A = [["I","vi","IV","V"], ["I","V","vi","IV"], ["I","iii","vi","IV"], 
 PROG_BANK_B = [["vi","IV","I","V"], ["ii","V","I","vi"], ["IV","I","V","vi"], ["vi","ii","V","I"], ["IV","vi","ii","V"],
                 ["vi","IV","ii","V"], ["ii","vi","IV","I"], ["vi","V","IV","V"],
                 ["i","iv","i","v"], ["i","VI","III","VII"], ["i","bVII","bVI","bVII"], ["I","bIII","IV","I"], ["vi","bVII","I","V"]]
-PROG_BANK_C = [prog[:-1] + ["I"] for prog in PROG_BANK_B]
+PROG_BANK_C = [["ii","V","iii","vi"], ["vi","IV","I","V"], ["iii","vi","ii","V"], ["IV","I","ii","vi"], ["i","iv","bVII","III"]]
 PROG_BANK_INTRO = [["I","IV"], ["ii","V"], ["I","V"], ["vi","IV"], ["I","ii"], ["I","vi"], ["IV","V"], ["ii","iii"],
                    ["i","iv"], ["i","bVII"], ["i","VI"], ["I","bVII"], ["I","bIII"]]
 
@@ -714,6 +722,7 @@ def auto_balance_levels(busses: Dict[str, np.ndarray], levels: Dict[str, float])
 def _render_melody(
     prog_seq,
     key_letter,
+    key_mode,
     bpm,
     dur_ms,
     rng,
@@ -742,7 +751,7 @@ def _render_melody(
     for bar in range(bars_total):
         chord_idx = int((bar * bar_ms) // chord_len)
         deg = prog_seq[chord_idx % len(prog_seq)]
-        freqs = _chord_freqs_from_degree(key_letter, deg, add7=False, add9=False)
+        freqs = _chord_freqs_from_degree(key_letter, deg, add7=False, add9=False, mode=key_mode)
         bar_choices.append([f * 2 for f in freqs])
 
     if motif_store is None:
@@ -957,6 +966,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
     key_letter = token[0].upper()
     if len(token) > 1 and token[1] in ("b", "#"):
         key_letter += token[1]
+    key_mode = str(motif.get("mode", "major")).lower()
 
     if chords:
         prog_seq = [str(c) for c in chords]
@@ -1004,7 +1014,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
 
     while chord_pos < dur_ms:
         deg = prog_seq[(chord_pos // chord_len) % len(prog_seq)]
-        freqs = _chord_freqs_from_degree(key_letter, deg, add7=add7, add9=add9, inversion=inv_cycle)
+        freqs = _chord_freqs_from_degree(key_letter, deg, add7=add7, add9=add9, inversion=inv_cycle, mode=key_mode)
         chord_roots_hz.append(freqs[0])
         vel = _vel_scale(rng, mean=1.0, std=0.05, lo=0.9, hi=1.1)
 
@@ -1097,6 +1107,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
         melody = _render_melody(
             prog_seq,
             key_letter,
+            key_mode,
             bpm,
             dur_ms,
             rng,
@@ -1369,9 +1380,26 @@ def render_from_spec(spec: Dict[str, Any]) -> Tuple[AudioSegment, int]:
     ]
 
     key_val = spec.get("key")
-    if key_val is None or str(key_val).lower() == "auto":
+    key_mode = "major"
+    if key_val is None or (isinstance(key_val, str) and str(key_val).lower() == "auto"):
         rng_key = np.random.default_rng((seed ^ 0xA5A5A5A5) & 0xFFFFFFFF)
-        key_val = rng_key.choice(list("CDEFGAB"))
+        key_letter = rng_key.choice(list("CDEFGAB"))
+    else:
+        if isinstance(key_val, dict):
+            key_letter = str(key_val.get("key", "C"))
+            key_mode = str(key_val.get("mode", "major")).lower()
+        else:
+            raw = str(key_val).strip().replace("♭", "b").replace("♯", "#")
+            if raw.lower().endswith("m"):
+                key_mode = "minor"
+                key_letter = raw[:-1]
+            else:
+                key_letter = raw
+    token = str(key_letter).strip()
+    base = token[0].upper()
+    if len(token) > 1 and token[1] in ("b", "#"):
+        base += token[1]
+    key_letter = base
 
     try:
         amb_lvl = float(spec.get("ambience_level", 0.5))
@@ -1394,7 +1422,8 @@ def render_from_spec(spec: Dict[str, Any]) -> Tuple[AudioSegment, int]:
         "instruments": spec.get("instruments") or [],
         "ambience": spec.get("ambience") or [],
         "ambience_level": amb_lvl,
-        "key": key_val,
+        "key": key_letter,
+        "mode": key_mode,
         "drum_pattern": spec.get("drum_pattern"),
         "hq_stereo": spec.get("hq_stereo", True),
         "hq_reverb": spec.get("hq_reverb", True),
