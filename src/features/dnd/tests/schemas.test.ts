@@ -1,22 +1,30 @@
 import { describe, expect, it } from "vitest";
-import { zNpc, zQuest, zEncounter } from "../schemas";
+import { zNpc, zLore, zQuest, zEncounter } from "../schemas";
 
 describe("dnd schemas", () => {
   it("parses NPC data", () => {
     const npc = {
       id: "1",
-      name: "Goblin",
-      tags: ["monster"],
-      appearance: "green",
-      personality: "sneaky",
-      motivation: "loot",
-      secret: "afraid of light",
+      name: "Goblin Scout",
+      species: "Goblinoid",
+      role: "Scout",
+      alignment: "CE",
       hooks: ["steal"],
-      stat_block_ref: "goblin",
-      stat_overrides: "hp 10",
-      theme: "Parchment",
+      voice: { style: "gravelly", provider: "acme", preset: "goblin" },
+      statblock: {},
+      tags: ["monster"],
     };
     expect(zNpc.parse(npc)).toEqual(npc);
+  });
+
+  it("parses Lore data", () => {
+    const lore = {
+      id: "l1",
+      name: "Ancient Ruins",
+      summary: "Crumbling stones from a lost age",
+      tags: ["history"],
+    };
+    expect(zLore.parse(lore)).toEqual(lore);
   });
 
   it("parses Quest data", () => {
