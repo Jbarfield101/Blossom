@@ -32,6 +32,36 @@ describe("dnd schemas", () => {
     expect(() => zNpc.parse(npc)).toThrowError();
   });
 
+  it("rejects NPCs missing required fields", () => {
+    const npc = {
+      id: "1",
+      species: "Goblinoid",
+      role: "Scout",
+      alignment: "CE",
+      hooks: ["steal"],
+      voice: { style: "gravelly", provider: "acme", preset: "goblin" },
+      statblock: {},
+      tags: ["monster"],
+    };
+    expect(() => zNpc.parse(npc)).toThrowError();
+  });
+
+  it("rejects NPCs with invalid hook types", () => {
+    const npc = {
+      id: "1",
+      name: "Goblin Scout",
+      species: "Goblinoid",
+      role: "Scout",
+      alignment: "CE",
+      // hooks should be an array of strings
+      hooks: "steal",
+      voice: { style: "gravelly", provider: "acme", preset: "goblin" },
+      statblock: {},
+      tags: ["monster"],
+    };
+    expect(() => zNpc.parse(npc)).toThrowError();
+  });
+
   it("parses Lore data", () => {
     const lore = {
       id: "l1",
@@ -40,6 +70,25 @@ describe("dnd schemas", () => {
       tags: ["history"],
     };
     expect(zLore.parse(lore)).toEqual(lore);
+  });
+
+  it("rejects Lore missing required fields", () => {
+    const lore = {
+      id: "l1",
+      name: "Ancient Ruins",
+      tags: ["history"],
+    };
+    expect(() => zLore.parse(lore)).toThrowError();
+  });
+
+  it("rejects Lore with invalid tag types", () => {
+    const lore = {
+      id: "l1",
+      name: "Ancient Ruins",
+      summary: "Crumbling stones from a lost age",
+      tags: "history",
+    };
+    expect(() => zLore.parse(lore)).toThrowError();
   });
 
   it("parses Quest data", () => {
@@ -56,6 +105,33 @@ describe("dnd schemas", () => {
     expect(zQuest.parse(quest)).toEqual(quest);
   });
 
+  it("rejects Quests missing required fields", () => {
+    const quest = {
+      id: "q1",
+      name: "Find the ring",
+      tier: 1,
+      summary: "Find the ring summary",
+      rewards: { gp: 100 },
+      complications: ["orcs"],
+      theme: "Ink",
+    };
+    expect(() => zQuest.parse(quest)).toThrowError();
+  });
+
+  it("rejects Quests with invalid tier types", () => {
+    const quest = {
+      id: "q1",
+      name: "Find the ring",
+      tier: "1",
+      summary: "Find the ring summary",
+      beats: ["start"],
+      rewards: { gp: 100 },
+      complications: ["orcs"],
+      theme: "Ink",
+    };
+    expect(() => zQuest.parse(quest)).toThrowError();
+  });
+
   it("parses Encounter data", () => {
     const encounter = {
       id: "e1",
@@ -69,5 +145,34 @@ describe("dnd schemas", () => {
       theme: "Minimal",
     };
     expect(zEncounter.parse(encounter)).toEqual(encounter);
+  });
+
+  it("rejects Encounters missing required fields", () => {
+    const encounter = {
+      id: "e1",
+      name: "Goblin ambush",
+      creatures: ["goblin"],
+      tactics: "hit and run",
+      terrain: "forest",
+      treasure: "gold",
+      scaling: "add more goblins",
+      theme: "Minimal",
+    };
+    expect(() => zEncounter.parse(encounter)).toThrowError();
+  });
+
+  it("rejects Encounters with invalid creature types", () => {
+    const encounter = {
+      id: "e1",
+      name: "Goblin ambush",
+      level: 1,
+      creatures: "goblin",
+      tactics: "hit and run",
+      terrain: "forest",
+      treasure: "gold",
+      scaling: "add more goblins",
+      theme: "Minimal",
+    };
+    expect(() => zEncounter.parse(encounter)).toThrowError();
   });
 });
