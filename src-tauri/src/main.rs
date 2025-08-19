@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod commands;
+mod stocks;
 use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
 
 fn main() {
@@ -11,12 +12,26 @@ fn main() {
             SqlBuilder::default()
                 .add_migrations(
                     "sqlite:stocks.db",
-                    vec![Migration {
-                        version: 1,
-                        description: "create stocks cache",
-                        sql: "CREATE TABLE IF NOT EXISTS stocks (symbol TEXT PRIMARY KEY, data TEXT, quote_ts INTEGER, hist_ts INTEGER);",
-                        kind: MigrationKind::Up,
-                    }],
+                    vec![
+                        Migration {
+                            version: 1,
+                            description: "create stocks cache",
+                            sql: "CREATE TABLE IF NOT EXISTS stocks (symbol TEXT PRIMARY KEY, data TEXT, quote_ts INTEGER, hist_ts INTEGER);",
+                            kind: MigrationKind::Up,
+                        },
+                        Migration {
+                            version: 2,
+                            description: "create stock quote cache",
+                            sql: "CREATE TABLE IF NOT EXISTS stock_quotes (ticker TEXT PRIMARY KEY, data TEXT, ts INTEGER);",
+                            kind: MigrationKind::Up,
+                        },
+                        Migration {
+                            version: 3,
+                            description: "create stock series cache",
+                            sql: "CREATE TABLE IF NOT EXISTS stock_series (ticker TEXT, range TEXT, data TEXT, ts INTEGER, PRIMARY KEY(ticker, range));",
+                            kind: MigrationKind::Up,
+                        },
+                    ],
                 )
                 .build(),
         )
