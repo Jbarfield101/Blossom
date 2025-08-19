@@ -11,12 +11,9 @@ use dirs;
 
 use crate::stocks::{stocks_fetch as stocks_fetch_impl, StockBundle};
 use chrono::{Local, NaiveDateTime};
-use robotstxt::DefaultMatcher;
-use rss::Channel;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::{AppHandle, Emitter, Manager, Runtime, Window};
-use url::Url;
 use which::which;
 
 /* ==============================
@@ -892,8 +889,6 @@ pub async fn general_chat<R: Runtime>(
     Ok(content.to_string())
 }
 
-use once_cell::sync::Lazy;
-use std::time::{Duration, Instant};
 
 #[tauri::command]
 pub async fn stocks_fetch<R: Runtime>(
@@ -944,175 +939,6 @@ pub async fn stock_forecast<R: Runtime>(
     )
     .await?;
     Ok(reply)
-}
-
-#[derive(Serialize, Clone)]
-pub struct NewsArticle {
-    pub title: String,
-    pub link: String,
-    pub pub_date: Option<String>,
-    pub source: String,
-    pub summary: Option<String>,
-    pub tags: Vec<String>,
-}
-
-static NEWS_CACHE: Lazy<Mutex<Option<(Instant, Vec<NewsArticle>)>>> =
-    Lazy::new(|| Mutex::new(None));
-
-static BIG_BROTHER_SUMMARY_CACHE: Lazy<Mutex<Option<(Instant, String)>>> =
-    Lazy::new(|| Mutex::new(None));
-
-#[tauri::command]
-pub async fn fetch_big_brother_news<R: Runtime>(
-    app: AppHandle<R>,
-    force: Option<bool>,
-) -> Result<Vec<NewsArticle>, String> {
-    let force = force.unwrap_or(false);
-    let client = reqwest::Client::new();
-
-    {
-        let cache = NEWS_CACHE.lock().unwrap();
-        if !force {
-            if let Some((last_fetch, data)) = &*cache {
-                if last_fetch.elapsed() < Duration::from_secs(3600) {
-                    return Ok(data.clone());
-                }
-            }
-        }
-    }
-
-    let feeds = vec![
-        ("Big Brother Network", "https://bigbrothernetwork.com/feed/"),
-        (
-            "Reality Blurred",
-            "https://www.realityblurred.com/realitytv/tag/big-brother/feed/",
-        ),
-    ];
-
-    let mut articles = Vec::new();
-
-    for (source, url) in feeds {
-        let parsed = Url::parse(url).map_err(|e| e.to_string())?;
-        let mut robots_url = parsed.clone();
-        robots_url.set_path("/robots.txt");
-        robots_url.set_query(None);
-        robots_url.set_fragment(None);
-
-        let allowed = match client.get(robots_url.as_str()).send().await {
-            Ok(resp) => {
-                let robots_body = resp.text().await.unwrap_or_default();
-                let mut matcher = DefaultMatcher::default();
-                matcher.one_agent_allowed_by_robots(&robots_body, "*", url)
-            }
-            Err(_) => true,
-        };
-
-        if !allowed {
-            continue;
-        }
-
-        let body = client
-            .get(url)
-            .send()
-            .await
-            .map_err(|e| e.to_string())?
-            .text()
-            .await
-            .map_err(|e| e.to_string())?;
-        let channel = Channel::read_from(body.as_bytes()).map_err(|e| e.to_string())?;
-        for item in channel.items() {
-            let title = item.title().unwrap_or("Untitled").to_string();
-            let link = item.link().unwrap_or("").to_string();
-            let pub_date = item.pub_date().map(|s| s.to_string());
-            let description = item.description().unwrap_or("");
-            let tags = item
-                .categories()
-                .iter()
-                .map(|c| c.name().to_string())
-                .collect::<Vec<_>>();
-
-            let prompt = format!(
-                "Summarize this Big Brother article in one or two sentences.\nTitle: {title}\nDescription: {description}"
-            );
-
-            let summary = match general_chat(
-                app.clone(),
-                vec![ChatMessage {
-                    role: "user".into(),
-                    content: prompt,
-                }],
-            )
-            .await
-            {
-                Ok(s) => Some(s.trim().to_string()),
-                Err(_) => None,
-            };
-
-            articles.push(NewsArticle {
-                title,
-                link,
-                pub_date,
-                source: source.to_string(),
-                summary,
-                tags,
-            });
-        }
-    }
-
-    let mut cache = NEWS_CACHE.lock().unwrap();
-    *cache = Some((Instant::now(), articles.clone()));
-
-    Ok(articles)
-}
-
-#[tauri::command]
-pub async fn fetch_big_brother_summary<R: Runtime>(
-    app: AppHandle<R>,
-    force: Option<bool>,
-) -> Result<String, String> {
-    let force = force.unwrap_or(false);
-
-    {
-        let cache = BIG_BROTHER_SUMMARY_CACHE.lock().unwrap();
-        if !force {
-            if let Some((last_fetch, data)) = &*cache {
-                if last_fetch.elapsed() < Duration::from_secs(86400) {
-                    return Ok(data.clone());
-                }
-            }
-        }
-    }
-
-    let articles = fetch_big_brother_news(app.clone(), Some(force)).await?;
-
-    let mut prompt = String::from(
-        "Provide a concise daily summary of the latest Big Brother developments based on these article summaries:\n",
-    );
-    for a in &articles {
-        if let Some(sum) = &a.summary {
-            prompt.push_str(&format!("- {}: {}\n", a.title, sum));
-        } else {
-            prompt.push_str(&format!("- {}\n", a.title));
-        }
-    }
-    prompt.push_str("\nSummary:");
-
-    let summary = general_chat(
-        app.clone(),
-        vec![ChatMessage {
-            role: "user".into(),
-            content: prompt,
-        }],
-    )
-    .await
-    .unwrap_or_else(|_| "No summary available.".into());
-
-    {
-        let mut cache = BIG_BROTHER_SUMMARY_CACHE.lock().unwrap();
-        *cache = Some((Instant::now(), summary.clone()));
-    }
-
-    Ok(summary)
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
