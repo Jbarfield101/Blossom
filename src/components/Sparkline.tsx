@@ -1,18 +1,19 @@
 import { Box } from "@mui/material";
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
+import { bucketDownsample } from "../utils/downsample";
 
-export default function Sparkline({ data, color = "#4caf50", width = 100, height = 30 }: { data: number[]; color?: string; width?: number; height?: number }) {
-  const ds = useMemo(() => {
-    if (!data || data.length === 0) return [] as number[];
-    const bucket = Math.max(1, Math.floor(data.length / width));
-    const out: number[] = [];
-    for (let i = 0; i < data.length; i += bucket) {
-      const slice = data.slice(i, i + bucket);
-      const avg = slice.reduce((a, b) => a + b, 0) / slice.length;
-      out.push(avg);
-    }
-    return out;
-  }, [data, width]);
+function Sparkline({
+  data,
+  color = "#4caf50",
+  width = 100,
+  height = 30,
+}: {
+  data: number[];
+  color?: string;
+  width?: number;
+  height?: number;
+}) {
+  const ds = useMemo(() => bucketDownsample(data, width), [data, width]);
 
   if (!ds.length) return null;
   const max = Math.max(...ds);
@@ -31,3 +32,5 @@ export default function Sparkline({ data, color = "#4caf50", width = 100, height
     </Box>
   );
 }
+
+export default memo(Sparkline);
