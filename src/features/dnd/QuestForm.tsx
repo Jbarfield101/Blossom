@@ -7,8 +7,7 @@ import {
 } from "@mui/material";
 import { zQuest } from "./schemas";
 import { QuestData, DndTheme } from "./types";
-
-const themes: DndTheme[] = ["Parchment", "Ink", "Minimal"];
+import { themes, themeStyles } from "./theme";
 
 export default function QuestForm() {
   const [name, setName] = useState("");
@@ -21,25 +20,6 @@ export default function QuestForm() {
   const [complications, setComplications] = useState("");
   const [theme, setTheme] = useState<DndTheme>("Parchment");
   const [result, setResult] = useState<QuestData | null>(null);
-
-  const themeStyles: Record<DndTheme, React.CSSProperties> = {
-    Parchment: {
-      background: "#fdf5e6",
-      padding: "1rem",
-      fontFamily: "serif",
-    },
-    Ink: {
-      background: "#fff",
-      color: "#000",
-      padding: "1rem",
-      fontFamily: "monospace",
-    },
-    Minimal: {
-      background: "#f0f0f0",
-      padding: "1rem",
-      fontFamily: "sans-serif",
-    },
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
