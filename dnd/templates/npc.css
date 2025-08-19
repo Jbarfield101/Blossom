@@ -1,0 +1,12 @@
+.npc {
+  font-family: serif;
+  margin: 1rem;
+}
+.portrait {
+  max-width: 200px;
+  height: auto;
+}
+.stats {
+  list-style: none;
+  padding: 0;
+}

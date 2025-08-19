@@ -1,0 +1,16 @@
+<div class="npc">
+  {{#if portrait}}
+  <img class="portrait" src="{{portrait}}" alt="{{name}} portrait" />
+  {{/if}}
+  <h1>{{name}}</h1>
+  {{#if description}}
+  <p>{{description}}</p>
+  {{/if}}
+  {{#if stats}}
+  <ul class="stats">
+    {{#each stats}}
+    <li>{{@key}}: {{this}}</li>
+    {{/each}}
+  </ul>
+  {{/if}}
+</div>
