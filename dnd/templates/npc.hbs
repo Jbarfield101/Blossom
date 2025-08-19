@@ -1,16 +1,64 @@
 <div class="npc">
-  {{#if portrait}}
-  <img class="portrait" src="{{portrait}}" alt="{{name}} portrait" />
+  <div class="header">
+    {{#if portrait}}
+    <img class="portrait" src="{{portrait}}" alt="{{name}} portrait" />
+    {{/if}}
+    <h1>{{name}}</h1>
+  </div>
+
+  {{#if quickStats}}
+  <section class="quick-stats">
+    <ul>
+      {{#each quickStats}}
+      <li><strong>{{@key}}:</strong> {{this}}</li>
+      {{/each}}
+    </ul>
+  </section>
   {{/if}}
-  <h1>{{name}}</h1>
-  {{#if description}}
-  <p>{{description}}</p>
+
+  {{#if hooks}}
+  <section class="hooks">
+    <h2>Hooks &amp; Quirks</h2>
+    <ul>
+      {{#each hooks}}
+      <li>{{this}}</li>
+      {{/each}}
+      {{#each quirks}}
+      <li>{{this}}</li>
+      {{/each}}
+    </ul>
+  </section>
   {{/if}}
-  {{#if stats}}
-  <ul class="stats">
-    {{#each stats}}
-    <li>{{@key}}: {{this}}</li>
-    {{/each}}
-  </ul>
+
+  {{#if secrets}}
+  <section class="secrets">
+    <h2>Secrets</h2>
+    <ul>
+      {{#each secrets}}
+      <li>{{this}}</li>
+      {{/each}}
+    </ul>
+  </section>
+  {{/if}}
+
+  {{#if statblock}}
+  <section class="statblock">
+    <h2>Statblock</h2>
+    <ul>
+      {{#each statblock}}
+      <li><strong>{{@key}}:</strong> {{this}}</li>
+      {{/each}}
+    </ul>
+  </section>
+  {{else if skills}}
+  <section class="skills">
+    <h2>Skills</h2>
+    <ul>
+      {{#each skills}}
+      <li><strong>{{@key}}:</strong> {{this}}</li>
+      {{/each}}
+    </ul>
+  </section>
   {{/if}}
 </div>
+
