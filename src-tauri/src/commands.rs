@@ -396,7 +396,10 @@ pub struct SongSpec {
     pub title: String,
     pub bpm: u32,
     pub key: String,
-    pub structure: Vec<Section>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub form: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub structure: Option<Vec<Section>>,
     pub mood: Vec<String>,
     pub instruments: Vec<String>,
     pub ambience: Vec<String>,
@@ -447,7 +450,8 @@ mod tests {
             title: "t".into(),
             bpm: 80,
             key: "C".into(),
-            structure: vec![],
+            form: None,
+            structure: None,
             mood: vec![],
             instruments: vec![],
             ambience: vec![],
