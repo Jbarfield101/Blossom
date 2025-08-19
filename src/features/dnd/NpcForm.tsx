@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Typography, TextField, Button } from "@mui/material";
+import { z } from "zod";
 import { zNpc } from "./schemas";
 import { NpcData } from "./types";
 
@@ -18,6 +19,9 @@ export default function NpcForm() {
   const [portrait, setPortrait] = useState("");
   const [statblock, setStatblock] = useState("{}");
   const [statblockError, setStatblockError] = useState<string | null>(null);
+  const [voiceStyleError, setVoiceStyleError] = useState<string | null>(null);
+  const [voiceProviderError, setVoiceProviderError] = useState<string | null>(null);
+  const [voicePresetError, setVoicePresetError] = useState<string | null>(null);
   const [tags, setTags] = useState("");
   const [result, setResult] = useState<NpcData | null>(null);
 
@@ -52,8 +56,24 @@ export default function NpcForm() {
       tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
     };
 
-    const parsed = zNpc.parse(data);
-    setResult(parsed);
+    setVoiceStyleError(null);
+    setVoiceProviderError(null);
+    setVoicePresetError(null);
+
+    try {
+      const parsed = zNpc.parse(data);
+      setResult(parsed);
+    } catch (err) {
+      setResult(null);
+      if (err instanceof z.ZodError) {
+        err.issues.forEach((issue) => {
+          const path = issue.path.join(".");
+          if (path === "voice.style") setVoiceStyleError(issue.message);
+          if (path === "voice.provider") setVoiceProviderError(issue.message);
+          if (path === "voice.preset") setVoicePresetError(issue.message);
+        });
+      }
+    }
   };
 
   return (
@@ -118,23 +138,38 @@ export default function NpcForm() {
       <TextField
         label="Voice Style"
         value={voiceStyle}
-        onChange={(e) => setVoiceStyle(e.target.value)}
+        onChange={(e) => {
+          setVoiceStyle(e.target.value);
+          setVoiceStyleError(null);
+        }}
         fullWidth
         margin="normal"
+        error={Boolean(voiceStyleError)}
+        helperText={voiceStyleError}
       />
       <TextField
         label="Voice Provider"
         value={voiceProvider}
-        onChange={(e) => setVoiceProvider(e.target.value)}
+        onChange={(e) => {
+          setVoiceProvider(e.target.value);
+          setVoiceProviderError(null);
+        }}
         fullWidth
         margin="normal"
+        error={Boolean(voiceProviderError)}
+        helperText={voiceProviderError}
       />
       <TextField
         label="Voice Preset"
         value={voicePreset}
-        onChange={(e) => setVoicePreset(e.target.value)}
+        onChange={(e) => {
+          setVoicePreset(e.target.value);
+          setVoicePresetError(null);
+        }}
         fullWidth
         margin="normal"
+        error={Boolean(voicePresetError)}
+        helperText={voicePresetError}
       />
       <TextField
         label="Portrait URL"
