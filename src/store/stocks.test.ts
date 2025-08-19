@@ -74,6 +74,13 @@ describe('useStocks store', () => {
     expect(invoke).toHaveBeenCalledWith('stock_forecast', { symbol: 'GOOG' });
   });
 
+  it('returns a friendly message when forecast fails', async () => {
+    (invoke as any).mockRejectedValue(new Error('fail'));
+    const result = await useStocks.getState().forecast('goog');
+    expect(result).toBe('Forecast currently unavailable.');
+    expect(invoke).toHaveBeenCalledWith('stock_forecast', { symbol: 'GOOG' });
+  });
+
   it('adds and removes symbols', () => {
     const origStart = useStocks.getState().startPolling;
     const origStop = useStocks.getState().stopPolling;
