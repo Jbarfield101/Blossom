@@ -878,30 +878,49 @@ pub async fn general_chat<R: Runtime>(
 }
 
 use once_cell::sync::Lazy;
-use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
-#[derive(serde::Serialize, Clone)]
-pub struct StockInfo {
+#[derive(serde::Serialize, serde::Deserialize, Clone)]
+pub struct StockBundle {
     price: f64,
     change_percent: f64,
     history: Vec<f64>,
+    market_status: String,
 }
 
-static STOCK_CACHE: Lazy<Mutex<HashMap<String, (Instant, StockInfo)>>> =
-    Lazy::new(|| Mutex::new(HashMap::new()));
-
 #[tauri::command]
-pub async fn fetch_stock_quote(symbol: String, force: Option<bool>) -> Result<StockInfo, String> {
+pub async fn stocks_fetch<R: Runtime>(
+    app: AppHandle<R>,
+    symbol: String,
+) -> Result<StockBundle, String> {
+    use tauri_plugin_sql::DbPool;
     let symbol = symbol.to_uppercase();
-    let force = force.unwrap_or(false);
+    let db = DbPool::connect("sqlite:stocks.db", &app)
+        .await
+        .map_err(|e| e.to_string())?;
+    let now = chrono::Utc::now().timestamp();
 
-    {
-        let cache = STOCK_CACHE.lock().unwrap();
-        if !force {
-            if let Some((last, info)) = cache.get(&symbol) {
-                if last.elapsed() < Duration::from_secs(60) {
-                    return Ok(info.clone());
+    let rows = db
+        .select(
+            "SELECT data, quote_ts, hist_ts FROM stocks WHERE symbol = $1",
+            vec![symbol.clone().into()],
+        )
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if let Some(row) = rows.get(0) {
+        let quote_ts = row
+            .get("quote_ts")
+            .and_then(|v| v.as_i64())
+            .unwrap_or_default();
+        let hist_ts = row
+            .get("hist_ts")
+            .and_then(|v| v.as_i64())
+            .unwrap_or_default();
+        if now - quote_ts < 30 && now - hist_ts < 3600 {
+            if let Some(data_str) = row.get("data").and_then(|v| v.as_str()) {
+                if let Ok(bundle) = serde_json::from_str::<StockBundle>(data_str) {
+                    return Ok(bundle);
                 }
             }
         }
@@ -920,6 +939,10 @@ pub async fn fetch_stock_quote(symbol: String, force: Option<bool>) -> Result<St
         .as_f64()
         .ok_or_else(|| "price not found".to_string())?;
     let change_percent = result["regularMarketChangePercent"].as_f64().unwrap_or(0.0);
+    let market_status = result["marketState"]
+        .as_str()
+        .unwrap_or("CLOSED")
+        .to_string();
 
     let chart_url = format!(
         "https://query1.finance.yahoo.com/v8/finance/chart/{}?range=1d&interval=5m",
@@ -936,18 +959,22 @@ pub async fn fetch_stock_quote(symbol: String, force: Option<bool>) -> Result<St
         .filter_map(|v| v.as_f64())
         .collect::<Vec<f64>>();
 
-    let info = StockInfo {
+    let bundle = StockBundle {
         price,
         change_percent,
         history,
+        market_status,
     };
 
-    {
-        let mut cache = STOCK_CACHE.lock().unwrap();
-        cache.insert(symbol.clone(), (Instant::now(), info.clone()));
-    }
+    let data_json = serde_json::to_string(&bundle).map_err(|e| e.to_string())?;
+    db.execute(
+        "INSERT INTO stocks (symbol, data, quote_ts, hist_ts) VALUES ($1,$2,$3,$4) \n         ON CONFLICT(symbol) DO UPDATE SET data=$2, quote_ts=$3, hist_ts=$4",
+        vec![symbol.clone().into(), data_json.into(), now.into(), now.into()],
+    )
+    .await
+    .map_err(|e| e.to_string())?;
 
-    Ok(info)
+    Ok(bundle)
 }
 
 #[tauri::command]

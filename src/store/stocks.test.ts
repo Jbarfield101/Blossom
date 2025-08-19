@@ -17,18 +17,21 @@ describe('useStocks store', () => {
     vi.useRealTimers();
   });
 
-  it('caches quotes for 60 seconds', async () => {
-    (invoke as any).mockResolvedValue({ price: 123, change_percent: 1, history: [1, 2, 3] });
-    const price1 = await useStocks.getState().fetchQuote('AAPL');
-    const price2 = await useStocks.getState().fetchQuote('AAPL');
-    expect(price1).toBe(123);
-    expect(price2).toBe(123);
-    expect(invoke).toHaveBeenCalledTimes(1);
+  it('fetches quotes through the backend', async () => {
+    (invoke as any).mockResolvedValue({
+      price: 123,
+      change_percent: 1,
+      history: [1, 2, 3],
+      market_status: 'OPEN',
+    });
+    const price = await useStocks.getState().fetchQuote('AAPL');
+    expect(price).toBe(123);
+    expect(invoke).toHaveBeenCalledWith('stocks_fetch', { symbol: 'AAPL' });
   });
 
   it('polls for updates when started', async () => {
     vi.useFakeTimers();
-    (invoke as any).mockResolvedValue({ price: 100, change_percent: 0, history: [100] });
+    (invoke as any).mockResolvedValue({ price: 100, change_percent: 0, history: [100], market_status: 'CLOSED' });
     const store = useStocks.getState();
     store.startPolling('MSFT', 1000);
     await vi.advanceTimersByTimeAsync(3100);

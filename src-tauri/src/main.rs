@@ -2,10 +2,24 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod commands;
+use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
 
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(
+            SqlBuilder::default()
+                .add_migrations(
+                    "sqlite:stocks.db",
+                    vec![Migration {
+                        version: 1,
+                        description: "create stocks cache",
+                        sql: "CREATE TABLE IF NOT EXISTS stocks (symbol TEXT PRIMARY KEY, data TEXT, quote_ts INTEGER, hist_ts INTEGER);",
+                        kind: MigrationKind::Up,
+                    }],
+                )
+                .build(),
+        )
         .setup(|app| {
             let handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
@@ -42,7 +56,7 @@ fn main() {
             commands::fetch_big_brother_news,
             commands::fetch_big_brother_summary,
             // Stocks:
-            commands::fetch_stock_quote,
+            commands::stocks_fetch,
             commands::stock_forecast,
             // Shorts:
             commands::load_shorts,

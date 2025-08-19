@@ -57,6 +57,7 @@ export default function Stocks() {
                     <Typography sx={{ width: 120, color }}>
                       {q.price.toFixed(2)} ({q.changePercent.toFixed(2)}%)
                     </Typography>
+                    <Typography sx={{ width: 80 }}>{q.marketStatus}</Typography>
                     <Sparkline data={q.history} color={color} />
                   </>
                 ) : (
