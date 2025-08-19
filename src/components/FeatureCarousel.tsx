@@ -67,8 +67,8 @@ export default function FeatureCarousel({
     const now = Date.now();
     if (now - wheelLock.current < 200) return;
     wheelLock.current = now;
-    if (Math.abs(e.deltaY) < 5 && Math.abs(e.deltaX) < 5) return;
-    go(e.deltaY > 0 || e.deltaX > 0 ? 1 : -1);
+    if (Math.abs(e.deltaY) < 5) return;
+    go(e.deltaY > 0 ? 1 : -1);
   };
 
   // layout constants
