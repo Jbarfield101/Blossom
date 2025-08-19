@@ -8,17 +8,21 @@ export const fixedIconButtonSx: SxProps = {
 
 export const carouselContainerSx: SxProps = {
   height: "100vh",
-  display: "grid",
-  placeItems: "center",
-  position: "relative",
+  width: 180,
+  position: "fixed",
+  left: 0,
+  top: 0,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
   overflow: "hidden",
   zIndex: 1,
 };
 
 export const carouselItemsWrapperSx: SxProps = {
   position: "relative",
-  width: "100%",
-  height: 240,
+  width: 180,
+  height: "100%",
 };
 
 export const carouselItemSx = (
@@ -31,7 +35,7 @@ export const carouselItemSx = (
   position: "absolute",
   left: "50%",
   top: "50%",
-  transform: `translate(-50%, -50%) translateX(${offset * gap}px) scale(${center ? scaleMid : scaleSide})`,
+  transform: `translate(-50%, -50%) translateY(${offset * gap}px) scale(${center ? scaleMid : scaleSide})`,
   transition: "transform 280ms ease, opacity 280ms ease, color 180ms ease",
   textAlign: "center",
   opacity: center ? 1 : 0.6,
