@@ -599,22 +599,23 @@ def _stitch_progression(bank, rng, length=None):
     seq = [rng.choice(starts)]
     while len(seq) < length:
         prev = seq[-1]
-        choices = trans.get(prev, starts)
+        choices = list(trans.get(prev, starts))
+
+        remaining = length - len(seq)
+        if remaining == 1:
+            # Bias final chord toward the tonic
+            tonic = "i" if any(chord.islower() for chord in seq) else "I"
+            choices += [tonic] * 3
+        elif remaining == 2:
+            # Bias penultimate chord toward cadential movement
+            choices += ["V", "V", "bVII", "IV"]
+
         seq.append(rng.choice(choices))
 
-    # Encourage cadential movement at phrase endings
-    if length >= 2:
-        tonic = "i" if any(chord.islower() for chord in seq) else "I"
+    # Ensure the phrase resolves on the tonic
+    tonic = "i" if any(chord.islower() for chord in seq) else "I"
+    if seq[-1] != tonic:
         seq[-1] = tonic
-        r = rng.random()
-        if r < 0.33:
-            seq[-2] = "V"
-        elif r < 0.66:
-            seq[-2] = "bVII"
-        else:
-            if length >= 3:
-                seq[-3] = "IV"
-            seq[-2] = "V"
 
     return seq
 
@@ -766,6 +767,13 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
     hat_prob = 0.95 - 0.2*t
     add7_prob = 0.3 + 0.5*t
     add9_prob = 0.1 + 0.35*t
+
+    is_intro_outro = section_name.lower() in ["intro", "outro"]
+    if is_intro_outro:
+        ghost_prob *= 0.5
+        fill_prob *= 0.5
+        hat_prob *= 0.5
+        chord_span_beats *= 2
 
     dur_ms = bars_to_ms(bars, bpm)
     beat, eighth, sixteenth = _beats_ms(bpm)
@@ -973,8 +981,14 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
                             fifth = _bass_note(root_hz*2**(7/12), int(beat*0.45), amp=0.14) * _vel_scale(rng, mean=0.9)
                             _place(fifth, bass, pos5)
 
-    melody = _render_melody(prog_seq, key_letter, bpm, dur_ms, rng, chord_span_beats)
-    melody = _apply_melody_timbre(melody, instrs)
+    melody_active = True
+    if is_intro_outro and rng.random() < 0.5:
+        melody_active = False
+    if melody_active:
+        melody = _render_melody(prog_seq, key_letter, bpm, dur_ms, rng, chord_span_beats)
+        melody = _apply_melody_timbre(melody, instrs)
+    else:
+        melody = np.zeros(n, dtype=np.float32)
 
     # --- ambience rotation
     amb_list = motif.get("ambience") or []
@@ -1183,8 +1197,10 @@ def build_song(
             chords=chords,
             chord_span_beats=chord_span_beats,
         )
-    parts.append(part)
-    song = crossfade_concat(parts, ms=120)
+        parts.append(part)
+    _, eighth, _ = _beats_ms(bpm)
+    xf_ms = max(80, min(int(0.33 * eighth), 220))
+    song = crossfade_concat(parts, ms=xf_ms)
     return song
 
 FORM_TEMPLATES: Dict[str, List[Dict[str, Any]]] = {
