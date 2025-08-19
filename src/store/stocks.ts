@@ -29,25 +29,29 @@ export const useStocks = create<StockState>((set, get) => ({
     const sym = symbol.toUpperCase();
     const map: Record<string, string> = { BTC: 'BTC-USD', ETH: 'ETH-USD' };
     const fetchSym = map[sym] ?? sym;
-    const { price, change_percent, history, market_status } = await invoke<{
-      price: number;
-      change_percent: number;
-      history: number[];
-      market_status: string;
-    }>('stocks_fetch', { symbol: fetchSym });
+    const bundle = await invoke<{
+      quotes: { price: number; change_percent: number; status: string }[];
+      series: { points: { ts: number; close: number }[] }[];
+      market: { phase: string };
+      stale: boolean;
+    }>('stocks_fetch', { tickers: [fetchSym], range: '1d' });
+    const quote = bundle.quotes[0];
+    const series = bundle.series[0];
+    const history = series?.points?.map((p) => p.close) ?? [];
+    const market_status = bundle.market.phase;
     set((state) => ({
       quotes: {
         ...state.quotes,
         [sym]: {
-          price,
-          changePercent: change_percent,
+          price: quote?.price ?? 0,
+          changePercent: quote?.change_percent ?? 0,
           history,
           marketStatus: market_status,
           lastFetched: Date.now(),
         },
       },
     }));
-    return price;
+    return quote?.price ?? 0;
   },
   startPolling: (symbol, interval = 15000) => {
     const sym = symbol.toUpperCase();

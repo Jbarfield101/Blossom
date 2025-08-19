@@ -18,6 +18,7 @@ use tauri::{AppHandle, Emitter, Manager, Runtime, Window};
 use ureq;
 use url::Url;
 use which::which;
+use crate::stocks::{stocks_fetch as stocks_fetch_impl, StockBundle};
 
 /* ==============================
 ComfyUI launcher (no extra crate)
@@ -243,10 +244,10 @@ fn resolve_python_path() -> PathBuf {
         }
     }
 
-    let candidates = if cfg!(windows) {
-        ["python.exe", "python3.exe", "py.exe"]
+    let candidates: &[&str] = if cfg!(windows) {
+        &["python.exe", "python3.exe", "py.exe"]
     } else {
-        ["python3", "python"]
+        &["python3", "python"]
     };
 
     for cand in candidates {
@@ -880,102 +881,15 @@ pub async fn general_chat<R: Runtime>(
 use once_cell::sync::Lazy;
 use std::time::{Duration, Instant};
 
-#[derive(serde::Serialize, serde::Deserialize, Clone)]
-pub struct StockBundle {
-    price: f64,
-    change_percent: f64,
-    history: Vec<f64>,
-    market_status: String,
-}
-
 #[tauri::command]
 pub async fn stocks_fetch<R: Runtime>(
     app: AppHandle<R>,
-    symbol: String,
+    tickers: Vec<String>,
+    range: String,
 ) -> Result<StockBundle, String> {
-    use tauri_plugin_sql::DbPool;
-    let symbol = symbol.to_uppercase();
-    let db = DbPool::connect("sqlite:stocks.db", &app)
-        .await
-        .map_err(|e| e.to_string())?;
-    let now = chrono::Utc::now().timestamp();
-
-    let rows = db
-        .select(
-            "SELECT data, quote_ts, hist_ts FROM stocks WHERE symbol = $1",
-            vec![symbol.clone().into()],
-        )
-        .await
-        .map_err(|e| e.to_string())?;
-
-    if let Some(row) = rows.get(0) {
-        let quote_ts = row
-            .get("quote_ts")
-            .and_then(|v| v.as_i64())
-            .unwrap_or_default();
-        let hist_ts = row
-            .get("hist_ts")
-            .and_then(|v| v.as_i64())
-            .unwrap_or_default();
-        if now - quote_ts < 30 && now - hist_ts < 3600 {
-            if let Some(data_str) = row.get("data").and_then(|v| v.as_str()) {
-                if let Ok(bundle) = serde_json::from_str::<StockBundle>(data_str) {
-                    return Ok(bundle);
-                }
-            }
-        }
-    }
-
-    let quote_url = format!(
-        "https://query1.finance.yahoo.com/v7/finance/quote?symbols={}",
-        symbol
-    );
-    let quote_resp = ureq::get(&quote_url).call().map_err(|e| e.to_string())?;
-    let quote_json: Value = quote_resp.into_json().map_err(|e| e.to_string())?;
-    let result = quote_json["quoteResponse"]["result"]
-        .get(0)
-        .ok_or_else(|| "quote result missing".to_string())?;
-    let price = result["regularMarketPrice"]
-        .as_f64()
-        .ok_or_else(|| "price not found".to_string())?;
-    let change_percent = result["regularMarketChangePercent"].as_f64().unwrap_or(0.0);
-    let market_status = result["marketState"]
-        .as_str()
-        .unwrap_or("CLOSED")
-        .to_string();
-
-    let chart_url = format!(
-        "https://query1.finance.yahoo.com/v8/finance/chart/{}?range=1d&interval=5m",
-        symbol
-    );
-    let chart_resp = ureq::get(&chart_url).call().map_err(|e| e.to_string())?;
-    let chart_json: Value = chart_resp.into_json().map_err(|e| e.to_string())?;
-    let history = chart_json["chart"]["result"]
-        .get(0)
-        .and_then(|v| v["indicators"]["quote"].get(0))
-        .and_then(|v| v["close"].as_array())
-        .ok_or_else(|| "history not found".to_string())?
-        .iter()
-        .filter_map(|v| v.as_f64())
-        .collect::<Vec<f64>>();
-
-    let bundle = StockBundle {
-        price,
-        change_percent,
-        history,
-        market_status,
-    };
-
-    let data_json = serde_json::to_string(&bundle).map_err(|e| e.to_string())?;
-    db.execute(
-        "INSERT INTO stocks (symbol, data, quote_ts, hist_ts) VALUES ($1,$2,$3,$4) \n         ON CONFLICT(symbol) DO UPDATE SET data=$2, quote_ts=$3, hist_ts=$4",
-        vec![symbol.clone().into(), data_json.into(), now.into(), now.into()],
-    )
-    .await
-    .map_err(|e| e.to_string())?;
-
-    Ok(bundle)
+    stocks_fetch_impl(app, tickers, range).await
 }
+
 
 #[tauri::command]
 pub async fn stock_forecast<R: Runtime>(
