@@ -69,6 +69,7 @@ describe('SongForm', () => {
     await waitFor(() => expect(invoke).toHaveBeenCalled());
     const call = (invoke as any).mock.calls.find(([c]: any) => c === 'run_lofi_song');
     expect(call[1].spec.structure[0]).toHaveProperty('chords');
+    expect(call[1].spec.chord_span_beats).toBe(4);
     expect(call[1].spec).toMatchObject({
       ambience: ['rain'],
       ambienceLevel: 0.5,

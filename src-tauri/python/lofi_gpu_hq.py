@@ -690,7 +690,7 @@ def auto_balance_levels(busses: Dict[str, np.ndarray], levels: Dict[str, float])
     return balanced
 
 
-def _render_melody(prog_seq, key_letter, bpm, dur_ms, rng):
+def _render_melody(prog_seq, key_letter, bpm, dur_ms, rng, chord_span_beats=4):
     """Simple lead line following the key and chord progression."""
 
     def _mel_note(freq, ms):
@@ -700,7 +700,7 @@ def _render_melody(prog_seq, key_letter, bpm, dur_ms, rng):
         return x
 
     beat, eighth, sixteenth = _beats_ms(bpm)
-    chord_len = 2 * beat
+    chord_len = chord_span_beats * beat
     n = int(dur_ms * SR / 1000)
     out = np.zeros(n, dtype=np.float32)
 
@@ -741,7 +741,7 @@ def _apply_melody_timbre(x, instrs):
     return x
 
 # ---------- Section renderer ----------
-def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None):
+def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None, chord_span_beats=4):
     # Variety mapping (0..100)
     t = float(np.clip(variety, 0, 100)) / 100.0
     swing = 0.54 + 0.08*t
@@ -754,6 +754,8 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
 
     dur_ms = bars_to_ms(bars, bpm)
     beat, eighth, sixteenth = _beats_ms(bpm)
+
+    chord_len = chord_span_beats * beat
 
     n = int(dur_ms * SR / 1000)
     drums = np.zeros(n, dtype=np.float32)
@@ -868,7 +870,6 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
     use_clean_gtr = ("clean electric guitar" in instrs)
     use_airy_pad = ("airy pads" in instrs)
 
-    chord_len = 2 * beat
     chord_pos = 0
     melodic_sources = {
         "rhodes",
@@ -957,7 +958,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
                             fifth = _bass_note(root_hz*2**(7/12), int(beat*0.45), amp=0.14) * _vel_scale(rng, mean=0.9)
                             _place(fifth, bass, pos5)
 
-    melody = _render_melody(prog_seq, key_letter, bpm, dur_ms, rng)
+    melody = _render_melody(prog_seq, key_letter, bpm, dur_ms, rng, chord_span_beats)
     melody = _apply_melody_timbre(melody, instrs)
 
     # --- ambience rotation
@@ -1122,12 +1123,39 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
         return _np_to_segment(mix)
 
 # ---------- Public API ----------
-def model_generate_audio(bars: int, bpm: int, seed: int, section: str, motif: Dict[str, Any], variety: int, chords: Optional[List[str]] = None) -> AudioSegment:
+def model_generate_audio(
+    bars: int,
+    bpm: int,
+    seed: int,
+    section: str,
+    motif: Dict[str, Any],
+    variety: int,
+    chords: Optional[List[str]] = None,
+    chord_span_beats: int = 4,
+) -> AudioSegment:
     sec = _stable_hash_int(section)
     full_seed = (seed ^ sec) & 0xFFFFFFFF
     rng = np.random.default_rng(full_seed)
-    return _render_section(bars, bpm, section, motif, rng=rng, variety=variety, chords=chords)
-def build_song(sections: List[Tuple[str, int, Optional[List[str]]]], bpm: int, seed: int, motif: Dict[str, Any], variety: int) -> AudioSegment:
+    return _render_section(
+        bars,
+        bpm,
+        section,
+        motif,
+        rng=rng,
+        variety=variety,
+        chords=chords,
+        chord_span_beats=chord_span_beats,
+    )
+
+
+def build_song(
+    sections: List[Tuple[str, int, Optional[List[str]]]],
+    bpm: int,
+    seed: int,
+    motif: Dict[str, Any],
+    variety: int,
+    chord_span_beats: int = 4,
+) -> AudioSegment:
     parts: List[AudioSegment] = []
     for name, bars, chords in sections:
         part = model_generate_audio(
@@ -1138,6 +1166,7 @@ def build_song(sections: List[Tuple[str, int, Optional[List[str]]]], bpm: int, s
             motif=motif,
             variety=variety,
             chords=chords,
+            chord_span_beats=chord_span_beats,
         )
         parts.append(part)
     song = crossfade_concat(parts, ms=120)
@@ -1203,7 +1232,21 @@ def render_from_spec(spec: Dict[str, Any]) -> Tuple[AudioSegment, int]:
         "limiter_drive": limiter_drive,
     }
 
-    song = build_song(sections, bpm=bpm, seed=seed, motif=motif, variety=variety)
+    try:
+        chord_span_beats = int(spec.get("chord_span_beats", 4))
+        if chord_span_beats not in (2, 4, 8):
+            chord_span_beats = 4
+    except Exception:
+        chord_span_beats = 4
+
+    song = build_song(
+        sections,
+        bpm=bpm,
+        seed=seed,
+        motif=motif,
+        variety=variety,
+        chord_span_beats=chord_span_beats,
+    )
     print(json.dumps({"stage": "post", "message": "cleaning audio"}))
     post_rng = np.random.default_rng((seed ^ 0x5A5A5A5A) & 0xFFFFFFFF)
     song = enhanced_post_process_chain(

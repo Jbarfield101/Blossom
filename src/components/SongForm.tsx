@@ -21,6 +21,7 @@ type SongSpec = {
   ambienceLevel: number; // 0..1
   seed: number;
   variety: number; // 0..100
+  chord_span_beats?: number;
   drum_pattern?: string;
   // NEW HQ feature flags (read by lofi_gpu_hq.py)
   hq_stereo?: boolean;
@@ -39,6 +40,7 @@ type TemplateSpec = {
   ambience: string[];
   drumPattern: string;
   variety: number;
+  chordSpanBeats?: number;
   hqStereo: boolean;
   hqReverb: boolean;
   hqSidechain: boolean;
@@ -334,6 +336,7 @@ export default function SongForm() {
     setAmbience(tpl.ambience);
     setDrumPattern(tpl.drumPattern);
     setVariety(tpl.variety);
+    setChordSpanBeats(tpl.chordSpanBeats ?? 4);
     setHqStereo(tpl.hqStereo);
     setHqReverb(tpl.hqReverb);
     setHqSidechain(tpl.hqSidechain);
@@ -370,6 +373,7 @@ export default function SongForm() {
   const [playLast, setPlayLast] = useState(true);
   const [drumPattern, setDrumPattern] = useState<string>("laidback");
   const [variety, setVariety] = useState(45);
+  const [chordSpanBeats, setChordSpanBeats] = useState(4);
 
   // NEW: Mix polish toggles mapping to engine flags
   const [hqStereo, setHqStereo] = useState(defaultHqStereo);
@@ -550,6 +554,7 @@ export default function SongForm() {
       ambienceLevel: amb,
       seed: pickSeed(i),
       variety: varPct,
+      chord_span_beats: chordSpanBeats,
       drum_pattern: drumPattern === "random" ? undefined : drumPattern,
       // pass-through HQ flags
       hq_stereo: hqStereo,
@@ -814,6 +819,7 @@ export default function SongForm() {
                         ambience,
                         drumPattern,
                         variety,
+                        chordSpanBeats,
                         hqStereo,
                         hqReverb,
                         hqSidechain,
@@ -956,7 +962,7 @@ export default function SongForm() {
         </div>
 
         {/* rhythm & feel */}
-        <div style={S.grid2}>
+        <div style={S.grid3}>
           <div style={S.panel}>
             <label style={S.label}>Drum Pattern</label>
             <select value={drumPattern} onChange={(e) => setDrumPattern(e.target.value)} style={{ ...S.input, padding: "8px 12px" }}>
@@ -971,6 +977,19 @@ export default function SongForm() {
             <label style={S.label}>Variety</label>
             <input type="range" min={0} max={100} value={variety} onChange={(e) => setVariety(Number(e.target.value))} style={S.slider} />
             <div style={S.small}>{variety}% fills & swing</div>
+          </div>
+
+          <div style={S.panel}>
+            <label style={S.label}>Chord Span</label>
+            <select
+              value={chordSpanBeats}
+              onChange={(e) => setChordSpanBeats(Number(e.target.value))}
+              style={{ ...S.input, padding: "8px 12px" }}
+            >
+              <option value={2}>½ bar</option>
+              <option value={4}>1 bar</option>
+              <option value={8}>2 bars</option>
+            </select>
           </div>
         </div>
 
