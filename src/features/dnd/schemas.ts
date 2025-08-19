@@ -7,16 +7,42 @@ export const zDndBase = z.object({
 
 export const zDndTheme = z.enum(["Parchment", "Ink", "Minimal"]);
 
-export const zNpc = zDndBase.extend({
-  tags: z.array(z.string()),
-  appearance: z.string(),
-  personality: z.string(),
-  motivation: z.string(),
-  secret: z.string(),
+/**
+ * Minimal schema for non-player characters (NPCs).
+ * Designed to keep downstream consumers consistent and predictable.
+ */
+export const zVoice = z.object({
+  style: z.string(),
+  provider: z.string(),
+  preset: z.string(),
+});
+
+export const zNpc = z.object({
+  id: z.string(),
+  name: z.string(),
+  species: z.string(),
+  role: z.string(),
+  alignment: z.string(),
+  backstory: z.string().optional(),
+  location: z.string().optional(),
   hooks: z.array(z.string()),
-  stat_block_ref: z.string(),
-  stat_overrides: z.string(),
-  theme: zDndTheme,
+  quirks: z.array(z.string()).optional(),
+  voice: zVoice,
+  portrait: z.string().optional(),
+  statblock: z.record(z.unknown()),
+  tags: z.array(z.string()),
+});
+
+/**
+ * Simple schema for world lore entries.
+ */
+export const zLore = z.object({
+  id: z.string(),
+  name: z.string(),
+  summary: z.string(),
+  location: z.string().optional(),
+  hooks: z.array(z.string()).optional(),
+  tags: z.array(z.string()),
 });
 
 export const zQuest = zDndBase.extend({

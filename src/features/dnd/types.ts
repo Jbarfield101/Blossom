@@ -6,15 +6,28 @@ export interface DndBase {
 export type DndTheme = "Parchment" | "Ink" | "Minimal";
 
 export interface NpcData extends DndBase {
-  tags: string[];
-  appearance: string;
-  personality: string;
-  motivation: string;
-  secret: string;
+  species: string;
+  role: string;
+  alignment: string;
+  backstory?: string;
+  location?: string;
   hooks: string[];
-  stat_block_ref: string;
-  stat_overrides: string;
-  theme: DndTheme;
+  quirks?: string[];
+  voice: {
+    style: string;
+    provider: string;
+    preset: string;
+  };
+  portrait?: string;
+  statblock: Record<string, unknown>;
+  tags: string[];
+}
+
+export interface LoreData extends DndBase {
+  summary: string;
+  location?: string;
+  hooks?: string[];
+  tags: string[];
 }
 
 export interface QuestData extends DndBase {

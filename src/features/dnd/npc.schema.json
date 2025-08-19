@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["id", "name", "species", "role", "alignment", "hooks", "voice", "statblock", "tags"],
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "species": { "type": "string" },
+    "role": { "type": "string" },
+    "alignment": { "type": "string" },
+    "backstory": { "type": "string" },
+    "location": { "type": "string" },
+    "hooks": { "type": "array", "items": { "type": "string" } },
+    "quirks": { "type": "array", "items": { "type": "string" } },
+    "voice": {
+      "type": "object",
+      "properties": {
+        "style": { "type": "string" },
+        "provider": { "type": "string" },
+        "preset": { "type": "string" }
+      },
+      "required": ["style", "provider", "preset"]
+    },
+    "portrait": { "type": "string" },
+    "statblock": { "type": "object" },
+    "tags": { "type": "array", "items": { "type": "string" } }
+  }
+}
