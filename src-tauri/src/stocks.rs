@@ -333,6 +333,16 @@ async fn save_series_db(
 // ========================
 
 fn compute_market_clock() -> MarketClock {
+    fn next_trading_day(mut d: chrono::NaiveDate) -> chrono::NaiveDate {
+        loop {
+            d = d + chrono::Duration::days(1);
+            match d.weekday() {
+                chrono::Weekday::Sat | chrono::Weekday::Sun => continue,
+                _ => break d,
+            }
+        }
+    }
+
     let now_ny = Utc::now().with_timezone(&New_York);
     let weekday = now_ny.weekday();
     let date = now_ny.date_naive();
@@ -351,50 +361,61 @@ fn compute_market_clock() -> MarketClock {
 
     let (phase, next_open, next_close) =
         if weekday == chrono::Weekday::Sat || weekday == chrono::Weekday::Sun {
-            // weekend: next open Monday 9:30
-            let days_ahead = (7 - weekday.num_days_from_monday() as i64) % 7;
-            let next_day = date + chrono::Duration::days(days_ahead as i64);
+            let next_day = next_trading_day(date);
             let next_open = New_York
                 .from_local_datetime(&next_day.and_hms_opt(9, 30, 0).unwrap())
+                .unwrap();
+            let next_close = New_York
+                .from_local_datetime(&next_day.and_hms_opt(16, 0, 0).unwrap())
                 .unwrap();
             (
                 MarketPhase::Closed,
                 next_open.timestamp(),
-                regular_end.timestamp(),
+                next_close.timestamp(),
             )
         } else if now_ny < pre_start {
             (
                 MarketPhase::Closed,
                 regular_start.timestamp(),
-                pre_start.timestamp(),
+                regular_end.timestamp(),
             )
         } else if now_ny < regular_start {
             (
                 MarketPhase::Pre,
                 regular_start.timestamp(),
-                regular_start.timestamp(),
+                regular_end.timestamp(),
             )
         } else if now_ny < regular_end {
             (
                 MarketPhase::Open,
-                regular_end.timestamp(),
+                regular_start.timestamp(),
                 regular_end.timestamp(),
             )
         } else if now_ny < post_end {
-            (
-                MarketPhase::Post,
-                regular_start.timestamp() + 24 * 3600,
-                post_end.timestamp(),
-            )
-        } else {
-            let next_day = date + chrono::Duration::days(1);
+            let next_day = next_trading_day(date);
             let next_open = New_York
                 .from_local_datetime(&next_day.and_hms_opt(9, 30, 0).unwrap())
+                .unwrap();
+            let next_close = New_York
+                .from_local_datetime(&next_day.and_hms_opt(16, 0, 0).unwrap())
+                .unwrap();
+            (
+                MarketPhase::Post,
+                next_open.timestamp(),
+                next_close.timestamp(),
+            )
+        } else {
+            let next_day = next_trading_day(date);
+            let next_open = New_York
+                .from_local_datetime(&next_day.and_hms_opt(9, 30, 0).unwrap())
+                .unwrap();
+            let next_close = New_York
+                .from_local_datetime(&next_day.and_hms_opt(16, 0, 0).unwrap())
                 .unwrap();
             (
                 MarketPhase::Closed,
                 next_open.timestamp(),
-                post_end.timestamp(),
+                next_close.timestamp(),
             )
         };
 
