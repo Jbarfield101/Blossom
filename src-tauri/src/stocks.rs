@@ -272,13 +272,19 @@ fn get_pool() -> &'static SqlitePool {
 }
 
 async fn load_quote_db(pool: &SqlitePool, ticker: &str) -> Option<Quote> {
-    let row = sqlx::query("SELECT data FROM stock_quotes WHERE ticker = ?")
+    let row = sqlx::query("SELECT data, ts FROM stock_quotes WHERE ticker = ?")
         .bind(ticker)
         .fetch_optional(pool)
         .await
         .ok()?;
-    let data: String = row?.get(0);
-    serde_json::from_str(&data).ok()
+    let row = row?;
+    let data: String = row.get(0);
+    let ts: i64 = row.get(1);
+    if Utc::now().timestamp() - ts > QUOTE_TTL.as_secs() as i64 {
+        None
+    } else {
+        serde_json::from_str(&data).ok()
+    }
 }
 
 async fn save_quote_db(pool: &SqlitePool, q: &Quote) -> Result<(), String> {
@@ -299,14 +305,20 @@ async fn load_series_db(
     ticker: &str,
     range: &Range,
 ) -> Option<Vec<SeriesPoint>> {
-    let row = sqlx::query("SELECT data FROM stock_series WHERE ticker = ? AND range = ?")
+    let row = sqlx::query("SELECT data, ts FROM stock_series WHERE ticker = ? AND range = ?")
         .bind(ticker)
         .bind(range.as_str())
         .fetch_optional(pool)
         .await
         .ok()?;
-    let data: String = row?.get(0);
-    serde_json::from_str(&data).ok()
+    let row = row?;
+    let data: String = row.get(0);
+    let ts: i64 = row.get(1);
+    if Utc::now().timestamp() - ts > SERIES_TTL.as_secs() as i64 {
+        None
+    } else {
+        serde_json::from_str(&data).ok()
+    }
 }
 
 async fn save_series_db(
