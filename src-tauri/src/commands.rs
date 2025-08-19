@@ -9,16 +9,15 @@ use std::{
 
 use dirs;
 
+use crate::stocks::{stocks_fetch as stocks_fetch_impl, StockBundle};
 use chrono::{Local, NaiveDateTime};
 use robotstxt::DefaultMatcher;
 use rss::Channel;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::{AppHandle, Emitter, Manager, Runtime, Window};
-use ureq;
 use url::Url;
 use which::which;
-use crate::stocks::{stocks_fetch as stocks_fetch_impl, StockBundle};
 
 /* ==============================
 ComfyUI launcher (no extra crate)
@@ -745,10 +744,13 @@ fn models_dir<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
 
 #[tauri::command]
 pub async fn start_ollama<R: Runtime>(app: AppHandle<R>, window: Window<R>) -> Result<(), String> {
+    let client = reqwest::Client::new();
     // check if already running
-    if ureq::get("http://127.0.0.1:11434/")
+    if client
+        .get("http://127.0.0.1:11434/")
         .timeout(std::time::Duration::from_millis(500))
-        .call()
+        .send()
+        .await
         .is_ok()
     {
         return Ok(());
@@ -775,29 +777,35 @@ pub async fn start_ollama<R: Runtime>(app: AppHandle<R>, window: Window<R>) -> R
 
     // wait for server
     for _ in 0..20 {
-        if ureq::get("http://127.0.0.1:11434/")
+        if client
+            .get("http://127.0.0.1:11434/")
             .timeout(std::time::Duration::from_millis(500))
-            .call()
+            .send()
+            .await
             .is_ok()
         {
             break;
         }
-        std::thread::sleep(std::time::Duration::from_millis(500));
+        tauri::async_runtime::sleep(std::time::Duration::from_millis(500)).await;
     }
 
-    if ureq::get("http://127.0.0.1:11434/")
+    if client
+        .get("http://127.0.0.1:11434/")
         .timeout(std::time::Duration::from_millis(500))
-        .call()
+        .send()
+        .await
         .is_err()
     {
         return Err("Ollama did not start".into());
     }
 
     // check model
-    let resp = ureq::get("http://127.0.0.1:11434/api/tags")
-        .call()
+    let resp = client
+        .get("http://127.0.0.1:11434/api/tags")
+        .send()
+        .await
         .map_err(|e| e.to_string())?;
-    let json: Value = resp.into_json().map_err(|e| e.to_string())?;
+    let json: Value = resp.json().await.map_err(|e| e.to_string())?;
     let has = json["models"]
         .as_array()
         .map(|arr| {
@@ -861,16 +869,19 @@ pub async fn general_chat<R: Runtime>(
             }
         }
     }
-    let resp = ureq::post("http://127.0.0.1:11434/api/chat")
-        .set("Content-Type", "application/json")
-        .send_json(ureq::json!({
+    let client = reqwest::Client::new();
+    let resp = client
+        .post("http://127.0.0.1:11434/api/chat")
+        .json(&serde_json::json!({
           "model": "gpt-oss:20b",
           "stream": false,
           "messages": msgs,
         }))
+        .send()
+        .await
         .map_err(|e| e.to_string())?;
 
-    let json: Value = resp.into_json().map_err(|e| e.to_string())?;
+    let json: Value = resp.json().await.map_err(|e| e.to_string())?;
     let content = json["message"]["content"]
         .as_str()
         .or_else(|| json["content"].as_str())
@@ -890,7 +901,6 @@ pub async fn stocks_fetch<R: Runtime>(
     stocks_fetch_impl(app, tickers, range).await
 }
 
-
 #[tauri::command]
 pub async fn stock_forecast<R: Runtime>(
     app: AppHandle<R>,
@@ -899,8 +909,8 @@ pub async fn stock_forecast<R: Runtime>(
     let sym = symbol.to_uppercase();
     let url =
         format!("https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=5d&interval=1d");
-    let resp = ureq::get(&url).call().map_err(|e| e.to_string())?;
-    let json: Value = resp.into_json().map_err(|e| e.to_string())?;
+    let resp = reqwest::get(&url).await.map_err(|e| e.to_string())?;
+    let json: Value = resp.json().await.map_err(|e| e.to_string())?;
     let result = json["chart"]["result"]
         .get(0)
         .ok_or_else(|| "chart result missing".to_string())?;
@@ -955,6 +965,7 @@ pub async fn fetch_big_brother_news<R: Runtime>(
     force: Option<bool>,
 ) -> Result<Vec<NewsArticle>, String> {
     let force = force.unwrap_or(false);
+    let client = reqwest::Client::new();
 
     {
         let cache = NEWS_CACHE.lock().unwrap();
@@ -984,9 +995,9 @@ pub async fn fetch_big_brother_news<R: Runtime>(
         robots_url.set_query(None);
         robots_url.set_fragment(None);
 
-        let allowed = match ureq::get(robots_url.as_str()).call() {
+        let allowed = match client.get(robots_url.as_str()).send().await {
             Ok(resp) => {
-                let robots_body = resp.into_string().unwrap_or_default();
+                let robots_body = resp.text().await.unwrap_or_default();
                 let mut matcher = DefaultMatcher::default();
                 matcher.one_agent_allowed_by_robots(&robots_body, "*", url)
             }
@@ -997,8 +1008,14 @@ pub async fn fetch_big_brother_news<R: Runtime>(
             continue;
         }
 
-        let resp = ureq::get(url).call().map_err(|e| e.to_string())?;
-        let body = resp.into_string().map_err(|e| e.to_string())?;
+        let body = client
+            .get(url)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?
+            .text()
+            .await
+            .map_err(|e| e.to_string())?;
         let channel = Channel::read_from(body.as_bytes()).map_err(|e| e.to_string())?;
         for item in channel.items() {
             let title = item.title().unwrap_or("Untitled").to_string();

@@ -6,9 +6,9 @@ use std::time::{Duration, Instant};
 use async_trait::async_trait;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Runtime};
-use tauri::async_runtime::Mutex;
 use sqlx::{Row, SqlitePool};
+use tauri::async_runtime::Mutex;
+use tauri::{AppHandle, Runtime};
 
 use chrono::{Datelike, TimeZone, Utc};
 use chrono_tz::America::New_York;
@@ -112,12 +112,9 @@ impl Provider for YahooProvider {
             ticker
         );
         let start = Instant::now();
-        let resp = ureq::get(&url).call().map_err(|e| e.to_string())?;
-        let size = resp
-            .header("content-length")
-            .and_then(|v| v.parse::<u64>().ok())
-            .unwrap_or_default();
-        let json: serde_json::Value = resp.into_json().map_err(|e| e.to_string())?;
+        let resp = reqwest::get(&url).await.map_err(|e| e.to_string())?;
+        let size = resp.content_length().unwrap_or_default();
+        let json: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
         let result = json["quoteResponse"]["result"].get(0).ok_or("no result")?;
         let price = result
             .get("regularMarketPrice")
@@ -153,18 +150,18 @@ impl Provider for YahooProvider {
             range.as_str()
         );
         let start = Instant::now();
-        let resp = ureq::get(&url).call().map_err(|e| e.to_string())?;
-        let size = resp
-            .header("content-length")
-            .and_then(|v| v.parse::<u64>().ok())
-            .unwrap_or_default();
-        let json: serde_json::Value = resp.into_json().map_err(|e| e.to_string())?;
+        let resp = reqwest::get(&url).await.map_err(|e| e.to_string())?;
+        let size = resp.content_length().unwrap_or_default();
+        let json: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
         let result = json["chart"]["result"].get(0).ok_or("no result")?;
         let timestamps = result
             .get("timestamp")
             .and_then(|v| v.as_array())
             .ok_or("no ts")?;
-        let closes = result["indicators"]["quote"].get(0).and_then(|v| v["close"].as_array()).ok_or("no close")?;
+        let closes = result["indicators"]["quote"]
+            .get(0)
+            .and_then(|v| v["close"].as_array())
+            .ok_or("no close")?;
         let mut points = Vec::new();
         for (ts, close) in timestamps.iter().zip(closes.iter()) {
             if let (Some(ts), Some(close)) = (ts.as_i64(), close.as_f64()) {
@@ -195,8 +192,15 @@ impl Provider for StubProvider {
         })
     }
 
-    async fn fetch_series(&self, _ticker: &str, _range: &Range) -> Result<Vec<SeriesPoint>, String> {
-        Ok(vec![SeriesPoint { ts: Utc::now().timestamp(), close: 100.0 }])
+    async fn fetch_series(
+        &self,
+        _ticker: &str,
+        _range: &Range,
+    ) -> Result<Vec<SeriesPoint>, String> {
+        Ok(vec![SeriesPoint {
+            ts: Utc::now().timestamp(),
+            close: 100.0,
+        }])
     }
 }
 
@@ -333,31 +337,54 @@ fn compute_market_clock() -> MarketClock {
         .from_local_datetime(&date.and_hms_opt(20, 0, 0).unwrap())
         .unwrap();
 
-    let (phase, next_open, next_close) = if weekday == chrono::Weekday::Sat
-        || weekday == chrono::Weekday::Sun
-    {
-        // weekend: next open Monday 9:30
-        let days_ahead = (7 - weekday.num_days_from_monday() as i64) % 7;
-        let next_day = date + chrono::Duration::days(days_ahead as i64);
-        let next_open = New_York
-            .from_local_datetime(&next_day.and_hms_opt(9, 30, 0).unwrap())
-            .unwrap();
-        (MarketPhase::Closed, next_open.timestamp(), regular_end.timestamp())
-    } else if now_ny < pre_start {
-        (MarketPhase::Closed, regular_start.timestamp(), pre_start.timestamp())
-    } else if now_ny < regular_start {
-        (MarketPhase::Pre, regular_start.timestamp(), regular_start.timestamp())
-    } else if now_ny < regular_end {
-        (MarketPhase::Open, regular_end.timestamp(), regular_end.timestamp())
-    } else if now_ny < post_end {
-        (MarketPhase::Post, regular_start.timestamp() + 24 * 3600, post_end.timestamp())
-    } else {
-        let next_day = date + chrono::Duration::days(1);
-        let next_open = New_York
-            .from_local_datetime(&next_day.and_hms_opt(9, 30, 0).unwrap())
-            .unwrap();
-        (MarketPhase::Closed, next_open.timestamp(), post_end.timestamp())
-    };
+    let (phase, next_open, next_close) =
+        if weekday == chrono::Weekday::Sat || weekday == chrono::Weekday::Sun {
+            // weekend: next open Monday 9:30
+            let days_ahead = (7 - weekday.num_days_from_monday() as i64) % 7;
+            let next_day = date + chrono::Duration::days(days_ahead as i64);
+            let next_open = New_York
+                .from_local_datetime(&next_day.and_hms_opt(9, 30, 0).unwrap())
+                .unwrap();
+            (
+                MarketPhase::Closed,
+                next_open.timestamp(),
+                regular_end.timestamp(),
+            )
+        } else if now_ny < pre_start {
+            (
+                MarketPhase::Closed,
+                regular_start.timestamp(),
+                pre_start.timestamp(),
+            )
+        } else if now_ny < regular_start {
+            (
+                MarketPhase::Pre,
+                regular_start.timestamp(),
+                regular_start.timestamp(),
+            )
+        } else if now_ny < regular_end {
+            (
+                MarketPhase::Open,
+                regular_end.timestamp(),
+                regular_end.timestamp(),
+            )
+        } else if now_ny < post_end {
+            (
+                MarketPhase::Post,
+                regular_start.timestamp() + 24 * 3600,
+                post_end.timestamp(),
+            )
+        } else {
+            let next_day = date + chrono::Duration::days(1);
+            let next_open = New_York
+                .from_local_datetime(&next_day.and_hms_opt(9, 30, 0).unwrap())
+                .unwrap();
+            (
+                MarketPhase::Closed,
+                next_open.timestamp(),
+                post_end.timestamp(),
+            )
+        };
 
     MarketClock {
         phase,
@@ -527,7 +554,11 @@ pub async fn stocks_fetch<R: Runtime>(
                     p
                 }
             };
-            let status = if points.is_empty() { "error".into() } else { "ok".into() };
+            let status = if points.is_empty() {
+                "error".into()
+            } else {
+                "ok".into()
+            };
             Series {
                 ticker: ticker.clone(),
                 range: range.clone(),
@@ -548,4 +579,3 @@ pub async fn stocks_fetch<R: Runtime>(
         stale: stale_bundle,
     })
 }
-
