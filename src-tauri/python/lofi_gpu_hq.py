@@ -674,6 +674,10 @@ def calculate_mix_levels(mood, section_name):
         levels["pad_gain"] *= 0.95
         levels["melody_gain"] *= 0.9
 
+    if section_name.lower() in ["ambient", "break"]:
+        levels["pad_gain"] *= 1.15
+        levels["melody_gain"] *= 1.15
+
     return levels
 
 
@@ -848,11 +852,16 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
     sn = section_name.lower()
     is_intro_outro = sn in ["intro", "outro"]
     is_break_ambient = sn in ["break", "ambient"]
-    if is_intro_outro or is_break_ambient:
+    if is_intro_outro:
         ghost_prob *= 0.5
         fill_prob *= 0.5
         hat_prob *= 0.5
         chord_span_beats *= 2
+    if is_break_ambient:
+        ghost_prob *= 0.5
+        fill_prob *= 0.5
+        hat_prob *= 0.5
+        chord_span_beats = 8
 
     dur_ms = bars_to_ms(bars, bpm)
     beat, eighth, sixteenth = _beats_ms(bpm)
@@ -867,9 +876,10 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
     hats  = np.zeros(n, dtype=np.float32)
 
     # --- choose drum pattern
-    pat_name = motif.get("drum_pattern") or rng.choice(list(DRUM_PATTERNS.keys()))
-    if is_break_ambient and rng.random() < 0.5:
+    if is_break_ambient:
         pat_name = "no_drums"
+    else:
+        pat_name = motif.get("drum_pattern") or rng.choice(list(DRUM_PATTERNS.keys()))
     pat = DRUM_PATTERNS[pat_name]
 
     # subtle timing wow for hats (per section)
@@ -1200,6 +1210,9 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
         elif "calm" in mood or "melancholy" in mood or variety <= 40:
             depth = 1.2
             bass_depth = 1.0
+        if is_break_ambient:
+            depth *= 0.5
+            bass_depth *= 0.5
         _apply_duck_envelope(keys, kick_positions_ms, depth_db=depth)
         _apply_duck_envelope(pads,  kick_positions_ms, depth_db=depth)
         _apply_duck_envelope(melody, kick_positions_ms, depth_db=depth)
