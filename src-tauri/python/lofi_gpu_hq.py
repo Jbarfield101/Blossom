@@ -601,6 +601,21 @@ def _stitch_progression(bank, rng, length=None):
         prev = seq[-1]
         choices = trans.get(prev, starts)
         seq.append(rng.choice(choices))
+
+    # Encourage cadential movement at phrase endings
+    if length >= 2:
+        tonic = "i" if any(chord.islower() for chord in seq) else "I"
+        seq[-1] = tonic
+        r = rng.random()
+        if r < 0.33:
+            seq[-2] = "V"
+        elif r < 0.66:
+            seq[-2] = "bVII"
+        else:
+            if length >= 3:
+                seq[-3] = "IV"
+            seq[-2] = "V"
+
     return seq
 
 BASS_PATTERNS = ["roots_13", "root5_13", "held_whole"]
@@ -1168,9 +1183,37 @@ def build_song(
             chords=chords,
             chord_span_beats=chord_span_beats,
         )
-        parts.append(part)
+    parts.append(part)
     song = crossfade_concat(parts, ms=120)
     return song
+
+FORM_TEMPLATES: Dict[str, List[Dict[str, Any]]] = {
+    "LoFiBasic": [
+        {"name": "Intro", "bars": 4},
+        {"name": "A", "bars": 16},
+        {"name": "B", "bars": 16},
+        {"name": "A", "bars": 8},
+        {"name": "Outro", "bars": 8},
+    ],
+    "AABA32": [
+        {"name": "Intro", "bars": 4},
+        {"name": "A", "bars": 8},
+        {"name": "A", "bars": 8},
+        {"name": "B", "bars": 8},
+        {"name": "A", "bars": 8},
+        {"name": "Outro", "bars": 4},
+    ],
+    "ABABCB": [
+        {"name": "Intro", "bars": 4},
+        {"name": "A", "bars": 16},
+        {"name": "B", "bars": 16},
+        {"name": "A", "bars": 16},
+        {"name": "B", "bars": 16},
+        {"name": "C", "bars": 8},
+        {"name": "B", "bars": 8},
+        {"name": "Outro", "bars": 8},
+    ],
+}
 
 def render_from_spec(spec: Dict[str, Any]) -> Tuple[AudioSegment, int]:
     """Build a song from a SongSpec dict and return the audio and BPM."""
@@ -1185,13 +1228,8 @@ def render_from_spec(spec: Dict[str, Any]) -> Tuple[AudioSegment, int]:
 
     structure = spec.get("structure")
     if not structure:
-        structure = [
-            {"name": "Intro", "bars": 4},
-            {"name": "A", "bars": 16},
-            {"name": "B", "bars": 16},
-            {"name": "A", "bars": 8},
-            {"name": "Outro", "bars": 8},
-        ]
+        form_name = spec.get("form", "LoFiBasic")
+        structure = FORM_TEMPLATES.get(form_name, FORM_TEMPLATES["LoFiBasic"])
     sections = [
         (s["name"], int(s["bars"]), s.get("chords") or None)
         for s in structure

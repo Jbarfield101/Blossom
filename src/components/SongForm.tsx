@@ -14,7 +14,8 @@ type SongSpec = {
   outDir: string;
   bpm: number;
   key: string; // "C".."B" or "Auto"
-  structure: Section[];
+  structure?: Section[];
+  form?: string;
   mood: string[];
   instruments: string[];
   ambience: string[];
