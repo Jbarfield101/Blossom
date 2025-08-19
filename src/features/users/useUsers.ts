@@ -33,6 +33,7 @@ interface User {
   name: string;
   theme: Theme;
   mode: PaletteMode;
+  money: number;
   modules: ModulesState;
 }
 
@@ -61,6 +62,7 @@ export const useUsers = create<UsersState>()(
               name,
               theme: 'default',
               mode: 'dark',
+              money: 5000,
               modules: { ...defaultModules },
             },
           },
