@@ -31,10 +31,10 @@ describe("dnd schemas", () => {
     const quest = {
       id: "q1",
       name: "Find the ring",
-      tier: "1",
+      tier: 1,
       summary: "Find the ring summary",
       beats: ["start"],
-      rewards: { gp: "100" },
+      rewards: { gp: 100 },
       complications: ["orcs"],
       theme: "Ink",
     };
@@ -45,7 +45,7 @@ describe("dnd schemas", () => {
     const encounter = {
       id: "e1",
       name: "Goblin ambush",
-      level: "1",
+      level: 1,
       creatures: ["goblin"],
       tactics: "hit and run",
       terrain: "forest",

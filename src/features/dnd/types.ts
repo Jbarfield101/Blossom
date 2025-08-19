@@ -31,11 +31,11 @@ export interface LoreData extends DndBase {
 }
 
 export interface QuestData extends DndBase {
-  tier: string;
+  tier: number;
   summary: string;
   beats: string[];
   rewards: {
-    gp?: string;
+    gp?: number;
     items?: string;
     favors?: string;
   };
@@ -44,7 +44,7 @@ export interface QuestData extends DndBase {
 }
 
 export interface EncounterData extends DndBase {
-  level: string;
+  level: number;
   creatures: string[];
   tactics: string;
   terrain: string;
