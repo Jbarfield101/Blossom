@@ -1115,7 +1115,8 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
             section_name=section_name,
             motif_store=motif,
         )
-        melody = _apply_melody_timbre(melody, instrs)
+        lead = motif.get("lead_instrument")
+        melody = _apply_melody_timbre(melody, [lead] if lead else instrs)
     else:
         melody = np.zeros(n, dtype=np.float32)
 
@@ -1417,9 +1418,14 @@ def render_from_spec(spec: Dict[str, Any]) -> Tuple[AudioSegment, int]:
     except Exception:
         dither_amt = 1.0
 
+    lead = spec.get("lead_instrument")
+    if lead:
+        lead = _normalize_instruments([lead])[0]
+
     motif = {
         "mood": spec.get("mood") or [],
         "instruments": spec.get("instruments") or [],
+        "lead_instrument": lead,
         "ambience": spec.get("ambience") or [],
         "ambience_level": amb_lvl,
         "key": key_letter,

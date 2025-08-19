@@ -18,6 +18,7 @@ type SongSpec = {
   form?: string;
   mood: string[];
   instruments: string[];
+  lead_instrument?: string;
   ambience: string[];
   ambience_level: number; // 0..1
   seed: number;
@@ -40,6 +41,7 @@ type TemplateSpec = {
   mood: string[];
   instruments: string[];
   ambience: string[];
+  leadInstrument?: string;
   drumPattern: string;
   variety: number;
   chordSpanBeats?: number;
@@ -106,7 +108,13 @@ const INSTR = [
   "lute",
   "pan flute",
 ];
-const AMBI = ["rain", "cafe"];
+const AMBI = ["rain", "cafe", "street"];
+const LEAD_INSTR = [
+  { value: "flute", label: "flute" },
+  { value: "saxophone", label: "sax" },
+  { value: "synth lead", label: "synth" },
+  { value: "violin", label: "violin" },
+];
 const DRUM_PATS = [
   "random",
   "no_drums",
@@ -117,6 +125,14 @@ const DRUM_PATS = [
   "swing",
   "half_time_shuffle",
 ];
+
+function inferLeadInstrument(instrs: string[]): string {
+  if (instrs.includes("flute")) return "flute";
+  if (instrs.includes("saxophone")) return "saxophone";
+  if (instrs.includes("violin")) return "violin";
+  if (instrs.includes("synth lead")) return "synth lead";
+  return "synth lead";
+}
 
 const SECTION_PRESETS: Record<string, Section[]> = {
   "Intro(4)-A(8)-B(8)-Break(4)-A(8)-Outro(4)": [
@@ -350,11 +366,11 @@ export default function SongForm() {
   const [bpm, setBpm] = useState(defaultBpm);
   const [key, setKey] = useState<string>(defaultKey);
   const [mood, setMood] = useState<string[]>(["calm", "cozy", "nostalgic"]);
-  const [instruments, setInstruments] = useState<string[]>([
-    "rhodes",
-    "nylon guitar",
-    "upright bass",
-  ]);
+  const defaultInstruments = ["rhodes", "nylon guitar", "upright bass"];
+  const [instruments, setInstruments] = useState<string[]>(defaultInstruments);
+  const [leadInstrument, setLeadInstrument] = useState<string>(() =>
+    inferLeadInstrument(defaultInstruments)
+  );
   const [ambience, setAmbience] = useState<string[]>(["rain"]);
   const [ambienceLevel, setAmbienceLevel] = useState(0.5);
   const [templates, setTemplates] = useState<Record<string, TemplateSpec>>(() => {
@@ -384,6 +400,7 @@ export default function SongForm() {
     setKey(tpl.key);
     setMood(tpl.mood);
     setInstruments(tpl.instruments);
+    setLeadInstrument(tpl.leadInstrument ?? inferLeadInstrument(tpl.instruments));
     setAmbience(tpl.ambience);
     setDrumPattern(tpl.drumPattern);
     setVariety(tpl.variety);
@@ -653,6 +670,7 @@ export default function SongForm() {
       structure: structure.map(({ name, bars, chords }) => ({ name, bars, chords })),
       mood,
       instruments,
+      lead_instrument: leadInstrument,
       ambience,
       ambience_level: amb,
       seed: pickSeed(i),
@@ -921,6 +939,7 @@ export default function SongForm() {
                         key,
                         mood,
                         instruments,
+                        leadInstrument,
                         ambience,
                         drumPattern,
                         variety,
@@ -1079,6 +1098,24 @@ export default function SongForm() {
               ))}
             </div>
             <div style={S.small}>Drums are synthesized automatically.</div>
+          </div>
+
+          <div style={S.panel}>
+            <label style={S.label}>Lead Instrument</label>
+            <div style={S.optionGrid}>
+              {LEAD_INSTR.map((l) => (
+                <label key={l.value} style={S.optionCard}>
+                  <span>{l.label}</span>
+                  <input
+                    type="radio"
+                    name="leadInstrument"
+                    value={l.value}
+                    checked={leadInstrument === l.value}
+                    onChange={() => setLeadInstrument(l.value)}
+                  />
+                </label>
+              ))}
+            </div>
           </div>
 
           <div style={S.panel}>
