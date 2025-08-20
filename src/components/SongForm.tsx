@@ -107,13 +107,29 @@ const INSTR = [
   "harp",
   "lute",
   "pan flute",
+  "brush kit",
+  "shaker",
+  "tambourine",
+  "808 sub-kick",
+  "wurlitzer",
+  "celesta",
+  "music box",
+  "vibraphone",
+  "marimba",
+  "muted electric guitar",
+  "muted trumpet",
+  "clarinet",
+  "field recordings",
+  "synth plucks",
 ];
-const AMBI = ["rain", "cafe", "street"];
+const AMBI = ["rain", "cafe", "street", "birds", "cicadas", "train"];
 const LEAD_INSTR = [
   { value: "flute", label: "flute" },
   { value: "saxophone", label: "sax" },
   { value: "synth lead", label: "synth" },
   { value: "violin", label: "violin" },
+  { value: "clarinet", label: "clarinet" },
+  { value: "muted trumpet", label: "muted trumpet" },
 ];
 const DRUM_PATS = [
   "random",
@@ -130,6 +146,8 @@ function inferLeadInstrument(instrs: string[]): string {
   if (instrs.includes("flute")) return "flute";
   if (instrs.includes("saxophone")) return "saxophone";
   if (instrs.includes("violin")) return "violin";
+  if (instrs.includes("clarinet")) return "clarinet";
+  if (instrs.includes("muted trumpet")) return "muted trumpet";
   if (instrs.includes("synth lead")) return "synth lead";
   return "synth lead";
 }
