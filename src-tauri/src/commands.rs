@@ -786,7 +786,7 @@ pub async fn start_ollama<R: Runtime>(app: AppHandle<R>, window: Window<R>) -> R
         {
             break;
         }
-        tauri::async_runtime::sleep(std::time::Duration::from_millis(500)).await;
+        std::thread::sleep(std::time::Duration::from_millis(500));
     }
 
     if client
@@ -889,7 +889,6 @@ pub async fn general_chat<R: Runtime>(
     Ok(content.to_string())
 }
 
-
 #[tauri::command]
 pub async fn stocks_fetch<R: Runtime>(
     app: AppHandle<R>,
@@ -939,6 +938,44 @@ pub async fn stock_forecast<R: Runtime>(
     )
     .await?;
     Ok(reply)
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct NewsArticle {
+    pub title: String,
+    pub link: String,
+    pub timestamp: i64,
+    pub summary: String,
+}
+
+#[tauri::command]
+pub async fn fetch_stock_news(symbol: String) -> Result<Vec<NewsArticle>, String> {
+    let sym = symbol.to_uppercase();
+    let url = format!(
+        "https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers={sym}&apikey=demo"
+    );
+    let resp = reqwest::get(&url).await.map_err(|e| e.to_string())?;
+    let json: Value = resp.json().await.map_err(|e| e.to_string())?;
+    let items = json["feed"].as_array().ok_or("feed missing")?;
+    let mut out = Vec::new();
+    for item in items {
+        let title = item["title"].as_str().unwrap_or("").to_string();
+        let link = item["url"].as_str().unwrap_or("").to_string();
+        let summary = item["summary"].as_str().unwrap_or("").to_string();
+        let ts = item["time_published"].as_str().unwrap_or("");
+        let timestamp = NaiveDateTime::parse_from_str(ts, "%Y%m%dT%H%M%S")
+            .map(|dt| dt.timestamp())
+            .unwrap_or(0);
+        if !title.is_empty() && !link.is_empty() {
+            out.push(NewsArticle {
+                title,
+                link,
+                timestamp,
+                summary,
+            });
+        }
+    }
+    Ok(out)
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

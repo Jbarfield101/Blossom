@@ -7,13 +7,13 @@ vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 describe('useStocks store', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useStocks.setState({ quotes: {}, pollers: {}, symbols: [] });
+    useStocks.setState({ quotes: {}, pollers: {}, symbols: [], news: {} });
   });
 
   afterEach(() => {
     const { pollers, stopPolling } = useStocks.getState();
     Object.keys(pollers).forEach((s) => stopPolling(s));
-    useStocks.setState({ symbols: [] });
+    useStocks.setState({ symbols: [], news: {} });
     vi.useRealTimers();
   });
 

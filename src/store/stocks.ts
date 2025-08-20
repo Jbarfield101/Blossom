@@ -15,14 +15,23 @@ interface Quote {
   error?: string;
 }
 
+interface NewsArticle {
+  title: string;
+  link: string;
+  timestamp: number;
+  summary: string;
+}
+
 interface StockState {
   quotes: Record<string, Quote>;
   pollers: Record<string, ReturnType<typeof setInterval>>;
   symbols: string[];
+  news: Record<string, { articles: NewsArticle[]; lastFetched: number }>;
   fetchQuote: (symbol: string) => Promise<number>;
   startPolling: (symbol: string, interval?: number) => void;
   stopPolling: (symbol: string) => void;
   forecast: (symbol: string) => Promise<string>;
+  fetchNews: (symbol: string) => Promise<NewsArticle[]>;
   addStock: (symbol: string) => void;
   removeStock: (symbol: string) => void;
 }
@@ -31,6 +40,7 @@ export const useStocks = create<StockState>((set, get) => ({
   quotes: {},
   pollers: {},
   symbols: [],
+  news: {},
   fetchQuote: async (symbol) => {
     const sym = symbol.toUpperCase();
     const fetchSym = SYMBOL_MAP[sym] ?? sym;
@@ -80,6 +90,24 @@ export const useStocks = create<StockState>((set, get) => ({
       return NaN;
     }
   },
+  fetchNews: async (symbol) => {
+    const sym = symbol.toUpperCase();
+    const cached = get().news[sym];
+    if (cached && Date.now() - cached.lastFetched < 15 * 60 * 1000) {
+      return cached.articles;
+    }
+    try {
+      const articles = await invoke<NewsArticle[]>('fetch_stock_news', {
+        symbol: sym,
+      });
+      set((state) => ({
+        news: { ...state.news, [sym]: { articles, lastFetched: Date.now() } },
+      }));
+      return articles;
+    } catch {
+      return [];
+    }
+  },
   startPolling: (symbol, interval = 15000) => {
     const sym = symbol.toUpperCase();
     const { pollers } = get();
@@ -124,4 +152,4 @@ export const useStocks = create<StockState>((set, get) => ({
   },
 }));
 
-export type { Quote, StockState };
+export type { Quote, StockState, NewsArticle };
