@@ -1,6 +1,6 @@
 // src-tauri/src/commands.rs
 use std::{
-    fs,
+    env, fs,
     io::{BufRead, BufReader, Read},
     path::PathBuf,
     process::{Child, Command as PCommand, Stdio},
@@ -164,6 +164,7 @@ Python paths
 pub struct AppConfig {
     pub python_path: Option<String>,
     pub comfy_path: Option<String>,
+    pub alphavantage_api_key: Option<String>,
 }
 
 fn config_path() -> PathBuf {
@@ -181,6 +182,12 @@ fn load_config() -> AppConfig {
     } else {
         AppConfig::default()
     }
+}
+
+fn alphavantage_api_key() -> Option<String> {
+    env::var("ALPHAVANTAGE_API_KEY")
+        .ok()
+        .or_else(|| load_config().alphavantage_api_key)
 }
 
 fn save_config(cfg: &AppConfig) -> Result<(), String> {
@@ -961,7 +968,9 @@ pub async fn stock_forecast<R: Runtime>(
     let long_summary = long_parts.join(", ");
 
     // news headlines
-    let articles = fetch_stock_news(sym.clone()).await.unwrap_or_else(|_| vec![]);
+    let articles = fetch_stock_news(sym.clone())
+        .await
+        .unwrap_or_else(|_| vec![]);
     let news_summary = if articles.is_empty() {
         String::from("No major news")
     } else {
@@ -986,11 +995,10 @@ pub async fn stock_forecast<R: Runtime>(
     )
     .await?;
 
-    let forecast: StockForecast =
-        serde_json::from_str(&reply).unwrap_or(StockForecast {
-            short_term: reply.clone(),
-            long_term: String::new(),
-        });
+    let forecast: StockForecast = serde_json::from_str(&reply).unwrap_or(StockForecast {
+        short_term: reply.clone(),
+        long_term: String::new(),
+    });
     Ok(forecast)
 }
 
@@ -1005,8 +1013,9 @@ pub struct NewsArticle {
 #[tauri::command]
 pub async fn fetch_stock_news(symbol: String) -> Result<Vec<NewsArticle>, String> {
     let sym = symbol.to_uppercase();
+    let api_key = alphavantage_api_key().ok_or("AlphaVantage API key not set")?;
     let url = format!(
-        "https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers={sym}&apikey=demo"
+        "https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers={sym}&apikey={api_key}"
     );
     let resp = reqwest::get(&url).await.map_err(|e| e.to_string())?;
     let json: Value = resp.json().await.map_err(|e| e.to_string())?;
