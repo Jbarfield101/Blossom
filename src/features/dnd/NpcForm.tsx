@@ -18,21 +18,19 @@ export default function NpcForm() {
   const [voicePreset, setVoicePreset] = useState("");
   const [portrait, setPortrait] = useState("");
   const [statblock, setStatblock] = useState("{}");
-  const [statblockError, setStatblockError] = useState<string | null>(null);
-  const [voiceStyleError, setVoiceStyleError] = useState<string | null>(null);
-  const [voiceProviderError, setVoiceProviderError] = useState<string | null>(null);
-  const [voicePresetError, setVoicePresetError] = useState<string | null>(null);
   const [tags, setTags] = useState("");
+  const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [result, setResult] = useState<NpcData | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
     let parsedStatblock: Record<string, unknown> = {};
     try {
       parsedStatblock = JSON.parse(statblock || "{}");
-      setStatblockError(null);
     } catch {
-      setStatblockError("Invalid JSON");
+      setErrors({ statblock: "Invalid JSON" });
+      setResult(null);
       return;
     }
 
@@ -56,22 +54,17 @@ export default function NpcForm() {
       tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
     };
 
-    setVoiceStyleError(null);
-    setVoiceProviderError(null);
-    setVoicePresetError(null);
-
     try {
       const parsed = zNpc.parse(data);
       setResult(parsed);
     } catch (err) {
       setResult(null);
       if (err instanceof z.ZodError) {
+        const fieldErrors: Record<string, string | null> = {};
         err.issues.forEach((issue) => {
-          const path = issue.path.join(".");
-          if (path === "voice.style") setVoiceStyleError(issue.message);
-          if (path === "voice.provider") setVoiceProviderError(issue.message);
-          if (path === "voice.preset") setVoicePresetError(issue.message);
+          fieldErrors[issue.path.join(".")] = issue.message;
         });
+        setErrors(fieldErrors);
       }
     }
   };
@@ -82,30 +75,50 @@ export default function NpcForm() {
       <TextField
         label="Name"
         value={name}
-        onChange={(e) => setName(e.target.value)}
+        onChange={(e) => {
+          setName(e.target.value);
+          setErrors((prev) => ({ ...prev, name: null }));
+        }}
         fullWidth
         margin="normal"
+        error={Boolean(errors.name)}
+        helperText={errors.name}
       />
       <TextField
         label="Species"
         value={species}
-        onChange={(e) => setSpecies(e.target.value)}
+        onChange={(e) => {
+          setSpecies(e.target.value);
+          setErrors((prev) => ({ ...prev, species: null }));
+        }}
         fullWidth
         margin="normal"
+        error={Boolean(errors.species)}
+        helperText={errors.species}
       />
       <TextField
         label="Role"
         value={role}
-        onChange={(e) => setRole(e.target.value)}
+        onChange={(e) => {
+          setRole(e.target.value);
+          setErrors((prev) => ({ ...prev, role: null }));
+        }}
         fullWidth
         margin="normal"
+        error={Boolean(errors.role)}
+        helperText={errors.role}
       />
       <TextField
         label="Alignment"
         value={alignment}
-        onChange={(e) => setAlignment(e.target.value)}
+        onChange={(e) => {
+          setAlignment(e.target.value);
+          setErrors((prev) => ({ ...prev, alignment: null }));
+        }}
         fullWidth
         margin="normal"
+        error={Boolean(errors.alignment)}
+        helperText={errors.alignment}
       />
       <TextField
         label="Backstory"
@@ -124,9 +137,14 @@ export default function NpcForm() {
       <TextField
         label="Hooks (comma separated)"
         value={hooks}
-        onChange={(e) => setHooks(e.target.value)}
+        onChange={(e) => {
+          setHooks(e.target.value);
+          setErrors((prev) => ({ ...prev, hooks: null }));
+        }}
         fullWidth
         margin="normal"
+        error={Boolean(errors.hooks)}
+        helperText={errors.hooks}
       />
       <TextField
         label="Quirks (comma separated)"
@@ -140,36 +158,36 @@ export default function NpcForm() {
         value={voiceStyle}
         onChange={(e) => {
           setVoiceStyle(e.target.value);
-          setVoiceStyleError(null);
+          setErrors((prev) => ({ ...prev, ["voice.style"]: null }));
         }}
         fullWidth
         margin="normal"
-        error={Boolean(voiceStyleError)}
-        helperText={voiceStyleError}
+        error={Boolean(errors["voice.style"])}
+        helperText={errors["voice.style"]}
       />
       <TextField
         label="Voice Provider"
         value={voiceProvider}
         onChange={(e) => {
           setVoiceProvider(e.target.value);
-          setVoiceProviderError(null);
+          setErrors((prev) => ({ ...prev, ["voice.provider"]: null }));
         }}
         fullWidth
         margin="normal"
-        error={Boolean(voiceProviderError)}
-        helperText={voiceProviderError}
+        error={Boolean(errors["voice.provider"])}
+        helperText={errors["voice.provider"]}
       />
       <TextField
         label="Voice Preset"
         value={voicePreset}
         onChange={(e) => {
           setVoicePreset(e.target.value);
-          setVoicePresetError(null);
+          setErrors((prev) => ({ ...prev, ["voice.preset"]: null }));
         }}
         fullWidth
         margin="normal"
-        error={Boolean(voicePresetError)}
-        helperText={voicePresetError}
+        error={Boolean(errors["voice.preset"])}
+        helperText={errors["voice.preset"]}
       />
       <TextField
         label="Portrait URL"
@@ -183,20 +201,25 @@ export default function NpcForm() {
         value={statblock}
         onChange={(e) => {
           setStatblock(e.target.value);
-          setStatblockError(null);
+          setErrors((prev) => ({ ...prev, statblock: null }));
         }}
         fullWidth
         margin="normal"
         multiline
-        error={Boolean(statblockError)}
-        helperText={statblockError}
+        error={Boolean(errors.statblock)}
+        helperText={errors.statblock}
       />
       <TextField
         label="Tags (comma separated)"
         value={tags}
-        onChange={(e) => setTags(e.target.value)}
+        onChange={(e) => {
+          setTags(e.target.value);
+          setErrors((prev) => ({ ...prev, tags: null }));
+        }}
         fullWidth
         margin="normal"
+        error={Boolean(errors.tags)}
+        helperText={errors.tags}
       />
       <Button type="submit" variant="contained" sx={{ mt: 2 }}>
         Submit
