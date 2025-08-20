@@ -151,6 +151,12 @@ def _normalize_instruments(instrs):
         "panflute": "pan flute",
         "pan pipes": "pan flute",
         "panpipes": "pan flute",
+        "electric organ": "wurlitzer",
+        "music box": "celesta",
+        "bass clarinet": "clarinet",
+        "jazz guitar comping": "muted electric guitar",
+        "jazz guitar": "muted electric guitar",
+        "muted guitar": "muted electric guitar",
     }
     canon = [
         "electric piano",
@@ -172,6 +178,19 @@ def _normalize_instruments(instrs):
         "harp",
         "lute",
         "pan flute",
+        "brush kit",
+        "shaker",
+        "tambourine",
+        "808 sub-kick",
+        "wurlitzer",
+        "celesta",
+        "vibraphone",
+        "marimba",
+        "muted electric guitar",
+        "muted trumpet",
+        "clarinet",
+        "field recordings",
+        "synth plucks",
     ]
     out = []
     for s in (instrs or []):
@@ -843,6 +862,10 @@ def _apply_melody_timbre(x, instrs):
         return _butter_highpass(_butter_lowpass(x, 8000), 1000)
     if "saxophone" in instrs:
         return _butter_bandpass(x, 300, 5000)
+    if "clarinet" in instrs:
+        return _butter_bandpass(x, 200, 5000)
+    if "muted trumpet" in instrs:
+        return _butter_bandpass(x, 400, 6000)
     if "trumpet" in instrs:
         return _butter_bandpass(x, 500, 7000)
     if "harp" in instrs or "lute" in instrs:
@@ -1154,6 +1177,18 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
         s = _load_ambience_sample("street", n, rng=rng)
         if s is not None:
             amb_mix += s
+    if "birds" in amb_list:
+        b = _load_ambience_sample("birds", n, rng=rng)
+        if b is not None:
+            amb_mix += b
+    if "cicadas" in amb_list:
+        ci = _load_ambience_sample("cicadas", n, rng=rng)
+        if ci is not None:
+            amb_mix += ci
+    if "train" in amb_list:
+        tr = _load_ambience_sample("train", n, rng=rng)
+        if tr is not None:
+            amb_mix += tr
 
     if "vinyl sounds" in instrs:
         amb_mix += 0.5 * _vinyl_crackle(n, density=0.0015, ticky=0.004, rng=rng)
