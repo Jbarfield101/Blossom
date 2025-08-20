@@ -116,6 +116,13 @@ impl Provider for YahooProvider {
         );
         let start = Instant::now();
         let resp = reqwest::get(&url).await.map_err(|e| e.to_string())?;
+        if !resp.status().is_success() {
+            return Err(format!(
+                "failed to fetch quote for {}: HTTP {}",
+                ticker,
+                resp.status()
+            ));
+        }
         let size = resp.content_length().unwrap_or_default();
         let json: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
         let result = json["quoteResponse"]["result"].get(0).ok_or("no result")?;
@@ -155,6 +162,13 @@ impl Provider for YahooProvider {
         );
         let start = Instant::now();
         let resp = reqwest::get(&url).await.map_err(|e| e.to_string())?;
+        if !resp.status().is_success() {
+            return Err(format!(
+                "failed to fetch series for {}: HTTP {}",
+                ticker,
+                resp.status()
+            ));
+        }
         let size = resp.content_length().unwrap_or_default();
         let json: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
         let result = json["chart"]["result"].get(0).ok_or("no result")?;
