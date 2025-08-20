@@ -22,6 +22,11 @@ interface NewsArticle {
   summary: string;
 }
 
+interface Forecast {
+  shortTerm: string;
+  longTerm: string;
+}
+
 interface StockState {
   quotes: Record<string, Quote>;
   pollers: Record<string, ReturnType<typeof setInterval>>;
@@ -30,7 +35,7 @@ interface StockState {
   fetchQuote: (symbol: string) => Promise<number>;
   startPolling: (symbol: string, interval?: number) => void;
   stopPolling: (symbol: string) => void;
-  forecast: (symbol: string) => Promise<string>;
+  forecast: (symbol: string) => Promise<Forecast>;
   fetchNews: (symbol: string) => Promise<NewsArticle[]>;
   addStock: (symbol: string) => void;
   removeStock: (symbol: string) => void;
@@ -131,9 +136,12 @@ export const useStocks = create<StockState>((set, get) => ({
   forecast: async (symbol) => {
     const sym = symbol.toUpperCase();
     try {
-      return await invoke<string>('stock_forecast', { symbol: sym });
+      return await invoke<Forecast>('stock_forecast', { symbol: sym });
     } catch {
-      return 'Forecast currently unavailable.';
+      return {
+        shortTerm: 'Forecast currently unavailable.',
+        longTerm: 'Forecast currently unavailable.',
+      };
     }
   },
   addStock: (symbol) => {
@@ -152,4 +160,4 @@ export const useStocks = create<StockState>((set, get) => ({
   },
 }));
 
-export type { Quote, StockState, NewsArticle };
+export type { Quote, StockState, NewsArticle, Forecast };

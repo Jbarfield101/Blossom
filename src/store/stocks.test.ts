@@ -68,17 +68,30 @@ describe('useStocks store', () => {
   });
 
   it('requests a forecast from the backend', async () => {
-    (invoke as any).mockResolvedValue('Uptrend');
+    (invoke as any).mockResolvedValue({ shortTerm: 'Up', longTerm: 'Down' });
     const result = await useStocks.getState().forecast('goog');
-    expect(result).toBe('Uptrend');
+    expect(result).toEqual({ shortTerm: 'Up', longTerm: 'Down' });
     expect(invoke).toHaveBeenCalledWith('stock_forecast', { symbol: 'GOOG' });
   });
 
   it('returns a friendly message when forecast fails', async () => {
     (invoke as any).mockRejectedValue(new Error('fail'));
     const result = await useStocks.getState().forecast('goog');
-    expect(result).toBe('Forecast currently unavailable.');
+    expect(result.shortTerm).toBe('Forecast currently unavailable.');
+    expect(result.longTerm).toBe('Forecast currently unavailable.');
     expect(invoke).toHaveBeenCalledWith('stock_forecast', { symbol: 'GOOG' });
+  });
+
+  it('fetches and caches news', async () => {
+    const articles = [{ title: 't', link: 'l', timestamp: 1, summary: 's' }];
+    (invoke as any).mockResolvedValue(articles);
+    const first = await useStocks.getState().fetchNews('msft');
+    expect(first).toEqual(articles);
+    expect(invoke).toHaveBeenCalledWith('fetch_stock_news', { symbol: 'MSFT' });
+    (invoke as any).mockClear();
+    const second = await useStocks.getState().fetchNews('msft');
+    expect(second).toEqual(articles);
+    expect(invoke).not.toHaveBeenCalled();
   });
 
   it('adds and removes symbols', () => {
