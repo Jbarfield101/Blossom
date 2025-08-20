@@ -46,6 +46,14 @@ fn conda_python() -> PathBuf {
 Activate your Python environment first. The high‑quality generator lives at
 `src-tauri/python/lofi_gpu_hq.py`.
 
+## Testing
+
+Run the test suite to verify the application:
+
+```bash
+npm test
+```
+
 ## Configuration and optional features
 
 - **Paths:** Set the ComfyUI directory in the Settings page and edit
