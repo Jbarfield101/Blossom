@@ -11,7 +11,7 @@ import { themes, themeStyles } from "./theme";
 
 export default function EncounterForm() {
   const [name, setName] = useState("");
-  const [level, setLevel] = useState("");
+  const [level, setLevel] = useState<number | undefined>();
   const [creatures, setCreatures] = useState("");
   const [tactics, setTactics] = useState("");
   const [terrain, setTerrain] = useState("");
@@ -19,13 +19,14 @@ export default function EncounterForm() {
   const [scaling, setScaling] = useState("");
   const [theme, setTheme] = useState<DndTheme>("Parchment");
   const [result, setResult] = useState<EncounterData | null>(null);
+  const [errors, setErrors] = useState<{ level?: string }>({});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const data: EncounterData = {
       id: crypto.randomUUID(),
       name,
-      level: Number(level),
+      level: level ?? NaN,
       creatures: creatures.split(",").map((c) => c.trim()).filter(Boolean),
       tactics,
       terrain,
@@ -33,8 +34,15 @@ export default function EncounterForm() {
       scaling,
       theme,
     };
-    const parsed = zEncounter.parse(data);
-    setResult(parsed);
+    const parsed = zEncounter.safeParse(data);
+    if (!parsed.success) {
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      setErrors({ level: fieldErrors.level?.[0] });
+      setResult(null);
+      return;
+    }
+    setErrors({});
+    setResult(parsed.data);
   };
 
   return (
@@ -49,8 +57,15 @@ export default function EncounterForm() {
       />
       <TextField
         label="Level"
-        value={level}
-        onChange={(e) => setLevel(e.target.value)}
+        type="number"
+        value={level ?? ""}
+        onChange={(e) => {
+          const val = e.target.value;
+          setLevel(val === "" ? undefined : Number(val));
+          setErrors((prev) => ({ ...prev, level: undefined }));
+        }}
+        error={!!errors.level}
+        helperText={errors.level}
         fullWidth
         margin="normal"
       />

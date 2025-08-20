@@ -11,26 +11,27 @@ import { themes, themeStyles } from "./theme";
 
 export default function QuestForm() {
   const [name, setName] = useState("");
-  const [tier, setTier] = useState("");
+  const [tier, setTier] = useState<number | undefined>();
   const [summary, setSummary] = useState("");
   const [beats, setBeats] = useState("");
-  const [gp, setGp] = useState("");
+  const [gp, setGp] = useState<number | undefined>();
   const [items, setItems] = useState("");
   const [favors, setFavors] = useState("");
   const [complications, setComplications] = useState("");
   const [theme, setTheme] = useState<DndTheme>("Parchment");
   const [result, setResult] = useState<QuestData | null>(null);
+  const [errors, setErrors] = useState<{ tier?: string; gp?: string }>({});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const data: QuestData = {
       id: crypto.randomUUID(),
       name,
-      tier: Number(tier),
+      tier: tier ?? NaN,
       summary,
       beats: beats.split(",").map((b) => b.trim()).filter(Boolean),
       rewards: {
-        gp: gp ? Number(gp) : undefined,
+        gp,
         items: items || undefined,
         favors: favors || undefined,
       },
@@ -40,8 +41,18 @@ export default function QuestForm() {
         .filter(Boolean),
       theme,
     };
-    const parsed = zQuest.parse(data);
-    setResult(parsed);
+    const parsed = zQuest.safeParse(data);
+    if (!parsed.success) {
+      const formatted = parsed.error.format();
+      setErrors({
+        tier: formatted.tier?._errors[0],
+        gp: formatted.rewards?.gp?._errors[0],
+      });
+      setResult(null);
+      return;
+    }
+    setErrors({});
+    setResult(parsed.data);
   };
 
   return (
@@ -56,8 +67,15 @@ export default function QuestForm() {
       />
       <TextField
         label="Tier"
-        value={tier}
-        onChange={(e) => setTier(e.target.value)}
+        type="number"
+        value={tier ?? ""}
+        onChange={(e) => {
+          const val = e.target.value;
+          setTier(val === "" ? undefined : Number(val));
+          setErrors((prev) => ({ ...prev, tier: undefined }));
+        }}
+        error={!!errors.tier}
+        helperText={errors.tier}
         fullWidth
         margin="normal"
       />
@@ -77,8 +95,15 @@ export default function QuestForm() {
       />
       <TextField
         label="Reward GP"
-        value={gp}
-        onChange={(e) => setGp(e.target.value)}
+        type="number"
+        value={gp ?? ""}
+        onChange={(e) => {
+          const val = e.target.value;
+          setGp(val === "" ? undefined : Number(val));
+          setErrors((prev) => ({ ...prev, gp: undefined }));
+        }}
+        error={!!errors.gp}
+        helperText={errors.gp}
         fullWidth
         margin="normal"
       />
