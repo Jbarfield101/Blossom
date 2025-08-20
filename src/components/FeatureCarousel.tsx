@@ -71,13 +71,29 @@ export default function FeatureCarousel({
     go(e.deltaY > 0 ? 1 : -1);
   };
 
+  // keyboard navigation: Up/Left for previous, Down/Right for next
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+      go(-1);
+    }
+    if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+      go(1);
+    }
+  };
+
   // layout constants
   const GAP = 140; // distance between items
   const SCALE_MID = 1.05; // center scale
   const SCALE_SIDE = 0.7; // side scale
 
     return (
-      <Box onWheel={onWheel} sx={carouselContainerSx}>
+      <Box
+        onWheel={onWheel}
+        onKeyDown={onKeyDown}
+        tabIndex={0}
+        role="listbox"
+        sx={carouselContainerSx}
+      >
         {/* items */}
         <Box sx={carouselItemsWrapperSx}>
           {len > 0 && [-2, -1, 0, 1, 2].map((offset) => {
