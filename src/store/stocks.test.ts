@@ -29,6 +29,17 @@ describe('useStocks store', () => {
     expect(invoke).toHaveBeenCalledWith('stocks_fetch', { tickers: ['AAPL'], range: '1d' });
   });
 
+  it('captures quote errors from the backend', async () => {
+    (invoke as any).mockResolvedValue({
+      quotes: [{ price: 0, change_percent: 0, status: 'CLOSED', error: 'fail' }],
+      series: [{ points: [] }],
+      market: { phase: 'CLOSED' },
+      stale: false,
+    });
+    await useStocks.getState().fetchQuote('AAPL');
+    expect(useStocks.getState().quotes['AAPL'].error).toBe('fail');
+  });
+
   it('stores an error when backend call fails', async () => {
     (invoke as any).mockRejectedValue(new Error('boom'));
     const price = await useStocks.getState().fetchQuote('AAPL');

@@ -12,6 +12,7 @@ interface Quote {
   history: number[];
   marketStatus: string;
   lastFetched: number;
+  // Optional error message from backend
   error?: string;
 }
 
@@ -51,7 +52,7 @@ export const useStocks = create<StockState>((set, get) => ({
     const fetchSym = SYMBOL_MAP[sym] ?? sym;
     try {
       const bundle = await invoke<{
-        quotes: { price: number; change_percent: number; status: string }[];
+        quotes: { price: number; change_percent: number; status: string; error?: string }[];
         series: { points: { ts: number; close: number }[] }[];
         market: { phase: string };
         stale: boolean;
@@ -69,7 +70,7 @@ export const useStocks = create<StockState>((set, get) => ({
             history,
             marketStatus: market_status,
             lastFetched: Date.now(),
-            error: undefined,
+            error: quote?.error,
           },
         },
       }));
