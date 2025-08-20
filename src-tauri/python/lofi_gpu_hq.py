@@ -226,7 +226,11 @@ def loudness_normalize_lufs(audio: AudioSegment, target_lufs: float = -14.0) -> 
     return audio.apply_gain(gain_needed)
 
 def enhanced_post_process_chain(
-    audio: AudioSegment, rng=None, drive: float = 1.02, dither_amount: float = 1.0
+    audio: AudioSegment,
+    rng=None,
+    drive: float = 1.02,
+    dither_amount: float = 1.0,
+    wow_flutter: Optional[Dict[str, float]] = None,
 ) -> AudioSegment:
     """Darker, warmer finishing chain for lofi character.
 
@@ -248,7 +252,10 @@ def enhanced_post_process_chain(
     drv = drive
     if drive is None and rng is not None:
         drv = float(rng.uniform(0.98, 1.04))
-    a = apply_wow_flutter(a, rng=rng)
+    if wow_flutter:
+        a = apply_wow_flutter(a, **wow_flutter)
+    else:
+        a = apply_wow_flutter(a, rng=rng)
     a = apply_tape_saturation(a, drive=drv)
     a = apply_soft_limit(a, drive=drv)
 
@@ -1362,6 +1369,18 @@ FORM_TEMPLATES: Dict[str, List[Dict[str, Any]]] = {
 
 def render_from_spec(spec: Dict[str, Any]) -> Tuple[AudioSegment, int]:
     """Build a song from a SongSpec dict and return the audio and BPM."""
+    preset_name = spec.get("preset")
+    if preset_name:
+        try:
+            preset_path = os.path.join(os.path.dirname(__file__), "presets.json")
+            with open(preset_path, "r", encoding="utf-8") as f:
+                presets = json.load(f)
+            preset = presets.get(preset_name)
+            if preset:
+                for k, v in preset.items():
+                    spec.setdefault(k, v)
+        except Exception:
+            pass
     bpm = int(spec.get("bpm", 80))
     seed = int(spec.get("seed", 12345))
 
@@ -1455,8 +1474,13 @@ def render_from_spec(spec: Dict[str, Any]) -> Tuple[AudioSegment, int]:
     )
     print(json.dumps({"stage": "post", "message": "cleaning audio"}))
     post_rng = np.random.default_rng((seed ^ 0x5A5A5A5A) & 0xFFFFFFFF)
+    wow_cfg = spec.get("wow_flutter")
     song = enhanced_post_process_chain(
-        song, rng=post_rng, drive=limiter_drive, dither_amount=dither_amt
+        song,
+        rng=post_rng,
+        drive=limiter_drive,
+        dither_amount=dither_amt,
+        wow_flutter=wow_cfg,
     )
     return song, bpm
 
