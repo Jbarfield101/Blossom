@@ -363,19 +363,29 @@ async fn save_series_db(
 // ========================
 
 fn compute_market_clock() -> MarketClock {
+    use nyse_holiday_cal::HolidayCal;
+
+    fn is_market_holiday(d: chrono::NaiveDate) -> bool {
+        d.holiday().ok().flatten().is_some()
+    }
+
     fn next_trading_day(mut d: chrono::NaiveDate) -> chrono::NaiveDate {
         loop {
             d = d + chrono::Duration::days(1);
-            match d.weekday() {
-                chrono::Weekday::Sat | chrono::Weekday::Sun => continue,
-                _ => break d,
+            if matches!(d.weekday(), chrono::Weekday::Sat | chrono::Weekday::Sun) {
+                continue;
             }
+            if is_market_holiday(d) {
+                continue;
+            }
+            break d;
         }
     }
 
     let now_ny = Utc::now().with_timezone(&New_York);
     let weekday = now_ny.weekday();
     let date = now_ny.date_naive();
+    let is_holiday = is_market_holiday(date);
     let pre_start = New_York
         .from_local_datetime(&date.and_hms_opt(4, 0, 0).unwrap())
         .unwrap();
@@ -389,8 +399,10 @@ fn compute_market_clock() -> MarketClock {
         .from_local_datetime(&date.and_hms_opt(20, 0, 0).unwrap())
         .unwrap();
 
+    let is_weekend = matches!(weekday, chrono::Weekday::Sat | chrono::Weekday::Sun);
+
     let (phase, next_open, next_close) =
-        if weekday == chrono::Weekday::Sat || weekday == chrono::Weekday::Sun {
+        if is_weekend || is_holiday {
             let next_day = next_trading_day(date);
             let next_open = New_York
                 .from_local_datetime(&next_day.and_hms_opt(9, 30, 0).unwrap())
