@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Box, IconButton, Stack, TextField, Typography } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 
@@ -11,6 +11,7 @@ interface Message {
 export default function HomeChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const send = () => {
     const trimmed = input.trim();
@@ -26,6 +27,9 @@ export default function HomeChat() {
       content: "Assistant features are not connected yet.",
     };
     setMessages((prev) => [...prev, userMsg, asstMsg]);
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
     setInput("");
   };
 
@@ -45,7 +49,7 @@ export default function HomeChat() {
         gap: 1,
       }}
     >
-      <Box sx={{ flex: 1, overflowY: "auto" }}>
+      <Box ref={scrollRef} sx={{ flex: 1, overflowY: "auto" }}>
         {messages.map((m) => (
           <Typography
             key={m.id}
