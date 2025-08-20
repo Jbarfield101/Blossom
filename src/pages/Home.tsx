@@ -6,6 +6,7 @@ import HoverCircle from "../components/HoverCircle";
 import FeatureCarousel from "../components/FeatureCarousel";
 import VersionBadge from "../components/VersionBadge";
 import { Theme, useTheme } from "../features/theme/ThemeContext";
+import HomeChat from "../components/HomeChat";
 
 export default function Home() {
   const { theme } = useTheme();
@@ -70,6 +71,9 @@ export default function Home() {
 
       {/* Carousel icons */}
       <FeatureCarousel onHoverColor={setHoverColor} />
+
+      {/* Floating chat box */}
+      <HomeChat />
     </>
   );
 }
