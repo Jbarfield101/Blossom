@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, cleanup } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import SongForm from './SongForm';
+import SongForm, { PRESET_TEMPLATES } from './SongForm';
 import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
@@ -185,6 +185,19 @@ describe('SongForm', () => {
     await waitFor(() => expect(invoke).toHaveBeenCalled());
     const call = (invoke as any).mock.calls.find(([c]: any) => c === 'run_lofi_song');
     expect(call[1].spec.lead_instrument).toBe('flute');
+  });
+
+  it('exports an odd-bar through-composed preset', () => {
+    expect(PRESET_TEMPLATES['Odd Odyssey'].structure.map((s) => s.bars)).toEqual([
+      4,
+      7,
+      5,
+      7,
+      5,
+      7,
+      5,
+      4,
+    ]);
   });
 
   it('calls generate_album when album mode enabled', async () => {
