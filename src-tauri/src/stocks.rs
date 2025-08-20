@@ -4,6 +4,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
+use futures::future::join_all;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use sqlx::sqlite::SqlitePoolOptions;
@@ -471,171 +472,188 @@ pub async fn stocks_fetch<R: Runtime>(
     let range = Range::parse(&range).ok_or_else(|| "bad range".to_string())?;
 
     sweep_cache().await;
-    let provider = provider_from_env();
-    let pool = get_pool();
+    let provider: Arc<dyn Provider> = provider_from_env().into();
+    let pool = get_pool().clone();
+
+    let futures: Vec<_> = tickers
+        .into_iter()
+        .filter_map(|t| {
+            let ticker = t.trim().to_uppercase();
+            if ticker.is_empty() {
+                return None;
+            }
+            let provider = provider.clone();
+            let pool = pool.clone();
+            let range = range.clone();
+            Some(async move {
+                let mut stale = false;
+
+                // Quote
+                let quote = {
+                    let mut cached = {
+                        let cache = QUOTE_CACHE.lock().await;
+                        cache.get(&ticker).and_then(|(q, ts)| {
+                            if ts.elapsed() < QUOTE_TTL {
+                                QUOTE_HIT.fetch_add(1, Ordering::Relaxed);
+                                Some(q.clone())
+                            } else {
+                                None
+                            }
+                        })
+                    };
+                    if cached.is_none() {
+                        QUOTE_MISS.fetch_add(1, Ordering::Relaxed);
+                        let lock = {
+                            let mut locks = QUOTE_LOCKS.lock().await;
+                            locks
+                                .entry(ticker.clone())
+                                .or_insert_with(|| Arc::new(Mutex::new(())))
+                                .clone()
+                        };
+                        let _guard = lock.lock().await;
+                        if cached.is_none() {
+                            {
+                                let cache = QUOTE_CACHE.lock().await;
+                                if let Some((q, ts)) = cache.get(&ticker) {
+                                    if ts.elapsed() < QUOTE_TTL {
+                                        QUOTE_HIT.fetch_add(1, Ordering::Relaxed);
+                                        cached = Some(q.clone());
+                                    }
+                                }
+                            }
+                        }
+                        if cached.is_none() {
+                            let fetch_start = Instant::now();
+                            let fetched = provider.fetch_quote(&ticker).await;
+                            let q = match fetched {
+                                Ok(q) => {
+                                    let _ = save_quote_db(&pool, &q).await;
+                                    q
+                                }
+                                Err(e) => {
+                                    stale = true;
+                                    let mut q =
+                                        load_quote_db(&pool, &ticker).await.unwrap_or(Quote {
+                                            ticker: ticker.clone(),
+                                            price: 0.0,
+                                            change_percent: 0.0,
+                                            status: "error".into(),
+                                            error: None,
+                                        });
+                                    q.error = Some(e.clone());
+                                    q
+                                }
+                            };
+                            {
+                                let mut cache = QUOTE_CACHE.lock().await;
+                                cache.insert(ticker.clone(), (q.clone(), Instant::now()));
+                            }
+                            let ms = fetch_start.elapsed().as_millis() as u64;
+                            QUOTE_FETCH_MS.fetch_add(ms, Ordering::Relaxed);
+                            QUOTE_FETCH_COUNT.fetch_add(1, Ordering::Relaxed);
+                            println!("quote {} total {} ms", ticker, ms);
+                            q
+                        } else {
+                            cached.unwrap()
+                        }
+                    } else {
+                        cached.unwrap()
+                    }
+                };
+
+                // Series
+                let series = {
+                    let key = (ticker.clone(), range.clone());
+                    let mut cached = {
+                        let cache = SERIES_CACHE.lock().await;
+                        cache.get(&key).and_then(|(pts, ts)| {
+                            if ts.elapsed() < SERIES_TTL {
+                                SERIES_HIT.fetch_add(1, Ordering::Relaxed);
+                                Some(pts.clone())
+                            } else {
+                                None
+                            }
+                        })
+                    };
+                    let points = if cached.is_some() {
+                        cached.unwrap()
+                    } else {
+                        SERIES_MISS.fetch_add(1, Ordering::Relaxed);
+                        let lock = {
+                            let mut locks = SERIES_LOCKS.lock().await;
+                            locks
+                                .entry(key.clone())
+                                .or_insert_with(|| Arc::new(Mutex::new(())))
+                                .clone()
+                        };
+                        let _guard = lock.lock().await;
+                        if cached.is_none() {
+                            {
+                                let cache = SERIES_CACHE.lock().await;
+                                if let Some((pts, ts)) = cache.get(&key) {
+                                    if ts.elapsed() < SERIES_TTL {
+                                        SERIES_HIT.fetch_add(1, Ordering::Relaxed);
+                                        cached = Some(pts.clone());
+                                    }
+                                }
+                            }
+                        }
+                        if let Some(p) = cached {
+                            p
+                        } else {
+                            let fetch_start = Instant::now();
+                            let res = provider.fetch_series(&ticker, &range).await;
+                            let p = match res {
+                                Ok(p) => {
+                                    let _ = save_series_db(&pool, &ticker, &range, &p).await;
+                                    {
+                                        let mut cache = SERIES_CACHE.lock().await;
+                                        cache.insert(key.clone(), (p.clone(), Instant::now()));
+                                    }
+                                    p
+                                }
+                                Err(e) => {
+                                    stale = true;
+                                    load_series_db(&pool, &ticker, &range).await.unwrap_or_else(
+                                        || {
+                                            println!("series {} error {}", ticker, e);
+                                            Vec::new()
+                                        },
+                                    )
+                                }
+                            };
+                            let ms = fetch_start.elapsed().as_millis() as u64;
+                            SERIES_FETCH_MS.fetch_add(ms, Ordering::Relaxed);
+                            SERIES_FETCH_COUNT.fetch_add(1, Ordering::Relaxed);
+                            println!("series {} total {} ms", ticker, ms);
+                            p
+                        }
+                    };
+                    let status = if points.is_empty() {
+                        "error".into()
+                    } else {
+                        "ok".into()
+                    };
+                    Series {
+                        ticker: ticker.clone(),
+                        range: range.clone(),
+                        points,
+                        status,
+                    }
+                };
+
+                (quote, series, stale)
+            })
+        })
+        .collect();
 
     let mut quotes = Vec::new();
     let mut series_vec = Vec::new();
     let mut stale_bundle = false;
-
-    for t in tickers {
-        let ticker = t.trim().to_uppercase();
-        if ticker.is_empty() {
-            continue;
+    for (quote, series, stale) in join_all(futures).await {
+        if stale {
+            stale_bundle = true;
         }
-        // Quote
-        let quote = {
-            let mut cached = {
-                let cache = QUOTE_CACHE.lock().await;
-                cache.get(&ticker).and_then(|(q, ts)| {
-                    if ts.elapsed() < QUOTE_TTL {
-                        QUOTE_HIT.fetch_add(1, Ordering::Relaxed);
-                        Some(q.clone())
-                    } else {
-                        None
-                    }
-                })
-            };
-            if cached.is_none() {
-                QUOTE_MISS.fetch_add(1, Ordering::Relaxed);
-                let lock = {
-                    let mut locks = QUOTE_LOCKS.lock().await;
-                    locks
-                        .entry(ticker.clone())
-                        .or_insert_with(|| Arc::new(Mutex::new(())))
-                        .clone()
-                };
-                let _guard = lock.lock().await;
-                if cached.is_none() {
-                    {
-                        let cache = QUOTE_CACHE.lock().await;
-                        if let Some((q, ts)) = cache.get(&ticker) {
-                            if ts.elapsed() < QUOTE_TTL {
-                                QUOTE_HIT.fetch_add(1, Ordering::Relaxed);
-                                cached = Some(q.clone());
-                            }
-                        }
-                    }
-                }
-                if cached.is_none() {
-                    let fetch_start = Instant::now();
-                    let fetched = provider.fetch_quote(&ticker).await;
-                    let q = match fetched {
-                        Ok(q) => {
-                            let _ = save_quote_db(pool, &q).await;
-                            q
-                        }
-                        Err(e) => {
-                            stale_bundle = true;
-                            let mut q = load_quote_db(pool, &ticker).await.unwrap_or(Quote {
-                                ticker: ticker.clone(),
-                                price: 0.0,
-                                change_percent: 0.0,
-                                status: "error".into(),
-                                error: None,
-                            });
-                            q.error = Some(e.clone());
-                            q
-                        }
-                    };
-                    {
-                        let mut cache = QUOTE_CACHE.lock().await;
-                        cache.insert(ticker.clone(), (q.clone(), Instant::now()));
-                    }
-                    let ms = fetch_start.elapsed().as_millis() as u64;
-                    QUOTE_FETCH_MS.fetch_add(ms, Ordering::Relaxed);
-                    QUOTE_FETCH_COUNT.fetch_add(1, Ordering::Relaxed);
-                    println!("quote {} total {} ms", ticker, ms);
-                    q
-                } else {
-                    cached.unwrap()
-                }
-            } else {
-                cached.unwrap()
-            }
-        };
-
-        // Series
-        let series = {
-            let key = (ticker.clone(), range.clone());
-            let mut cached = {
-                let cache = SERIES_CACHE.lock().await;
-                cache.get(&key).and_then(|(pts, ts)| {
-                    if ts.elapsed() < SERIES_TTL {
-                        SERIES_HIT.fetch_add(1, Ordering::Relaxed);
-                        Some(pts.clone())
-                    } else {
-                        None
-                    }
-                })
-            };
-            let points = if cached.is_some() {
-                cached.unwrap()
-            } else {
-                SERIES_MISS.fetch_add(1, Ordering::Relaxed);
-                let lock = {
-                    let mut locks = SERIES_LOCKS.lock().await;
-                    locks
-                        .entry(key.clone())
-                        .or_insert_with(|| Arc::new(Mutex::new(())))
-                        .clone()
-                };
-                let _guard = lock.lock().await;
-                if cached.is_none() {
-                    {
-                        let cache = SERIES_CACHE.lock().await;
-                        if let Some((pts, ts)) = cache.get(&key) {
-                            if ts.elapsed() < SERIES_TTL {
-                                SERIES_HIT.fetch_add(1, Ordering::Relaxed);
-                                cached = Some(pts.clone());
-                            }
-                        }
-                    }
-                }
-                if let Some(p) = cached {
-                    p
-                } else {
-                    let fetch_start = Instant::now();
-                    let res = provider.fetch_series(&ticker, &range).await;
-                    let p = match res {
-                        Ok(p) => {
-                            let _ = save_series_db(pool, &ticker, &range, &p).await;
-                            {
-                                let mut cache = SERIES_CACHE.lock().await;
-                                cache.insert(key.clone(), (p.clone(), Instant::now()));
-                            }
-                            p
-                        }
-                        Err(e) => {
-                            stale_bundle = true;
-                            load_series_db(pool, &ticker, &range)
-                                .await
-                                .unwrap_or_else(|| {
-                                    println!("series {} error {}", ticker, e);
-                                    Vec::new()
-                                })
-                        }
-                    };
-                    let ms = fetch_start.elapsed().as_millis() as u64;
-                    SERIES_FETCH_MS.fetch_add(ms, Ordering::Relaxed);
-                    SERIES_FETCH_COUNT.fetch_add(1, Ordering::Relaxed);
-                    println!("series {} total {} ms", ticker, ms);
-                    p
-                }
-            };
-            let status = if points.is_empty() {
-                "error".into()
-            } else {
-                "ok".into()
-            };
-            Series {
-                ticker: ticker.clone(),
-                range: range.clone(),
-                points,
-                status,
-            }
-        };
-
         quotes.push(quote);
         series_vec.push(series);
     }

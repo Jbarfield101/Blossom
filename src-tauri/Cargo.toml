@@ -35,4 +35,5 @@ which = "8"
 async-trait = "0.1"
 chrono-tz = "0.8"
 sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio-rustls"] }
+futures = "0.3"
 
