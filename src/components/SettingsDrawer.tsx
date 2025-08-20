@@ -10,8 +10,11 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Snackbar,
 } from "@mui/material";
 import { open } from "@tauri-apps/plugin-dialog";
+import { invoke } from "@tauri-apps/api/core";
+import { useState, useEffect } from "react";
 import { usePaths } from "../features/paths/usePaths";
 import { useOutput } from "../features/output/useOutput";
 import { useAudioDefaults } from "../features/audioDefaults/useAudioDefaults";
@@ -57,9 +60,34 @@ function PathField({
   onPick: (p: string) => void;
   directory?: boolean;
 }) {
+  const [invalid, setInvalid] = useState(false);
+
+  useEffect(() => {
+    async function validate() {
+      if (!value) {
+        setInvalid(false);
+        return;
+      }
+      try {
+        const exists = await invoke<boolean>("plugin:fs|exists", { path: value });
+        setInvalid(!exists);
+      } catch {
+        setInvalid(true);
+      }
+    }
+    validate();
+  }, [value]);
+
   return (
     <Box sx={{ mt: 1 }}>
-      <TextField label={label} value={value} fullWidth InputProps={{ readOnly: true }} />
+      <TextField
+        label={label}
+        value={value}
+        fullWidth
+        InputProps={{ readOnly: true }}
+        error={invalid}
+        helperText={invalid ? "Path does not exist" : undefined}
+      />
       <Button
         variant="outlined"
         sx={{ mt: 1 }}
@@ -91,6 +119,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
     hqChorus,
     toggleHqChorus,
   } = useAudioDefaults();
+  const [audioSaved, setAudioSaved] = useState(false);
 
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
@@ -151,6 +180,9 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
             control={<Switch checked={hqChorus} onChange={toggleHqChorus} />}
             label="HQ Chorus"
           />
+          <Button variant="contained" sx={{ mt: 2 }} onClick={() => setAudioSaved(true)}>
+            Save Audio Defaults
+          </Button>
         </Box>
 
         <Box>
@@ -162,6 +194,12 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
             directory
           />
         </Box>
+        <Snackbar
+          open={audioSaved}
+          autoHideDuration={3000}
+          onClose={() => setAudioSaved(false)}
+          message="Audio defaults saved"
+        />
       </Box>
     </Drawer>
   );
