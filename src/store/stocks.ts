@@ -31,7 +31,7 @@ interface StockState {
   quotes: Record<string, Quote>;
   pollers: Record<string, ReturnType<typeof setInterval>>;
   symbols: string[];
-  news: Record<string, { articles: NewsArticle[]; lastFetched: number }>;
+  news: Record<string, { articles: NewsArticle[]; lastFetched: number; error?: string }>;
   fetchQuote: (symbol: string) => Promise<number>;
   startPolling: (symbol: string, interval?: number) => void;
   stopPolling: (symbol: string) => void;
@@ -106,10 +106,20 @@ export const useStocks = create<StockState>((set, get) => ({
         symbol: sym,
       });
       set((state) => ({
-        news: { ...state.news, [sym]: { articles, lastFetched: Date.now() } },
+        news: {
+          ...state.news,
+          [sym]: { articles, lastFetched: Date.now(), error: undefined },
+        },
       }));
       return articles;
-    } catch {
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      set((state) => ({
+        news: {
+          ...state.news,
+          [sym]: { articles: [], lastFetched: Date.now(), error: message },
+        },
+      }));
       return [];
     }
   },
