@@ -1,5 +1,6 @@
 // src/pages/Home.tsx
 import { useEffect, useState } from "react";
+import { Box } from "@mui/material";
 import Countdown from "../components/Countdown";
 import { useCalendar } from "../features/calendar/useCalendar";
 import HoverCircle from "../components/HoverCircle";
@@ -7,6 +8,11 @@ import FeatureNav from "../components/FeatureNav";
 import VersionBadge from "../components/VersionBadge";
 import { Theme, useTheme } from "../features/theme/ThemeContext";
 import HomeChat from "../components/HomeChat";
+import {
+  countdownContainerSx,
+  countdownTextSx,
+  versionBadgeContainerSx,
+} from "./homeStyles";
 
 export default function Home() {
   const { theme } = useTheme();
@@ -35,36 +41,16 @@ export default function Home() {
   return (
     <>
       {event && (
-        <div
-          style={{
-            position: "absolute",
-            top: 12,
-            right: 12,
-            zIndex: 50,
-            color: "#fff",
-            textAlign: "right",
-          }}
-        >
-          <div style={{ fontSize: 14 }}>
+        <Box sx={countdownContainerSx}>
+          <Box sx={countdownTextSx}>
             <strong>{event.title}:</strong> <Countdown target={event.date} />
-          </div>
-        </div>
+          </Box>
+        </Box>
       )}
       {/* Top-center app title and version */}
-      <div
-        style={{
-          position: "absolute",
-          top: 12,
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 50,
-          pointerEvents: "none",
-          textAlign: "center",
-          color: "#fff",
-        }}
-      >
+      <Box sx={versionBadgeContainerSx}>
         <VersionBadge />
-      </div>
+      </Box>
 
       {/* Background hover effect */}
       <HoverCircle color={hoverColor} />
