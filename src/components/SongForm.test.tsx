@@ -139,6 +139,11 @@ describe('SongForm', () => {
     expect(screen.getByText('fantasy')).toBeInTheDocument();
   });
 
+  it('shows Arcane Clash template option', () => {
+    render(<SongForm />);
+    expect(screen.getAllByText('Arcane Clash')[0]).toBeInTheDocument();
+  });
+
   it('shows ambience options', () => {
     render(<SongForm />);
     ['street', 'vinyl', 'forest', 'fireplace', 'ocean'].forEach((name) => {
