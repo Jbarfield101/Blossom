@@ -1,6 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
-import { npcSchema } from "../src/dnd/schemas/npc";
+import { zNpc } from "../src/dnd/schemas/npc";
 import { reindex } from "./reindex";
 
 function slugify(str: string) {
@@ -36,7 +36,7 @@ async function main() {
       name: `${theme} NPC ${i + 1}`,
       tags: [theme]
     };
-    const parsed = npcSchema.safeParse(spec);
+    const parsed = zNpc.safeParse(spec);
     if (!parsed.success) {
       console.error("Validation failed", parsed.error);
       continue;

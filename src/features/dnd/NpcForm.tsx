@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Typography, TextField, Button } from "@mui/material";
 import { z } from "zod";
-import { zNpc } from "./schemas";
+import { zNpc } from "../../dnd/schemas/npc";
 import { NpcData } from "./types";
 
 export default function NpcForm() {
