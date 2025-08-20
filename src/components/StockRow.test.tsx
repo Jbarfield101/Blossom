@@ -13,17 +13,23 @@ const baseQuote = {
 
 describe('StockRow', () => {
   beforeEach(() => {
-    useStocks.setState({ quotes: {}, removeStock: vi.fn() } as any);
+    useStocks.setState({
+      quotes: {},
+      removeStock: vi.fn(),
+      forecast: vi.fn().mockResolvedValue({ shortTerm: 'st', longTerm: 'lt' }),
+      fetchNews: vi.fn().mockResolvedValue([]),
+    } as any);
   });
 
   afterEach(() => {
-    useStocks.setState({ quotes: {} });
+    useStocks.setState({ quotes: {}, forecast: undefined, fetchNews: undefined } as any);
     cleanup();
   });
 
-  it('renders quote data', () => {
+  it('renders quote data', async () => {
     useStocks.setState({ quotes: { AAPL: baseQuote } });
     const { asFragment } = render(<StockRow symbol="AAPL" />);
+    await Promise.resolve();
     expect(asFragment()).toMatchSnapshot();
   });
 

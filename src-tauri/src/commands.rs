@@ -898,17 +898,26 @@ pub async fn stocks_fetch<R: Runtime>(
     stocks_fetch_impl(app, tickers, range).await
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct StockForecast {
+    pub short_term: String,
+    pub long_term: String,
+}
+
 #[tauri::command]
 pub async fn stock_forecast<R: Runtime>(
     app: AppHandle<R>,
     symbol: String,
-) -> Result<String, String> {
+) -> Result<StockForecast, String> {
     let sym = symbol.to_uppercase();
-    let url =
+
+    // recent 5 day series
+    let recent_url =
         format!("https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=5d&interval=1d");
-    let resp = reqwest::get(&url).await.map_err(|e| e.to_string())?;
-    let json: Value = resp.json().await.map_err(|e| e.to_string())?;
-    let result = json["chart"]["result"]
+    let recent_resp = reqwest::get(&recent_url).await.map_err(|e| e.to_string())?;
+    let recent_json: Value = recent_resp.json().await.map_err(|e| e.to_string())?;
+    let result = recent_json["chart"]["result"]
         .get(0)
         .ok_or_else(|| "chart result missing".to_string())?;
     let timestamps = result["timestamp"].as_array().ok_or("timestamps missing")?;
@@ -916,19 +925,58 @@ pub async fn stock_forecast<R: Runtime>(
         .get(0)
         .and_then(|q| q["close"].as_array())
         .ok_or("closes missing")?;
-    let mut parts = Vec::new();
+    let mut recent_parts = Vec::new();
     for (ts, close) in timestamps.iter().zip(closes.iter()) {
         if let (Some(ts), Some(price)) = (ts.as_i64(), close.as_f64()) {
             if let Some(dt) = NaiveDateTime::from_timestamp_opt(ts, 0) {
                 let date = dt.format("%Y-%m-%d").to_string();
-                parts.push(format!("{date}: {:.2}", price));
+                recent_parts.push(format!("{date}: {:.2}", price));
             }
         }
     }
-    let summary = parts.join(", ");
+    let recent_summary = recent_parts.join(", ");
+
+    // 6 month series (weekly)
+    let long_url =
+        format!("https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=6mo&interval=1wk");
+    let long_resp = reqwest::get(&long_url).await.map_err(|e| e.to_string())?;
+    let long_json: Value = long_resp.json().await.map_err(|e| e.to_string())?;
+    let result = long_json["chart"]["result"]
+        .get(0)
+        .ok_or_else(|| "chart result missing".to_string())?;
+    let timestamps = result["timestamp"].as_array().ok_or("timestamps missing")?;
+    let closes = result["indicators"]["quote"]
+        .get(0)
+        .and_then(|q| q["close"].as_array())
+        .ok_or("closes missing")?;
+    let mut long_parts = Vec::new();
+    for (ts, close) in timestamps.iter().zip(closes.iter()) {
+        if let (Some(ts), Some(price)) = (ts.as_i64(), close.as_f64()) {
+            if let Some(dt) = NaiveDateTime::from_timestamp_opt(ts, 0) {
+                let date = dt.format("%Y-%m-%d").to_string();
+                long_parts.push(format!("{date}: {:.2}", price));
+            }
+        }
+    }
+    let long_summary = long_parts.join(", ");
+
+    // news headlines
+    let articles = fetch_stock_news(sym.clone()).await.unwrap_or_else(|_| vec![]);
+    let news_summary = if articles.is_empty() {
+        String::from("No major news")
+    } else {
+        articles
+            .iter()
+            .take(3)
+            .map(|a| a.title.clone())
+            .collect::<Vec<_>>()
+            .join("; ")
+    };
+
     let prompt = format!(
-        "Here are recent closing prices for {sym}: {summary}. Provide a brief forecast for {sym}'s price trend over the next week."
+        "Recent closing prices for {sym} (5d): {recent_summary}. Six month trend: {long_summary}. News: {news_summary}. Provide a short-term (next week) and long-term (next quarter or year) forecast for {sym}. Respond in JSON with keys shortTerm and longTerm."
     );
+
     let reply = general_chat(
         app,
         vec![ChatMessage {
@@ -937,7 +985,13 @@ pub async fn stock_forecast<R: Runtime>(
         }],
     )
     .await?;
-    Ok(reply)
+
+    let forecast: StockForecast =
+        serde_json::from_str(&reply).unwrap_or(StockForecast {
+            short_term: reply.clone(),
+            long_term: String::new(),
+        });
+    Ok(forecast)
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
