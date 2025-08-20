@@ -1153,7 +1153,19 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
     # --- ambience rotation
     amb_list = motif.get("ambience") or []
     if not amb_list:
-        amb_list = rng.choice([["rain"], ["cafe"], ["rain","cafe"], ["vinyl"], ["street"]])
+        amb_list = rng.choice(
+            [
+                ["rain"],
+                ["cafe"],
+                ["rain", "cafe"],
+                ["vinyl"],
+                ["street"],
+                ["forest"],
+                ["train"],
+                ["fireplace"],
+                ["ocean"],
+            ]
+        )
 
     amb_level = float(np.clip(motif.get("ambience_level", 0.5), 0.0, 1.0))
 
@@ -1189,6 +1201,23 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
         tr = _load_ambience_sample("train", n, rng=rng)
         if tr is not None:
             amb_mix += tr
+    if "forest" in amb_list:
+        if "cicadas" not in amb_list:
+            ci = _load_ambience_sample("cicadas", n, rng=rng)
+            if ci is not None:
+                amb_mix += ci
+        for name in ["crickets", "forest", "wind"]:
+            f = _load_ambience_sample(name, n, rng=rng)
+            if f is not None:
+                amb_mix += f
+    if "fireplace" in amb_list:
+        fp = _load_ambience_sample("fireplace", n, rng=rng)
+        if fp is not None:
+            amb_mix += fp
+    if "ocean" in amb_list:
+        oc = _load_ambience_sample("ocean", n, rng=rng)
+        if oc is not None:
+            amb_mix += oc
 
     if "vinyl sounds" in instrs:
         amb_mix += 0.5 * _vinyl_crackle(n, density=0.0015, ticky=0.004, rng=rng)

@@ -122,7 +122,18 @@ const INSTR = [
   "field recordings",
   "synth plucks",
 ];
-const AMBI = ["rain", "cafe", "street", "birds", "cicadas", "train"];
+const AMBI = [
+  "rain",
+  "cafe",
+  "street",
+  "birds",
+  "cicadas",
+  "train",
+  "vinyl",
+  "forest",
+  "fireplace",
+  "ocean",
+];
 const LEAD_INSTR = [
   { value: "flute", label: "flute" },
   { value: "saxophone", label: "sax" },
@@ -1347,19 +1358,26 @@ export default function SongForm() {
           </div>
 
           <div style={S.panel}>
-            <label style={S.label}>Ambience</label>
-            <div style={S.optionGrid}>
+            <label style={S.label} htmlFor="ambience-select">
+              Ambience
+            </label>
+            <select
+              id="ambience-select"
+              multiple
+              value={ambience}
+              onChange={(e) =>
+                setAmbience(
+                  Array.from(e.target.selectedOptions).map((o) => o.value)
+                )
+              }
+              style={S.input}
+            >
               {AMBI.map((a) => (
-                <label key={a} style={S.optionCard}>
-                  <span>{a}</span>
-                  <input
-                    type="checkbox"
-                    checked={ambience.includes(a)}
-                    onChange={() => setAmbience((prev) => toggle(prev, a))}
-                  />
-                </label>
+                <option key={a} value={a}>
+                  {a}
+                </option>
               ))}
-            </div>
+            </select>
             <input
               type="range"
               min={0}
