@@ -63,6 +63,7 @@ fn main() {
             // Stocks:
             commands::stocks_fetch,
             commands::stock_forecast,
+            commands::fetch_stock_news,
             // Shorts:
             commands::load_shorts,
             commands::save_shorts,
