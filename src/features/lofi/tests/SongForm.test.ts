@@ -27,6 +27,7 @@ describe('Song form hook', () => {
       const NoiseSynth = vi.fn().mockImplementation(() => mkSynth());
       const MembraneSynth = vi.fn().mockImplementation(() => mkSynth());
       const PolySynth = vi.fn().mockImplementation(() => mkSynth());
+      const PluckSynth = vi.fn().mockImplementation(() => mkSynth());
       const Reverb = vi.fn().mockImplementation(() => {
         const obj: any = {
           connect: vi.fn().mockReturnThis(),
@@ -75,6 +76,7 @@ describe('Song form hook', () => {
         NoiseSynth,
         MembraneSynth,
         PolySynth,
+        PluckSynth,
         Reverb,
         Volume,
         Filter,
@@ -96,6 +98,7 @@ describe('Song form hook', () => {
     const loopInstance = (tone.Loop as Mock).mock.results[0].value;
     expect(tone.start).toHaveBeenCalled();
     expect(tone.Transport.start).toHaveBeenCalled();
+    expect(tone.PluckSynth).toHaveBeenCalled();
     expect(loopInstance.start).toHaveBeenCalled();
     expect(useLofi.getState().isPlaying).toBe(true);
     useLofi.getState().stop();
