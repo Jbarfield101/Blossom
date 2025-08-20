@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Countdown from "../components/Countdown";
 import { useCalendar } from "../features/calendar/useCalendar";
 import HoverCircle from "../components/HoverCircle";
-import FeatureCarousel from "../components/FeatureCarousel";
+import FeatureNav from "../components/FeatureNav";
 import VersionBadge from "../components/VersionBadge";
 import { Theme, useTheme } from "../features/theme/ThemeContext";
 import HomeChat from "../components/HomeChat";
@@ -70,7 +70,7 @@ export default function Home() {
       <HoverCircle color={hoverColor} />
 
       {/* Carousel icons */}
-      <FeatureCarousel onHoverColor={setHoverColor} />
+      <FeatureNav onHoverColor={setHoverColor} />
 
       {/* Floating chat box */}
       <HomeChat />
