@@ -154,6 +154,7 @@ const DRUM_PATS = [
   "half_time",
   "swing",
   "half_time_shuffle",
+  "bossa_nova",
 ];
 
 function inferLeadInstrument(instrs: string[]): string {
@@ -328,6 +329,29 @@ export const PRESET_TEMPLATES: Record<string, TemplateSpec> = {
     limiterDrive: 1.05,
     dither: true,
     bpmJitterPct: 6,
+  },
+  "Bossa Nova": {
+    structure: [
+      { name: "Intro", bars: 4, chords: [] },
+      { name: "A", bars: 16, chords: [] },
+      { name: "B", bars: 16, chords: [] },
+      { name: "A", bars: 16, chords: [] },
+      { name: "Outro", bars: 4, chords: [] },
+    ],
+    bpm: 120,
+    key: "Auto",
+    mood: ["calm", "cozy"],
+    instruments: ["nylon guitar", "upright bass", "piano"],
+    ambience: ["cafe"],
+    drumPattern: "bossa_nova",
+    variety: 35,
+    hqStereo: true,
+    hqReverb: true,
+    hqSidechain: true,
+    hqChorus: true,
+    limiterDrive: 1.05,
+    dither: true,
+    bpmJitterPct: 3,
   },
   "Quick Beat": {
     structure: [
@@ -1195,6 +1219,7 @@ export default function SongForm() {
             <option value="Jazz Cafe">Jazz Cafe</option>
             <option value="Midnight Drive">Midnight Drive</option>
             <option value="Rain & Coffee">Rain & Coffee</option>
+            <option value="Bossa Nova">Bossa Nova</option>
             <option value="Quick Beat">Quick Beat</option>
             <option value="Sunset Sketches">Sunset Sketches</option>
             <option value="Neon Rain">Neon Rain</option>

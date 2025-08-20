@@ -134,6 +134,14 @@ describe('SongForm', () => {
     expect(values).toContain('no_drums');
   });
 
+  it('offers a bossa_nova option', () => {
+    render(<SongForm />);
+    const label = screen.getByText('Drum Pattern');
+    const select = label.parentElement!.querySelector('select') as HTMLSelectElement;
+    const values = Array.from(select.options).map((o) => o.value);
+    expect(values).toContain('bossa_nova');
+  });
+
   it('shows fantasy mood option', () => {
     render(<SongForm />);
     expect(screen.getByText('fantasy')).toBeInTheDocument();
@@ -144,11 +152,34 @@ describe('SongForm', () => {
     expect(screen.getAllByText('Arcane Clash')[0]).toBeInTheDocument();
   });
 
+  it('shows Bossa Nova template option and applies it', () => {
+    render(<SongForm />);
+    expect(screen.getAllByText('Bossa Nova')[0]).toBeInTheDocument();
+    const select = screen.getByLabelText(/song templates/i) as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: 'Bossa Nova' } });
+    const label = screen.getByText('Drum Pattern');
+    const drumSelect = label.parentElement!.querySelector('select') as HTMLSelectElement;
+    expect(drumSelect.value).toBe('bossa_nova');
+    const bpmSlider = screen.getAllByRole('slider')[0] as HTMLInputElement;
+    expect(bpmSlider.value).toBe('120');
+  });
+
   it('shows ambience options', () => {
     render(<SongForm />);
     ['street', 'vinyl', 'forest', 'fireplace', 'ocean'].forEach((name) => {
       expect(screen.getByText(name)).toBeInTheDocument();
     });
+  });
+
+  it('keeps preset templates when loading custom templates', () => {
+    localStorage.setItem(
+      'songTemplates',
+      JSON.stringify({ Foo: PRESET_TEMPLATES['Classic Lofi'] })
+    );
+    render(<SongForm />);
+    const select = screen.getByLabelText(/song templates/i) as HTMLSelectElement;
+    const options = Array.from(select.options).map((o) => o.value);
+    expect(options).toContain('Bossa Nova');
   });
 
   it('passes selected instruments in spec', async () => {
