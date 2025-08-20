@@ -66,6 +66,9 @@ npm test
   clipping intensity (values around `1.0` keep saturation subtle).
 - **Chord span:** Control how long each chord lasts with `chord_span_beats`
   (2 = ½ bar, 4 = 1 bar, 8 = 2 bars).
+- **Song form:** Structure songs with through‑composed templates (e.g.
+  `Intro–A–B–C–D–E–F–Outro`) and use odd bar lengths like 5 or 7 bars for
+  asymmetrical phrases.
 - **Analog polish:** Finishing chain adds tape-style saturation and subtle
   wow/flutter for vintage warmth.
 - **Dithering:** Exported 16‑bit WAVs now include low-level triangular dither.

@@ -1400,6 +1400,26 @@ FORM_TEMPLATES: Dict[str, List[Dict[str, Any]]] = {
         {"name": "B", "bars": 8},
         {"name": "Outro", "bars": 8},
     ],
+    "ThroughABCDEF": [
+        {"name": "Intro", "bars": 4},
+        {"name": "A", "bars": 8},
+        {"name": "B", "bars": 8},
+        {"name": "C", "bars": 8},
+        {"name": "D", "bars": 8},
+        {"name": "E", "bars": 8},
+        {"name": "F", "bars": 8},
+        {"name": "Outro", "bars": 4},
+    ],
+    "ThroughOddABCDEF": [
+        {"name": "Intro", "bars": 4},
+        {"name": "A", "bars": 7},
+        {"name": "B", "bars": 5},
+        {"name": "C", "bars": 7},
+        {"name": "D", "bars": 5},
+        {"name": "E", "bars": 7},
+        {"name": "F", "bars": 5},
+        {"name": "Outro", "bars": 4},
+    ],
 }
 
 def render_from_spec(spec: Dict[str, Any]) -> Tuple[AudioSegment, int]:
