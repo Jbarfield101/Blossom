@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export const zDndBase = z.object({
-  id: z.string(),
-  name: z.string(),
+  id: z.string().min(1),
+  name: z.string().min(1),
 });
 
 export const zDndTheme = z.enum(["Parchment", "Ink", "Minimal"]);
@@ -18,52 +18,52 @@ export const zVoice = z.object({
 });
 
 export const zNpc = z.object({
-  id: z.string(),
-  name: z.string(),
-  species: z.string(),
-  role: z.string(),
-  alignment: z.string(),
+  id: z.string().min(1),
+  name: z.string().min(1),
+  species: z.string().min(1),
+  role: z.string().min(1),
+  alignment: z.string().min(1),
   backstory: z.string().optional(),
   location: z.string().optional(),
-  hooks: z.array(z.string()),
+  hooks: z.array(z.string()).nonempty(),
   quirks: z.array(z.string()).optional(),
   voice: zVoice,
   portrait: z.string().optional(),
   statblock: z.record(z.unknown()),
-  tags: z.array(z.string()),
+  tags: z.array(z.string()).nonempty(),
 });
 
 /**
  * Simple schema for world lore entries.
  */
 export const zLore = z.object({
-  id: z.string(),
-  name: z.string(),
-  summary: z.string(),
+  id: z.string().min(1),
+  name: z.string().min(1),
+  summary: z.string().min(1),
   location: z.string().optional(),
   hooks: z.array(z.string()).optional(),
-  tags: z.array(z.string()),
+  tags: z.array(z.string()).nonempty(),
 });
 
 export const zQuest = zDndBase.extend({
   tier: z.number(),
-  summary: z.string(),
-  beats: z.array(z.string()),
+  summary: z.string().min(1),
+  beats: z.array(z.string()).nonempty(),
   rewards: z.object({
     gp: z.number().optional(),
     items: z.string().optional(),
     favors: z.string().optional(),
   }),
-  complications: z.array(z.string()),
+  complications: z.array(z.string()).nonempty(),
   theme: zDndTheme,
 });
 
 export const zEncounter = zDndBase.extend({
   level: z.number(),
-  creatures: z.array(z.string()),
-  tactics: z.string(),
-  terrain: z.string(),
-  treasure: z.string(),
-  scaling: z.string(),
+  creatures: z.array(z.string()).nonempty(),
+  tactics: z.string().min(1),
+  terrain: z.string().min(1),
+  treasure: z.string().min(1),
+  scaling: z.string().min(1),
   theme: zDndTheme,
 });

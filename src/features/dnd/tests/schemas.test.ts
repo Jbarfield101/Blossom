@@ -46,6 +46,21 @@ describe("dnd schemas", () => {
     expect(() => zNpc.parse(npc)).toThrowError();
   });
 
+  it("rejects NPCs with empty required fields", () => {
+    const npc = {
+      id: "", // empty string
+      name: "",
+      species: "Goblinoid",
+      role: "Scout",
+      alignment: "CE",
+      hooks: [], // empty array
+      voice: { style: "gravelly", provider: "acme", preset: "goblin" },
+      statblock: {},
+      tags: ["monster"],
+    } as any;
+    expect(() => zNpc.parse(npc)).toThrowError();
+  });
+
   it("rejects NPCs with invalid hook types", () => {
     const npc = {
       id: "1",
@@ -91,6 +106,16 @@ describe("dnd schemas", () => {
     expect(() => zLore.parse(lore)).toThrowError();
   });
 
+  it("rejects Lore with empty required fields", () => {
+    const lore = {
+      id: "l1",
+      name: "",
+      summary: "",
+      tags: [],
+    };
+    expect(() => zLore.parse(lore)).toThrowError();
+  });
+
   it("parses Quest data", () => {
     const quest = {
       id: "q1",
@@ -129,6 +154,20 @@ describe("dnd schemas", () => {
       complications: ["orcs"],
       theme: "Ink",
     };
+    expect(() => zQuest.parse(quest)).toThrowError();
+  });
+
+  it("rejects Quests with empty required fields", () => {
+    const quest = {
+      id: "q1",
+      name: "Find the ring",
+      tier: 1,
+      summary: "",
+      beats: [],
+      rewards: { gp: 100 },
+      complications: [],
+      theme: "Ink",
+    } as any;
     expect(() => zQuest.parse(quest)).toThrowError();
   });
 
@@ -173,6 +212,21 @@ describe("dnd schemas", () => {
       scaling: "add more goblins",
       theme: "Minimal",
     };
+    expect(() => zEncounter.parse(encounter)).toThrowError();
+  });
+
+  it("rejects Encounters with empty required fields", () => {
+    const encounter = {
+      id: "e1",
+      name: "Goblin ambush",
+      level: 1,
+      creatures: [],
+      tactics: "",
+      terrain: "forest",
+      treasure: "gold",
+      scaling: "add more goblins",
+      theme: "Minimal",
+    } as any;
     expect(() => zEncounter.parse(encounter)).toThrowError();
   });
 });
