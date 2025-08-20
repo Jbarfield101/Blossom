@@ -24,6 +24,8 @@ pub struct Quote {
     pub price: f64,
     pub change_percent: f64,
     pub status: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -141,6 +143,7 @@ impl Provider for YahooProvider {
             price,
             change_percent,
             status,
+            error: None,
         })
     }
 
@@ -190,6 +193,7 @@ impl Provider for StubProvider {
             price: 100.0,
             change_percent: 0.0,
             status: "STUB".into(),
+            error: None,
         })
     }
 
@@ -509,12 +513,15 @@ pub async fn stocks_fetch<R: Runtime>(
                         }
                         Err(e) => {
                             stale_bundle = true;
-                            load_quote_db(pool, &ticker).await.unwrap_or(Quote {
+                            let mut q = load_quote_db(pool, &ticker).await.unwrap_or(Quote {
                                 ticker: ticker.clone(),
                                 price: 0.0,
                                 change_percent: 0.0,
-                                status: e.clone(),
-                            })
+                                status: "error".into(),
+                                error: None,
+                            });
+                            q.error = Some(e.clone());
+                            q
                         }
                     };
                     {
