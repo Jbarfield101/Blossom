@@ -1,4 +1,4 @@
-import { IconButton } from "@mui/material";
+import { IconButton, Tooltip } from "@mui/material";
 import type { SxProps } from "@mui/material";
 import { fixedIconButtonSx } from "./sx";
 import { FaHome, FaWrench, FaUser } from "react-icons/fa";
@@ -17,38 +17,44 @@ export default function TopBar() {
 
   return (
     <>
-      <IconButton
-        onClick={() => nav("/")}
-        sx={{ ...fixedIconButtonSx, left: 12, ...activeSx("/") }}
-        aria-label="Home"
-        aria-current={pathname === "/" ? "page" : undefined}
-      >
-        <FaHome />
-      </IconButton>
+      <Tooltip title="Home">
+        <IconButton
+          onClick={() => nav("/")}
+          sx={{ ...fixedIconButtonSx, left: 12, ...activeSx("/") }}
+          aria-label="Home"
+          aria-current={pathname === "/" ? "page" : undefined}
+        >
+          <FaHome />
+        </IconButton>
+      </Tooltip>
 
-      <IconButton
-        onClick={() => nav("/user")}
-        sx={{ ...fixedIconButtonSx, left: 60, ...activeSx("/user") }}
-        aria-label="User"
-        aria-current={pathname === "/user" ? "page" : undefined}
-      >
-        <FaUser />
-      </IconButton>
+      <Tooltip title="User">
+        <IconButton
+          onClick={() => nav("/user")}
+          sx={{ ...fixedIconButtonSx, left: 60, ...activeSx("/user") }}
+          aria-label="User"
+          aria-current={pathname === "/user" ? "page" : undefined}
+        >
+          <FaUser />
+        </IconButton>
+      </Tooltip>
 
-      <IconButton
-        onClick={() => setOpen(true)}
-        sx={{
-          ...fixedIconButtonSx,
-          right: 12,
-          ...(open
-            ? { color: "#000", backgroundColor: "#fff", borderRadius: 4 }
-            : { color: "white" }),
-        }}
-        aria-label="Settings"
-        aria-expanded={open}
-      >
-        <FaWrench />
-      </IconButton>
+      <Tooltip title="Settings">
+        <IconButton
+          onClick={() => setOpen(true)}
+          sx={{
+            ...fixedIconButtonSx,
+            right: 12,
+            ...(open
+              ? { color: "#000", backgroundColor: "#fff", borderRadius: 4 }
+              : { color: "white" }),
+          }}
+          aria-label="Settings"
+          aria-expanded={open}
+        >
+          <FaWrench />
+        </IconButton>
+      </Tooltip>
       <SettingsDrawer open={open} onClose={() => setOpen(false)} />
     </>
   );
