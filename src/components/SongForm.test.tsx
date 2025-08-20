@@ -139,9 +139,11 @@ describe('SongForm', () => {
     expect(screen.getByText('fantasy')).toBeInTheDocument();
   });
 
-  it('shows street ambience option', () => {
+  it('shows ambience options', () => {
     render(<SongForm />);
-    expect(screen.getByText('street')).toBeInTheDocument();
+    ['street', 'vinyl', 'forest', 'fireplace', 'ocean'].forEach((name) => {
+      expect(screen.getByText(name)).toBeInTheDocument();
+    });
   });
 
   it('passes selected instruments in spec', async () => {
