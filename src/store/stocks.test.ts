@@ -94,6 +94,16 @@ describe('useStocks store', () => {
     expect(invoke).not.toHaveBeenCalled();
   });
 
+  it('stores an error when news fetch fails', async () => {
+    (invoke as any).mockRejectedValue(new Error('news boom'));
+    const articles = await useStocks.getState().fetchNews('msft');
+    expect(articles).toEqual([]);
+    const entry = useStocks.getState().news['MSFT'];
+    expect(entry).toBeDefined();
+    expect(entry.articles).toEqual([]);
+    expect(entry.error).toBe('news boom');
+  });
+
   it('adds and removes symbols', () => {
     const origStart = useStocks.getState().startPolling;
     const origStop = useStocks.getState().stopPolling;
