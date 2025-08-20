@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { zNpc, zLore, zQuest, zEncounter } from "../schemas";
+import { zLore, zQuest, zEncounter } from "../schemas";
+import { zNpc } from "../../../dnd/schemas/npc";
 
 describe("dnd schemas", () => {
   it("parses NPC data", () => {

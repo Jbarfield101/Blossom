@@ -5,23 +5,9 @@ export interface DndBase {
 
 export type DndTheme = "Parchment" | "Ink" | "Minimal";
 
-export interface NpcData extends DndBase {
-  species: string;
-  role: string;
-  alignment: string;
-  backstory?: string;
-  location?: string;
-  hooks: string[];
-  quirks?: string[];
-  voice: {
-    style: string;
-    provider: string;
-    preset: string;
-  };
-  portrait?: string;
-  statblock: Record<string, unknown>;
-  tags: string[];
-}
+import type { Npc } from "../../dnd/schemas/npc";
+
+export type NpcData = Npc;
 
 export interface LoreData extends DndBase {
   summary: string;

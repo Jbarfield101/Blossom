@@ -15,6 +15,6 @@ describe('EncounterForm validation', () => {
     await user.type(screen.getByLabelText(/Treasure/i), 'gold');
     await user.type(screen.getByLabelText(/Scaling/i), 'hard');
     await user.click(screen.getByRole('button', { name: /submit/i }));
-    expect(await screen.findByText('Too small: expected number to be >0')).toBeInTheDocument();
+    expect(await screen.findByText('Number must be greater than 0')).toBeInTheDocument();
   });
 });

@@ -11,7 +11,8 @@
     "test": "vitest",
     "reindex": "tsx scripts/reindex.ts",
     "npc:gen": "tsx scripts/npc-gen.ts",
-    "npc:pdf": "tsx scripts/export_npc_pdf.ts"
+    "npc:pdf": "tsx scripts/export_npc_pdf.ts",
+    "schemas:generate": "tsx scripts/gen-schemas.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -32,7 +33,7 @@
     "remark-gfm": "^4.0.1",
     "three": "^0.179.1",
     "tone": "^15.1.22",
-    "zod": "^4.0.17",
+    "zod": "^3.24.1",
     "zustand": "^5.0.7"
   },
   "devDependencies": {
@@ -51,6 +52,7 @@
     "vite": "^7.0.4",
     "vitest": "^2.0.5",
     "tsx": "^4.19.1",
+    "zod-to-json-schema": "^3.23.5",
     "handlebars": "^4.7.8",
     "puppeteer": "^23.4.1"
   }

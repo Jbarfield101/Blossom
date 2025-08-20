@@ -14,7 +14,7 @@ describe('QuestForm validation', () => {
     await user.type(screen.getByLabelText(/Reward GP/i), '-5');
     await user.type(screen.getByLabelText(/Complications/i), 'comp');
     await user.click(screen.getByRole('button', { name: /submit/i }));
-    const errors = await screen.findAllByText('Too small: expected number to be >0');
+    const errors = await screen.findAllByText('Number must be greater than 0');
     expect(errors).toHaveLength(2);
   });
 });
