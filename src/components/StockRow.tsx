@@ -7,20 +7,26 @@ import { useStocks } from "../store/stocks";
 function StockRow({ symbol }: { symbol: string }) {
   const quote = useStocks((state) => state.quotes[symbol]);
   const removeStock = useStocks((state) => state.removeStock);
-  const forecastFn = useStocks((state) => state.forecast);
-  const fetchNews = useStocks((state) => state.fetchNews);
   const [forecast, setForecast] = useState<{ shortTerm: string; longTerm: string } | null>(null);
   const [newsSummary, setNewsSummary] = useState("");
   useEffect(() => {
-    forecastFn(symbol).then(setForecast);
+    let mounted = true;
+    const { forecast, fetchNews } = useStocks.getState();
+    forecast(symbol).then((result) => {
+      if (mounted) setForecast(result);
+    });
     fetchNews(symbol).then((articles) => {
+      if (!mounted) return;
       const summary = articles
         .slice(0, 3)
         .map((a) => a.title)
         .join("; ");
       setNewsSummary(summary);
     });
-  }, [symbol, forecastFn, fetchNews]);
+    return () => {
+      mounted = false;
+    };
+  }, [symbol]);
   const color = quote && quote.changePercent < 0 ? "#ff5252" : "#4caf50";
 
   return (
