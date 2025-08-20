@@ -34,5 +34,6 @@ dirs = "5"
 which = "8"
 async-trait = "0.1"
 chrono-tz = "0.8"
+nyse-holiday-cal = "0.2.3"
 sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio-rustls"] }
 
