@@ -874,6 +874,14 @@ def _apply_melody_timbre(x, instrs):
         return _butter_highpass(_butter_lowpass(x, 6000), 800)
     if "synth lead" in instrs:
         return _butter_highpass(_butter_lowpass(x, 10000), 500)
+    if "vibraphone" in instrs:
+        return _butter_lowpass(x, 6500)
+    if "celesta" in instrs:
+        return _butter_highpass(_butter_lowpass(x, 7000), 1500)
+    if "muted electric guitar" in instrs:
+        return _butter_bandpass(x, 300, 3500)
+    if "synth plucks" in instrs:
+        return _butter_highpass(_butter_lowpass(x, 8000), 1200)
     return x
 
 # ---------- Section renderer ----------
@@ -1025,6 +1033,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
     use_electric = ("electric piano" in instrs)
     use_clean_gtr = ("clean electric guitar" in instrs)
     use_airy_pad = ("airy pads" in instrs)
+    use_wurli = ("wurlitzer" in instrs)
 
     chord_pos = 0
     melodic_sources = {
@@ -1037,6 +1046,11 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
         "harp",
         "lute",
         "pan flute",
+        "vibraphone",
+        "celesta",
+        "muted electric guitar",
+        "synth plucks",
+        "wurlitzer",
     }
     add_rhodes_default = not any(src in instrs for src in melodic_sources)
 
@@ -1062,6 +1076,10 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
             keys[i0:i1] += ac[: i1 - i0]
         if use_electric:
             ep = _electric_piano_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.18) * vel
+            i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(ep))
+            keys[i0:i1] += ep[: i1 - i0]
+        if use_wurli:
+            ep = _electric_piano_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.16) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(ep))
             keys[i0:i1] += ep[: i1 - i0]
         if use_clean_gtr:
