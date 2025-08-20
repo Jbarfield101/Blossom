@@ -27,6 +27,7 @@ let chain: {
   kick: Tone.MembraneSynth;
   snare: Tone.NoiseSynth;
   pad: Tone.PolySynth;
+  harp: Tone.PluckSynth;
   rev: Tone.Reverb;
   voice: Tone.Player;
 } | null = null;
@@ -286,12 +287,15 @@ function init() {
   const pad = new Tone.PolySynth(Tone.Synth).connect(padFilter);
   addSend(padFilter, 0.4);
 
+  const harp = new Tone.PluckSynth().connect(master);
+  addSend(harp, 0.4);
+
   const voice = new Tone.Player();
   applyVinylEffect(voice).connect(master);
   addSend(voice, 0.3);
   scheduleSpokenWord(voice, 8);
 
-  chain = { lead, bass, hat, kick, snare, pad, rev, voice };
+  chain = { lead, bass, hat, kick, snare, pad, harp, rev, voice };
   Tone.Transport.bpm.value = 80;
 
   loop = new Tone.Loop((time) => {
@@ -317,6 +321,10 @@ function init() {
       chain.bass.triggerAttackRelease(b, '2n', time);
       const chord = chords[chordStep % chords.length];
       chain.pad.triggerAttackRelease(chord, '1m', time);
+      chord.forEach((n, i) => {
+        const harpNote = Tone.Frequency(n).transpose(12).toNote();
+        chain.harp.triggerAttackRelease(harpNote, '8n', time + i * Tone.Time('16n'));
+      });
       bassStep++;
       chordStep++;
     }
