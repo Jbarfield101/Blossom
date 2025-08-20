@@ -56,6 +56,9 @@ npm test
 
 ## Configuration and optional features
 
+- **Alpha Vantage API key:** Set the `ALPHAVANTAGE_API_KEY` environment variable (or add
+  `alphavantage_api_key` to `~/.blossom/config.json`) so the app can fetch stock
+  news.
 - **Paths:** Set the ComfyUI directory in the Settings page and edit
   `conda_python()` in `src-tauri/src/commands.rs` so the app can find your Python
   interpreter.
