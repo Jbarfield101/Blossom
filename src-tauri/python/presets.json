@@ -1,0 +1,28 @@
+{
+  "Warm Cassette": {
+    "hq_stereo": true,
+    "hq_reverb": false,
+    "hq_sidechain": false,
+    "hq_chorus": false,
+    "limiter_drive": 1.2,
+    "wow_flutter": {
+      "rate_hz": 0.3,
+      "depth": 0.003,
+      "flutter_rate": 5.0,
+      "flutter_depth": 0.0005
+    }
+  },
+  "Night Drive": {
+    "hq_stereo": true,
+    "hq_reverb": true,
+    "hq_sidechain": true,
+    "hq_chorus": true,
+    "limiter_drive": 0.9,
+    "wow_flutter": {
+      "rate_hz": 0.25,
+      "depth": 0.0015,
+      "flutter_rate": 4.5,
+      "flutter_depth": 0.0003
+    }
+  }
+}

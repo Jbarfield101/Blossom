@@ -63,4 +63,8 @@ Activate your Python environment first. The high‑quality generator lives at
 - **Dithering:** Exported 16‑bit WAVs now include low-level triangular dither.
   Tune the noise floor with an optional `dither_amount` value in the song JSON
   (`1.0` for standard dithering, `0` to disable).
+- **Presets:** Set `"preset": "Warm Cassette"` or `"Night Drive"` in your song
+  JSON to load bundled settings from `src-tauri/python/presets.json`. Presets map
+  HQ flags, limiter drive, and wow/flutter depth so you don't have to tweak raw
+  parameters. Any value you specify in the song JSON overrides the preset.
 
