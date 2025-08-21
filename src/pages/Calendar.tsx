@@ -212,12 +212,14 @@ export default function Calendar() {
           <button
             className="p-2 rounded-lg hover:bg-gray-100"
             onClick={() => setCurrent(new Date(year, month - 1, 1))}
+            aria-label="Previous month"
           >
             <ChevronLeftIcon className="w-6 h-6" />
           </button>
           <button
             className="p-2 rounded-lg hover:bg-gray-100"
             onClick={() => setCurrent(new Date(year, month + 1, 1))}
+            aria-label="Next month"
           >
             <ChevronRightIcon className="w-6 h-6" />
           </button>
