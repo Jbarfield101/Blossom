@@ -11,10 +11,11 @@ use std::{
 use dirs;
 
 use crate::stocks::{stocks_fetch as stocks_fetch_impl, StockBundle};
+use crate::task_queue::{TaskQueue, Task, TaskCommand};
 use chrono::{Local, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use tauri::{AppHandle, Emitter, Manager, Runtime, Window};
+use tauri::{AppHandle, Emitter, Manager, Runtime, Window, State};
 use which::which;
 use sysinfo::{CpuExt, System, SystemExt};
 
@@ -1139,4 +1140,32 @@ pub async fn system_info() -> Result<SystemInfo, String> {
         mem_usage,
         gpu_usage,
     })
+}
+
+/* ==============================
+Task queue commands
+============================== */
+
+#[tauri::command]
+pub async fn enqueue_task(
+    queue: State<'_, TaskQueue>,
+    label: String,
+    command: TaskCommand,
+) -> Result<u64, String> {
+    Ok(queue.enqueue(label, command).await)
+}
+
+#[tauri::command]
+pub async fn task_status(queue: State<'_, TaskQueue>, id: u64) -> Result<Option<Task>, String> {
+    Ok(queue.get(id))
+}
+
+#[tauri::command]
+pub async fn cancel_task(queue: State<'_, TaskQueue>, id: u64) -> Result<bool, String> {
+    Ok(queue.cancel(id).await)
+}
+
+#[tauri::command]
+pub async fn list_tasks(queue: State<'_, TaskQueue>) -> Result<Vec<Task>, String> {
+    Ok(queue.list())
 }
