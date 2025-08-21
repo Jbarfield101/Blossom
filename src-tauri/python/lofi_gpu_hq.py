@@ -31,6 +31,7 @@ import random
 import sys
 import hashlib
 import re
+import logging
 from typing import List, Dict, Tuple, Any, Optional
 
 import numpy as np
@@ -50,6 +51,21 @@ from effects import (
     _apply_duck_envelope,
     _schroeder_room,
 )
+
+
+class _JsonFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:  # type: ignore[override]
+        if isinstance(record.msg, dict):
+            payload = {"level": record.levelname, **record.msg}
+        else:
+            payload = {"level": record.levelname, "message": record.getMessage()}
+        return json.dumps(payload)
+
+
+_handler = logging.StreamHandler()
+_handler.setFormatter(_JsonFormatter())
+logging.basicConfig(level=logging.INFO, handlers=[_handler])
+logger = logging.getLogger(__name__)
 
 
 INSTRUMENTS_ENV = "BLOSSOM_INSTRUMENTS_FILE"
@@ -100,19 +116,19 @@ def _set_ffmpeg_paths():
             if p and os.path.exists(p):
                 AudioSegment.converter = p
                 AudioSegment.ffmpeg = p
-                print(json.dumps({"stage": "info", "message": "ffmpeg set", "path": p}))
+                logger.info({"stage": "info", "message": "ffmpeg set", "path": p})
                 set_any = True
                 break
         for p in candidates_ffprobe:
             if p and os.path.exists(p):
                 AudioSegment.ffprobe = p
-                print(json.dumps({"stage": "info", "message": "ffprobe set", "path": p}))
+                logger.info({"stage": "info", "message": "ffprobe set", "path": p})
                 break
     except (FileNotFoundError, OSError) as e:
-        print(json.dumps({"stage": "error", "message": f"ffmpeg configuration failed: {e}"}))
+        logger.error({"stage": "error", "message": f"ffmpeg configuration failed: {e}"})
         sys.exit(1)
     if not set_any:
-        print(json.dumps({"stage": "error", "message": "ffmpeg not found; please install ffmpeg and ensure it is on PATH"}))
+        logger.error({"stage": "error", "message": "ffmpeg not found; please install ffmpeg and ensure it is on PATH"})
         sys.exit(1)
 _set_ffmpeg_paths()
 # -----------------------------------
@@ -212,16 +228,14 @@ def loudness_normalize_lufs(audio: AudioSegment, target_lufs: float = -14.0) -> 
             return audio
         loudness = 20 * np.log10(rms)
         headroom = 3.0
-        print(
-            json.dumps(
-                {
-                    "stage": "warn",
-                    "message": "pyloudnorm missing, using gated RMS loudness estimate with 3 dB headroom",
-                }
-            )
+        logger.warning(
+            {
+                "stage": "warn",
+                "message": "pyloudnorm missing, using gated RMS loudness estimate with 3 dB headroom",
+            }
         )
     except Exception as e:
-        print(json.dumps({"stage": "warn", "message": f"loudness normalization failed: {e}"}))
+        logger.warning({"stage": "warn", "message": f"loudness normalization failed: {e}"})
         return audio
     gain_needed = target_lufs - loudness - headroom
     return audio.apply_gain(gain_needed)
@@ -1011,7 +1025,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
         for inst in fantasy_instrs:
             if inst not in instrs:
                 instrs.append(inst)
-    print(json.dumps({"stage": "debug", "section": section_name, "instruments": instrs}))
+    logger.debug({"stage": "debug", "section": section_name, "instruments": instrs})
 
     use_electric = ("electric piano" in instrs)
     use_clean_gtr = ("clean electric guitar" in instrs)
@@ -1557,7 +1571,7 @@ def render_from_spec(spec: Dict[str, Any]) -> Tuple[AudioSegment, int]:
         variety=variety,
         chord_span_beats=chord_span_beats,
     )
-    print(json.dumps({"stage": "post", "message": "cleaning audio"}))
+    logger.info({"stage": "post", "message": "cleaning audio"})
     post_rng = np.random.default_rng((seed ^ 0x5A5A5A5A) & 0xFFFFFFFF)
     wow_cfg = spec.get("wow_flutter")
     song = enhanced_post_process_chain(
@@ -1578,7 +1592,14 @@ def main():
         "--instruments-file",
         help="Path to instruments.json (override or use env BLOSSOM_INSTRUMENTS_FILE)",
     )
+    parser.add_argument(
+        "--log-level",
+        default="INFO",
+        help="Logging level (e.g. INFO, DEBUG, WARNING)",
+    )
     args = parser.parse_args()
+
+    logging.getLogger().setLevel(args.log_level.upper())
 
     if args.instruments_file:
         global INSTRUMENTS_DATA
@@ -1586,7 +1607,7 @@ def main():
 
     spec = json.loads(args.song_json)
 
-    print(json.dumps({"stage": "generate", "message": "building sections"}))
+    logger.info({"stage": "generate", "message": "building sections"})
     song, _ = render_from_spec(spec)
 
     out_path = args.out
@@ -1598,7 +1619,7 @@ def main():
         os.remove(out_path)
     os.replace(tmp_path, out_path)
 
-    print(json.dumps({"stage": "done", "message": "saved", "path": out_path}))
+    logger.info({"stage": "done", "message": "saved", "path": out_path})
 
 if __name__ == "__main__":
     main()
