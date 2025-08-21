@@ -52,6 +52,11 @@ body.theme-noir {
   background: #1a1a1a;
 }
 
+body.theme-mono {
+  background: #000;
+  color: #fff;
+}
+
 body.theme-rainy {
   background: radial-gradient(circle at center, #0a1e3d, #081229);
   overflow: hidden;
@@ -90,6 +95,22 @@ body.theme-retro textarea {
   background: #000;
   color: #0f0;
   border: 1px solid #0f0;
+}
+
+body.theme-mono button,
+body.theme-mono input,
+body.theme-mono select,
+body.theme-mono textarea {
+  background: #fff;
+  color: #000;
+  border: 1px solid #888;
+}
+
+body.theme-mono button:hover,
+body.theme-mono input:hover,
+body.theme-mono select:hover,
+body.theme-mono textarea:hover {
+  background: #eee;
 }
 
 body.theme-studio button:hover,

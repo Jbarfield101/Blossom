@@ -27,6 +27,7 @@ export default function Home() {
     studio: "rgba(0,255,255,0.22)",
     galaxy: "rgba(150,200,255,0.22)",
     retro: "rgba(0,255,0,0.22)",
+    mono: "rgba(128,128,128,0.22)",
   };
   const [hoverColor, setHoverColor] = useState(themeColors[theme]);
   useEffect(() => {
