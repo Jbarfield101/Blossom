@@ -1,4 +1,4 @@
-# lofi_gpu_hq.py (Blossom HQ)
+# renderer.py (Blossom HQ)
 # High-quality renderer with optional polish features
 # Same CLI / JSON spec / output behavior as before
 # Adds high‑quality polish while keeping determinism by seed.
@@ -28,14 +28,12 @@ import argparse
 import json
 import os
 import random
-import sys
 import hashlib
 import re
 from typing import List, Dict, Tuple, Any, Optional
 
 import numpy as np
 from pydub import AudioSegment
-from pydub.utils import which
 
 from effects import (
     SR,
@@ -50,72 +48,30 @@ from effects import (
     _apply_duck_envelope,
     _schroeder_room,
 )
-
-
-INSTRUMENTS_ENV = "BLOSSOM_INSTRUMENTS_FILE"
-DEFAULT_INSTRUMENTS_PATH = os.path.join(
-    os.path.dirname(__file__), "data", "instruments.json"
+# Import helpers split into dedicated modules
+from .dsp import (
+    _env_ad,
+    _sine,
+    _pitch_sweep,
+    _noise,
+    _kick,
+    _snare,
+    _hat,
+    _process_drums,
+    _process_hats,
+    _bar_ms,
+    _beats_ms,
+    _vinyl_crackle,
+    _analog_noise_floor,
 )
 
-
-def _load_instruments(path: str) -> Dict[str, Any]:
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    if not isinstance(data, dict):
-        raise ValueError("Instruments JSON must be an object")
-    alias = data.get("alias")
-    canon = data.get("canonical")
-    if not isinstance(alias, dict) or not all(
-        isinstance(k, str) and isinstance(v, str) for k, v in alias.items()
-    ):
-        raise ValueError("'alias' must be a dict of strings")
-    if not isinstance(canon, list) or not all(isinstance(x, str) for x in canon):
-        raise ValueError("'canonical' must be a list of strings")
-    return {"alias": alias, "canonical": canon}
-
-
-INSTRUMENTS_DATA = _load_instruments(
-    os.environ.get(INSTRUMENTS_ENV, DEFAULT_INSTRUMENTS_PATH)
+from .io_utils import (
+    INSTRUMENTS_DATA,
+    crossfade_concat,
+    ensure_wav_bitdepth,
+    enhanced_post_process_chain,
+    _np_to_segment,
 )
-
-
-# ---------- FFmpeg wiring ----------
-def _set_ffmpeg_paths():
-    exe_dir = os.path.dirname(sys.executable)
-    candidates_ffmpeg = [
-        os.path.join(exe_dir, "ffmpeg.exe"),
-        os.path.join(exe_dir, "Library", "bin", "ffmpeg.exe"),
-        os.path.join(exe_dir, "..", "Library", "bin", "ffmpeg.exe"),
-        which("ffmpeg"),
-    ]
-    candidates_ffprobe = [
-        os.path.join(exe_dir, "ffprobe.exe"),
-        os.path.join(exe_dir, "Library", "bin", "ffprobe.exe"),
-        os.path.join(exe_dir, "..", "Library", "bin", "ffprobe.exe"),
-        which("ffprobe"),
-    ]
-    set_any = False
-    try:
-        for p in candidates_ffmpeg:
-            if p and os.path.exists(p):
-                AudioSegment.converter = p
-                AudioSegment.ffmpeg = p
-                print(json.dumps({"stage": "info", "message": "ffmpeg set", "path": p}))
-                set_any = True
-                break
-        for p in candidates_ffprobe:
-            if p and os.path.exists(p):
-                AudioSegment.ffprobe = p
-                print(json.dumps({"stage": "info", "message": "ffprobe set", "path": p}))
-                break
-    except (FileNotFoundError, OSError) as e:
-        print(json.dumps({"stage": "error", "message": f"ffmpeg configuration failed: {e}"}))
-        sys.exit(1)
-    if not set_any:
-        print(json.dumps({"stage": "error", "message": "ffmpeg not found; please install ffmpeg and ensure it is on PATH"}))
-        sys.exit(1)
-_set_ffmpeg_paths()
-# -----------------------------------
 
 # ---------- Small helpers ----------
 def _stable_hash_int(s: str) -> int:
@@ -125,50 +81,6 @@ def bars_to_ms(bars: int, bpm: float, beats_per_bar: int = 4) -> int:
     seconds_per_beat = 60.0 / float(bpm)
     seconds = bars * beats_per_bar * seconds_per_beat
     return int(seconds * 1000)
-
-def crossfade_concat(sections: List[AudioSegment], ms: int = 120) -> AudioSegment:
-    if not sections:
-        return AudioSegment.silent(duration=1)
-    out = sections[0]
-    for seg in sections[1:]:
-        out = out.append(seg, crossfade=ms)
-    return out
-
-def apply_dither(
-    audio: AudioSegment,
-    sample_width: int,
-    amount: float = 1.0,
-    rng: Optional[np.random.Generator] = None,
-) -> AudioSegment:
-    """Add low-level triangular dither prior to bit depth reduction."""
-    if amount <= 0:
-        return audio
-    samples = np.array(audio.get_array_of_samples())
-    max_int = float(2 ** (8 * audio.sample_width - 1))
-    floats = samples.astype(np.float32) / max_int
-    lsb = 1.0 / (2 ** (8 * sample_width - 1))
-    # use seeded RNG when available
-    if rng is not None:
-        r1 = rng.random(floats.shape)
-        r2 = rng.random(floats.shape)
-    else:
-        r1 = np.random.random(floats.shape)
-        r2 = np.random.random(floats.shape)
-    noise = (r1 - r2) * lsb * float(amount)
-    floats = np.clip(floats + noise, -1.0, 1.0)
-    dithered = (floats * max_int).astype(samples.dtype)
-    return audio._spawn(dithered.tobytes())
-
-def ensure_wav_bitdepth(
-    audio: AudioSegment,
-    sample_width: int = 2,
-    dither_amount: float = 1.0,
-    rng: Optional[np.random.Generator] = None,
-) -> AudioSegment:
-    """Reduce bit depth with optional TPDF dithering."""
-    if audio.sample_width > sample_width:
-        audio = apply_dither(audio, sample_width, amount=dither_amount, rng=rng)
-    return audio.set_sample_width(sample_width)
 
 
 def _normalize_instruments(instrs):
@@ -188,214 +100,9 @@ def _normalize_instruments(instrs):
             out.append(k)
     return out
 
-# ---------- Post-processing ----------
-
-def loudness_normalize_lufs(audio: AudioSegment, target_lufs: float = -14.0) -> AudioSegment:
-    samples = np.array(audio.get_array_of_samples()).astype(np.float32)
-    if audio.channels == 2:
-        samples = samples.reshape((-1, 2)).mean(axis=1)
-    max_int = float(2 ** (8 * audio.sample_width - 1))
-    x = samples / max_int
-    headroom = 0.0
-    try:
-        import pyloudnorm as pyln
-
-        meter = pyln.Meter(audio.frame_rate)
-        loudness = meter.integrated_loudness(x)
-    except ImportError:
-        abs_x = np.abs(x)
-        gate = abs_x > 10 ** (-60.0 / 20.0)
-        if not np.any(gate):
-            return audio
-        rms = np.sqrt(np.mean(np.square(x[gate])))
-        if rms <= 0:
-            return audio
-        loudness = 20 * np.log10(rms)
-        headroom = 3.0
-        print(
-            json.dumps(
-                {
-                    "stage": "warn",
-                    "message": "pyloudnorm missing, using gated RMS loudness estimate with 3 dB headroom",
-                }
-            )
-        )
-    except Exception as e:
-        print(json.dumps({"stage": "warn", "message": f"loudness normalization failed: {e}"}))
-        return audio
-    gain_needed = target_lufs - loudness - headroom
-    return audio.apply_gain(gain_needed)
-
-def enhanced_post_process_chain(
-    audio: AudioSegment,
-    rng=None,
-    drive: float = 1.02,
-    dither_amount: float = 1.0,
-    wow_flutter: Optional[Dict[str, float]] = None,
-) -> AudioSegment:
-    """Darker, warmer finishing chain for lofi character.
-
-    dither_amount controls final triangular dithering level (1.0 = 1 LSB).
-    """
-    a = audio.high_pass_filter(30)
-
-    lpf_base = 7800
-    if rng is not None:
-        lpf_base = int(rng.integers(7000, 8500))
-    a = a.low_pass_filter(lpf_base + 500)
-    a = a.low_pass_filter(lpf_base)
-
-    mids = a.low_pass_filter(2000).high_pass_filter(200).apply_gain(1.5)
-    a = a.overlay(mids)
-    presence = a.high_pass_filter(4000).apply_gain(-2.0)
-    a = a.overlay(presence)
-
-    drv = drive
-    if drive is None and rng is not None:
-        drv = float(rng.uniform(0.98, 1.04))
-    if wow_flutter:
-        a = apply_wow_flutter(a, **wow_flutter)
-    else:
-        a = apply_wow_flutter(a, rng=rng)
-    a = apply_tape_saturation(a, drive=drv)
-    a = apply_soft_limit(a, drive=drv)
-
-    try:
-        arr = np.array(a.get_array_of_samples()).astype(np.float32)
-        if a.channels == 2:
-            arr = arr.reshape((-1, 2)).mean(axis=1)
-        max_int = float(2 ** (8 * a.sample_width - 1))
-        mono = arr / max_int
-        low = _butter_lowpass(mono, 140) * 0.06
-        high_cut = _butter_lowpass(mono, 11500)
-        shaped = np.clip(high_cut + low, -1.0, 1.0)
-        a = a.overlay(_np_to_segment(shaped, frame_rate=a.frame_rate))
-    except Exception:
-        pass
-
-    a = loudness_normalize_lufs(a, target_lufs=-16.0)
-    a = ensure_wav_bitdepth(
-        a, sample_width=2, dither_amount=dither_amount, rng=rng
-    )
-    return a
-
-# ---------- DSP building blocks ----------
-def _np_to_segment(x: np.ndarray, frame_rate=SR) -> AudioSegment:
-    """Accepts mono (N,) or stereo (N,2) float32 in [-1,1]."""
-    if x.ndim == 1:
-        x = np.stack([x, x], axis=-1)
-    x = np.clip(x, -1.0, 1.0)
-    xi16 = (x * 32767.0).astype(np.int16)
-    interleaved = xi16.reshape(-1)
-    return AudioSegment(
-        interleaved.tobytes(),
-        frame_rate=frame_rate,
-        sample_width=2,
-        channels=2,
-    )
-
-def _env_ad(decay_ms: float, length_ms: int):
-    n = max(1, int(length_ms * SR / 1000))
-    d = int(decay_ms * SR / 1000)
-    d = max(0, min(d, n))
-    env = np.ones(n, dtype=np.float32)
-    if d > 0:
-        tail = np.linspace(1.0, 0.0, d, dtype=np.float32)
-        env[-d:] *= tail
-    return env
-
-def _sine(freq, ms, amp=0.5):
-    t = np.arange(int(ms * SR / 1000)) / SR
-    return (amp * np.sin(2 * np.pi * freq * t)).astype(np.float32)
-
-def _pitch_sweep(f0, f1, ms, amp=0.8):
-    n = int(ms * SR / 1000)
-    t = np.arange(n) / SR
-    freqs = np.linspace(f0, f1, n)
-    phase = 2 * np.pi * np.cumsum(freqs) / SR
-    return (amp * np.sin(phase)).astype(np.float32)
-
-def _noise(ms, amp=0.3, rng=None):
-    n = int(ms * SR / 1000)
-    if rng is not None:
-        r = (rng.random(n).astype(np.float32) * 2 - 1)
-    else:
-        r = (np.random.rand(n).astype(np.float32) * 2 - 1)
-    return (amp * r).astype(np.float32)
-
-
-def _kick(ms=160, rng=None):
-    body = _pitch_sweep(90, 45, ms, amp=0.9) * _env_ad(ms*0.9, ms)
-    click = _noise(40, 0.2, rng=rng) * _env_ad(20, 40)
-    x = body.copy(); x[:len(click)] += click
-    x = _butter_lowpass(x, 150)
-    return x
-
-def _snare(ms=180, rng=None):
-    tone = _sine(180, ms, 0.05) * _env_ad(120, ms)
-    noise = _noise(ms, 0.5, rng=rng) * _env_ad(140, ms)
-    x = noise + tone
-    x = _butter_highpass(x, 180)
-    return x
-
-def _hat(ms=60, rng=None):
-    n = _noise(ms, 0.4, rng=rng)
-    n = _butter_highpass(n, 5000)
-    n *= _env_ad(40, ms)
-    return n
-
-def _process_drums(x: np.ndarray) -> np.ndarray:
-    """Basic lofi treatment for drum bus."""
-    y = _butter_lowpass(x, 8000)
-    max_val = 2 ** 7 - 1
-    y = np.round(y * max_val) / max_val
-    y = np.tanh(y * 1.8)
-    return y.astype(np.float32)
-
-def _process_hats(x: np.ndarray, snare_positions_ms: List[float], variety: int) -> np.ndarray:
-    y = _butter_lowpass(x, 10000)
-    depth = 1.0
-    if variety > 70:
-        depth = 0.7
-    _apply_duck_envelope(y, snare_positions_ms, depth_db=depth, attack_ms=5, hold_ms=20, release_ms=60)
-    if variety > 70:
-        y *= 10 ** (-0.8 / 20.0)
-    return y.astype(np.float32)
-
-def _bar_ms(bpm):
-    return int((60.0 / bpm) * 4 * 1000)
-
-def _beats_ms(bpm):
-    beat = int((60.0 / bpm) * 1000)
-    eighth = beat // 2
-    sixteenth = beat // 4
-    return beat, eighth, sixteenth
-
-# Stereo and mix polish helpers reside in effects.py
-
-def _vinyl_crackle(n: int, density=0.0015, ticky=0.003, rng=None) -> np.ndarray:
-    if rng is None:
-        x = (np.random.rand(n).astype(np.float32)*2 - 1) * 0.0007  # hiss
-        pops = (np.random.rand(n) < density).astype(np.float32)
-        if pops.any():
-            x[pops > 0] += (np.random.rand(int(pops.sum())).astype(np.float32)*2-1) * ticky
-    else:
-        x = (rng.random(n).astype(np.float32)*2 - 1) * 0.0007  # hiss
-        pops = (rng.random(n) < density).astype(np.float32)
-        if pops.any():
-            x[pops > 0] += (rng.random(int(pops.sum())).astype(np.float32)*2-1) * ticky
-    return _butter_lowpass(x, 6000)
-
-def _analog_noise_floor(n: int, level=0.0003, rng=None) -> np.ndarray:
-    if rng is not None:
-        noise = rng.standard_normal(n).astype(np.float32) * level
-    else:
-        noise = np.random.randn(n).astype(np.float32) * level
-    return _butter_highpass(noise, 200)
-
 def _load_ambience_sample(name: str, n: int, rng=None) -> Optional[np.ndarray]:
     """Load and loop an ambience sample from samples/ambience."""
-    amb_dir = os.path.join(os.path.dirname(__file__), "samples", "ambience")
+    amb_dir = os.path.join(os.path.dirname(__file__), "..", "samples", "ambience")
     if not os.path.isdir(amb_dir):
         return None
     files = [f for f in os.listdir(amb_dir) if name.lower() in f.lower()]

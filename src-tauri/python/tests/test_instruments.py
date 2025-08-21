@@ -4,7 +4,7 @@ import sys
 import pytest
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-from lofi_gpu_hq import _load_instruments, DEFAULT_INSTRUMENTS_PATH
+from lofi.io_utils import _load_instruments, DEFAULT_INSTRUMENTS_PATH
 
 
 def test_instruments_json_schema():

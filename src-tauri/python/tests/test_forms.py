@@ -1,10 +1,10 @@
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-import lofi_gpu_hq  # noqa: E402
+from lofi.renderer import FORM_TEMPLATES  # noqa: E402
 
 
 def test_through_composed_forms():
-    form = lofi_gpu_hq.FORM_TEMPLATES["ThroughABCDEF"]
+    form = FORM_TEMPLATES["ThroughABCDEF"]
     assert [s["name"] for s in form] == [
         "Intro",
         "A",
@@ -15,5 +15,5 @@ def test_through_composed_forms():
         "F",
         "Outro",
     ]
-    odd = lofi_gpu_hq.FORM_TEMPLATES["ThroughOddABCDEF"]
+    odd = FORM_TEMPLATES["ThroughOddABCDEF"]
     assert [s["bars"] for s in odd] == [4, 7, 5, 7, 5, 7, 5, 4]

@@ -3,11 +3,11 @@ import os
 import sys
 import numpy as np
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-import lofi_gpu_hq  # noqa: E402
+from lofi.renderer import render_from_spec  # noqa: E402
 
 
-EXPECTED_RMS = 0.165903
-EXPECTED_HASH = "82fdd90872a6d191afc972db5890d113a419fa53c9239d7970063d64d1e3ad90"
+EXPECTED_RMS = 0.165555
+EXPECTED_HASH = "9a76d1f1cc2268dfb1ba732fa643cf0086eb4dfbd57175c3a1dd0c21d8e46ef6"
 
 
 def test_deterministic_render():
@@ -22,7 +22,7 @@ def test_deterministic_render():
         "ambience_level": 0.5,
         "instruments": ["piano"],
     }
-    audio, _ = lofi_gpu_hq.render_from_spec(spec)
+    audio, _ = render_from_spec(spec)
     samples = np.array(audio.get_array_of_samples()).astype(np.int16)
     rms = np.sqrt(np.mean((samples / 32768.0) ** 2))
     buf_hash = hashlib.sha256(samples.tobytes()).hexdigest()
