@@ -1,9 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Box, IconButton, Stack, TextField, Typography } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
+import { nanoid } from "nanoid";
+import { invoke } from "@tauri-apps/api/core";
 
 interface Message {
-  id: number;
+  id: string;
   role: "user" | "assistant";
   content: string;
 }
@@ -11,26 +13,44 @@ interface Message {
 export default function HomeChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const send = () => {
-    const trimmed = input.trim();
-    if (!trimmed) return;
-    const userMsg: Message = {
-      id: Date.now(),
-      role: "user",
-      content: trimmed,
-    };
-    const asstMsg: Message = {
-      id: Date.now() + 1,
-      role: "assistant",
-      content: "Assistant features are not connected yet.",
-    };
-    setMessages((prev) => [...prev, userMsg, asstMsg]);
+  useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
+  }, [messages]);
+
+  const send = async () => {
+    const trimmed = input.trim();
+    if (!trimmed || loading) return;
+    const userMsg: Message = { id: nanoid(), role: "user", content: trimmed };
+    setMessages((prev) => [...prev, userMsg]);
     setInput("");
+    setLoading(true);
+    let reply = "";
+    try {
+      if (trimmed.toLowerCase().startsWith("/music")) {
+        const title = trimmed.slice(6).trim() || "untitled";
+        await invoke("generate_album", {
+          meta: { track_count: 1, title_base: title },
+        });
+        reply = `Started music generation for "${title}".`;
+      } else {
+        const history = [...messages, userMsg].map(({ role, content }) => ({
+          role,
+          content,
+        }));
+        reply = await invoke<string>("general_chat", { messages: history });
+      }
+    } catch (e: any) {
+      reply = String(e);
+    } finally {
+      setLoading(false);
+    }
+    const asstMsg: Message = { id: nanoid(), role: "assistant", content: reply };
+    setMessages((prev) => [...prev, asstMsg]);
   };
 
   return (
@@ -74,7 +94,12 @@ export default function HomeChat() {
           }}
           InputProps={{ sx: { bgcolor: "#fff", borderRadius: 1 } }}
         />
-        <IconButton color="primary" onClick={send}>
+        <IconButton
+          color="primary"
+          onClick={send}
+          disabled={loading}
+          aria-label="Send"
+        >
           <SendIcon />
         </IconButton>
       </Stack>
