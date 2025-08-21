@@ -1354,6 +1354,9 @@ export default function SongForm() {
             <option value="King's Last Stand">King's Last Stand</option>
             <option value="Ocean Breeze">Ocean Breeze</option>
             <option value="City Lights">City Lights</option>
+            <option value="Sunset VHS">Sunset VHS</option>
+            <option value="Neon Palms">Neon Palms</option>
+            <option value="Night Swim">Night Swim</option>
             <option value="Starlit Voyage">Starlit Voyage</option>
           </select>
         </div>
