@@ -23,7 +23,8 @@ export type Theme =
   | "retro"
   | "noir"
   | "aurora"
-  | "rainy";
+  | "rainy"
+  | "mono";
 
 interface ThemeContextType {
   theme: Theme;
@@ -59,6 +60,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       "theme-noir",
       "theme-aurora",
       "theme-rainy",
+      "theme-mono",
     ];
     document.body.classList.remove(...classes);
     document.body.classList.add(`theme-${theme}`);
