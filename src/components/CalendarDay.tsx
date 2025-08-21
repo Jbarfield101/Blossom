@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Tooltip } from '@mui/material';
 import React, { useCallback } from 'react';
 import { statusColors } from '../features/calendar/statusColors';
 import type { CalendarEvent } from '../features/calendar/types';
@@ -62,7 +62,9 @@ const CalendarDay = React.memo(
         }}
       >
         {holiday && (
-          <Box sx={{ position: 'absolute', top: 4, right: 4, fontSize: 12 }}>🎉</Box>
+          <Tooltip title={holiday}>
+            <Box sx={{ position: 'absolute', top: 4, right: 4, fontSize: 12 }}>🎉</Box>
+          </Tooltip>
         )}
         <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
           {day}
@@ -80,9 +82,11 @@ const CalendarDay = React.memo(
             />
           ))}
           {events.length > 3 && (
-            <Typography sx={{ fontSize: 10, color: 'text.secondary' }}>
-              +{events.length - 3}
-            </Typography>
+            <Tooltip title={events.slice(3).map((ev) => ev.title).join(', ')}>
+              <Typography sx={{ fontSize: 10, color: 'text.secondary' }}>
+                +{events.length - 3}
+              </Typography>
+            </Tooltip>
           )}
         </Box>
       </Box>
