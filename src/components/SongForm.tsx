@@ -6,6 +6,14 @@ import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useLofi } from "../features/lofi/SongForm";
 import Waveform from "./Waveform";
+import { FaQuestionCircle } from "react-icons/fa";
+
+const HelpIcon = ({ text }: { text: string }) => (
+  <FaQuestionCircle
+    title={text}
+    style={{ marginLeft: 4, cursor: "help", opacity: 0.6 }}
+  />
+);
 
 type Section = { name: string; bars: number; chords: string[]; barsStr?: string };
 
@@ -1200,7 +1208,10 @@ export default function SongForm() {
 
         {/* template selector */}
         <div style={S.panel}>
-          <label style={S.label}>Song Templates</label>
+          <label style={S.label}>
+            Song Templates
+            <HelpIcon text="Select a preset arrangement and settings" />
+          </label>
           <select
             aria-label="Song Templates"
             value={selectedTemplate}
@@ -1254,7 +1265,10 @@ export default function SongForm() {
         {/* core knobs */}
         <div style={S.grid3}>
           <div style={S.panel}>
-            <label style={S.label}>BPM: {bpm}</label>
+            <label style={S.label}>
+              BPM: {bpm}
+              <HelpIcon text="Song tempo in beats per minute" />
+            </label>
             <input
               type="range"
               min={60}
@@ -1265,7 +1279,10 @@ export default function SongForm() {
             />
           </div>
           <div style={S.panel}>
-            <label style={S.label}>Key</label>
+            <label style={S.label}>
+              Key
+              <HelpIcon text="Musical key; choose Auto for random" />
+            </label>
             <div style={S.row}>
               <select value={key} onChange={(e) => setKey(e.target.value)} style={{ ...S.input, padding: "8px 12px" }}>
                 {KEYS.map((k) => (
@@ -1279,7 +1296,10 @@ export default function SongForm() {
             </div>
           </div>
           <div style={S.panel}>
-            <label style={S.label}>Seed</label>
+            <label style={S.label}>
+              Seed
+              <HelpIcon text="Randomness seed for reproducibility" />
+            </label>
             <input
               type="number"
               value={seedBase}
@@ -1403,7 +1423,10 @@ export default function SongForm() {
               ))}
             </select>
           </div>
-          <label style={S.label}>Structure (bars)</label>
+          <label style={S.label}>
+            Structure (bars)
+            <HelpIcon text="Order of song sections with lengths and chords" />
+          </label>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {structure.map((sec, i) => (
               <div key={i} style={{ background: "#17191d", padding: 8, borderRadius: 8, minWidth: 120 }}>
@@ -1469,7 +1492,10 @@ export default function SongForm() {
         {/* vibe controls */}
         <div style={S.grid3}>
           <div style={S.panel}>
-            <label style={S.label}>Mood</label>
+            <label style={S.label}>
+              Mood
+              <HelpIcon text="Tags describing the vibe" />
+            </label>
             <div style={S.optionGrid}>
               {MOODS.map((m) => (
                 <label key={m} style={S.optionCard}>
@@ -1485,7 +1511,10 @@ export default function SongForm() {
           </div>
 
           <div style={S.panel}>
-            <label style={S.label}>Instruments</label>
+            <label style={S.label}>
+              Instruments
+              <HelpIcon text="Select instruments to include" />
+            </label>
             <div style={S.optionGrid}>
               {INSTR.map((i) => (
                 <label key={i} style={S.optionCard}>
@@ -1502,7 +1531,10 @@ export default function SongForm() {
           </div>
 
           <div style={S.panel}>
-            <label style={S.label}>Lead Instrument</label>
+            <label style={S.label}>
+              Lead Instrument
+              <HelpIcon text="Main instrument for the melody" />
+            </label>
             <div style={S.optionGrid}>
               {LEAD_INSTR.map((l) => (
                 <label key={l.value} style={S.optionCard}>
@@ -1522,6 +1554,7 @@ export default function SongForm() {
           <div style={S.panel}>
             <label style={S.label} htmlFor="ambience-select">
               Ambience
+              <HelpIcon text="Background ambience sounds" />
             </label>
             <select
               id="ambience-select"
@@ -1556,7 +1589,10 @@ export default function SongForm() {
         {/* rhythm & feel */}
         <div style={S.grid3}>
           <div style={S.panel}>
-            <label style={S.label}>Drum Pattern</label>
+            <label style={S.label}>
+              Drum Pattern
+              <HelpIcon text="Choose a groove style or no drums" />
+            </label>
             <select value={drumPattern} onChange={(e) => setDrumPattern(e.target.value)} style={{ ...S.input, padding: "8px 12px" }}>
               {DRUM_PATS.map((p) => (
                 <option key={p} value={p}>{p}</option>
@@ -1566,13 +1602,19 @@ export default function SongForm() {
           </div>
 
           <div style={S.panel}>
-            <label style={S.label}>Variety</label>
+            <label style={S.label}>
+              Variety
+              <HelpIcon text="Amount of fills and swing" />
+            </label>
             <input type="range" min={0} max={100} value={variety} onChange={(e) => setVariety(Number(e.target.value))} style={S.slider} />
             <div style={S.small}>{variety}% fills & swing</div>
           </div>
 
           <div style={S.panel}>
-            <label style={S.label}>Chord Span</label>
+            <label style={S.label}>
+              Chord Span
+              <HelpIcon text="Number of beats each chord lasts" />
+            </label>
             <select
               value={chordSpanBeats}
               onChange={(e) => setChordSpanBeats(Number(e.target.value))}
@@ -1588,7 +1630,9 @@ export default function SongForm() {
         {/* polish accordion */}
         <div style={{ ...S.panel, marginTop: 12 }}>
           <details open>
-            <summary style={{ cursor: "pointer", fontSize: 12, opacity: 0.8 }}>Polish</summary>
+            <summary style={{ cursor: "pointer", fontSize: 12, opacity: 0.8 }}>
+              Polish <HelpIcon text="Optional mix polish effects" />
+            </summary>
             <div style={{ marginTop: 8 }}>
               <div style={S.optionGrid}>
                 <label style={S.optionCard}>
@@ -1611,7 +1655,10 @@ export default function SongForm() {
               <details style={{ marginTop: 8 }}>
                 <summary style={{ cursor: "pointer", fontSize: 12, opacity: 0.8 }}>Advanced</summary>
                 <div style={{ marginTop: 8 }}>
-                  <label style={S.label}>Limiter Drive</label>
+                  <label style={S.label}>
+                    Limiter Drive
+                    <HelpIcon text="Amount of saturation added by the limiter" />
+                  </label>
                   <input
                     type="range"
                     min={0.5}
@@ -1635,11 +1682,17 @@ export default function SongForm() {
         <div style={S.panel}>
           <label style={S.toggle}>
             <input type="checkbox" checked={albumMode} onChange={(e) => setAlbumMode(e.target.checked)} />
-            <span style={S.small}>Album mode</span>
+            <span style={S.small}>
+              Album mode
+              <HelpIcon text="Render multiple tracks as an album" />
+            </span>
           </label>
           {albumMode && (
             <>
-              <label style={S.label}>Track Count</label>
+              <label style={S.label}>
+                Track Count
+                <HelpIcon text="Number of tracks in album mode" />
+              </label>
               <input
                 type="number"
                 min={3}
@@ -1659,7 +1712,10 @@ export default function SongForm() {
         {/* batch + variation */}
         <div style={S.grid2}>
           <div style={S.panel}>
-            <label style={S.label}>How many songs?</label>
+            <label style={S.label}>
+              How many songs?
+              <HelpIcon text="Number of songs to render in this batch" />
+            </label>
             <input type="number" min={1} value={numSongs} onChange={(e) => setNumSongs(Math.max(1, Number(e.target.value || 1)))} style={S.input} />
             <div style={{ ...S.small, marginTop: 8 }}>
               Titles will be suffixed with{" "}
@@ -1671,7 +1727,10 @@ export default function SongForm() {
           </div>
 
           <div style={S.panel}>
-            <label style={S.label}>BPM Jitter (per song)</label>
+            <label style={S.label}>
+              BPM Jitter (per song)
+              <HelpIcon text="Random tempo variation around base BPM" />
+            </label>
             <input type="range" min={0} max={30} value={bpmJitterPct} onChange={(e) => setBpmJitterPct(Number(e.target.value))} style={S.slider} />
             <div style={S.small}>±{bpmJitterPct}% around the base BPM</div>
             <div style={{ ...S.toggle, marginTop: 8 }}>
