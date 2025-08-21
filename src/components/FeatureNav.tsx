@@ -129,6 +129,7 @@ export default function FeatureNav({
       onKeyDown={onKeyDown}
       tabIndex={0}
       role="listbox"
+      aria-activedescendant={len > 0 ? "feature-nav-active" : undefined}
       sx={carouselContainerSx}
     >
       <Box sx={carouselItemsWrapperSx}>
@@ -144,6 +145,9 @@ export default function FeatureNav({
                 onMouseLeave={() => onHoverColor("rgba(255,255,255,0.22)")}
                 onClick={() => (center ? nav(it.path) : setI(idx))}
                 aria-label={it.label}
+                role="option"
+                aria-selected={center}
+                id={center ? "feature-nav-active" : undefined}
               >
                 {it.icon}
               </IconButton>
