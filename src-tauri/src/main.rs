@@ -6,6 +6,7 @@ mod stocks;
 use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
 
 fn main() {
+    env_logger::init();
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(

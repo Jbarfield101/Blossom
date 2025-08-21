@@ -140,7 +140,7 @@ impl Provider for YahooProvider {
             .and_then(|v| v.as_str())
             .unwrap_or("UNKNOWN")
             .to_string();
-        println!(
+        log::info!(
             "quote {} fetched in {} ms ({} bytes)",
             ticker,
             start.elapsed().as_millis(),
@@ -187,7 +187,7 @@ impl Provider for YahooProvider {
                 points.push(SeriesPoint { ts, close });
             }
         }
-        println!(
+        log::info!(
             "series {} {} points fetched in {} ms ({} bytes)",
             ticker,
             points.len(),
@@ -561,7 +561,7 @@ pub async fn stocks_fetch<R: Runtime>(
                         let ms = fetch_start.elapsed().as_millis() as u64;
                         QUOTE_FETCH_MS.fetch_add(ms, Ordering::Relaxed);
                         QUOTE_FETCH_COUNT.fetch_add(1, Ordering::Relaxed);
-                        println!("quote {} total {} ms", ticker, ms);
+                        log::info!("quote {} total {} ms", ticker, ms);
                         q
                     } else {
                         cached.unwrap()
@@ -627,7 +627,7 @@ pub async fn stocks_fetch<R: Runtime>(
                                 load_series_db(pool, &ticker, &range)
                                     .await
                                     .unwrap_or_else(|| {
-                                        println!("series {} error {}", ticker, e);
+                                        log::info!("series {} error {}", ticker, e);
                                         Vec::new()
                                     })
                             }
@@ -635,7 +635,7 @@ pub async fn stocks_fetch<R: Runtime>(
                         let ms = fetch_start.elapsed().as_millis() as u64;
                         SERIES_FETCH_MS.fetch_add(ms, Ordering::Relaxed);
                         SERIES_FETCH_COUNT.fetch_add(1, Ordering::Relaxed);
-                        println!("series {} total {} ms", ticker, ms);
+                        log::info!("series {} total {} ms", ticker, ms);
                         p
                     }
                 };
