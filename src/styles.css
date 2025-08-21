@@ -42,6 +42,10 @@ body.theme-galaxy {
   background: #000 url("/galaxy.svg") center / cover no-repeat;
 }
 
+body.theme-noir {
+  background: #1a1a1a;
+}
+
 body.theme-studio button,
 body.theme-studio input,
 body.theme-studio select {
@@ -75,4 +79,25 @@ body.theme-studio input[type="range"]::-moz-range-thumb {
   100% {
     background-position: 0% 50%;
   }
+}
+
+@keyframes neonFlicker {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.neon-text {
+  color: #0ff;
+  text-shadow: 0 0 4px #0ff, 0 0 8px #0ff;
+  animation: neonFlicker 1.5s infinite alternate;
+}
+
+.neon-accent {
+  border-color: #0ff;
+  box-shadow: 0 0 4px #0ff, 0 0 8px #0ff;
+  animation: neonFlicker 1.5s infinite alternate;
 }

@@ -20,6 +20,7 @@ export type Theme =
   | "sakura"
   | "studio"
   | "galaxy"
+  | "noir"
   | "aurora";
 
 interface ThemeContextType {
@@ -52,6 +53,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       "theme-sakura",
       "theme-studio",
       "theme-galaxy",
+      "theme-noir",
       "theme-aurora",
     ];
     document.body.classList.remove(...classes);
