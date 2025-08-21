@@ -28,6 +28,12 @@ body.theme-sakura {
   background: radial-gradient(circle at center, #5e0a3d, #380829);
 }
 
+body.theme-aurora {
+  background: linear-gradient(270deg, #00ffa3, #0085ff, #b300ff, #ff3ab3);
+  background-size: 800% 800%;
+  animation: auroraShift 30s ease infinite;
+}
+
 body.theme-studio {
   background: #000;
 }
@@ -57,4 +63,16 @@ body.theme-studio input[type="range"]::-webkit-slider-thumb {
 
 body.theme-studio input[type="range"]::-moz-range-thumb {
   box-shadow: 0 0 10px #0ff;
+}
+
+@keyframes auroraShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
