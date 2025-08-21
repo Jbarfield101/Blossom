@@ -7,7 +7,8 @@ from typing import List
 from pydub import AudioSegment
 from gtts import gTTS
 
-from lofi_gpu_hq import render_from_spec, ensure_wav_bitdepth
+from lofi.renderer import render_from_spec
+from lofi.io_utils import ensure_wav_bitdepth
 
 
 def tempo_align(seg: AudioSegment, source_bpm: float, target_bpm: float) -> AudioSegment:

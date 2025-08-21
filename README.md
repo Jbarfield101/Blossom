@@ -47,7 +47,7 @@ fn conda_python() -> PathBuf {
 ## Running Python scripts
 
 Activate your Python environment first. The high‑quality generator lives at
-`src-tauri/python/lofi_gpu_hq.py`.
+`src-tauri/python/lofi/renderer.py`.
 
 ## Testing
 
@@ -65,7 +65,7 @@ npm test
 - **Paths:** Set the ComfyUI directory in the Settings page and edit
   `conda_python()` in `src-tauri/src/commands.rs` so the app can find your Python
   interpreter.
-- **HQ feature flags:** `lofi_gpu_hq.py` supports `hq_stereo`, `hq_reverb`,
+- **HQ feature flags:** `lofi/renderer.py` supports `hq_stereo`, `hq_reverb`,
   `hq_sidechain`, and `hq_chorus` flags inside the `motif` object to enable or disable
   high‑quality processing.
 - **Limiter drive:** Add `limiter_drive` to the song JSON to control soft

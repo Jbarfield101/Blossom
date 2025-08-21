@@ -1,4 +1,4 @@
-# lofi_gpu_hq.py (Blossom HQ)
+# renderer.py (Blossom HQ)
 # High-quality renderer with optional polish features
 # Same CLI / JSON spec / output behavior as before
 # Adds high‑quality polish while keeping determinism by seed.
@@ -28,7 +28,6 @@ import argparse
 import json
 import os
 import random
-import sys
 import hashlib
 import re
 import logging
@@ -36,9 +35,8 @@ from typing import List, Dict, Tuple, Any, Optional
 
 import numpy as np
 from pydub import AudioSegment
-from pydub.utils import which
 
-from effects import (
+from .dsp import (
     SR,
     _butter_lowpass,
     _butter_highpass,
@@ -51,6 +49,7 @@ from effects import (
     _apply_duck_envelope,
     _schroeder_room,
 )
+from .io_utils import ensure_wav_bitdepth
 
 
 class _JsonFormatter(logging.Formatter):
@@ -70,7 +69,7 @@ logger = logging.getLogger(__name__)
 
 INSTRUMENTS_ENV = "BLOSSOM_INSTRUMENTS_FILE"
 DEFAULT_INSTRUMENTS_PATH = os.path.join(
-    os.path.dirname(__file__), "data", "instruments.json"
+    os.path.dirname(os.path.dirname(__file__)), "data", "instruments.json"
 )
 
 
@@ -95,44 +94,6 @@ INSTRUMENTS_DATA = _load_instruments(
 )
 
 
-# ---------- FFmpeg wiring ----------
-def _set_ffmpeg_paths():
-    exe_dir = os.path.dirname(sys.executable)
-    candidates_ffmpeg = [
-        os.path.join(exe_dir, "ffmpeg.exe"),
-        os.path.join(exe_dir, "Library", "bin", "ffmpeg.exe"),
-        os.path.join(exe_dir, "..", "Library", "bin", "ffmpeg.exe"),
-        which("ffmpeg"),
-    ]
-    candidates_ffprobe = [
-        os.path.join(exe_dir, "ffprobe.exe"),
-        os.path.join(exe_dir, "Library", "bin", "ffprobe.exe"),
-        os.path.join(exe_dir, "..", "Library", "bin", "ffprobe.exe"),
-        which("ffprobe"),
-    ]
-    set_any = False
-    try:
-        for p in candidates_ffmpeg:
-            if p and os.path.exists(p):
-                AudioSegment.converter = p
-                AudioSegment.ffmpeg = p
-                logger.info({"stage": "info", "message": "ffmpeg set", "path": p})
-                set_any = True
-                break
-        for p in candidates_ffprobe:
-            if p and os.path.exists(p):
-                AudioSegment.ffprobe = p
-                logger.info({"stage": "info", "message": "ffprobe set", "path": p})
-                break
-    except (FileNotFoundError, OSError) as e:
-        logger.error({"stage": "error", "message": f"ffmpeg configuration failed: {e}"})
-        sys.exit(1)
-    if not set_any:
-        logger.error({"stage": "error", "message": "ffmpeg not found; please install ffmpeg and ensure it is on PATH"})
-        sys.exit(1)
-_set_ffmpeg_paths()
-# -----------------------------------
-
 # ---------- Small helpers ----------
 def _stable_hash_int(s: str) -> int:
     return int.from_bytes(hashlib.md5(s.encode("utf-8")).digest()[:4], "little")
@@ -149,42 +110,6 @@ def crossfade_concat(sections: List[AudioSegment], ms: int = 120) -> AudioSegmen
     for seg in sections[1:]:
         out = out.append(seg, crossfade=ms)
     return out
-
-def apply_dither(
-    audio: AudioSegment,
-    sample_width: int,
-    amount: float = 1.0,
-    rng: Optional[np.random.Generator] = None,
-) -> AudioSegment:
-    """Add low-level triangular dither prior to bit depth reduction."""
-    if amount <= 0:
-        return audio
-    samples = np.array(audio.get_array_of_samples())
-    max_int = float(2 ** (8 * audio.sample_width - 1))
-    floats = samples.astype(np.float32) / max_int
-    lsb = 1.0 / (2 ** (8 * sample_width - 1))
-    # use seeded RNG when available
-    if rng is not None:
-        r1 = rng.random(floats.shape)
-        r2 = rng.random(floats.shape)
-    else:
-        r1 = np.random.random(floats.shape)
-        r2 = np.random.random(floats.shape)
-    noise = (r1 - r2) * lsb * float(amount)
-    floats = np.clip(floats + noise, -1.0, 1.0)
-    dithered = (floats * max_int).astype(samples.dtype)
-    return audio._spawn(dithered.tobytes())
-
-def ensure_wav_bitdepth(
-    audio: AudioSegment,
-    sample_width: int = 2,
-    dither_amount: float = 1.0,
-    rng: Optional[np.random.Generator] = None,
-) -> AudioSegment:
-    """Reduce bit depth with optional TPDF dithering."""
-    if audio.sample_width > sample_width:
-        audio = apply_dither(audio, sample_width, amount=dither_amount, rng=rng)
-    return audio.set_sample_width(sample_width)
 
 
 def _normalize_instruments(instrs):
@@ -409,7 +334,7 @@ def _analog_noise_floor(n: int, level=0.0003, rng=None) -> np.ndarray:
 
 def _load_ambience_sample(name: str, n: int, rng=None) -> Optional[np.ndarray]:
     """Load and loop an ambience sample from samples/ambience."""
-    amb_dir = os.path.join(os.path.dirname(__file__), "samples", "ambience")
+    amb_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "samples", "ambience")
     if not os.path.isdir(amb_dir):
         return None
     files = [f for f in os.listdir(amb_dir) if name.lower() in f.lower()]
@@ -1473,7 +1398,7 @@ def render_from_spec(spec: Dict[str, Any]) -> Tuple[AudioSegment, int]:
     preset_name = spec.get("preset")
     if preset_name:
         try:
-            preset_path = os.path.join(os.path.dirname(__file__), "presets.json")
+            preset_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "presets.json")
             with open(preset_path, "r", encoding="utf-8") as f:
                 presets = json.load(f)
             preset = presets.get(preset_name)
