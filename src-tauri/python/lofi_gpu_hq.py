@@ -52,6 +52,33 @@ from effects import (
 )
 
 
+INSTRUMENTS_ENV = "BLOSSOM_INSTRUMENTS_FILE"
+DEFAULT_INSTRUMENTS_PATH = os.path.join(
+    os.path.dirname(__file__), "data", "instruments.json"
+)
+
+
+def _load_instruments(path: str) -> Dict[str, Any]:
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    if not isinstance(data, dict):
+        raise ValueError("Instruments JSON must be an object")
+    alias = data.get("alias")
+    canon = data.get("canonical")
+    if not isinstance(alias, dict) or not all(
+        isinstance(k, str) and isinstance(v, str) for k, v in alias.items()
+    ):
+        raise ValueError("'alias' must be a dict of strings")
+    if not isinstance(canon, list) or not all(isinstance(x, str) for x in canon):
+        raise ValueError("'canonical' must be a list of strings")
+    return {"alias": alias, "canonical": canon}
+
+
+INSTRUMENTS_DATA = _load_instruments(
+    os.environ.get(INSTRUMENTS_ENV, DEFAULT_INSTRUMENTS_PATH)
+)
+
+
 # ---------- FFmpeg wiring ----------
 def _set_ffmpeg_paths():
     exe_dir = os.path.dirname(sys.executable)
@@ -145,56 +172,8 @@ def ensure_wav_bitdepth(
 
 
 def _normalize_instruments(instrs):
-    alias = {
-        "pads": "airy pads",
-        "vinyl": "vinyl sounds",
-        "acoustic": "acoustic guitar",
-        "harps": "harp",
-        "lutes": "lute",
-        "panflute": "pan flute",
-        "pan pipes": "pan flute",
-        "panpipes": "pan flute",
-        "electric organ": "wurlitzer",
-        "music box": "celesta",
-        "bass clarinet": "clarinet",
-        "jazz guitar comping": "muted electric guitar",
-        "jazz guitar": "muted electric guitar",
-        "muted guitar": "muted electric guitar",
-    }
-    canon = [
-        "electric piano",
-        "upright bass",
-        "clean electric guitar",
-        "nylon guitar",
-        "airy pads",
-        "piano",
-        "rhodes",
-        "bass",
-        "vinyl sounds",
-        "acoustic guitar",
-        "violin",
-        "cello",
-        "flute",
-        "saxophone",
-        "trumpet",
-        "synth lead",
-        "harp",
-        "lute",
-        "pan flute",
-        "brush kit",
-        "shaker",
-        "tambourine",
-        "808 sub-kick",
-        "wurlitzer",
-        "celesta",
-        "vibraphone",
-        "marimba",
-        "muted electric guitar",
-        "muted trumpet",
-        "clarinet",
-        "field recordings",
-        "synth plucks",
-    ]
+    alias = INSTRUMENTS_DATA["alias"]
+    canon = INSTRUMENTS_DATA["canonical"]
     out = []
     for s in (instrs or []):
         k = str(s).strip().lower()
@@ -1595,7 +1574,15 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--song-json", required=True, help="JSON blob from Tauri SongSpec")
     parser.add_argument("--out", required=True, help="Output WAV path")
+    parser.add_argument(
+        "--instruments-file",
+        help="Path to instruments.json (override or use env BLOSSOM_INSTRUMENTS_FILE)",
+    )
     args = parser.parse_args()
+
+    if args.instruments_file:
+        global INSTRUMENTS_DATA
+        INSTRUMENTS_DATA = _load_instruments(args.instruments_file)
 
     spec = json.loads(args.song_json)
 
