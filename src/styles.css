@@ -36,6 +36,37 @@ body.theme-galaxy {
   background: #000 url("/galaxy.svg") center / cover no-repeat;
 }
 
+body.theme-noir {
+  background: #1a1a1a;
+}
+
+@keyframes neon-flicker {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  60% {
+    opacity: 0.95;
+  }
+  70% {
+    opacity: 0.85;
+  }
+}
+
+body.theme-noir .neon-text {
+  color: #0ff;
+  text-shadow: 0 0 5px rgba(0, 255, 255, 0.7);
+  animation: neon-flicker 1.5s infinite alternate;
+}
+
+body.theme-noir .neon-accent {
+  border-color: #0ff;
+  box-shadow: 0 0 6px rgba(0, 255, 255, 0.7);
+  animation: neon-flicker 1.5s infinite alternate;
+}
+
 body.theme-studio button,
 body.theme-studio input,
 body.theme-studio select {

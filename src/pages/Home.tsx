@@ -26,6 +26,7 @@ export default function Home() {
     sakura: "rgba(255,150,200,0.22)",
     studio: "rgba(0,255,255,0.22)",
     galaxy: "rgba(150,200,255,0.22)",
+    noir: "rgba(255,0,255,0.22)",
   };
   const [hoverColor, setHoverColor] = useState(themeColors[theme]);
   useEffect(() => {
