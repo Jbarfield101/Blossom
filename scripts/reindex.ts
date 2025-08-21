@@ -59,9 +59,8 @@ async function buildNpcIndex() {
       path: filepath,
     });
   }
-  const npcDir = path.resolve("dnd", "npc");
-  await fs.mkdir(npcDir, { recursive: true });
-  await fs.writeFile(path.join(npcDir, "index.json"), JSON.stringify(entries, null, 2) + "\n");
+  await fs.mkdir(npcsDir, { recursive: true });
+  await fs.writeFile(path.join(npcsDir, "index.json"), JSON.stringify(entries, null, 2) + "\n");
 }
 
 export async function reindex() {

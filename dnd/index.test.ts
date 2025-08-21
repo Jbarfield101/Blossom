@@ -27,7 +27,7 @@ describe("dnd index sync", () => {
   it("npc index matches npc files", async () => {
     const fileIds = await idsFromDir(path.join("dnd", "npcs"));
     const index = JSON.parse(
-      await fs.readFile(path.join("dnd", "npc", "index.json"), "utf8")
+      await fs.readFile(path.join("dnd", "npcs", "index.json"), "utf8")
     );
     const indexIds = index.map((e: any) => e.id);
     expect(new Set(indexIds)).toEqual(new Set(fileIds));

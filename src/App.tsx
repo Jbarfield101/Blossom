@@ -33,8 +33,8 @@ export default function App() {
         <Route path="/assistant" element={<Assistant />} />
         <Route path="/assistant/general-chat" element={<GeneralChat />} />
         <Route path="/dnd/world-builder" element={<WorldBuilder />} />
-        <Route path="/dnd/npc-maker" element={<NPCMaker />} />
-        <Route path="/dnd/npc-library" element={<NPCList />} />
+        <Route path="/dnd/npcs-maker" element={<NPCMaker />} />
+        <Route path="/dnd/npcs-library" element={<NPCList />} />
         <Route path="/laser" element={<Laser />} />
         <Route path="/lofi" element={<Lofi />} />
         <Route path="/stocks" element={<Stocks />} />
