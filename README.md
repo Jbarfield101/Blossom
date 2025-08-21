@@ -11,7 +11,10 @@ Install the following tools before working with the project:
 - **Node.js** – version 18 or later for the React/Vite front‑end.
 - **Python** – version 3.10+ for audio scripts.
 - **FFmpeg** – used by the Python scripts for reading and writing audio. Ensure
-  `ffmpeg` is available on your `PATH`.
+  `ffmpeg` and `ffprobe` are available on your `PATH`. On macOS or Linux install
+  via your package manager (for example `brew install ffmpeg` or `sudo apt install ffmpeg`).
+  On Windows download a build from [ffmpeg.org](https://ffmpeg.org/download.html)
+  and add its `bin` directory to your `PATH`.
 
 ## Installation
 

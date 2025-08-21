@@ -30,7 +30,6 @@ import os
 import random
 import sys
 import hashlib
-import warnings
 import re
 from typing import List, Dict, Tuple, Any, Optional
 
@@ -52,7 +51,6 @@ from effects import (
     _schroeder_room,
 )
 
-warnings.filterwarnings("ignore", message="Couldn't find ffmpeg or avconv")
 
 # ---------- FFmpeg wiring ----------
 def _set_ffmpeg_paths():
@@ -70,20 +68,25 @@ def _set_ffmpeg_paths():
         which("ffprobe"),
     ]
     set_any = False
-    for p in candidates_ffmpeg:
-        if p and os.path.exists(p):
-            AudioSegment.converter = p
-            AudioSegment.ffmpeg = p
-            print(json.dumps({"stage": "info", "message": "ffmpeg set", "path": p}))
-            set_any = True
-            break
-    for p in candidates_ffprobe:
-        if p and os.path.exists(p):
-            AudioSegment.ffprobe = p
-            print(json.dumps({"stage": "info", "message": "ffprobe set", "path": p}))
-            break
+    try:
+        for p in candidates_ffmpeg:
+            if p and os.path.exists(p):
+                AudioSegment.converter = p
+                AudioSegment.ffmpeg = p
+                print(json.dumps({"stage": "info", "message": "ffmpeg set", "path": p}))
+                set_any = True
+                break
+        for p in candidates_ffprobe:
+            if p and os.path.exists(p):
+                AudioSegment.ffprobe = p
+                print(json.dumps({"stage": "info", "message": "ffprobe set", "path": p}))
+                break
+    except (FileNotFoundError, OSError) as e:
+        print(json.dumps({"stage": "error", "message": f"ffmpeg configuration failed: {e}"}))
+        sys.exit(1)
     if not set_any:
-        print(json.dumps({"stage": "warn", "message": "ffmpeg not found; pydub exports will fail"}))
+        print(json.dumps({"stage": "error", "message": "ffmpeg not found; please install ffmpeg and ensure it is on PATH"}))
+        sys.exit(1)
 _set_ffmpeg_paths()
 # -----------------------------------
 
