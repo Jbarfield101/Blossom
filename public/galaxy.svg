@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+  <rect width="100" height="100" fill="#000"/>
+  <g transform="translate(50 50)">
+    <g stroke="#8fd6ff" stroke-width="2" fill="none" stroke-linecap="round">
+      <path d="M0 0 C20 -5 30 -15 40 -30"/>
+      <path d="M0 0 C20 -5 30 -15 40 -30" transform="rotate(90)"/>
+      <path d="M0 0 C20 -5 30 -15 40 -30" transform="rotate(180)"/>
+      <path d="M0 0 C20 -5 30 -15 40 -30" transform="rotate(270)"/>
+    </g>
+    <circle r="3" fill="#fff"/>
+    <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0" to="360" dur="60s" repeatCount="indefinite"/>
+  </g>
+</svg>

@@ -32,6 +32,10 @@ body.theme-studio {
   background: #000;
 }
 
+body.theme-galaxy {
+  background: #000 url("/galaxy.svg") center / cover no-repeat;
+}
+
 body.theme-studio button,
 body.theme-studio input,
 body.theme-studio select {
