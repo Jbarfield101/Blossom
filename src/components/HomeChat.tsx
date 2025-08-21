@@ -7,6 +7,7 @@ import Draggable from "react-draggable";
 import { nanoid } from "nanoid";
 import { invoke } from "@tauri-apps/api/core";
 import { PRESET_TEMPLATES } from "./SongForm";
+import { SystemInfo } from "../features/system/useSystemInfo";
 
 interface Message {
   id: string;
@@ -37,7 +38,15 @@ export default function HomeChat() {
     setLoading(true);
     let reply = "";
     try {
-      if (trimmed.toLowerCase().startsWith("/music")) {
+      if (trimmed.toLowerCase().startsWith("/sys")) {
+        const info = await invoke<SystemInfo>("system_info");
+        const gpu =
+          info.gpu_usage !== null ? `${Math.round(info.gpu_usage)}%` : "N/A";
+        reply =
+          `CPU: ${Math.round(info.cpu_usage)}%\n` +
+          `Memory: ${Math.round(info.mem_usage)}%\n` +
+          `GPU: ${gpu}`;
+      } else if (trimmed.toLowerCase().startsWith("/music")) {
         const args = trimmed.slice(6).trim();
         const templateMatch = args.match(/template=("[^"]+"|[^\s]+)/i);
         const trackMatch = args.match(/tracks=(\d+)/i);

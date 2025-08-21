@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/re
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import HomeChat from './HomeChat';
 import { invoke } from '@tauri-apps/api/core';
+import { SystemInfo } from '../features/system/useSystemInfo';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 
@@ -66,5 +67,20 @@ describe('HomeChat', () => {
         'Started music generation for "My Song" using "Classic Lofi" with 2 tracks.'
       )
     ).toBeInTheDocument();
+  });
+
+  it('handles /sys command', async () => {
+    const info: SystemInfo = { cpu_usage: 12, mem_usage: 34, gpu_usage: 56 };
+    (invoke as any).mockResolvedValue(info);
+    render(<HomeChat />);
+    fireEvent.change(screen.getByPlaceholderText('Ask Blossom...'), {
+      target: { value: '/sys' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /send/i }));
+    await waitFor(() => {
+      expect(invoke).toHaveBeenCalledWith('system_info');
+    });
+    const msg = await screen.findByText(/CPU: 12%/);
+    expect(msg.textContent).toBe('CPU: 12%\nMemory: 34%\nGPU: 56%');
   });
 });
