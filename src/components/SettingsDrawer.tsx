@@ -18,6 +18,7 @@ import { useState, useEffect } from "react";
 import { usePaths } from "../features/paths/usePaths";
 import { useOutput } from "../features/output/useOutput";
 import { useAudioDefaults } from "../features/audioDefaults/useAudioDefaults";
+import { useTheme, type Theme } from "../features/theme/ThemeContext";
 
 const KEY_OPTIONS = [
   "Auto",
@@ -119,6 +120,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
     hqChorus,
     toggleHqChorus,
   } = useAudioDefaults();
+  const { theme, setTheme, mode, setMode } = useTheme();
   const [audioSaved, setAudioSaved] = useState(false);
 
   return (
@@ -183,6 +185,35 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
           <Button variant="contained" sx={{ mt: 2 }} onClick={() => setAudioSaved(true)}>
             Save Audio Defaults
           </Button>
+        </Box>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle1">Appearance</Typography>
+          <FormControl fullWidth sx={{ mt: 2 }}>
+            <InputLabel id="theme-label">Theme</InputLabel>
+            <Select
+              labelId="theme-label"
+              label="Theme"
+              value={theme}
+              onChange={(e) => setTheme(e.target.value as Theme)}
+            >
+              <MenuItem value="default">Default</MenuItem>
+              <MenuItem value="ocean">Ocean</MenuItem>
+              <MenuItem value="forest">Forest</MenuItem>
+              <MenuItem value="sunset">Sunset</MenuItem>
+              <MenuItem value="sakura">Sakura</MenuItem>
+              <MenuItem value="studio">Studio</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControlLabel
+            sx={{ mt: 1 }}
+            control={
+              <Switch
+                checked={mode === "dark"}
+                onChange={(e) => setMode(e.target.checked ? "dark" : "light")}
+              />
+            }
+            label="Dark Mode"
+          />
         </Box>
 
         <Box>
