@@ -1,8 +1,9 @@
 import type { CalendarEvent } from './types';
+import { colors } from '../../theme';
 
 export const statusColors: Record<CalendarEvent['status'], string> = {
-  scheduled: 'bg-blue-500',
-  canceled: 'bg-red-500',
-  missed: 'bg-amber-500',
-  completed: 'bg-emerald-500',
+  scheduled: colors.status.scheduled,
+  canceled: colors.status.canceled,
+  missed: colors.status.missed,
+  completed: colors.status.completed,
 };

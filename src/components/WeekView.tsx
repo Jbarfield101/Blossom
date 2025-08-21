@@ -1,3 +1,4 @@
+import { Box, List, ListItem, Typography } from '@mui/material';
 import type { CalendarEvent } from "../features/calendar/types";
 
 interface Props {
@@ -35,9 +36,11 @@ export default function WeekView({ current, events }: Props) {
   });
 
   return (
-    <div data-testid="week-view">
+    <Box data-testid="week-view">
       {weekEvents.length === 0 ? (
-        <div className="text-sm text-gray-500">No events this week</div>
+        <Typography variant="body2" color="text.secondary">
+          No events this week
+        </Typography>
       ) : (
         Object.keys(grouped)
           .sort((a, b) => Number(a) - Number(b))
@@ -61,9 +64,9 @@ export default function WeekView({ current, events }: Props) {
               weekday: "long",
             });
             return (
-              <div key={day} className="mb-2">
-                <div className="font-medium">{dayName}</div>
-                <ul className="space-y-1">
+              <Box key={day} sx={{ mb: 2 }}>
+                <Typography fontWeight={500}>{dayName}</Typography>
+                <List dense sx={{ p: 0 }}>
                   {dayEvents.map((ev) => {
                     const evStart = new Date(ev.date).getTime();
                     const evEnd = new Date(ev.end).getTime();
@@ -80,17 +83,16 @@ export default function WeekView({ current, events }: Props) {
                       minute: "2-digit",
                     });
                     return (
-                      <li key={ev.id} className="text-sm">
-                        {`${displayStart} - ${displayEnd} ${ev.title}`}
-                      </li>
+                      <ListItem key={ev.id} sx={{ py: 0 }}>
+                        <Typography variant="body2">{`${displayStart} - ${displayEnd} ${ev.title}`}</Typography>
+                      </ListItem>
                     );
                   })}
-                </ul>
-              </div>
+                </List>
+              </Box>
             );
           })
       )}
-    </div>
+    </Box>
   );
 }
-

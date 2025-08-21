@@ -1,21 +1,24 @@
-import { useCalendar } from "../features/calendar/useCalendar";
+import { List, ListItem, Typography, Paper } from '@mui/material';
+import { useCalendar } from '../features/calendar/useCalendar';
 
 export default function TagStats() {
   const { tagTotals } = useCalendar();
   const entries = Object.entries(tagTotals).sort((a, b) => b[1] - a[1]);
-
   if (entries.length === 0) return null;
-
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mt-6">
-      <h3 className="text-lg font-semibold mb-4">Tag Stats</h3>
-      <ul className="space-y-1">
+    <Paper sx={{ p: 3, mt: 6 }}>
+      <Typography variant="h6" gutterBottom>
+        Tag Stats
+      </Typography>
+      <List dense sx={{ p: 0 }}>
         {entries.map(([tag, ms]) => (
-          <li key={tag} className="text-sm text-gray-700">
-            {tag}: {(ms / (1000 * 60 * 60)).toFixed(2)}h
-          </li>
+          <ListItem key={tag} sx={{ py: 0 }}>
+            <Typography variant="body2" color="text.secondary">
+              {tag}: {(ms / (1000 * 60 * 60)).toFixed(2)}h
+            </Typography>
+          </ListItem>
         ))}
-      </ul>
-    </div>
+      </List>
+    </Paper>
   );
 }

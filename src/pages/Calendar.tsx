@@ -1,5 +1,19 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import {
+  Box,
+  Button,
+  ButtonGroup,
+  Checkbox,
+  FormControlLabel,
+  Grid,
+  IconButton,
+  MenuItem,
+  Paper,
+  Select,
+  TextField,
+  Typography,
+} from "@mui/material";
+import {
   ChevronLeftIcon,
   ChevronRightIcon,
   PencilIcon,
@@ -199,32 +213,28 @@ export default function Calendar() {
   }, [quickAdd, closeQuickAdd]);
 
   const agendaEvents = selectedDay ? dayEvents(selectedDay) : [];
-
   const monthNames = Array.from({ length: 12 }, (_, i) =>
     new Date(0, i).toLocaleString("default", { month: "long" })
   );
 
   return (
-    <div className="p-5 pt-20 mx-auto max-w-7xl">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between mb-6 relative">
-        <div className="flex items-center space-x-2">
-          <button
-            className="p-2 rounded-lg hover:bg-gray-100"
+    <Box sx={{ p: 5, pt: 20, mx: "auto", maxWidth: 1200 }}>
+      <Box display="flex" alignItems="center" justifyContent="space-between" mb={6} position="relative">
+        <Box display="flex" alignItems="center" gap={2}>
+          <IconButton
             onClick={() => setCurrent(new Date(year, month - 1, 1))}
             aria-label="Previous month"
           >
-            <ChevronLeftIcon className="w-6 h-6" />
-          </button>
-          <button
-            className="p-2 rounded-lg hover:bg-gray-100"
+            <ChevronLeftIcon width={24} height={24} />
+          </IconButton>
+          <IconButton
             onClick={() => setCurrent(new Date(year, month + 1, 1))}
             aria-label="Next month"
           >
-            <ChevronRightIcon className="w-6 h-6" />
-          </button>
-          <button
-            className="px-3 py-1 border rounded-md"
+            <ChevronRightIcon width={24} height={24} />
+          </IconButton>
+          <Button
+            variant="outlined"
             onClick={() => {
               const now = new Date();
               setCurrent(new Date(now.getFullYear(), now.getMonth(), 1));
@@ -232,55 +242,60 @@ export default function Calendar() {
             }}
           >
             Today
-          </button>
-        </div>
-        <h2 className="text-2xl font-bold absolute left-1/2 -translate-x-1/2">
+          </Button>
+        </Box>
+        <Typography variant="h5" fontWeight={700} sx={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
           {current.toLocaleString("default", { month: "long" })} {year}
-        </h2>
-        <div className="flex items-center space-x-2">
-          <select
-            className="border rounded-md p-1"
+        </Typography>
+        <Box display="flex" alignItems="center" gap={2}>
+          <Select
+            size="small"
             value={month}
-            onChange={(e) =>
-              setCurrent(new Date(year, Number(e.target.value), 1))
-            }
+            onChange={(e) => setCurrent(new Date(year, Number(e.target.value), 1))}
           >
             {monthNames.map((m, i) => (
-              <option value={i} key={m}>
+              <MenuItem value={i} key={m}>
                 {m}
-              </option>
+              </MenuItem>
             ))}
-          </select>
-          <div className="inline-flex border rounded-md overflow-hidden">
+          </Select>
+          <ButtonGroup size="small">
             {(["month", "week", "agenda"] as const).map((v) => (
-              <button
+              <Button
                 key={v}
-                className={`px-3 py-1 text-sm capitalize ${
-                  view === v
-                    ? "bg-blue-600 text-white"
-                    : "bg-white"
-                }`}
+                variant={view === v ? "contained" : "outlined"}
                 onClick={() => setView(v)}
+                sx={{ textTransform: "capitalize" }}
               >
                 {v}
-              </button>
+              </Button>
             ))}
-          </div>
-        </div>
-      </div>
+          </ButtonGroup>
+        </Box>
+      </Box>
 
-      <div className="md:flex md:gap-6">
+      <Box display={{ md: "flex" }} gap={6}>
         {view === "month" ? (
           <>
-            <div className="flex-1">
-              <div className="grid grid-cols-7 gap-1 mb-8" role="grid">
+            <Box flex={1}>
+              <Box
+                role="grid"
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(7, 1fr)",
+                  gap: 1,
+                  mb: 8,
+                }}
+              >
                 {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-                  <div
+                  <Typography
                     key={d}
-                    className="text-center font-semibold text-gray-700 py-2"
+                    align="center"
+                    fontWeight={600}
+                    color="text.secondary"
                   >
                     {d}
-                  </div>
+                  </Typography>
                 ))}
                 {cells.map((day, idx) => (
                   <CalendarDay
@@ -301,253 +316,251 @@ export default function Calendar() {
                     }
                   />
                 ))}
-              </div>
-            </div>
+              </Box>
+            </Box>
 
-            <aside className="w-full md:w-80 space-y-6">
-              <div className="bg-white rounded-lg shadow-md p-4">
-                <h3 className="text-lg font-semibold mb-4">Agenda</h3>
+            <Box sx={{ width: { xs: "100%", md: 320 }, display: "flex", flexDirection: "column", gap: 6 }}>
+              <Paper sx={{ p: 2 }}>
+                <Typography variant="h6" gutterBottom>
+                  Agenda
+                </Typography>
                 {selectedDay == null ? (
-                  <div className="text-sm text-gray-500">Select a day</div>
+                  <Typography variant="body2" color="text.secondary">
+                    Select a day
+                  </Typography>
                 ) : agendaEvents.length === 0 ? (
-                  <div className="text-sm text-gray-500">No events yet</div>
+                  <Typography variant="body2" color="text.secondary">
+                    No events yet
+                  </Typography>
                 ) : (
-                  <ul className="space-y-1">
+                  <Box component="ul" sx={{ listStyle: "none", p: 0, m: 0 }}>
                     {agendaEvents.map((ev) => (
-                      <li key={ev.id} className="text-sm flex items-center gap-2">
-                        <span
-                          className={`px-2 py-0.5 rounded text-white text-xs ${statusColors[ev.status]}`}
+                      <Box
+                        component="li"
+                        key={ev.id}
+                        sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
+                      >
+                        <Box
+                          sx={{
+                            px: 0.5,
+                            py: 0.25,
+                            borderRadius: 1,
+                            bgcolor: statusColors[ev.status],
+                            color: "#fff",
+                            fontSize: 12,
+                          }}
                         >
                           {ev.status}
-                        </span>
-                        <span className="flex-1">{ev.title}</span>
-                        <button
-                          type="button"
+                        </Box>
+                        <Typography sx={{ flexGrow: 1, fontSize: 14 }}>
+                          {ev.title}
+                        </Typography>
+                        <IconButton
                           aria-label="Edit event"
-                          className="text-blue-500"
+                          size="small"
                           onClick={() => startEdit(ev)}
+                          sx={{ color: "primary.main" }}
                         >
-                          <PencilIcon className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
+                          <PencilIcon width={16} height={16} />
+                        </IconButton>
+                        <IconButton
                           aria-label="Delete event"
-                          className="text-red-500"
+                          size="small"
                           onClick={() => removeEvent(ev.id)}
+                          sx={{ color: "error.main" }}
                         >
-                          <TrashIcon className="w-4 h-4" />
-                        </button>
-                      </li>
+                          <TrashIcon width={16} height={16} />
+                        </IconButton>
+                      </Box>
                     ))}
-                  </ul>
+                  </Box>
                 )}
-              </div>
+              </Paper>
 
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-semibold mb-4">
+              <Paper sx={{ p: 2 }}>
+                <Typography variant="h6" gutterBottom>
                   {editingId ? "Edit Event" : "Add Event"}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label
-                      htmlFor="title"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Title
-                    </label>
-                    <input
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <TextField
                       id="title"
-                      type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Event title..."
+                      label="Title"
+                      fullWidth
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                     />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="start"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Start Time
-                    </label>
-                    <input
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
                       id="start"
-                      data-testid="date-input"
                       type="datetime-local"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      label="Start Time"
+                      fullWidth
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
+                      inputProps={{ "data-testid": "date-input" }}
+                      InputLabelProps={{ shrink: true }}
                     />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="end"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      End Time
-                    </label>
-                    <input
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
                       id="end"
-                      data-testid="end-input"
                       type="datetime-local"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      label="End Time"
+                      fullWidth
                       value={end}
                       onChange={(e) => setEnd(e.target.value)}
+                      inputProps={{ "data-testid": "end-input" }}
+                      InputLabelProps={{ shrink: true }}
                     />
                     {timeError && (
-                      <div
-                        className="text-red-600 text-sm mt-1"
-                        data-testid="time-error"
-                      >
+                      <Typography color="error" variant="body2" data-testid="time-error">
                         End time must be after start time
-                      </div>
+                      </Typography>
                     )}
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="tags"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Tags
-                    </label>
-                    <input
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
                       id="tags"
-                      type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      label="Tags"
+                      fullWidth
                       placeholder="tag1, tag2"
                       value={tags}
                       onChange={(e) => setTags(e.target.value)}
                     />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="status"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Status
-                    </label>
-                    <select
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
                       id="status"
+                      label="Status"
+                      select
+                      fullWidth
                       value={status}
                       onChange={(e) => setStatus(e.target.value as any)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="scheduled">Scheduled</option>
-                      <option value="canceled">Canceled</option>
-                      <option value="missed">Missed</option>
-                      <option value="completed">Completed</option>
-                    </select>
-                  </div>
-                  <div className="flex items-center mt-2">
-                    <input
-                      id="countdown"
-                      type="checkbox"
-                      className="h-4 w-4 text-blue-600 border-gray-300 rounded"
-                      checked={hasCountdown}
-                      onChange={(e) => setHasCountdown(e.target.checked)}
+                      <MenuItem value="scheduled">Scheduled</MenuItem>
+                      <MenuItem value="canceled">Canceled</MenuItem>
+                      <MenuItem value="missed">Missed</MenuItem>
+                      <MenuItem value="completed">Completed</MenuItem>
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          id="countdown"
+                          checked={hasCountdown}
+                          onChange={(e) => setHasCountdown(e.target.checked)}
+                        />
+                      }
+                      label="Countdown"
                     />
-                    <label htmlFor="countdown" className="ml-2 text-sm text-gray-700">
-                      Countdown
-                    </label>
-                  </div>
-                </div>
-                <div className="flex justify-end mt-6">
-                  <button
+                  </Grid>
+                </Grid>
+                <Box display="flex" justifyContent="flex-end" mt={3}>
+                  <Button
+                    variant="contained"
                     onClick={save}
                     disabled={timeError || !title || !date || !end}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     data-testid="add-button"
                   >
                     {editingId ? "Update Event" : "Add Event"}
-                  </button>
-                </div>
-              </div>
+                  </Button>
+                </Box>
+              </Paper>
 
               <TagStats />
-            </aside>
+            </Box>
           </>
         ) : view === "week" ? (
           <WeekView current={current} events={events} />
         ) : (
           <AgendaView events={events} />
         )}
-      </div>
+      </Box>
 
       {view === "month" && quickAdd && (
         <>
-          <div
-            className="fixed inset-0 z-10"
+          <Box
             data-testid="quick-add-overlay"
             onClick={closeQuickAdd}
+            sx={{ position: "fixed", inset: 0, zIndex: 10 }}
           />
-          <div
-            className="absolute z-20 bg-white border rounded-lg shadow-md p-4 w-56"
+          <Paper
+            sx={{ position: "absolute", zIndex: 20, p: 2, width: 224 }}
             style={{ top: quickAdd.top, left: quickAdd.left }}
           >
-            <div className="mb-2">
+            <Box sx={{ mb: 2 }}>
               {dayEvents(quickAdd.day).length > 0 && (
-                <ul className="mb-2 space-y-1">
+                <Box component="ul" sx={{ listStyle: "none", p: 0, m: 0, mb: 2 }}>
                   {dayEvents(quickAdd.day).map((ev) => (
-                    <li
+                    <Box
+                      component="li"
                       key={ev.id}
-                      className="text-sm flex items-center gap-2"
+                      sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}
                     >
-                      <span
-                        className={`px-2 py-0.5 rounded text-white text-xs ${statusColors[ev.status]}`}
+                      <Box
+                        sx={{
+                          px: 0.5,
+                          py: 0.25,
+                          borderRadius: 1,
+                          bgcolor: statusColors[ev.status],
+                          color: "#fff",
+                          fontSize: 12,
+                        }}
                       >
                         {ev.status}
-                      </span>
-                      <button
-                        type="button"
-                        className="flex-1 text-left"
+                      </Box>
+                      <Button
                         onClick={() => startEdit(ev)}
+                        sx={{ flexGrow: 1, justifyContent: "flex-start", textTransform: "none" }}
                       >
                         {ev.title}
-                      </button>
-                    </li>
+                      </Button>
+                    </Box>
                   ))}
-                </ul>
+                </Box>
               )}
-              <input
-                ref={quickTitleRef}
+              <TextField
+                inputRef={quickTitleRef}
                 type="text"
-                className="w-full px-2 py-1 border rounded mb-2"
+                fullWidth
                 placeholder="Title"
                 value={quickTitle}
                 onChange={(e) => setQuickTitle(e.target.value)}
+                sx={{ mb: 2 }}
               />
-              <input
+              <TextField
                 type="time"
                 aria-label="Start time"
-                data-testid="quick-time"
-                className="w-full px-2 py-1 border rounded mb-2"
+                inputProps={{ "data-testid": "quick-time" }}
+                fullWidth
                 value={quickTime}
                 onChange={(e) => setQuickTime(e.target.value)}
+                sx={{ mb: 2 }}
               />
-              <select
-                aria-label="Duration"
-                data-testid="quick-duration"
-                className="w-full px-2 py-1 border rounded mb-2"
+              <TextField
+                select
+                fullWidth
                 value={quickDuration}
                 onChange={(e) => setQuickDuration(parseInt(e.target.value))}
+                SelectProps={{ native: true, inputProps: { "data-testid": "quick-duration" } }}
+                sx={{ mb: 2 }}
               >
                 <option value={30}>30m</option>
                 <option value={60}>1h</option>
                 <option value={90}>1h 30m</option>
                 <option value={120}>2h</option>
-              </select>
-              <button
-                className="w-full bg-blue-600 text-white py-1 rounded"
-                onClick={addQuick}
-              >
+              </TextField>
+              <Button fullWidth variant="contained" onClick={addQuick}>
                 Add
-              </button>
-            </div>
-          </div>
+              </Button>
+            </Box>
+          </Paper>
         </>
       )}
-    </div>
+    </Box>
   );
 }
 
@@ -598,4 +611,3 @@ function useKeyboardNavigation(
 
   return { focusedDay, setFocusedDay };
 }
-
