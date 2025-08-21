@@ -528,17 +528,20 @@ export default function Calendar() {
                 type="text"
                 fullWidth
                 placeholder="Title"
+                inputProps={{ "aria-label": "Title" }}
                 value={quickTitle}
                 onChange={(e) => setQuickTitle(e.target.value)}
                 sx={{ mb: 2 }}
               />
               <TextField
                 type="time"
-                aria-label="Start time"
-                inputProps={{ "data-testid": "quick-time" }}
                 fullWidth
                 value={quickTime}
                 onChange={(e) => setQuickTime(e.target.value)}
+                inputProps={{
+                  "data-testid": "quick-time",
+                  "aria-label": "Start time",
+                }}
                 sx={{ mb: 2 }}
               />
               <TextField
@@ -546,7 +549,13 @@ export default function Calendar() {
                 fullWidth
                 value={quickDuration}
                 onChange={(e) => setQuickDuration(parseInt(e.target.value))}
-                SelectProps={{ native: true, inputProps: { "data-testid": "quick-duration" } }}
+                SelectProps={{
+                  native: true,
+                  inputProps: {
+                    "data-testid": "quick-duration",
+                    "aria-label": "Duration",
+                  },
+                }}
                 sx={{ mb: 2 }}
               >
                 <option value={30}>30m</option>
