@@ -83,7 +83,7 @@ const KEYS = ["Auto", ...KEYS_BASE, ...EXTRA_KEYS];
 const displayKey = (k: string) => k.replace("#", "♯").replace("b", "♭");
 const showKey = (k: SongSpec["key"]) =>
   typeof k === "string" ? displayKey(k) : displayKey(k.key + (k.mode === "minor" ? "m" : ""));
-const MOODS = ["calm", "melancholy", "cozy", "nostalgic", "fantasy"];
+const MOODS = ["calm", "melancholy", "cozy", "nostalgic", "fantasy", "dreamy"];
 const INSTR = [
   "rhodes",
   "nylon guitar",
