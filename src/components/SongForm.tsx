@@ -41,6 +41,7 @@ type TemplateSpec = {
   mood: string[];
   instruments: string[];
   ambience: string[];
+  ambienceLevel?: number;
   leadInstrument?: string;
   drumPattern: string;
   variety: number;
@@ -792,6 +793,7 @@ export default function SongForm() {
     setInstruments(tpl.instruments);
     setLeadInstrument(tpl.leadInstrument ?? inferLeadInstrument(tpl.instruments));
     setAmbience(tpl.ambience);
+    setAmbienceLevel(tpl.ambienceLevel ?? 0.5);
     setDrumPattern(tpl.drumPattern);
     setVariety(tpl.variety);
     setChordSpanBeats(tpl.chordSpanBeats ?? 4);
@@ -1342,6 +1344,7 @@ export default function SongForm() {
                         instruments,
                         leadInstrument,
                         ambience,
+                        ambienceLevel,
                         drumPattern,
                         variety,
                         chordSpanBeats,
