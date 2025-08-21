@@ -4,15 +4,15 @@ import WeekView from './WeekView';
 import type { CalendarEvent } from '../features/calendar/types';
 
 describe('WeekView', () => {
-  const current = new Date('2024-05-15T12:00:00Z');
+  const current = new Date('2024-05-15T12:00');
 
   it('includes events that overlap the week', () => {
     const events: CalendarEvent[] = [
       {
         id: '1',
         title: 'Weekend',
-        date: '2024-05-11T23:00:00Z',
-        end: '2024-05-12T01:00:00Z',
+        date: '2024-05-11T23:00',
+        end: '2024-05-12T01:00',
         tags: [],
         status: 'scheduled',
         hasCountdown: false,
@@ -31,8 +31,8 @@ describe('WeekView', () => {
       {
         id: '2',
         title: 'Overnight',
-        date: '2024-05-13T23:00:00Z',
-        end: '2024-05-14T01:00:00Z',
+        date: '2024-05-13T23:00',
+        end: '2024-05-14T01:00',
         tags: [],
         status: 'scheduled',
         hasCountdown: false,

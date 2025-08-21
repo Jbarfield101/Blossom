@@ -26,6 +26,7 @@ import AgendaView from "../components/AgendaView";
 import { useCalendar } from "../features/calendar/useCalendar";
 import { statusColors } from "../features/calendar/statusColors";
 import type { CalendarEvent } from "../features/calendar/types";
+import { toLocalNaive } from "../utils/time";
 
 function pad(n: number) {
   return n.toString().padStart(2, "0");
@@ -192,8 +193,8 @@ export default function Calendar() {
     const endTime = new Date(start.getTime() + quickDuration * 60000);
     addEvent({
       title: quickTitle,
-      date: start.toISOString(),
-      end: endTime.toISOString(),
+      date: toLocalNaive(start),
+      end: toLocalNaive(endTime),
       tags: [],
       status: "scheduled",
       hasCountdown: false,
