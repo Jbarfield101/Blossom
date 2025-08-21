@@ -54,6 +54,7 @@ fn main() {
             commands::pdf_remove,
             commands::pdf_list,
             commands::pdf_search,
+            commands::pdf_ingest,
             // Blender:
             commands::blender_run_script,
             commands::save_npc,

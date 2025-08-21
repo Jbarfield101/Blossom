@@ -24,9 +24,17 @@ export function useDocs() {
     refresh();
   }, []);
 
-  async function addDoc(path: string) {
-    await invoke("pdf_add", { path });
+  async function ingestDoc(docId: string) {
+    await invoke("pdf_ingest", { docId });
+  }
+
+  async function addDoc(path: string, ingest = false) {
+    const meta = await invoke<DocMeta>("pdf_add", { path });
+    if (ingest) {
+      await ingestDoc(meta.doc_id);
+    }
     refresh();
+    return meta;
   }
 
   async function removeDoc(docId: string) {
@@ -38,7 +46,7 @@ export function useDocs() {
     return invoke("pdf_search", { query });
   }
 
-  return { docs, refresh, addDoc, removeDoc, searchDocs };
+  return { docs, refresh, addDoc, removeDoc, searchDocs, ingestDoc };
 }
 
 export type { DocMeta };
