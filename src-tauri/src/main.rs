@@ -3,11 +3,16 @@
 
 mod commands;
 mod stocks;
+mod task_queue;
+
+use task_queue::TaskQueue;
 use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
 
 fn main() {
     env_logger::init();
+    let queue = TaskQueue::new(1);
     tauri::Builder::default()
+        .manage(queue)
         .plugin(tauri_plugin_dialog::init())
         .plugin(
             SqlBuilder::default()
@@ -71,6 +76,10 @@ fn main() {
             commands::save_shorts,
             commands::generate_short,
             commands::system_info,
+            commands::enqueue_task,
+            commands::task_status,
+            commands::cancel_task,
+            commands::list_tasks,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
