@@ -8,8 +8,8 @@ import {
   ThemeProvider as MuiThemeProvider,
   CssBaseline,
   PaletteMode,
-  createTheme,
 } from "@mui/material";
+import { createAppTheme } from "../../theme";
 import { useUsers } from "../users/useUsers";
 
 export type Theme =
@@ -58,13 +58,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.style.colorScheme = mode;
   }, [mode]);
 
-  const muiTheme = useMemo(
-    () =>
-      createTheme({
-        palette: { mode },
-      }),
-    [mode]
-  );
+  const muiTheme = useMemo(() => createAppTheme(mode), [mode]);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, mode, setMode }}>

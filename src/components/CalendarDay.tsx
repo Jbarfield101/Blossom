@@ -1,3 +1,4 @@
+import { Box, Typography } from '@mui/material';
 import React, { useCallback } from 'react';
 import { statusColors } from '../features/calendar/statusColors';
 import type { CalendarEvent } from '../features/calendar/types';
@@ -25,7 +26,7 @@ const CalendarDay = React.memo(
     holiday,
   }: Props) => {
     if (!day) {
-      return <div className="min-h-24 bg-gray-50" />;
+      return <Box sx={{ minHeight: 96, bgcolor: 'grey.50' }} />;
     }
 
     const handleClick = useCallback(
@@ -36,11 +37,8 @@ const CalendarDay = React.memo(
     );
 
     return (
-      <div
+      <Box
         data-testid={`day-${day}`}
-        className={`relative min-h-24 p-2 border border-gray-200 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-          isToday ? 'bg-blue-50 border-blue-300' : 'bg-white'
-        } ${isFocused ? 'ring-2 ring-blue-500' : ''}`}
         onClick={handleClick}
         onDoubleClick={() => onPrefill(day)}
         onKeyDown={(e) => e.key === 'Enter' && handleClick(e)}
@@ -49,21 +47,45 @@ const CalendarDay = React.memo(
         aria-label={`Day ${day}, ${events.length} events`}
         aria-selected={isSelected}
         aria-current={isToday ? 'date' : undefined}
+        sx={{
+          position: 'relative',
+          minHeight: 96,
+          p: 2,
+          border: '1px solid',
+          borderColor: isToday ? 'primary.light' : 'grey.200',
+          bgcolor: isToday ? 'primary.light' : 'background.paper',
+          cursor: 'pointer',
+          '&:focus': {
+            outline: 'none',
+            boxShadow: (theme) => `0 0 0 2px ${theme.palette.primary.main}`,
+          },
+        }}
       >
-        {holiday && <span className="absolute top-1 right-1 text-xs">🎉</span>}
-        <div className="font-semibold text-gray-900 mb-1">{day}</div>
-        <div className="flex gap-1 flex-wrap">
+        {holiday && (
+          <Box sx={{ position: 'absolute', top: 4, right: 4, fontSize: 12 }}>🎉</Box>
+        )}
+        <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+          {day}
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
           {events.slice(0, 3).map((ev) => (
-            <span
+            <Box
               key={ev.id}
-              className={`w-2 h-2 rounded-full ${statusColors[ev.status]}`}
+              sx={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                bgcolor: statusColors[ev.status],
+              }}
             />
           ))}
           {events.length > 3 && (
-            <span className="text-[10px] text-gray-500">+{events.length - 3}</span>
+            <Typography sx={{ fontSize: 10, color: 'text.secondary' }}>
+              +{events.length - 3}
+            </Typography>
           )}
-        </div>
-      </div>
+        </Box>
+      </Box>
     );
   }
 );

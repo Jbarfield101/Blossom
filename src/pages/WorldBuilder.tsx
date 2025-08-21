@@ -29,7 +29,7 @@ export default function WorldBuilder() {
               {w}
             </Button>
             <IconButton onClick={() => removeWorld(w)}>
-              <TrashIcon className="h-5 w-5" />
+              <TrashIcon width={20} height={20} />
             </IconButton>
           </Stack>
         ))}

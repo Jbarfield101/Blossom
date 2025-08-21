@@ -1,3 +1,4 @@
+import { Box, List, ListItem, Typography } from '@mui/material';
 import type { CalendarEvent } from "../features/calendar/types";
 
 interface Props {
@@ -10,11 +11,13 @@ export default function AgendaView({ events }: Props) {
   );
 
   return (
-    <div data-testid="agenda-view">
+    <Box data-testid="agenda-view">
       {sorted.length === 0 ? (
-        <div className="text-sm text-gray-500">No events</div>
+        <Typography variant="body2" color="text.secondary">
+          No events
+        </Typography>
       ) : (
-        <ul className="space-y-1">
+        <List dense sx={{ p: 0 }}>
           {sorted.map((ev) => {
             const start = new Date(ev.date);
             const end = new Date(ev.end);
@@ -28,14 +31,13 @@ export default function AgendaView({ events }: Props) {
               minute: "2-digit",
             });
             return (
-              <li key={ev.id} className="text-sm">
-                {`${dateStr} ${startStr} - ${endStr} ${ev.title}`}
-              </li>
+              <ListItem key={ev.id} sx={{ py: 0 }}>
+                <Typography variant="body2">{`${dateStr} ${startStr} - ${endStr} ${ev.title}`}</Typography>
+              </ListItem>
             );
           })}
-        </ul>
+        </List>
       )}
-    </div>
+    </Box>
   );
 }
-
