@@ -380,6 +380,12 @@ pub async fn pdf_search<R: Runtime>(
     serde_json::from_value(v["results"].clone()).map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+pub async fn pdf_ingest<R: Runtime>(app: AppHandle<R>, doc_id: String) -> Result<Value, String> {
+    let out = run_pdf_tool(&app, &["ingest", &doc_id])?;
+    serde_json::from_str(&out).map_err(|e| e.to_string())
+}
+
 /* ==============================
 Serde-mapped types (camelCase)
 ============================== */

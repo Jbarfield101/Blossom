@@ -8,6 +8,8 @@ from pathlib import Path
 import numpy as np
 import pdfplumber
 import pytesseract
+import requests
+import subprocess
 
 
 def _base_dir() -> Path:
@@ -30,6 +32,12 @@ BASE_DIR = _base_dir()
 PDF_DIR = BASE_DIR / "PDFs"
 INDEX_DIR = BASE_DIR / "Index"
 EMBED_DIM = 512
+
+# repository roots for D&D assets
+ROOT_DIR = Path(__file__).resolve().parents[2]
+DND_DIR = ROOT_DIR / "dnd"
+NPC_SPEC_DIR = ROOT_DIR / "npc" / "specs"
+QUEST_DIR = DND_DIR / "quests"
 
 
 def ensure_dirs() -> None:
@@ -242,6 +250,111 @@ def meta(doc_id: str):
     return {"title": info.get("title"), "pages": info.get("pages"), "created": info.get("created")}
 
 
+# ---------------- Ingestion helpers -----------------
+
+def _llm_extract(text: str) -> str:
+    """Send text to a local LLM and return raw string response."""
+    url = os.environ.get("LOCAL_LLM_URL", "http://localhost:11434/api/generate")
+    model = os.environ.get("LOCAL_LLM_MODEL", "llama2")
+    prompt = (
+        "Extract Dungeons & Dragons entities (npc, lore, quest) from the following text. "
+        "Respond with a JSON array of objects {\"type\": \"npc|lore|quest\", \"data\": {...}}.\n\n"
+        + text
+    )
+    try:
+        resp = requests.post(
+            url,
+            json={"model": model, "prompt": prompt, "stream": False},
+            timeout=30,
+        )
+        if resp.ok:
+            data = resp.json()
+            if isinstance(data, dict):
+                if "response" in data:
+                    return data["response"]
+                if "choices" in data and data["choices"]:
+                    return data["choices"][0].get("text", "")
+    except Exception:
+        pass
+    return ""
+
+
+def _validate_entry(kind: str, payload: dict) -> bool:
+    """Validate payload using zod schemas via a node script."""
+    script = ROOT_DIR / "scripts" / "validate-dnd.ts"
+    try:
+        res = subprocess.run(
+            ["npx", "tsx", str(script), kind, json.dumps(payload)],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return res.returncode == 0
+    except Exception:
+        return False
+
+
+def _save_entry(kind: str, payload: dict) -> None:
+    if kind == "lore":
+        out_dir = DND_DIR / "lore"
+    elif kind == "npc":
+        out_dir = NPC_SPEC_DIR
+    elif kind == "quest":
+        out_dir = QUEST_DIR
+    else:
+        return
+    out_dir.mkdir(parents=True, exist_ok=True)
+    entry_id = payload.get("id") or hashlib.sha256(json.dumps(payload).encode()).hexdigest()[:8]
+    (out_dir / f"{entry_id}.json").write_text(
+        json.dumps(payload, indent=2), encoding="utf-8"
+    )
+
+
+def _run_reindex() -> None:
+    script = ROOT_DIR / "scripts" / "reindex.ts"
+    try:
+        subprocess.run(["npx", "tsx", str(script)], check=False)
+    except Exception:
+        pass
+
+
+def ingest_doc(doc_id: str):
+    """Process a document's chunks through the local LLM and persist results."""
+    chunks_path = INDEX_DIR / "chunks.jsonl"
+    if not chunks_path.exists():
+        return {"processed": 0, "saved": 0}
+    texts = []
+    with chunks_path.open("r", encoding="utf-8") as f:
+        for line in f:
+            obj = json.loads(line)
+            if obj.get("doc_id") == doc_id:
+                texts.append(obj.get("text", ""))
+    processed = 0
+    saved = 0
+    for text in texts:
+        processed += 1
+        raw = _llm_extract(text)
+        if not raw:
+            continue
+        try:
+            items = json.loads(raw)
+        except Exception:
+            continue
+        if isinstance(items, dict):
+            items = [items]
+        for item in items:
+            kind = item.get("type")
+            payload = item.get("data")
+            if not isinstance(payload, dict) or not kind:
+                continue
+            if _validate_entry(kind, payload):
+                _save_entry(kind, payload)
+                saved += 1
+    if saved:
+        _run_reindex()
+    return {"processed": processed, "saved": saved}
+
+
 def main():
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -254,6 +367,8 @@ def main():
     p = sub.add_parser("meta")
     p.add_argument("doc_id")
     p = sub.add_parser("remove")
+    p.add_argument("doc_id")
+    p = sub.add_parser("ingest")
     p.add_argument("doc_id")
     sub.add_parser("list")
     args = parser.parse_args()
@@ -269,6 +384,8 @@ def main():
     elif args.cmd == "remove":
         remove_doc(args.doc_id)
         out = {"removed": args.doc_id}
+    elif args.cmd == "ingest":
+        out = ingest_doc(args.doc_id)
     elif args.cmd == "list":
         out = list_docs()
     else:
