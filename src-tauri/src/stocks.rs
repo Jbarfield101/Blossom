@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -477,6 +477,11 @@ pub async fn stocks_fetch<R: Runtime>(
     tickers: Vec<String>,
     range: String,
 ) -> Result<StockBundle, String> {
+    let tickers: HashSet<String> = tickers
+        .into_iter()
+        .map(|t| t.trim().to_uppercase())
+        .filter(|t| !t.is_empty())
+        .collect();
     if tickers.is_empty() {
         return Err("ticker list empty".into());
     }
@@ -488,11 +493,7 @@ pub async fn stocks_fetch<R: Runtime>(
 
     let mut futures = Vec::new();
 
-    for t in tickers {
-        let ticker = t.trim().to_uppercase();
-        if ticker.is_empty() {
-            continue;
-        }
+    for ticker in tickers {
         let provider = provider.clone();
         let range = range.clone();
         let pool = pool;
