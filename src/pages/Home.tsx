@@ -8,10 +8,12 @@ import FeatureNav from "../components/FeatureNav";
 import VersionBadge from "../components/VersionBadge";
 import { Theme, useTheme } from "../features/theme/ThemeContext";
 import HomeChat from "../components/HomeChat";
+import SystemInfoWidget from "../components/SystemInfoWidget";
 import {
   countdownContainerSx,
   countdownTextSx,
   versionBadgeContainerSx,
+  systemInfoWidgetSx,
 } from "./homeStyles";
 
 export default function Home() {
@@ -62,6 +64,11 @@ export default function Home() {
 
       {/* Floating chat box */}
       <HomeChat />
+
+      {/* System info widget */}
+      <Box sx={systemInfoWidgetSx}>
+        <SystemInfoWidget />
+      </Box>
     </>
   );
 }

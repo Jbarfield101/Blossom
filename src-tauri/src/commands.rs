@@ -5,6 +5,7 @@ use std::{
     path::PathBuf,
     process::{Child, Command as PCommand, Stdio},
     sync::{Mutex, OnceLock},
+    time::Duration,
 };
 
 use dirs;
@@ -15,6 +16,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::{AppHandle, Emitter, Manager, Runtime, Window};
 use which::which;
+use sysinfo::{CpuExt, System, SystemExt};
 
 /* ==============================
 ComfyUI launcher (no extra crate)
@@ -1085,4 +1087,45 @@ pub async fn save_shorts(specs: Vec<ShortSpec>) -> Result<(), String> {
 pub async fn generate_short(spec: ShortSpec) -> Result<String, String> {
     println!("Generating short: {:?}", spec);
     Ok("ok".into())
+}
+
+#[derive(Serialize)]
+pub struct SystemInfo {
+    pub cpu_usage: f32,
+    pub mem_usage: f32,
+    pub gpu_usage: Option<f32>,
+}
+
+#[tauri::command]
+pub async fn system_info() -> Result<SystemInfo, String> {
+    let mut sys = System::new();
+    sys.refresh_cpu();
+    std::thread::sleep(Duration::from_millis(100));
+    sys.refresh_cpu();
+    sys.refresh_memory();
+    let cpu_usage = sys.global_cpu_info().cpu_usage();
+    let mem_usage = if sys.total_memory() > 0 {
+        (sys.used_memory() as f32 / sys.total_memory() as f32) * 100.0
+    } else {
+        0.0
+    };
+
+    let gpu_usage = std::process::Command::new("nvidia-smi")
+        .args([
+            "--query-gpu=utilization.gpu",
+            "--format=csv,noheader,nounits",
+        ])
+        .output()
+        .ok()
+        .and_then(|o| {
+            String::from_utf8(o.stdout)
+                .ok()
+                .and_then(|s| s.trim().parse::<f32>().ok())
+        });
+
+    Ok(SystemInfo {
+        cpu_usage,
+        mem_usage,
+        gpu_usage,
+    })
 }
