@@ -18,6 +18,7 @@ import DND from "./pages/DND";
 import Stocks from "./pages/Stocks";
 import Shorts from "./pages/Shorts";
 import User from "./pages/User";
+import SystemInfo from "./pages/SystemInfo";
 
 export default function App() {
   return (
@@ -39,6 +40,7 @@ export default function App() {
         <Route path="/lofi" element={<Lofi />} />
         <Route path="/stocks" element={<Stocks />} />
         <Route path="/shorts" element={<Shorts />} />
+        <Route path="/system" element={<SystemInfo />} />
         <Route path="/dnd" element={<DND />} />
         <Route path="/user" element={<User />} />
         <Route path="*" element={<NotFound />} />

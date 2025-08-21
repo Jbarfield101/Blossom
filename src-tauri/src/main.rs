@@ -70,6 +70,7 @@ fn main() {
             commands::load_shorts,
             commands::save_shorts,
             commands::generate_short,
+            commands::system_info,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

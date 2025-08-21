@@ -23,3 +23,10 @@ export const versionBadgeContainerSx: SxProps<Theme> = {
   textAlign: "center",
   color: "#fff",
 };
+
+export const systemInfoWidgetSx: SxProps<Theme> = {
+  position: "absolute",
+  bottom: { xs: "1rem", sm: "1.5rem" },
+  left: { xs: "1rem", sm: "1.5rem" },
+  zIndex: 50,
+};
