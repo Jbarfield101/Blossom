@@ -203,6 +203,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
               <MenuItem value="sakura">Sakura</MenuItem>
               <MenuItem value="studio">Studio</MenuItem>
               <MenuItem value="galaxy">Galaxy</MenuItem>
+              <MenuItem value="retro">Retro</MenuItem>
               <MenuItem value="noir">Noir</MenuItem>
               <MenuItem value="aurora">Aurora</MenuItem>
               <MenuItem value="rainy">Rainy</MenuItem>
