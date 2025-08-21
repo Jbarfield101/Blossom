@@ -1,5 +1,5 @@
 import { memo, useEffect, useState } from "react";
-import { Box, Typography, IconButton, ListItem } from "@mui/material";
+import { Box, Typography, IconButton, ListItem, Skeleton, Fade } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Sparkline from "./Sparkline";
 import { useStocks } from "../store/stocks";
@@ -47,16 +47,18 @@ function StockRow({ symbol }: { symbol: string }) {
                 {quote.error}
               </Typography>
             ) : (
-              <>
-                <Typography sx={{ width: 120, color }}>
-                  {quote.price.toFixed(2)} ({quote.changePercent.toFixed(2)}%)
-                </Typography>
-                <Typography sx={{ width: 80 }}>{quote.marketStatus}</Typography>
-                <Sparkline data={quote.history} color={color} />
-              </>
+              <Fade in={!!quote}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <Typography sx={{ width: 120, color }}>
+                    {quote.price.toFixed(2)} ({quote.changePercent.toFixed(2)}%)
+                  </Typography>
+                  <Typography sx={{ width: 80 }}>{quote.marketStatus}</Typography>
+                  <Sparkline data={quote.history} color={color} />
+                </Box>
+              </Fade>
             )
           ) : (
-            <Typography sx={{ width: 120 }}>...</Typography>
+            <Skeleton variant="text" width={120} />
           )}
         </Box>
         {forecast && (
