@@ -20,6 +20,7 @@ export type Theme =
   | "sakura"
   | "studio"
   | "galaxy"
+  | "retro"
   | "noir"
   | "aurora"
   | "rainy";
@@ -54,6 +55,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       "theme-sakura",
       "theme-studio",
       "theme-galaxy",
+      "theme-retro",
       "theme-noir",
       "theme-aurora",
       "theme-rainy",

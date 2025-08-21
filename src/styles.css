@@ -42,6 +42,12 @@ body.theme-galaxy {
   background: #000 url("/galaxy.svg") center / cover no-repeat;
 }
 
+body.theme-retro {
+  background: #000;
+  color: #0f0;
+  font-family: "Courier New", monospace;
+}
+
 body.theme-noir {
   background: #1a1a1a;
 }
@@ -75,6 +81,15 @@ body.theme-studio select {
   color: #0ff;
   border: 1px solid #0ff;
   box-shadow: 0 0 6px rgba(0, 255, 255, 0.7);
+}
+
+body.theme-retro button,
+body.theme-retro input,
+body.theme-retro select,
+body.theme-retro textarea {
+  background: #000;
+  color: #0f0;
+  border: 1px solid #0f0;
 }
 
 body.theme-studio button:hover,

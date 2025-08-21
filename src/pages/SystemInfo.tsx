@@ -10,6 +10,7 @@ const themeColors: Record<Theme, string> = {
   sakura: "rgba(255,150,200,0.22)",
   studio: "rgba(0,255,255,0.22)",
   galaxy: "rgba(150,200,255,0.22)",
+  retro: "rgba(0,255,0,0.22)",
 };
 
 export default function SystemInfo() {
