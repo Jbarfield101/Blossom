@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { Box, IconButton, Stack, TextField, Typography } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import Draggable from "react-draggable";
 import { nanoid } from "nanoid";
 import { invoke } from "@tauri-apps/api/core";
 import { PRESET_TEMPLATES } from "./SongForm";
@@ -15,6 +18,8 @@ export default function HomeChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [minimized, setMinimized] = useState(false);
+  const nodeRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -75,56 +80,84 @@ export default function HomeChat() {
   };
 
   return (
-    <Box
-      sx={{
-        position: "fixed",
-        bottom: 16,
-        right: 16,
-        width: 320,
-        bgcolor: "rgba(0,0,0,0.7)",
-        color: "#fff",
-        p: 2,
-        borderRadius: 2,
-        display: "flex",
-        flexDirection: "column",
-        gap: 1,
-      }}
-    >
-      <Box ref={scrollRef} sx={{ flex: 1, overflowY: "auto" }}>
-        {messages.map((m) => (
-          <Typography
-            key={m.id}
-            sx={{ mb: 1, textAlign: m.role === "user" ? "right" : "left" }}
-          >
-            {m.content}
-          </Typography>
-        ))}
-      </Box>
-      <Stack direction="row" spacing={1}>
-        <TextField
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          size="small"
-          fullWidth
-          placeholder="Ask Blossom..."
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              send();
-            }
+    <Draggable nodeRef={nodeRef} handle=".homechat-handle">
+      <Box
+        ref={nodeRef}
+        sx={{
+          position: "fixed",
+          bottom: 16,
+          right: 16,
+          width: 320,
+          bgcolor: "rgba(0,0,0,0.7)",
+          color: "#fff",
+          p: 2,
+          borderRadius: 2,
+          display: "flex",
+          flexDirection: "column",
+          gap: 1,
+        }}
+      >
+        <Box
+          className="homechat-handle"
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            cursor: "move",
           }}
-          InputProps={{ sx: { bgcolor: "#fff", borderRadius: 1 } }}
-        />
-        <IconButton
-          color="primary"
-          onClick={send}
-          disabled={loading}
-          aria-label="Send"
         >
-          <SendIcon />
-        </IconButton>
-      </Stack>
-    </Box>
+          <Typography variant="subtitle1">Chat</Typography>
+          <IconButton
+            size="small"
+            onClick={() => setMinimized((m) => !m)}
+            aria-label={minimized ? "Expand" : "Collapse"}
+          >
+            {minimized ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          </IconButton>
+        </Box>
+        {!minimized && (
+          <>
+            <Box ref={scrollRef} sx={{ flex: 1, overflowY: "auto" }}>
+              {messages.map((m) => (
+                <Typography
+                  key={m.id}
+                  sx={{
+                    mb: 1,
+                    textAlign: m.role === "user" ? "right" : "left",
+                  }}
+                >
+                  {m.content}
+                </Typography>
+              ))}
+            </Box>
+            <Stack direction="row" spacing={1}>
+              <TextField
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                size="small"
+                fullWidth
+                placeholder="Ask Blossom..."
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    send();
+                  }
+                }}
+                InputProps={{ sx: { bgcolor: "#fff", borderRadius: 1 } }}
+              />
+              <IconButton
+                color="primary"
+                onClick={send}
+                disabled={loading}
+                aria-label="Send"
+              >
+                <SendIcon />
+              </IconButton>
+            </Stack>
+          </>
+        )}
+      </Box>
+    </Draggable>
   );
 }
 
