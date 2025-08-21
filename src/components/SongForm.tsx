@@ -41,6 +41,7 @@ type TemplateSpec = {
   mood: string[];
   instruments: string[];
   ambience: string[];
+  ambienceLevel?: number;
   leadInstrument?: string;
   drumPattern: string;
   variety: number;
@@ -735,6 +736,117 @@ export const PRESET_TEMPLATES: Record<string, TemplateSpec> = {
     dither: true,
     bpmJitterPct: 4,
   },
+  "Sunset VHS": {
+    structure: [
+      { name: "Intro", bars: 4, chords: ["Am7", "Am7", "Am7", "Am7"] },
+      {
+        name: "A",
+        bars: 8,
+        chords: ["Am7", "Gmaj7", "Fmaj7", "E7", "Am7", "Gmaj7", "Fmaj7", "E7"],
+      },
+      {
+        name: "B",
+        bars: 8,
+        chords: ["Dm7", "G7", "Cmaj7", "Fmaj7", "Bm7b5", "E7", "Am7", "Am7"],
+      },
+      {
+        name: "A",
+        bars: 8,
+        chords: ["Am7", "Gmaj7", "Fmaj7", "E7", "Am7", "Gmaj7", "Fmaj7", "E7"],
+      },
+      { name: "Outro", bars: 4, chords: ["Fmaj7", "E7", "Am7", "Am7"] },
+    ],
+    bpm: 90,
+    key: "Am",
+    mood: ["nostalgic", "dreamy"],
+    instruments: ["wurlitzer", "upright bass", "pads", "synth lead"],
+    ambience: ["vinyl"],
+    ambienceLevel: 0.35,
+    drumPattern: "laidback",
+    variety: 45,
+    chordSpanBeats: 4,
+    hqStereo: true,
+    hqReverb: true,
+    hqSidechain: true,
+    hqChorus: true,
+    limiterDrive: 1.05,
+    dither: true,
+    bpmJitterPct: 5,
+  },
+  "Neon Palms": {
+    structure: [
+      { name: "Intro", bars: 4, chords: ["F#m7", "F#m7", "F#m7", "F#m7"] },
+      {
+        name: "A",
+        bars: 8,
+        chords: ["F#m7", "Dmaj7", "E7", "C#m7", "F#m7", "Dmaj7", "E7", "C#m7"],
+      },
+      {
+        name: "B",
+        bars: 8,
+        chords: ["Amaj7", "B7", "G#m7", "C#7", "Amaj7", "B7", "G#m7", "C#7"],
+      },
+      {
+        name: "A",
+        bars: 8,
+        chords: ["F#m7", "Dmaj7", "E7", "C#m7", "F#m7", "Dmaj7", "E7", "C#m7"],
+      },
+      { name: "Outro", bars: 4, chords: ["Dmaj7", "E7", "F#m7", "F#m7"] },
+    ],
+    bpm: 92,
+    key: "F#m",
+    mood: ["nostalgic", "dreamy"],
+    instruments: ["wurlitzer", "upright bass", "pads", "synth lead"],
+    ambience: ["vinyl"],
+    ambienceLevel: 0.3,
+    drumPattern: "boom_bap_B",
+    variety: 50,
+    chordSpanBeats: 4,
+    hqStereo: true,
+    hqReverb: true,
+    hqSidechain: true,
+    hqChorus: true,
+    limiterDrive: 1.05,
+    dither: true,
+    bpmJitterPct: 5,
+  },
+  "Night Swim": {
+    structure: [
+      { name: "Intro", bars: 4, chords: ["Dm7", "Dm7", "Dm7", "Dm7"] },
+      {
+        name: "A",
+        bars: 8,
+        chords: ["Dm7", "Gm7", "C7", "Fmaj7", "Dm7", "Gm7", "C7", "Fmaj7"],
+      },
+      {
+        name: "B",
+        bars: 8,
+        chords: ["Bbmaj7", "A7", "Dm7", "Gm7", "Bbmaj7", "A7", "Dm7", "Gm7"],
+      },
+      {
+        name: "A",
+        bars: 8,
+        chords: ["Dm7", "Gm7", "C7", "Fmaj7", "Dm7", "Gm7", "C7", "Fmaj7"],
+      },
+      { name: "Outro", bars: 4, chords: ["Gm7", "A7", "Dm7", "Dm7"] },
+    ],
+    bpm: 84,
+    key: "Dm",
+    mood: ["nostalgic", "calm"],
+    instruments: ["clean electric guitar", "upright bass", "pads", "synth lead"],
+    ambience: ["vinyl"],
+    ambienceLevel: 0.4,
+    drumPattern: "half_time",
+    variety: 40,
+    chordSpanBeats: 4,
+    hqStereo: true,
+    hqReverb: true,
+    hqSidechain: true,
+    hqChorus: true,
+    limiterDrive: 1.05,
+    dither: true,
+    bpmJitterPct: 5,
+  },
 };
 
 const SONG_TEMPLATES = PRESET_TEMPLATES;
@@ -792,6 +904,7 @@ export default function SongForm() {
     setInstruments(tpl.instruments);
     setLeadInstrument(tpl.leadInstrument ?? inferLeadInstrument(tpl.instruments));
     setAmbience(tpl.ambience);
+    setAmbienceLevel(tpl.ambienceLevel ?? 0.5);
     setDrumPattern(tpl.drumPattern);
     setVariety(tpl.variety);
     setChordSpanBeats(tpl.chordSpanBeats ?? 4);
