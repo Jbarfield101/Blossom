@@ -149,7 +149,7 @@ describe('SongForm', () => {
 
   it('shows dreamy mood option', () => {
     render(<SongForm />);
-    expect(screen.getByText('dreamy')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'dreamy' })).toBeInTheDocument();
   });
 
   it('shows Arcane Clash template option', () => {
@@ -160,6 +160,21 @@ describe('SongForm', () => {
   it('shows Bossa Nova template option', () => {
     render(<SongForm />);
     expect(screen.getAllByText('Bossa Nova')[0]).toBeInTheDocument();
+  });
+
+  it("shows King's Last Stand template option", () => {
+    render(<SongForm />);
+    expect(screen.getAllByText("King's Last Stand")[0]).toBeInTheDocument();
+  });
+
+  it('shows Ocean Breeze template option', () => {
+    render(<SongForm />);
+    expect(screen.getAllByText('Ocean Breeze')[0]).toBeInTheDocument();
+  });
+
+  it('shows City Lights template option', () => {
+    render(<SongForm />);
+    expect(screen.getAllByText('City Lights')[0]).toBeInTheDocument();
   });
 
   it('applies Bossa Nova template', () => {
