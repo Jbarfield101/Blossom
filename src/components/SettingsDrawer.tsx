@@ -205,6 +205,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
               <MenuItem value="galaxy">Galaxy</MenuItem>
               <MenuItem value="noir">Noir</MenuItem>
               <MenuItem value="aurora">Aurora</MenuItem>
+              <MenuItem value="rainy">Rainy</MenuItem>
             </Select>
           </FormControl>
           <FormControlLabel
