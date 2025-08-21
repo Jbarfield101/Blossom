@@ -1475,6 +1475,7 @@ export default function SongForm() {
                         instruments,
                         leadInstrument,
                         ambience,
+                        ambienceLevel,
                         drumPattern,
                         variety,
                         chordSpanBeats,
