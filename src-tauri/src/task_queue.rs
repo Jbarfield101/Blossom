@@ -1,15 +1,34 @@
 use std::collections::{HashMap, HashSet};
+use std::process::Command as PCommand;
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use tokio::sync::{mpsc, Semaphore};
 use tauri::async_runtime::{self, JoinHandle};
+
+use crate::commands::ShortSpec;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TaskCommand {
     /// Placeholder variant for future expansion.
     Example,
+    LofiGenerateGpu {
+        py: String,
+        script: String,
+        prompt: String,
+        duration: u32,
+        seed: u64,
+    },
+    PdfIngest {
+        py: String,
+        script: String,
+        doc_id: String,
+    },
+    GenerateShort {
+        spec: ShortSpec,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -28,6 +47,7 @@ pub struct Task {
     pub command: TaskCommand,
     pub status: TaskStatus,
     pub progress: f32,
+    pub result: Option<Value>,
 }
 
 enum Message {
@@ -67,6 +87,7 @@ impl TaskQueue {
                             continue;
                         }
                         let tasks_clone = tasks_worker.clone();
+                        let command = task.command.clone();
                         let permit = semaphore.clone().acquire_owned().await.unwrap();
                         let id = task.id;
                         let handle = async_runtime::spawn(async move {
@@ -76,11 +97,65 @@ impl TaskQueue {
                                     t.status = TaskStatus::Running;
                                 }
                             }
+                            let res: Result<Value, String> = match command {
+                                TaskCommand::Example => Ok(Value::Null),
+                                TaskCommand::LofiGenerateGpu { py, script, prompt, duration, seed } => {
+                                    let output = PCommand::new(&py)
+                                        .arg("-u")
+                                        .arg(&script)
+                                        .arg("--prompt")
+                                        .arg(&prompt)
+                                        .arg("--duration")
+                                        .arg(duration.to_string())
+                                        .arg("--seed")
+                                        .arg(seed.to_string())
+                                        .output()
+                                        .map_err(|e| format!("Failed to start python: {e}"))?;
+                                    if !output.status.success() {
+                                        let stderr = String::from_utf8_lossy(&output.stderr);
+                                        Err(format!("Python exited with status {}:\n{}", output.status, stderr))
+                                    } else {
+                                        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                                        if stdout.is_empty() {
+                                            Err("Python returned no path".into())
+                                        } else {
+                                            Ok(Value::String(stdout))
+                                        }
+                                    }
+                                }
+                                TaskCommand::PdfIngest { py, script, doc_id } => {
+                                    let output = PCommand::new(&py)
+                                        .arg(&script)
+                                        .arg("ingest")
+                                        .arg(&doc_id)
+                                        .output()
+                                        .map_err(|e| format!("Failed to start python: {e}"))?;
+                                    if !output.status.success() {
+                                        let stderr = String::from_utf8_lossy(&output.stderr);
+                                        Err(format!("Python exited with status {}:\n{}", output.status, stderr))
+                                    } else {
+                                        let stdout = String::from_utf8_lossy(&output.stdout);
+                                        serde_json::from_str::<Value>(&stdout).map_err(|e| e.to_string())
+                                    }
+                                }
+                                TaskCommand::GenerateShort { spec } => {
+                                    println!("Generating short: {:?}", spec);
+                                    Ok(Value::String("ok".into()))
+                                }
+                            };
                             {
                                 let mut map = tasks_clone.lock().unwrap();
                                 if let Some(t) = map.get_mut(&id) {
-                                    t.status = TaskStatus::Completed;
-                                    t.progress = 1.0;
+                                    match res {
+                                        Ok(v) => {
+                                            t.status = TaskStatus::Completed;
+                                            t.progress = 1.0;
+                                            t.result = Some(v);
+                                        }
+                                        Err(e) => {
+                                            t.status = TaskStatus::Failed(e);
+                                        }
+                                    }
                                 }
                             }
                             drop(permit);
@@ -111,6 +186,7 @@ impl TaskQueue {
             command,
             status: TaskStatus::Queued,
             progress: 0.0,
+            result: None,
         };
         let _ = self.tx.send(Message::Enqueue(task)).await;
         id

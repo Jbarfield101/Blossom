@@ -389,9 +389,27 @@ pub async fn pdf_search<R: Runtime>(
 }
 
 #[tauri::command]
-pub async fn pdf_ingest<R: Runtime>(app: AppHandle<R>, doc_id: String) -> Result<Value, String> {
-    let out = run_pdf_tool(&app, &["ingest", &doc_id])?;
-    serde_json::from_str(&out).map_err(|e| e.to_string())
+pub async fn pdf_ingest<R: Runtime>(
+    app: AppHandle<R>,
+    queue: State<'_, TaskQueue>,
+    doc_id: String,
+) -> Result<u64, String> {
+    let py = conda_python();
+    if !py.exists() {
+        return Err(format!("Python not found at {}", py.display()));
+    }
+    let script = pdf_tools_path(&app);
+    if !script.exists() {
+        return Err(format!("Script not found at {}", script.display()));
+    }
+    let cmd = TaskCommand::PdfIngest {
+        py: py.to_string_lossy().to_string(),
+        script: script.to_string_lossy().to_string(),
+        doc_id: doc_id.clone(),
+    };
+    Ok(queue
+        .enqueue(format!("pdf_ingest {doc_id}"), cmd)
+        .await)
 }
 
 /* ==============================
@@ -498,14 +516,15 @@ mod tests {
 Audio commands
 ============================== */
 
-/// Non‑streaming generate (no progress). Returns a single wav path.
+/// Non-streaming generate. Enqueues a task and returns its ID.
 #[tauri::command]
 pub async fn lofi_generate_gpu<R: Runtime>(
     app: AppHandle<R>,
+    queue: State<'_, TaskQueue>,
     prompt: String,
     duration: Option<u32>,
     seed: Option<u64>,
-) -> Result<String, String> {
+) -> Result<u64, String> {
     let py = conda_python();
     if !py.exists() {
         return Err(format!("Python not found at {}", py.display()));
@@ -519,31 +538,16 @@ pub async fn lofi_generate_gpu<R: Runtime>(
     let dur = duration.unwrap_or(12);
     let seed = seed.unwrap_or(42);
 
-    let output = PCommand::new(&py)
-        .arg("-u")
-        .arg(&script)
-        .arg("--prompt")
-        .arg(&prompt)
-        .arg("--duration")
-        .arg(dur.to_string())
-        .arg("--seed")
-        .arg(seed.to_string())
-        .output()
-        .map_err(|e| format!("Failed to start python: {e}"))?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!(
-            "Python exited with status {}:\n{}",
-            output.status, stderr
-        ));
-    }
-
-    let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    if stdout.is_empty() {
-        return Err("Python returned no path".into());
-    }
-    Ok(stdout)
+    let cmd = TaskCommand::LofiGenerateGpu {
+        py: py.to_string_lossy().to_string(),
+        script: script.to_string_lossy().to_string(),
+        prompt,
+        duration: dur,
+        seed,
+    };
+    Ok(queue
+        .enqueue("lofi_generate_gpu".into(), cmd)
+        .await)
 }
 
 /// Run full-song generation based on a structured spec (typed, camelCase-friendly).
@@ -1096,9 +1100,13 @@ pub async fn save_shorts(specs: Vec<ShortSpec>) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub async fn generate_short(spec: ShortSpec) -> Result<String, String> {
-    println!("Generating short: {:?}", spec);
-    Ok("ok".into())
+pub async fn generate_short(
+    queue: State<'_, TaskQueue>,
+    spec: ShortSpec,
+) -> Result<u64, String> {
+    let label = format!("generate_short {}", spec.id);
+    let cmd = TaskCommand::GenerateShort { spec };
+    Ok(queue.enqueue(label, cmd).await)
 }
 
 #[derive(Serialize)]
