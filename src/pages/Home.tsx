@@ -22,6 +22,8 @@ export default function Home() {
     forest: "rgba(0,255,150,0.22)",
     sunset: "rgba(255,150,0,0.22)",
     sakura: "rgba(255,150,200,0.22)",
+    studio: "rgba(0,255,255,0.22)",
+    galaxy: "rgba(150,200,255,0.22)",
   };
   const [hoverColor, setHoverColor] = useState(themeColors[theme]);
   useEffect(() => {
