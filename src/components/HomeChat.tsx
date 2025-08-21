@@ -3,6 +3,7 @@ import { Box, IconButton, Stack, TextField, Typography } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import { nanoid } from "nanoid";
 import { invoke } from "@tauri-apps/api/core";
+import { PRESET_TEMPLATES } from "./SongForm";
 
 interface Message {
   id: string;
@@ -32,11 +33,31 @@ export default function HomeChat() {
     let reply = "";
     try {
       if (trimmed.toLowerCase().startsWith("/music")) {
-        const title = trimmed.slice(6).trim() || "untitled";
-        await invoke("generate_album", {
-          meta: { track_count: 1, title_base: title },
-        });
-        reply = `Started music generation for "${title}".`;
+        const args = trimmed.slice(6).trim();
+        const templateMatch = args.match(/template=("[^"]+"|[^\s]+)/i);
+        const trackMatch = args.match(/tracks=(\d+)/i);
+        const template = templateMatch
+          ? templateMatch[1].replace(/^"|"$/g, "")
+          : undefined;
+        const trackCount = trackMatch ? Number(trackMatch[1]) : undefined;
+        const title = args
+          .replace(/template=("[^"]+"|[^\s]+)/i, "")
+          .replace(/tracks=\d+/i, "")
+          .trim() || "untitled";
+
+        if (!template || !trackCount) {
+          const templates = Object.keys(PRESET_TEMPLATES).join(", ");
+          reply =
+            `Please specify template and track count.\n` +
+            `Templates: ${templates}\n` +
+            `Example: /music My Song template="Classic Lofi" tracks=3`;
+        } else {
+          await invoke("generate_album", {
+            meta: { track_count: trackCount, title_base: title, template },
+          });
+          const plural = trackCount === 1 ? "track" : "tracks";
+          reply = `Started music generation for "${title}" using "${template}" with ${trackCount} ${plural}.`;
+        }
       } else {
         const history = [...messages, userMsg].map(({ role, content }) => ({
           role,
