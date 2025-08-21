@@ -4,7 +4,7 @@ import sys
 import logging
 import numpy as np
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-import lofi_gpu_hq  # noqa: E402
+import lofi.renderer as renderer  # noqa: E402
 
 
 EXPECTED_RMS = 0.165903
@@ -24,7 +24,7 @@ def test_deterministic_render(caplog):
         "ambience_level": 0.5,
         "instruments": ["piano"],
     }
-    audio, _ = lofi_gpu_hq.render_from_spec(spec)
+    audio, _ = renderer.render_from_spec(spec)
     assert any(
         isinstance(r.msg, dict) and r.msg.get("stage") == "debug" for r in caplog.records
     )

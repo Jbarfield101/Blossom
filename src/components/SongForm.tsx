@@ -1,4 +1,4 @@
-// src/components/SongForm.tsx — HQ wiring for lofi_gpu_hq
+// src/components/SongForm.tsx — HQ wiring for lofi renderer
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAudioDefaults } from "../features/audioDefaults/useAudioDefaults";
 import { open } from "@tauri-apps/plugin-dialog";
@@ -33,7 +33,7 @@ type SongSpec = {
   variety: number; // 0..100
   chord_span_beats?: number;
   drum_pattern?: string;
-  // NEW HQ feature flags (read by lofi_gpu_hq.py)
+  // NEW HQ feature flags (read by lofi/renderer.py)
   hq_stereo?: boolean;
   hq_reverb?: boolean;
   hq_sidechain?: boolean;

@@ -280,7 +280,11 @@ fn default_comfy_path() -> PathBuf {
 /// Resolve path to the HQ non-stream script (dev -> repo path; prod -> Resources).
 fn script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
     if let Ok(cwd) = std::env::current_dir() {
-        let dev = cwd.join("src-tauri").join("python").join("lofi_gpu_hq.py");
+        let dev = cwd
+            .join("src-tauri")
+            .join("python")
+            .join("lofi")
+            .join("renderer.py");
         if dev.exists() {
             return dev;
         }
@@ -289,7 +293,8 @@ fn script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
         .resource_dir()
         .expect("resource dir")
         .join("python")
-        .join("lofi_gpu_hq.py")
+        .join("lofi")
+        .join("renderer.py")
 }
 
 fn pdf_tools_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
