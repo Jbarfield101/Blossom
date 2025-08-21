@@ -157,9 +157,13 @@ describe('SongForm', () => {
     expect(screen.getAllByText('Arcane Clash')[0]).toBeInTheDocument();
   });
 
-  it('shows Bossa Nova template option and applies it', () => {
+  it('shows Bossa Nova template option', () => {
     render(<SongForm />);
     expect(screen.getAllByText('Bossa Nova')[0]).toBeInTheDocument();
+  });
+
+  it('applies Bossa Nova template', () => {
+    render(<SongForm />);
     const select = screen.getByLabelText(/song templates/i) as HTMLSelectElement;
     fireEvent.change(select, { target: { value: 'Bossa Nova' } });
     const label = screen.getByText('Drum Pattern');
