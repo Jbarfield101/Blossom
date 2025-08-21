@@ -1045,9 +1045,11 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
         "pan flute",
         "vibraphone",
         "celesta",
+        "glockenspiel",
         "muted electric guitar",
         "synth plucks",
         "wurlitzer",
+        "oboe",
     }
     add_rhodes_default = not any(src in instrs for src in melodic_sources)
 

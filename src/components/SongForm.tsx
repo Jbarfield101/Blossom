@@ -123,11 +123,13 @@ const INSTR = [
   "wurlitzer",
   "celesta",
   "music box",
+  "glockenspiel",
   "vibraphone",
   "marimba",
   "muted electric guitar",
   "muted trumpet",
   "clarinet",
+  "oboe",
   "field recordings",
   "synth plucks",
   "timpani",
@@ -152,7 +154,9 @@ const LEAD_INSTR = [
   { value: "synth lead", label: "synth" },
   { value: "violin", label: "violin" },
   { value: "clarinet", label: "clarinet" },
+  { value: "oboe", label: "oboe" },
   { value: "muted trumpet", label: "muted trumpet" },
+  { value: "glockenspiel", label: "glockenspiel" },
 ];
 const DRUM_PATS = [
   "random",
@@ -171,7 +175,9 @@ function inferLeadInstrument(instrs: string[]): string {
   if (instrs.includes("saxophone")) return "saxophone";
   if (instrs.includes("violin")) return "violin";
   if (instrs.includes("clarinet")) return "clarinet";
+  if (instrs.includes("oboe")) return "oboe";
   if (instrs.includes("muted trumpet")) return "muted trumpet";
+  if (instrs.includes("glockenspiel")) return "glockenspiel";
   if (instrs.includes("synth lead")) return "synth lead";
   return "synth lead";
 }
