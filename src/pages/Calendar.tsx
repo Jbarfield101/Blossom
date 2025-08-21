@@ -43,9 +43,11 @@ export default function Calendar() {
   const [current, setCurrent] = useState(new Date());
   const [view, setView] = useState<"month" | "week" | "agenda">("month");
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
-  const [quickAdd, setQuickAdd] = useState<
-    { day: number; top: number; left: number } | null
-  >(null);
+  const [quickAdd, setQuickAdd] = useState<{
+    day: number;
+    top: number;
+    left: number;
+  } | null>(null);
   const [quickTitle, setQuickTitle] = useState("");
   const [quickTime, setQuickTime] = useState("09:00");
   const [quickDuration, setQuickDuration] = useState(60);
@@ -159,7 +161,7 @@ export default function Calendar() {
 
   const { focusedDay, setFocusedDay } = useKeyboardNavigation(
     daysInMonth,
-    prefillDay
+    prefillDay,
   );
 
   const today = new Date();
@@ -168,16 +170,21 @@ export default function Calendar() {
     month === today.getMonth() &&
     year === today.getFullYear();
 
-  const handleDayClick = (
-    day: number,
-    e: React.MouseEvent<HTMLDivElement>
-  ) => {
+  const handleDayClick = (day: number, e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
+    const width = 224;
+    const height = 300;
+    let top = rect.bottom;
+    let left = rect.left;
+    top = Math.min(top, window.innerHeight - height);
+    left = Math.min(left, window.innerWidth - width);
+    top = Math.max(0, top);
+    left = Math.max(0, left);
     lastFocusedDayRef.current = e.currentTarget;
     setQuickAdd({
       day,
-      top: rect.bottom + window.scrollY,
-      left: rect.left + window.scrollX,
+      top,
+      left,
     });
     setQuickTitle("");
     setQuickTime("09:00");
@@ -215,12 +222,18 @@ export default function Calendar() {
 
   const agendaEvents = selectedDay ? dayEvents(selectedDay) : [];
   const monthNames = Array.from({ length: 12 }, (_, i) =>
-    new Date(0, i).toLocaleString("default", { month: "long" })
+    new Date(0, i).toLocaleString("default", { month: "long" }),
   );
 
   return (
     <Box sx={{ p: 5, pt: 20, mx: "auto", maxWidth: 1200 }}>
-      <Box display="flex" alignItems="center" justifyContent="space-between" mb={6} position="relative">
+      <Box
+        display="flex"
+        alignItems="center"
+        justifyContent="space-between"
+        mb={6}
+        position="relative"
+      >
         <Box display="flex" alignItems="center" gap={2}>
           <IconButton
             onClick={() => setCurrent(new Date(year, month - 1, 1))}
@@ -245,14 +258,24 @@ export default function Calendar() {
             Today
           </Button>
         </Box>
-        <Typography variant="h5" fontWeight={700} sx={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
+        <Typography
+          variant="h5"
+          fontWeight={700}
+          sx={{
+            position: "absolute",
+            left: "50%",
+            transform: "translateX(-50%)",
+          }}
+        >
           {current.toLocaleString("default", { month: "long" })} {year}
         </Typography>
         <Box display="flex" alignItems="center" gap={2}>
           <Select
             size="small"
             value={month}
-            onChange={(e) => setCurrent(new Date(year, Number(e.target.value), 1))}
+            onChange={(e) =>
+              setCurrent(new Date(year, Number(e.target.value), 1))
+            }
           >
             {monthNames.map((m, i) => (
               <MenuItem value={i} key={m}>
@@ -311,7 +334,7 @@ export default function Calendar() {
                     holiday={
                       day
                         ? HOLIDAYS.find(
-                            (h) => h.month === month && h.day === day
+                            (h) => h.month === month && h.day === day,
                           )?.title || null
                         : null
                     }
@@ -320,7 +343,14 @@ export default function Calendar() {
               </Box>
             </Box>
 
-            <Box sx={{ width: { xs: "100%", md: 320 }, display: "flex", flexDirection: "column", gap: 6 }}>
+            <Box
+              sx={{
+                width: { xs: "100%", md: 320 },
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+              }}
+            >
               <Paper sx={{ p: 2 }}>
                 <Typography variant="h6" gutterBottom>
                   Agenda
@@ -339,7 +369,12 @@ export default function Calendar() {
                       <Box
                         component="li"
                         key={ev.id}
-                        sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          mb: 1,
+                        }}
                       >
                         <Box
                           sx={{
@@ -416,7 +451,11 @@ export default function Calendar() {
                       InputLabelProps={{ shrink: true }}
                     />
                     {timeError && (
-                      <Typography color="error" variant="body2" data-testid="time-error">
+                      <Typography
+                        color="error"
+                        variant="body2"
+                        data-testid="time-error"
+                      >
                         End time must be after start time
                       </Typography>
                     )}
@@ -489,17 +528,25 @@ export default function Calendar() {
             sx={{ position: "fixed", inset: 0, zIndex: 10 }}
           />
           <Paper
-            sx={{ position: "absolute", zIndex: 20, p: 2, width: 224 }}
+            sx={{ position: "fixed", zIndex: 20, p: 2, width: 224 }}
             style={{ top: quickAdd.top, left: quickAdd.left }}
           >
             <Box sx={{ mb: 2 }}>
               {dayEvents(quickAdd.day).length > 0 && (
-                <Box component="ul" sx={{ listStyle: "none", p: 0, m: 0, mb: 2 }}>
+                <Box
+                  component="ul"
+                  sx={{ listStyle: "none", p: 0, m: 0, mb: 2 }}
+                >
                   {dayEvents(quickAdd.day).map((ev) => (
                     <Box
                       component="li"
                       key={ev.id}
-                      sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 0.5,
+                      }}
                     >
                       <Box
                         sx={{
@@ -515,7 +562,11 @@ export default function Calendar() {
                       </Box>
                       <Button
                         onClick={() => startEdit(ev)}
-                        sx={{ flexGrow: 1, justifyContent: "flex-start", textTransform: "none" }}
+                        sx={{
+                          flexGrow: 1,
+                          justifyContent: "flex-start",
+                          textTransform: "none",
+                        }}
                       >
                         {ev.title}
                       </Button>
@@ -576,7 +627,7 @@ export default function Calendar() {
 
 function useKeyboardNavigation(
   daysInMonth: number,
-  onSelect: (day: number) => void
+  onSelect: (day: number) => void,
 ) {
   const [focusedDay, setFocusedDay] = useState<number | null>(null);
 
@@ -613,7 +664,7 @@ function useKeyboardNavigation(
   useEffect(() => {
     if (focusedDay != null) {
       const el = document.querySelector(
-        `[data-testid="day-${focusedDay}"]`
+        `[data-testid="day-${focusedDay}"]`,
       ) as HTMLElement | null;
       el?.focus();
     }
