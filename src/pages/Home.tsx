@@ -26,6 +26,10 @@ export default function Home() {
     sakura: "rgba(255,150,200,0.22)",
     studio: "rgba(0,255,255,0.22)",
     galaxy: "rgba(150,200,255,0.22)",
+    noir: "rgba(255,255,255,0.15)",
+    aurora: "rgba(0,255,200,0.22)",
+    rainy: "rgba(0,100,200,0.22)",
+    mono: "rgba(128,128,128,0.22)",
   };
   const [hoverColor, setHoverColor] = useState(themeColors[theme]);
   useEffect(() => {

@@ -46,6 +46,11 @@ body.theme-noir {
   background: #1a1a1a;
 }
 
+body.theme-mono {
+  background: #000;
+  color: #fff;
+}
+
 body.theme-rainy {
   background: radial-gradient(circle at center, #0a1e3d, #081229);
   overflow: hidden;
@@ -89,6 +94,20 @@ body.theme-studio input[type="range"]::-webkit-slider-thumb {
 
 body.theme-studio input[type="range"]::-moz-range-thumb {
   box-shadow: 0 0 10px #0ff;
+}
+
+body.theme-mono button,
+body.theme-mono input,
+body.theme-mono select {
+  background: #fff;
+  color: #000;
+  border: 1px solid #888;
+}
+
+body.theme-mono button:hover,
+body.theme-mono input:hover,
+body.theme-mono select:hover {
+  background: #e5e5e5;
 }
 
 @keyframes auroraShift {
