@@ -24,6 +24,11 @@ body {
   height: auto;
 }
 
+.icon {
+  width: 50px;
+  height: 50px;
+}
+
 .quick-stats ul,
 .hooks ul,
 .secrets ul,
@@ -36,6 +41,10 @@ body {
 
 .statblock,
 .skills {
+  page-break-inside: avoid;
+}
+
+.custom-section {
   page-break-inside: avoid;
 }
 

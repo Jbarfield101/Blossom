@@ -15,11 +15,13 @@ export interface NPC {
   background: string;
   appearance: string;
   portrait?: string;
+  icon?: string;
   hooks?: string[];
   quirks?: string[];
   secrets?: string[];
   stats?: Record<string, string | number>;
   skills?: Record<string, string | number>;
+  sections?: Record<string, unknown>;
 }
 
 interface NPCState {

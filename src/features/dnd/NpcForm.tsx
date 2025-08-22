@@ -17,7 +17,9 @@ export default function NpcForm() {
   const [voiceProvider, setVoiceProvider] = useState("");
   const [voicePreset, setVoicePreset] = useState("");
   const [portrait, setPortrait] = useState("");
+  const [icon, setIcon] = useState("");
   const [statblock, setStatblock] = useState("{}");
+  const [sections, setSections] = useState("{}");
   const [tags, setTags] = useState("");
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [result, setResult] = useState<NpcData | null>(null);
@@ -30,6 +32,15 @@ export default function NpcForm() {
       parsedStatblock = JSON.parse(statblock || "{}");
     } catch {
       setErrors({ statblock: "Invalid JSON" });
+      setResult(null);
+      return;
+    }
+
+    let parsedSections: Record<string, unknown> = {};
+    try {
+      parsedSections = JSON.parse(sections || "{}");
+    } catch {
+      setErrors({ sections: "Invalid JSON" });
       setResult(null);
       return;
     }
@@ -50,6 +61,8 @@ export default function NpcForm() {
         preset: voicePreset,
       },
       portrait: portrait || undefined,
+      icon: icon || undefined,
+      sections: Object.keys(parsedSections).length ? parsedSections : undefined,
       statblock: parsedStatblock,
       tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
     };
@@ -197,6 +210,13 @@ export default function NpcForm() {
         margin="normal"
       />
       <TextField
+        label="Icon URL"
+        value={icon}
+        onChange={(e) => setIcon(e.target.value)}
+        fullWidth
+        margin="normal"
+      />
+      <TextField
         label="Statblock JSON"
         value={statblock}
         onChange={(e) => {
@@ -208,6 +228,19 @@ export default function NpcForm() {
         multiline
         error={Boolean(errors.statblock)}
         helperText={errors.statblock}
+      />
+      <TextField
+        label="Custom Sections JSON"
+        value={sections}
+        onChange={(e) => {
+          setSections(e.target.value);
+          setErrors((prev) => ({ ...prev, sections: null }));
+        }}
+        fullWidth
+        margin="normal"
+        multiline
+        error={Boolean(errors.sections)}
+        helperText={errors.sections}
       />
       <TextField
         label="Tags (comma separated)"
