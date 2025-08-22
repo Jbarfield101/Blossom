@@ -7,6 +7,7 @@ import EncounterForm from "../features/dnd/EncounterForm";
 import RuleForm from "../features/dnd/RuleForm";
 import SpellForm from "../features/dnd/SpellForm";
 import DiceRoller from "../features/dnd/DiceRoller";
+import TabletopMap from "../features/dnd/TabletopMap";
 
 export default function DND() {
   const [tab, setTab] = useState(0);
@@ -21,6 +22,7 @@ export default function DND() {
         <Tab label="Rulebook" />
         <Tab label="Spellbook" />
         <Tab label="Dice" />
+        <Tab label="Tabletop" />
       </Tabs>
       {tab === 0 && <NpcForm />}
       {tab === 1 && <LoreForm />}
@@ -29,6 +31,7 @@ export default function DND() {
       {tab === 4 && <RuleForm />}
       {tab === 5 && <SpellForm />}
       {tab === 6 && <DiceRoller />}
+      {tab === 7 && <TabletopMap />}
     </Box>
   );
 }
