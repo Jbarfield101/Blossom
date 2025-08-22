@@ -4,12 +4,14 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { usePaths } from "../features/paths/usePaths";
 import PromptManager from "../components/PromptManager";
+import { useComfyTutorial } from "../features/comfyTutorial/useComfyTutorial";
 
 export default function Comfy() {
   const [running, setRunning] = useState(false);
   const [log, setLog] = useState<string[]>([]);
   const [pingOk, setPingOk] = useState(false);
   const { comfyPath } = usePaths();
+  const { showTutorial, setShowTutorial } = useComfyTutorial();
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -65,6 +67,17 @@ export default function Comfy() {
 
   return (
     <div style={styles.wrap}>
+      {showTutorial && (
+        <div style={styles.tut}>
+          <h3 style={{ marginTop: 0 }}>Connect Blossom to ComfyUI</h3>
+          <ol style={{ marginTop: 4 }}>
+            <li>Install ComfyUI; the folder should contain <code>main.py</code>.</li>
+            <li>Open Settings → Paths and set "ComfyUI Folder" to that directory.</li>
+            <li>Return here and click Start to launch ComfyUI.</li>
+          </ol>
+          <button onClick={() => setShowTutorial(false)} style={styles.tutBtn}>Got it</button>
+        </div>
+      )}
       <div style={styles.header}>
         <div>
           <h2 style={{ margin: 0 }}>ComfyUI</h2>
@@ -129,5 +142,20 @@ const styles: Record<string, React.CSSProperties> = {
   right: { background: "#121214", borderRadius: 10, display: "flex", flexDirection: "column" },
   placeholder: { height: "100%", display: "grid", placeItems: "center", opacity: 0.7 },
   logHead: { padding: "8px 12px", borderBottom: "1px solid #333", fontSize: 12, opacity: 0.8 },
-  logBox: { padding: 12, overflow: "auto", fontFamily: "ui-monospace, monospace", fontSize: 12, flex: 1 }
+  logBox: { padding: 12, overflow: "auto", fontFamily: "ui-monospace, monospace", fontSize: 12, flex: 1 },
+  tut: {
+    background: "#222",
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  tutBtn: {
+    marginTop: 8,
+    padding: "6px 10px",
+    border: "none",
+    borderRadius: 6,
+    background: "#3a82f6",
+    color: "#fff",
+    cursor: "pointer",
+  }
 };
