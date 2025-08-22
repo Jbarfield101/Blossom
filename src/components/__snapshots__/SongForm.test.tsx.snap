@@ -1498,7 +1498,6 @@ exports[`SongForm > renders default form 1`] = `
             >
               <label
                 class="_label_62bdff"
-                for="ambience-select"
               >
                 Ambience
                 <svg
@@ -1519,62 +1518,111 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </svg>
               </label>
-              <select
-                class="_input_62bdff"
-                id="ambience-select"
-                multiple=""
+              <div
+                class="_optionGrid_62bdff"
               >
-                <option
-                  value="rain"
+                <label
+                  class="_optionCard_62bdff"
                 >
-                  rain
-                </option>
-                <option
-                  value="cafe"
+                  <span>
+                    rain
+                  </span>
+                  <input
+                    checked=""
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
                 >
-                  cafe
-                </option>
-                <option
-                  value="street"
+                  <span>
+                    cafe
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
                 >
-                  street
-                </option>
-                <option
-                  value="birds"
+                  <span>
+                    street
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
                 >
-                  birds
-                </option>
-                <option
-                  value="cicadas"
+                  <span>
+                    birds
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
                 >
-                  cicadas
-                </option>
-                <option
-                  value="train"
+                  <span>
+                    cicadas
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
                 >
-                  train
-                </option>
-                <option
-                  value="vinyl"
+                  <span>
+                    train
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
                 >
-                  vinyl
-                </option>
-                <option
-                  value="forest"
+                  <span>
+                    vinyl
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
                 >
-                  forest
-                </option>
-                <option
-                  value="fireplace"
+                  <span>
+                    forest
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
                 >
-                  fireplace
-                </option>
-                <option
-                  value="ocean"
+                  <span>
+                    fireplace
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
                 >
-                  ocean
-                </option>
-              </select>
+                  <span>
+                    ocean
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+              </div>
               <input
                 class="_slider_62bdff"
                 max="1"
