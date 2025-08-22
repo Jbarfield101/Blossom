@@ -6,14 +6,12 @@ import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useLofi } from "../features/lofi/SongForm";
 import Waveform from "./Waveform";
-import { FaQuestionCircle } from "react-icons/fa";
-
-const HelpIcon = ({ text }: { text: string }) => (
-  <FaQuestionCircle
-    title={text}
-    style={{ marginLeft: 4, cursor: "help", opacity: 0.6 }}
-  />
-);
+import TemplateSelector from "./TemplateSelector";
+import VibeControls from "./VibeControls";
+import RhythmControls from "./RhythmControls";
+import PolishControls from "./PolishControls";
+import BatchActions from "./BatchActions";
+import HelpIcon from "./HelpIcon";
 
 type Section = { name: string; bars: number; chords: string[]; barsStr?: string };
 
@@ -42,7 +40,7 @@ type SongSpec = {
   dither_amount?: number;
 };
 
-type TemplateSpec = {
+export type TemplateSpec = {
   structure: Section[];
   bpm: number;
   key: string;
@@ -1069,10 +1067,6 @@ export default function SongForm() {
     };
   }, [runningJobId]);
 
-  function toggle(list: string[], val: string) {
-    return list.includes(val) ? list.filter((x) => x !== val) : [...list, val];
-  }
-
   const hasInvalidBars = useMemo(
     () =>
       structure.some((s) => {
@@ -1289,6 +1283,33 @@ export default function SongForm() {
     }
   }
 
+  const handleRender = () => {
+    albumMode ? createAlbum() : renderBatch();
+  };
+
+  async function handlePreview() {
+    if (previewPlaying) {
+      previewStop();
+    } else {
+      setPreviewBpm(bpm);
+      setPreviewKey(key === "Auto" ? "C" : key);
+      setPreviewSeed(seedBase);
+      await previewPlay();
+    }
+  }
+
+  async function handlePlayLastTrack() {
+    const a = audioRef.current;
+    if (!a?.src) return setErr("No track loaded.");
+    if (isPlaying) {
+      a.pause();
+      setIsPlaying(false);
+    } else {
+      await a.play();
+      setIsPlaying(true);
+    }
+  }
+
   async function getFreshJobs(): Promise<Job[]> {
     return new Promise((r) => setJobs((prev) => (r(prev), prev)));
   }
@@ -1326,46 +1347,13 @@ export default function SongForm() {
         <div style={S.h1}>Blossom — Song Builder (Batch + Vibes)</div>
 
         {/* template selector */}
-        <div style={S.panel}>
-          <label style={S.label}>
-            Song Templates
-            <HelpIcon text="Select a preset arrangement and settings" />
-          </label>
-          <select
-            aria-label="Song Templates"
-            value={selectedTemplate}
-            onChange={(e) => {
-              const templateName = e.target.value;
-              setSelectedTemplate(templateName);
-              if (templateName && SONG_TEMPLATES[templateName]) {
-                applyTemplate(SONG_TEMPLATES[templateName]);
-              }
-            }}
-            style={{ ...S.input, padding: "8px 12px" }}
-          >
-            <option value="">Custom Structure</option>
-            <option value="Classic Lofi">Classic Lofi</option>
-            <option value="Study Session">Study Session</option>
-            <option value="Jazz Cafe">Jazz Cafe</option>
-            <option value="Midnight Drive">Midnight Drive</option>
-            <option value="Rain & Coffee">Rain & Coffee</option>
-            <option value="Bossa Nova">Bossa Nova</option>
-            <option value="Quick Beat">Quick Beat</option>
-            <option value="Sunset Sketches">Sunset Sketches</option>
-            <option value="Neon Rain">Neon Rain</option>
-            <option value="Loft Morning">Loft Morning</option>
-            <option value="Late Night Coding">Late Night Coding</option>
-            <option value="Forest Spirits">Forest Spirits</option>
-            <option value="Arcane Clash">Arcane Clash</option>
-            <option value="King's Last Stand">King's Last Stand</option>
-            <option value="Ocean Breeze">Ocean Breeze</option>
-            <option value="City Lights">City Lights</option>
-            <option value="Sunset VHS">Sunset VHS</option>
-            <option value="Neon Palms">Neon Palms</option>
-            <option value="Night Swim">Night Swim</option>
-            <option value="Starlit Voyage">Starlit Voyage</option>
-          </select>
-        </div>
+        <TemplateSelector
+          S={S}
+          templates={SONG_TEMPLATES}
+          selectedTemplate={selectedTemplate}
+          setSelectedTemplate={setSelectedTemplate}
+          applyTemplate={applyTemplate}
+        />
 
         {/* title + output folder */}
         <div style={S.row}>
@@ -1613,194 +1601,52 @@ export default function SongForm() {
         </div>
 
         {/* vibe controls */}
-        <div style={S.grid3}>
-          <div style={S.panel}>
-            <label style={S.label}>
-              Mood
-              <HelpIcon text="Tags describing the vibe" />
-            </label>
-            <div style={S.optionGrid}>
-              {MOODS.map((m) => (
-                <label key={m} style={S.optionCard}>
-                  <span>{m}</span>
-                  <input
-                    type="checkbox"
-                    checked={mood.includes(m)}
-                    onChange={() => setMood((prev) => toggle(prev, m))}
-                  />
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div style={S.panel}>
-            <label style={S.label}>
-              Instruments
-              <HelpIcon text="Select instruments to include" />
-            </label>
-            <div style={S.optionGrid}>
-              {INSTR.map((i) => (
-                <label key={i} style={S.optionCard}>
-                  <span>{i}</span>
-                  <input
-                    type="checkbox"
-                    checked={instruments.includes(i)}
-                    onChange={() => setInstruments((prev) => toggle(prev, i))}
-                  />
-                </label>
-              ))}
-            </div>
-            <div style={S.small}>Drums are synthesized automatically.</div>
-          </div>
-
-          <div style={S.panel}>
-            <label style={S.label}>
-              Lead Instrument
-              <HelpIcon text="Main instrument for the melody" />
-            </label>
-            <div style={S.optionGrid}>
-              {LEAD_INSTR.map((l) => (
-                <label key={l.value} style={S.optionCard}>
-                  <span>{l.label}</span>
-                  <input
-                    type="radio"
-                    name="leadInstrument"
-                    value={l.value}
-                    checked={leadInstrument === l.value}
-                    onChange={() => setLeadInstrument(l.value)}
-                  />
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div style={S.panel}>
-            <label style={S.label} htmlFor="ambience-select">
-              Ambience
-              <HelpIcon text="Background ambience sounds" />
-            </label>
-            <select
-              id="ambience-select"
-              multiple
-              value={ambience}
-              onChange={(e) =>
-                setAmbience(
-                  Array.from(e.target.selectedOptions).map((o) => o.value)
-                )
-              }
-              style={S.input}
-            >
-              {AMBI.map((a) => (
-                <option key={a} value={a}>
-                  {a}
-                </option>
-              ))}
-            </select>
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.01}
-              value={ambienceLevel}
-              onChange={(e) => setAmbienceLevel(Number(e.target.value))}
-              style={S.slider}
-            />
-            <div style={S.small}>{Math.round(ambienceLevel * 100)}% intensity</div>
-          </div>
-        </div>
+        <VibeControls
+          S={S}
+          MOODS={MOODS}
+          INSTR={INSTR}
+          LEAD_INSTR={LEAD_INSTR}
+          AMBI={AMBI}
+          mood={mood}
+          setMood={setMood}
+          instruments={instruments}
+          setInstruments={setInstruments}
+          leadInstrument={leadInstrument}
+          setLeadInstrument={setLeadInstrument}
+          ambience={ambience}
+          setAmbience={setAmbience}
+          ambienceLevel={ambienceLevel}
+          setAmbienceLevel={setAmbienceLevel}
+        />
 
         {/* rhythm & feel */}
-        <div style={S.grid3}>
-          <div style={S.panel}>
-            <label style={S.label}>
-              Drum Pattern
-              <HelpIcon text="Choose a groove style or no drums" />
-            </label>
-            <select value={drumPattern} onChange={(e) => setDrumPattern(e.target.value)} style={{ ...S.input, padding: "8px 12px" }}>
-              {DRUM_PATS.map((p) => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
-            <div style={S.small}>Choose a groove or leave random.</div>
-          </div>
-
-          <div style={S.panel}>
-            <label style={S.label}>
-              Variety
-              <HelpIcon text="Amount of fills and swing" />
-            </label>
-            <input type="range" min={0} max={100} value={variety} onChange={(e) => setVariety(Number(e.target.value))} style={S.slider} />
-            <div style={S.small}>{variety}% fills & swing</div>
-          </div>
-
-          <div style={S.panel}>
-            <label style={S.label}>
-              Chord Span
-              <HelpIcon text="Number of beats each chord lasts" />
-            </label>
-            <select
-              value={chordSpanBeats}
-              onChange={(e) => setChordSpanBeats(Number(e.target.value))}
-              style={{ ...S.input, padding: "8px 12px" }}
-            >
-              <option value={2}>½ bar</option>
-              <option value={4}>1 bar</option>
-              <option value={8}>2 bars</option>
-            </select>
-          </div>
-        </div>
+        <RhythmControls
+          S={S}
+          DRUM_PATS={DRUM_PATS}
+          drumPattern={drumPattern}
+          setDrumPattern={setDrumPattern}
+          variety={variety}
+          setVariety={setVariety}
+          chordSpanBeats={chordSpanBeats}
+          setChordSpanBeats={setChordSpanBeats}
+        />
 
         {/* polish accordion */}
-        <div style={{ ...S.panel, marginTop: 12 }}>
-          <details open>
-            <summary style={{ cursor: "pointer", fontSize: 12, opacity: 0.8 }}>
-              Polish <HelpIcon text="Optional mix polish effects" />
-            </summary>
-            <div style={{ marginTop: 8 }}>
-              <div style={S.optionGrid}>
-                <label style={S.optionCard}>
-                  <span>Stereo widen</span>
-                  <input type="checkbox" checked={hqStereo} onChange={(e) => setHqStereo(e.target.checked)} />
-                </label>
-                <label style={S.optionCard}>
-                  <span>Room reverb</span>
-                  <input type="checkbox" checked={hqReverb} onChange={(e) => setHqReverb(e.target.checked)} />
-                </label>
-                <label style={S.optionCard}>
-                  <span>Sidechain (kick)</span>
-                  <input type="checkbox" checked={hqSidechain} onChange={(e) => setHqSidechain(e.target.checked)} />
-                </label>
-                <label style={S.optionCard}>
-                  <span>Chorus</span>
-                  <input type="checkbox" checked={hqChorus} onChange={(e) => setHqChorus(e.target.checked)} />
-                </label>
-              </div>
-              <details style={{ marginTop: 8 }}>
-                <summary style={{ cursor: "pointer", fontSize: 12, opacity: 0.8 }}>Advanced</summary>
-                <div style={{ marginTop: 8 }}>
-                  <label style={S.label}>
-                    Limiter Drive
-                    <HelpIcon text="Amount of saturation added by the limiter" />
-                  </label>
-                  <input
-                    type="range"
-                    min={0.5}
-                    max={2}
-                    step={0.01}
-                    value={limiterDrive}
-                    onChange={(e) => setLimiterDrive(Number(e.target.value))}
-                    style={S.slider}
-                  />
-                  <div style={S.small}>{limiterDrive.toFixed(2)}× saturation</div>
-                  <div style={{ ...S.toggle, marginTop: 8 }}>
-                    <input type="checkbox" checked={dither} onChange={(e) => setDither(e.target.checked)} />
-                    <span style={S.small}>Dither</span>
-                  </div>
-                </div>
-              </details>
-            </div>
-          </details>
-        </div>
+        <PolishControls
+          S={S}
+          hqStereo={hqStereo}
+          setHqStereo={setHqStereo}
+          hqReverb={hqReverb}
+          setHqReverb={setHqReverb}
+          hqSidechain={hqSidechain}
+          setHqSidechain={setHqSidechain}
+          hqChorus={hqChorus}
+          setHqChorus={setHqChorus}
+          limiterDrive={limiterDrive}
+          setLimiterDrive={setLimiterDrive}
+          dither={dither}
+          setDither={setDither}
+        />
         {/* album mode toggle */}
         <div style={S.panel}>
           <label style={S.toggle}>
@@ -1832,86 +1678,27 @@ export default function SongForm() {
           )}
         </div>
 
-        {/* batch + variation */}
-        <div style={S.grid2}>
-          <div style={S.panel}>
-            <label style={S.label}>
-              How many songs?
-              <HelpIcon text="Number of songs to render in this batch" />
-            </label>
-            <input type="number" min={1} value={numSongs} onChange={(e) => setNumSongs(Math.max(1, Number(e.target.value || 1)))} style={S.input} />
-            <div style={{ ...S.small, marginTop: 8 }}>
-              Titles will be suffixed with{" "}
-              <select value={titleSuffixMode} onChange={(e) => setTitleSuffixMode(e.target.value as any)} style={{ ...S.input, padding: "4px 8px", display: "inline-block", width: 160, marginLeft: 6 }}>
-                <option value="number"># (1, 2, 3…)</option>
-                <option value="timestamp">timestamp</option>
-              </select>
-            </div>
-          </div>
-
-          <div style={S.panel}>
-            <label style={S.label}>
-              BPM Jitter (per song)
-              <HelpIcon text="Random tempo variation around base BPM" />
-            </label>
-            <input type="range" min={0} max={30} value={bpmJitterPct} onChange={(e) => setBpmJitterPct(Number(e.target.value))} style={S.slider} />
-            <div style={S.small}>±{bpmJitterPct}% around the base BPM</div>
-            <div style={{ ...S.toggle, marginTop: 8 }}>
-              <input type="checkbox" checked={playLast} onChange={(e) => setPlayLast(e.target.checked)} />
-              <span style={S.small}>Auto‑play last successful render</span>
-            </div>
-          </div>
-        </div>
-
-        {/* actions */}
-        <div style={S.actions}>
-          <button
-            style={S.btn}
-            disabled={busy || !outDir || !titleBase || hasInvalidBars}
-            onClick={albumMode ? createAlbum : renderBatch}
-          >
-            {albumMode
-              ? busy
-                ? "Creating album…"
-                : "Create Album"
-              : busy
-                ? "Rendering batch…"
-                : "Render Songs"}
-          </button>
-
-          <button
-            style={S.playBtn}
-            onClick={async () => {
-              if (previewPlaying) {
-                previewStop();
-              } else {
-                setPreviewBpm(bpm);
-                setPreviewKey(key === "Auto" ? "C" : key);
-                setPreviewSeed(seedBase);
-                await previewPlay();
-              }
-            }}
-          >
-            {previewPlaying ? "Stop preview" : "Preview in browser"}
-          </button>
-
-          <button
-            style={S.playBtn}
-            onClick={async () => {
-              const a = audioRef.current;
-              if (!a?.src) return setErr("No track loaded.");
-              if (isPlaying) {
-                a.pause();
-                setIsPlaying(false);
-              } else {
-                await a.play();
-                setIsPlaying(true);
-              }
-            }}
-          >
-            {isPlaying ? "Pause" : "Play last track"}
-          </button>
-        </div>
+        <BatchActions
+          S={S}
+          numSongs={numSongs}
+          setNumSongs={setNumSongs}
+          titleSuffixMode={titleSuffixMode}
+          setTitleSuffixMode={setTitleSuffixMode}
+          bpmJitterPct={bpmJitterPct}
+          setBpmJitterPct={setBpmJitterPct}
+          playLast={playLast}
+          setPlayLast={setPlayLast}
+          busy={busy}
+          outDir={outDir}
+          titleBase={titleBase}
+          hasInvalidBars={hasInvalidBars}
+          albumMode={albumMode}
+          onRender={handleRender}
+          previewPlaying={previewPlaying}
+          onPreview={handlePreview}
+          isPlaying={isPlaying}
+          onPlayLastTrack={handlePlayLastTrack}
+        />
 
         {globalStatus && <div style={S.status}>Status: {globalStatus}</div>}
         {busy && (
