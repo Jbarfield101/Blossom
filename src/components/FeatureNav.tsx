@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Box, IconButton } from "@mui/material";
+import { getContrastColor } from "../utils/color";
 import {
   FaMusic,
   FaCubes,
@@ -57,39 +58,45 @@ export default function FeatureNav({
   const enabled = useMemo(() => ITEMS.filter((it) => modules[it.key]), [modules]);
 
   if (variant === "grid") {
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        gap={48}
-        sx={{ height: "100vh", position: "relative", zIndex: 1, flexWrap: "wrap" }}
-      >
-        {enabled.map((it, i) => (
-          <div key={i} style={{ textAlign: "center" }}>
-            <IconButton
-              sx={{
-                fontSize: "3rem",
-                color: "white",
-                transition: "all .2s",
-                "&:hover": {
-                  color: it.color.replace("0.55", "1"),
-                  transform: "scale(1.08)",
-                  filter: "drop-shadow(0 8px 18px rgba(0,0,0,.18))",
-                },
-              }}
-              onMouseEnter={() => onHoverColor(it.color)}
-              onMouseLeave={() => onHoverColor("rgba(255,255,255,0.22)")}
-              onClick={() => nav(it.path)}
-              aria-label={it.label}
-            >
-              {it.icon}
-            </IconButton>
-            <div style={{ color: "#222", marginTop: 8, fontSize: 14 }}>{it.label}</div>
-          </div>
-        ))}
-      </Box>
-    );
+      return (
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          gap={48}
+          sx={{ height: "100vh", position: "relative", zIndex: 1, flexWrap: "wrap" }}
+        >
+          {enabled.map((it, i) => {
+            const fullColor = it.color.replace("0.55", "1");
+            const textColor = getContrastColor(fullColor);
+            return (
+              <div key={i} style={{ textAlign: "center" }}>
+                <IconButton
+                  sx={{
+                    fontSize: "3rem",
+                    color: textColor,
+                    transition: "all .2s",
+                    "&:hover": {
+                      color: fullColor,
+                      transform: "scale(1.08)",
+                      filter: "drop-shadow(0 8px 18px rgba(0,0,0,.18))",
+                    },
+                  }}
+                  onMouseEnter={() => onHoverColor(it.color)}
+                  onMouseLeave={() => onHoverColor("rgba(255,255,255,0.22)")}
+                  onClick={() => nav(it.path)}
+                  aria-label={it.label}
+                >
+                  {it.icon}
+                </IconButton>
+                <div style={{ color: textColor, marginTop: 8, fontSize: 14 }}>
+                  {it.label}
+                </div>
+              </div>
+            );
+          })}
+        </Box>
+      );
   }
 
   // carousel variant

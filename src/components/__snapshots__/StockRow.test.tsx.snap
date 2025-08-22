@@ -52,6 +52,7 @@ exports[`StockRow > renders quote data 1`] = `
       class="MuiListItemSecondaryAction-root css-zezwi5-MuiListItemSecondaryAction-root"
     >
       <button
+        aria-label="Remove AAPL"
         class="MuiButtonBase-root MuiIconButton-root MuiIconButton-edgeEnd MuiIconButton-sizeMedium css-1ysp02-MuiButtonBase-root-MuiIconButton-root"
         tabindex="0"
         type="button"

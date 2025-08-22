@@ -1,4 +1,5 @@
 import type { SxProps } from "@mui/material";
+import { getContrastColor } from "../utils/color";
 
 export const fixedIconButtonSx: SxProps = {
   position: "fixed",
@@ -56,7 +57,7 @@ export const carouselIconButtonSx = (center: boolean, accent: string): SxProps =
 });
 
 export const carouselLabelSx = (center: boolean, accent: string): SxProps => ({
-  color: center ? accent : "white",
+  color: center ? getContrastColor(accent) : "white",
   mt: 1.5,
   fontSize: 14,
 });
