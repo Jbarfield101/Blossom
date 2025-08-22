@@ -48,3 +48,19 @@ export const zEncounter = zDndBase.extend({
   scaling: z.string().min(1),
   theme: zDndTheme,
 });
+
+export const zRule = zDndBase.extend({
+  description: z.string().min(1),
+  tags: z.array(z.string()).nonempty(),
+});
+
+export const zSpell = zDndBase.extend({
+  level: z.number().int().nonnegative(),
+  school: z.string().min(1),
+  castingTime: z.string().min(1),
+  range: z.string().min(1),
+  components: z.array(z.string()).nonempty(),
+  duration: z.string().min(1),
+  description: z.string().min(1),
+  tags: z.array(z.string()).nonempty(),
+});
