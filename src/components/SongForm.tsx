@@ -275,6 +275,21 @@ export default function SongForm() {
     }
   }, [selectedTemplate]);
 
+  useEffect(() => {
+    const stored = localStorage.getItem("lastInstruments");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as string[];
+        setInstruments(parsed);
+        setLeadInstrument(inferLeadInstrument(parsed));
+      } catch {}
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("lastInstruments", JSON.stringify(instruments));
+  }, [instruments]);
+
   // Album mode
   const [albumMode, setAlbumMode] = useState(false);
   const [trackCount, setTrackCount] = useState(6);
@@ -646,6 +661,34 @@ export default function SongForm() {
     return new Promise((r) => setJobs((prev) => (r(prev), prev)));
   }
 
+  function restoreLastSettings() {
+    const lastTpl = localStorage.getItem("lastSongTemplate");
+    if (lastTpl && templates[lastTpl]) {
+      setSelectedTemplate(lastTpl);
+      applyTemplate(templates[lastTpl]);
+    }
+    const lastInstr = localStorage.getItem("lastInstruments");
+    if (lastInstr) {
+      try {
+        const parsed = JSON.parse(lastInstr) as string[];
+        setInstruments(parsed);
+        setLeadInstrument(inferLeadInstrument(parsed));
+      } catch {}
+    }
+    const lastDir = localStorage.getItem("outDir");
+    if (lastDir) {
+      setOutDir(lastDir);
+    }
+  }
+
+  function restoreDefaults() {
+    setSelectedTemplate("");
+    applyTemplate(PRESET_TEMPLATES["Classic Lofi"]);
+    setTitleBase("Midnight Coffee");
+    setOutDir("");
+    setAutoKeyPerSong(false);
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.card}>
@@ -658,6 +701,15 @@ export default function SongForm() {
           setSelectedTemplate={setSelectedTemplate}
           applyTemplate={applyTemplate}
         />
+
+        <div className={styles.row}>
+          <button className={styles.btn} onClick={restoreLastSettings}>
+            Use last settings
+          </button>
+          <button className={styles.btn} onClick={restoreDefaults}>
+            Restore defaults
+          </button>
+        </div>
 
         {/* title + output folder */}
         <div className={styles.row}>
@@ -708,8 +760,11 @@ export default function SongForm() {
             </div>
             <div className={clsx(styles.toggle, "mt-2") }>
               <input type="checkbox" checked={autoKeyPerSong} onChange={(e) => setAutoKeyPerSong(e.target.checked)} disabled={key === "Auto"} />
-              <span className={styles.small}>Rotate key per song{key === "Auto" ? " (disabled: Auto)" : ""}</span>
+              <span className={styles.small}>Rotate key per song</span>
             </div>
+            {key === "Auto" && (
+              <div className={styles.small}>Disabled when key is set to Auto</div>
+            )}
           </div>
           <div className={styles.panel}>
             <label className={styles.label}>

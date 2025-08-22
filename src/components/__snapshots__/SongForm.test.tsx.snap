@@ -172,6 +172,20 @@ exports[`SongForm > renders default form 1`] = `
       <div
         class="_row_62bdff"
       >
+        <button
+          class="_btn_62bdff"
+        >
+          Use last settings
+        </button>
+        <button
+          class="_btn_62bdff"
+        >
+          Restore defaults
+        </button>
+      </div>
+      <div
+        class="_row_62bdff"
+      >
         <input
           class="_input_62bdff"
           placeholder="Song title base"
@@ -386,8 +400,13 @@ exports[`SongForm > renders default form 1`] = `
               <span
                 class="_small_62bdff"
               >
-                Rotate key per song (disabled: Auto)
+                Rotate key per song
               </span>
+            </div>
+            <div
+              class="_small_62bdff"
+            >
+              Disabled when key is set to Auto
             </div>
           </div>
           <div
