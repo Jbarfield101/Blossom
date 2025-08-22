@@ -13,7 +13,7 @@ describe('ImagePromptGenerator', () => {
 
     const kodak = screen.getByLabelText(/Kodak Portra 400/i);
     fireEvent.click(kodak);
-    const polaroid = screen.getByLabelText(/Polaroid/i);
+    const polaroid = screen.getByLabelText(/Shot on Polaroid/i);
     expect(polaroid).toBeDisabled();
 
     const wide = screen.getByLabelText(/Wide-angle lens/i);
