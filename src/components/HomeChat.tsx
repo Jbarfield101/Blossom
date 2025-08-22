@@ -6,7 +6,7 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import Draggable from "react-draggable";
 import { nanoid } from "nanoid";
 import { invoke } from "@tauri-apps/api/core";
-import { PRESET_TEMPLATES } from "./SongForm";
+import { PRESET_TEMPLATES } from "./songTemplates";
 import { SystemInfo } from "../features/system/useSystemInfo";
 
 interface Message {

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, cleanup } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import SongForm, { PRESET_TEMPLATES } from './SongForm';
+import SongForm from './SongForm';
+import { PRESET_TEMPLATES } from "./songTemplates";
 import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
