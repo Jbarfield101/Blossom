@@ -7,13 +7,14 @@ vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 describe('useStocks store', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useStocks.setState({ quotes: {}, pollers: {}, symbols: [], news: {} });
+    useStocks.setState({ quotes: {}, pollers: {}, ws: {}, symbols: [], news: {} });
   });
 
   afterEach(() => {
-    const { pollers, stopPolling } = useStocks.getState();
+    const { pollers, stopPolling, ws, stopRealtime } = useStocks.getState();
     Object.keys(pollers).forEach((s) => stopPolling(s));
-    useStocks.setState({ symbols: [], news: {} });
+    Object.keys(ws).forEach((s) => stopRealtime(s));
+    useStocks.setState({ symbols: [], news: {}, ws: {} });
     vi.useRealTimers();
   });
 
@@ -76,6 +77,41 @@ describe('useStocks store', () => {
     await vi.advanceTimersByTimeAsync(2100);
     store.stopPolling('MSFT');
     expect(invoke).toHaveBeenCalledTimes(3);
+  });
+
+  it('updates quotes from realtime stream', async () => {
+    class MockWebSocket {
+      static instance: MockWebSocket;
+      onmessage: ((ev: { data: string }) => void) | null = null;
+      onclose: (() => void) | null = null;
+      constructor() {
+        MockWebSocket.instance = this;
+      }
+      close() {
+        this.onclose && this.onclose();
+      }
+    }
+    (globalThis as any).WebSocket = MockWebSocket as any;
+
+    useStocks.setState({
+      quotes: {
+        BTC: {
+          price: 100,
+          changePercent: 0,
+          history: [],
+          marketStatus: '',
+          volume: 0,
+          lastFetched: Date.now(),
+        },
+      },
+    } as any);
+
+    const store = useStocks.getState();
+    store.startRealtime('BTC');
+    MockWebSocket.instance.onmessage?.({ data: JSON.stringify({ p: '105' }) });
+    await Promise.resolve();
+    expect(useStocks.getState().quotes['BTC'].price).toBe(105);
+    store.stopRealtime('BTC');
   });
 
   it('requests a forecast from the backend', async () => {

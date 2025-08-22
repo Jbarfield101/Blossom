@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useState, useRef } from "react";
 import { Box, Typography, IconButton, ListItem, Skeleton, Fade } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Sparkline from "./Sparkline";
@@ -16,6 +16,8 @@ function StockRow({ symbol, metrics }: { symbol: string; metrics: MetricConfig }
   const removeStock = useStocks((state) => state.removeStock);
   const [forecast, setForecast] = useState<{ shortTerm: string; longTerm: string } | null>(null);
   const [newsSummary, setNewsSummary] = useState("");
+  const prevPrice = useRef<number | null>(null);
+  const [flash, setFlash] = useState<"up" | "down" | null>(null);
   useEffect(() => {
     let mounted = true;
     const { forecast, fetchNews } = useStocks.getState();
@@ -35,6 +37,22 @@ function StockRow({ symbol, metrics }: { symbol: string; metrics: MetricConfig }
     };
   }, [symbol]);
   const color = quote && quote.changePercent < 0 ? "#ff5252" : "#4caf50";
+
+  useEffect(() => {
+    if (!quote) return;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    if (prevPrice.current !== null) {
+      const dir = quote.price > prevPrice.current ? "up" : quote.price < prevPrice.current ? "down" : null;
+      if (dir) {
+        setFlash(dir);
+        timeout = setTimeout(() => setFlash(null), 500);
+      }
+    }
+    prevPrice.current = quote.price;
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [quote?.price]);
 
   return (
     <ListItem
@@ -57,7 +75,19 @@ function StockRow({ symbol, metrics }: { symbol: string; metrics: MetricConfig }
               <Fade in={!!quote}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
                   {metrics.price && (
-                    <Typography sx={{ width: 100, color }}>
+                    <Typography
+                      sx={{
+                        width: 100,
+                        color,
+                        bgcolor:
+                          flash === "up"
+                            ? "rgba(76, 175, 80, 0.3)"
+                            : flash === "down"
+                              ? "rgba(255, 82, 82, 0.3)"
+                              : "transparent",
+                        transition: "background-color 0.5s",
+                      }}
+                    >
                       {quote.price.toFixed(2)}
                     </Typography>
                   )}
