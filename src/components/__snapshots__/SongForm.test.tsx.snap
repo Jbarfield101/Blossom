@@ -189,7 +189,7 @@ exports[`SongForm > renders default form 1`] = `
         <input
           class="_input_62bdff"
           placeholder="Song title base"
-          value="Midnight Coffee"
+          value=""
         />
         <button
           class="_btn_62bdff"
