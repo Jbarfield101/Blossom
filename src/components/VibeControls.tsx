@@ -83,7 +83,7 @@ export default function VibeControls({
       <div className={styles.panel}>
         <label className={styles.label}>
           Lead Instrument
-          <HelpIcon text="Main instrument for the melody" />
+          <HelpIcon text="Choose the instrument that carries the main melody" />
         </label>
         <div className={styles.optionGrid}>
           {LEAD_INSTR.map((l) => (

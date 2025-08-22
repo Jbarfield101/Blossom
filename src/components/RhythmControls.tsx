@@ -45,7 +45,7 @@ export default function RhythmControls({
 
       <div className={styles.panel}>
         <label className={styles.label}>
-          Variety
+          Variety (0-100%)
           <HelpIcon text="Amount of fills and swing" />
         </label>
         <input

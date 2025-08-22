@@ -19,6 +19,7 @@ import { usePaths } from "../features/paths/usePaths";
 import { useOutput } from "../features/output/useOutput";
 import { useAudioDefaults } from "../features/audioDefaults/useAudioDefaults";
 import { useTheme, type Theme } from "../features/theme/ThemeContext";
+import HelpIcon from "./HelpIcon";
 
 const KEY_OPTIONS = [
   "Auto",
@@ -168,11 +169,21 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
           </FormControl>
           <FormControlLabel
             control={<Switch checked={hqStereo} onChange={toggleHqStereo} />}
-            label="HQ Stereo"
+            label={
+              <span style={{ display: "inline-flex", alignItems: "center" }}>
+                HQ Stereo
+                <HelpIcon text="Enhanced stereo width for clearer separation" />
+              </span>
+            }
           />
           <FormControlLabel
             control={<Switch checked={hqReverb} onChange={toggleHqReverb} />}
-            label="HQ Reverb"
+            label={
+              <span style={{ display: "inline-flex", alignItems: "center" }}>
+                HQ Reverb
+                <HelpIcon text="High-quality reverb for a more natural space" />
+              </span>
+            }
           />
           <FormControlLabel
             control={<Switch checked={hqSidechain} onChange={toggleHqSidechain} />}
