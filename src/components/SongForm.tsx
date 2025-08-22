@@ -15,6 +15,7 @@ import HelpIcon from "./HelpIcon";
 import { PRESET_TEMPLATES, SECTION_PRESETS } from "./songTemplates";
 import styles from "./SongForm.module.css";
 import clsx from "clsx";
+import { useTheme } from "@mui/material/styles";
 
 export type Section = { name: string; bars: number; chords: string[]; barsStr?: string };
 
@@ -188,6 +189,7 @@ const SONG_TEMPLATES = PRESET_TEMPLATES;
 
 export default function SongForm() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const theme = useTheme();
   const {
     bpm: defaultBpm,
     key: defaultKey,
@@ -835,7 +837,11 @@ export default function SongForm() {
           </label>
           <div className="flex gap-2 flex-wrap">
             {structure.map((sec, i) => (
-              <div key={i} className="bg-[#17191d] p-2 rounded-lg min-w-[120px]">
+              <div
+                key={i}
+                className="p-2 rounded-lg min-w-[120px]"
+                style={{ backgroundColor: theme.palette.action.hover }}
+              >
                 <div className={styles.small}>{sec.name}</div>
                 <input
                   type="number"
@@ -860,13 +866,15 @@ export default function SongForm() {
                     border:
                       !/^[0-9]+$/.test(sec.barsStr ?? String(sec.bars)) ||
                       parseInt(sec.barsStr ?? String(sec.bars), 10) < 1
-                        ? "1px solid #ff7b7b"
+                        ? `1px solid ${theme.palette.error.main}`
                         : undefined,
                   }}
                 />
                 {!/^[0-9]+$/.test(sec.barsStr ?? String(sec.bars)) ||
                 parseInt(sec.barsStr ?? String(sec.bars), 10) < 1 ? (
-                  <div className={styles.err}>Enter bars ≥1</div>
+                  <div className={styles.err} style={{ color: theme.palette.error.main }}>
+                    Enter bars ≥1
+                  </div>
                 ) : null}
                 <input
                   type="text"
@@ -997,7 +1005,11 @@ export default function SongForm() {
             <div className={styles.progressInner} style={{ width: `${progress}%` }} />
           </div>
         )}
-        {err && <div className={styles.err}>Error: {err}</div>}
+        {err && (
+          <div className={styles.err} style={{ color: theme.palette.error.main }}>
+            Error: {err}
+          </div>
+        )}
 
         {jobs.length > 0 && (
           <table className={styles.table}>
@@ -1019,7 +1031,11 @@ export default function SongForm() {
                   <td className={styles.td}>{j.spec.bpm}</td>
                   <td className={styles.td}>{j.spec.seed}</td>
                   <td className={styles.td}>
-                    {j.error ? <span className="text-[#ff7b7b]">error</span> : j.status || "—"}
+                    {j.error ? (
+                      <span style={{ color: theme.palette.error.main }}>error</span>
+                    ) : (
+                      j.status || "—"
+                    )}
                     {j.error && (
                       <details className="mt-1">
                         <summary className="opacity-80 cursor-pointer">details</summary>
