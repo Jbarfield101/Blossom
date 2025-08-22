@@ -2,7 +2,7 @@
 use std::{
     env, fs,
     io::{BufRead, BufReader, Read},
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::{Child, Command as PCommand, Stdio},
     sync::{Mutex, OnceLock},
     time::Duration,
@@ -1203,6 +1203,111 @@ pub async fn generate_short(queue: State<'_, TaskQueue>, spec: ShortSpec) -> Res
     let label = format!("generate_short {}", spec.id);
     let cmd = TaskCommand::GenerateShort { spec };
     Ok(queue.enqueue(label, cmd).await)
+}
+
+/* ==============================
+Transcription
+============================== */
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TranscriptEntry {
+    pub id: String,
+    pub audio_path: String,
+    pub text: String,
+    pub created_at: String,
+}
+
+fn transcripts_path() -> PathBuf {
+    let mut dir = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+    dir.push(".blossom");
+    let _ = fs::create_dir_all(&dir);
+    dir.push("transcripts.json");
+    dir
+}
+
+fn transcripts_audio_dir() -> PathBuf {
+    let mut dir = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+    dir.push(".blossom");
+    dir.push("transcripts");
+    let _ = fs::create_dir_all(&dir);
+    dir
+}
+
+fn transcribe_script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
+    if let Ok(cwd) = std::env::current_dir() {
+        let dev = cwd.join("src-tauri").join("python").join("transcribe.py");
+        if dev.exists() {
+            return dev;
+        }
+    }
+    app.path()
+        .resource_dir()
+        .expect("resource dir")
+        .join("python")
+        .join("transcribe.py")
+}
+
+fn run_transcribe_script<R: Runtime>(app: &AppHandle<R>, audio: &Path) -> Result<String, String> {
+    let py = conda_python();
+    if !py.exists() {
+        return Err(format!("Python not found at {}", py.display()));
+    }
+    let script = transcribe_script_path(app);
+    if !script.exists() {
+        return Err(format!("Script not found at {}", script.display()));
+    }
+    let output = PCommand::new(&py)
+        .arg(&script)
+        .arg(audio)
+        .output()
+        .map_err(|e| format!("Failed to start python: {e}"))?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("Python exited with status {}:\n{}", output.status, stderr));
+    }
+    Ok(String::from_utf8_lossy(&output.stdout).to_string())
+}
+
+fn save_transcripts(entries: &[TranscriptEntry]) -> Result<(), String> {
+    let path = transcripts_path();
+    if let Some(parent) = path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    let data = serde_json::to_string_pretty(entries).map_err(|e| e.to_string())?;
+    fs::write(path, data).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn load_transcripts() -> Result<Vec<TranscriptEntry>, String> {
+    let path = transcripts_path();
+    if let Ok(data) = fs::read_to_string(path) {
+        serde_json::from_str(&data).map_err(|e| e.to_string())
+    } else {
+        Ok(vec![])
+    }
+}
+
+#[tauri::command]
+pub async fn transcribe_audio<R: Runtime>(app: AppHandle<R>, data: Vec<u8>) -> Result<String, String> {
+    if data.is_empty() {
+        return Err("no audio data provided".into());
+    }
+    let id = chrono::Local::now().timestamp_millis().to_string();
+    let audio_dir = transcripts_audio_dir();
+    let audio_path = audio_dir.join(format!("{id}.wav"));
+    fs::write(&audio_path, &data).map_err(|e| e.to_string())?;
+    let text = run_transcribe_script(&app, &audio_path)?.trim().to_string();
+
+    let mut entries = load_transcripts().await.unwrap_or_else(|_| vec![]);
+    entries.push(TranscriptEntry {
+        id: id.clone(),
+        audio_path: audio_path.to_string_lossy().to_string(),
+        text: text.clone(),
+        created_at: chrono::Local::now().to_rfc3339(),
+    });
+    save_transcripts(&entries)?;
+
+    Ok(text)
 }
 
 #[derive(Serialize)]

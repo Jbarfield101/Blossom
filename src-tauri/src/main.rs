@@ -78,6 +78,9 @@ fn main() {
             commands::load_shorts,
             commands::save_shorts,
             commands::generate_short,
+            // Transcription:
+            commands::load_transcripts,
+            commands::transcribe_audio,
             commands::system_info,
             commands::enqueue_task,
             commands::task_status,
