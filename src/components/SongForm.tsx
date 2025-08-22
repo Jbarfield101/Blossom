@@ -1,5 +1,6 @@
 // src/components/SongForm.tsx — HQ wiring for lofi renderer
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTheme as useMuiTheme } from "@mui/material/styles";
 import { useAudioDefaults } from "../features/audioDefaults/useAudioDefaults";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke, convertFileSrc } from "@tauri-apps/api/core";
@@ -186,7 +187,7 @@ const SONG_TEMPLATES = PRESET_TEMPLATES;
 
 export default function SongForm() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const {
+  const { 
     bpm: defaultBpm,
     key: defaultKey,
     hqStereo: defaultHqStereo,
@@ -194,6 +195,8 @@ export default function SongForm() {
     hqSidechain: defaultHqSidechain,
     hqChorus: defaultHqChorus,
   } = useAudioDefaults();
+
+  const theme = useMuiTheme();
 
   // THEME (applies to all songs)
   const [titleBase, setTitleBase] = useState("Midnight Coffee");
@@ -636,30 +639,90 @@ export default function SongForm() {
   }
 
   const S: Record<string, React.CSSProperties> = {
-    page: { position: "relative", minHeight: "100vh", background: "#0f0f10", color: "#fff", padding: 16 },
-    card: { background: "#17181b", borderRadius: 16, padding: 16, boxShadow: "0 10px 24px rgba(0,0,0,.32)", color: "#fff", maxWidth: 1100, margin: "0 auto" },
+    page: {
+      position: "relative",
+      minHeight: "100vh",
+      background: theme.palette.background.default,
+      color: theme.palette.text.primary,
+      padding: 16,
+    },
+    card: {
+      background: theme.palette.background.paper,
+      borderRadius: 16,
+      padding: 16,
+      boxShadow: "0 10px 24px rgba(0,0,0,.32)",
+      color: theme.palette.text.primary,
+      maxWidth: 1100,
+      margin: "0 auto",
+    },
     h1: { margin: "0 0 12px 0", fontSize: 22, fontWeight: 800 },
     row: { display: "flex", gap: 8, alignItems: "center" },
-    input: { flex: 1, padding: "10px 12px", borderRadius: 10, border: "1px solid #2b2e33", background: "#0e0f12", color: "#e7e7ea" },
-    btn: { padding: "10px 14px", borderRadius: 10, border: "none", background: "#3a82f6", color: "#fff", cursor: "pointer", minWidth: 140 },
+    input: {
+      flex: 1,
+      padding: "10px 12px",
+      borderRadius: 10,
+      border: `1px solid ${theme.palette.divider}`,
+      background: theme.palette.background.default,
+      color: theme.palette.text.primary,
+    },
+    btn: {
+      padding: "10px 14px",
+      borderRadius: 10,
+      border: "none",
+      background: theme.palette.primary.main,
+      color: theme.palette.primary.contrastText,
+      cursor: "pointer",
+      minWidth: 140,
+    },
     small: { fontSize: 12, opacity: 0.75, marginTop: 4 },
     grid3: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 12, marginTop: 12 },
     grid2: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: 12, marginTop: 12 },
-    panel: { background: "#0e0f12", borderRadius: 10, padding: 12 },
+    panel: { background: theme.palette.background.default, borderRadius: 10, padding: 12 },
     label: { fontSize: 12, opacity: 0.8, marginBottom: 6, display: "block" },
     actions: { marginTop: 12, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" },
     status: { marginTop: 10, fontSize: 12, opacity: 0.8 },
-    err: { marginTop: 8, color: "#ff7b7b", fontSize: 12 },
+    err: { marginTop: 8, color: theme.palette.error.main, fontSize: 12 },
     table: { width: "100%", marginTop: 12, borderCollapse: "collapse", fontSize: 13 },
-    th: { textAlign: "left", padding: "8px 6px", borderBottom: "1px solid #2b2e33", opacity: 0.8 },
-    td: { padding: "8px 6px", borderBottom: "1px solid #1e2025" },
+    th: {
+      textAlign: "left",
+      padding: "8px 6px",
+      borderBottom: `1px solid ${theme.palette.divider}`,
+      opacity: 0.8,
+    },
+    td: { padding: "8px 6px", borderBottom: `1px solid ${theme.palette.divider}` },
     optionGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px,1fr))", gap: 8 },
-    optionCard: { background: "#17191d", borderRadius: 8, padding: "8px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" },
+    optionCard: {
+      background: theme.palette.background.default,
+      borderRadius: 8,
+      padding: "8px 12px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
     toggle: { display: "flex", gap: 8, alignItems: "center" },
     slider: { width: "100%" },
-    playBtn: { padding: "10px 14px", borderRadius: 10, border: "1px solid #2b2e33", background: "transparent", color: "#e7e7ea", cursor: "pointer", minWidth: 120 },
-    progressOuter: { height: 6, background: "#2b2e33", borderRadius: 3, overflow: "hidden", marginTop: 8 },
-    progressInner: { height: "100%", background: "#3a82f6", width: "0%", transition: "width 0.3s" },
+    playBtn: {
+      padding: "10px 14px",
+      borderRadius: 10,
+      border: `1px solid ${theme.palette.divider}`,
+      background: "transparent",
+      color: theme.palette.text.primary,
+      cursor: "pointer",
+      minWidth: 120,
+    },
+    progressOuter: {
+      height: 6,
+      background: theme.palette.divider,
+      borderRadius: 3,
+      overflow: "hidden",
+      marginTop: 8,
+    },
+    progressInner: {
+      height: "100%",
+      background: theme.palette.primary.main,
+      width: "0%",
+      transition: "width 0.3s",
+    },
   };
 
   return (
@@ -861,7 +924,10 @@ export default function SongForm() {
           </label>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {structure.map((sec, i) => (
-              <div key={i} style={{ background: "#17191d", padding: 8, borderRadius: 8, minWidth: 120 }}>
+              <div
+                key={i}
+                style={{ background: theme.palette.background.default, padding: 8, borderRadius: 8, minWidth: 120 }}
+              >
                 <div style={S.small}>{sec.name}</div>
                 <input
                   type="number"
@@ -886,7 +952,7 @@ export default function SongForm() {
                     border:
                       !/^[0-9]+$/.test(sec.barsStr ?? String(sec.bars)) ||
                       parseInt(sec.barsStr ?? String(sec.bars), 10) < 1
-                        ? "1px solid #ff7b7b"
+                        ? `1px solid ${theme.palette.error.main}`
                         : undefined,
                   }}
                 />
@@ -1049,7 +1115,7 @@ export default function SongForm() {
                   <td style={S.td}>{j.spec.bpm}</td>
                   <td style={S.td}>{j.spec.seed}</td>
                   <td style={S.td}>
-                    {j.error ? <span style={{ color: "#ff7b7b" }}>error</span> : j.status || "—"}
+                    {j.error ? <span style={{ color: theme.palette.error.main }}>error</span> : j.status || "—"}
                     {j.error && (
                       <details style={{ marginTop: 4 }}>
                         <summary style={{ opacity: 0.8, cursor: "pointer" }}>details</summary>
