@@ -35,7 +35,13 @@ export default function GenerateNPCModal({ open, onClose }: Props) {
           ],
         });
         try {
-          const data = JSON.parse(reply) as Omit<NPC, 'id'>;
+          const parsed = JSON.parse(reply) as Partial<NPC>;
+          const data: Omit<NPC, 'id'> = {
+            portrait: 'placeholder.png',
+            icon: 'placeholder-icon.png',
+            playerCharacter: false,
+            ...parsed,
+          } as Omit<NPC, 'id'>;
           addNPC(data);
         } catch {
           // ignore parse errors for now

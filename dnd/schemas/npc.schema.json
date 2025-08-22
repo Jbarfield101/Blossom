@@ -24,6 +24,9 @@
           "type": "string",
           "minLength": 1
         },
+        "playerCharacter": {
+          "type": "boolean"
+        },
         "backstory": {
           "type": "string"
         },
@@ -67,10 +70,12 @@
           "additionalProperties": false
         },
         "portrait": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "icon": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "sections": {
           "type": "object",
@@ -94,8 +99,11 @@
         "species",
         "role",
         "alignment",
+        "playerCharacter",
         "hooks",
         "voice",
+        "portrait",
+        "icon",
         "statblock",
         "tags"
       ],
