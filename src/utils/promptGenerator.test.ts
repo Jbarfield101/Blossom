@@ -7,7 +7,9 @@ describe('generatePrompt', () => {
   });
 
   it('creates an image prompt', () => {
-    expect(generatePrompt('dogs', 'image')).toBe('Generate a detailed image of dogs.');
+    expect(generatePrompt('dogs', 'image')).toBe(
+      'Generate a detailed image combining dogs.'
+    );
   });
 
   it('creates a music prompt', () => {

@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Box, Stack, TextField, Button, Typography } from "@mui/material";
 import { generatePrompt } from "../utils/promptGenerator";
-import { getRandomWord } from "../utils/randomWord";
+import { getRandomConcept } from "../utils/randomConcept";
 
 export default function Fusion() {
-  const [word1, setWord1] = useState("");
-  const [word2, setWord2] = useState("");
+  const [concept1, setConcept1] = useState("");
+  const [concept2, setConcept2] = useState("");
   const [prompt, setPrompt] = useState("");
   const [archive, setArchive] = useState<
-    { word1: string; word2: string; prompt: string }[]
+    { concept1: string; concept2: string; prompt: string }[]
   >(() => {
     const stored = localStorage.getItem("fusionArchive");
     return stored ? JSON.parse(stored) : [];
@@ -16,13 +16,12 @@ export default function Fusion() {
 
   const handleChange = (setter: (v: string) => void) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value.replace(/\s+/g, "");
-      setter(value);
+      setter(e.target.value);
     };
 
   const saveArchive = (entry: {
-    word1: string;
-    word2: string;
+    concept1: string;
+    concept2: string;
     prompt: string;
   }) => {
     setArchive((prev) => {
@@ -32,24 +31,24 @@ export default function Fusion() {
     });
   };
 
-  const fuse = (w1 = word1, w2 = word2) => {
-    if (!w1 && !w2) return;
-    const fusion = [w1, w2].filter(Boolean).join(" ");
+  const fuse = (c1 = concept1, c2 = concept2) => {
+    if (!c1 && !c2) return;
+    const fusion = [c1, c2].filter(Boolean).join(" and ");
     const result = generatePrompt(fusion, "image");
     setPrompt(result);
-    saveArchive({ word1: w1, word2: w2, prompt: result });
+    saveArchive({ concept1: c1, concept2: c2, prompt: result });
   };
 
   const randomize = (setter: (v: string) => void) => {
-    setter(getRandomWord());
+    setter(getRandomConcept());
   };
 
   const randomFuse = () => {
-    const w1 = getRandomWord();
-    const w2 = getRandomWord();
-    setWord1(w1);
-    setWord2(w2);
-    fuse(w1, w2);
+    const c1 = getRandomConcept();
+    const c2 = getRandomConcept();
+    setConcept1(c1);
+    setConcept2(c2);
+    fuse(c1, c2);
   };
 
   return (
@@ -58,21 +57,21 @@ export default function Fusion() {
         <Stack direction="row" spacing={2}>
           <Stack direction="row" spacing={1}>
             <TextField
-              label="Word 1"
-              value={word1}
-              onChange={handleChange(setWord1)}
+              label="Concept 1"
+              value={concept1}
+              onChange={handleChange(setConcept1)}
             />
-            <Button variant="outlined" onClick={() => randomize(setWord1)}>
+            <Button variant="outlined" onClick={() => randomize(setConcept1)}>
               Random
             </Button>
           </Stack>
           <Stack direction="row" spacing={1}>
             <TextField
-              label="Word 2"
-              value={word2}
-              onChange={handleChange(setWord2)}
+              label="Concept 2"
+              value={concept2}
+              onChange={handleChange(setConcept2)}
             />
-            <Button variant="outlined" onClick={() => randomize(setWord2)}>
+            <Button variant="outlined" onClick={() => randomize(setConcept2)}>
               Random
             </Button>
           </Stack>
@@ -99,7 +98,7 @@ export default function Fusion() {
             </Typography>
             <Stack spacing={1} maxHeight={200} sx={{ overflowY: "auto" }}>
               {archive.map((a, i) => (
-                <Box key={i}>{`${a.word1} + ${a.word2}: ${a.prompt}`}</Box>
+                <Box key={i}>{`${a.concept1} + ${a.concept2}: ${a.prompt}`}</Box>
               ))}
             </Stack>
           </Box>
