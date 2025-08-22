@@ -22,6 +22,17 @@ const cameraOptions = [
   "Captured with DSLR, shallow depth of field",
   "Medium format photography",
   "Shot on CineStill 800T (moody, film-like with strong blues and halogens)",
+  // 💅 Editorial / Styled / Trendy - Use for stylized, design-focused, or aesthetic-heavy compositions.
+  "Vogue cover portrait",
+  "Shot for Architectural Digest",
+  "Instagram aesthetic",
+  "Apple product ad lighting",
+  "Clean studio backdrop",
+  "Polaroid border style",
+  "CineStill 800T color grading",
+  "Euphoria lighting",
+  "Wes Anderson symmetry and palette",
+  "Pinterest decor angle",
 ];
 
 const lensOptions = [
