@@ -16,6 +16,7 @@ describe('StockRow', () => {
   beforeEach(() => {
     useStocks.setState({
       quotes: {},
+      ws: {},
       removeStock: vi.fn(),
       forecast: vi.fn().mockResolvedValue({ shortTerm: 'st', longTerm: 'lt' }),
       fetchNews: vi.fn().mockResolvedValue([]),
@@ -23,7 +24,7 @@ describe('StockRow', () => {
   });
 
   afterEach(() => {
-    useStocks.setState({ quotes: {}, forecast: undefined, fetchNews: undefined } as any);
+    useStocks.setState({ quotes: {}, ws: {}, forecast: undefined, fetchNews: undefined } as any);
     cleanup();
   });
 

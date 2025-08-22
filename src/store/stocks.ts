@@ -32,20 +32,29 @@ interface Forecast {
 interface StockState {
   quotes: Record<string, Quote>;
   pollers: Record<string, ReturnType<typeof setInterval>>;
+  ws: Record<string, WebSocket>;
   symbols: string[];
   news: Record<string, { articles: NewsArticle[]; lastFetched: number; error?: string }>;
   fetchQuote: (symbol: string) => Promise<number>;
   startPolling: (symbol: string, interval?: number) => void;
   stopPolling: (symbol: string) => void;
+  startRealtime: (symbol: string) => void;
+  stopRealtime: (symbol: string) => void;
   forecast: (symbol: string) => Promise<Forecast>;
   fetchNews: (symbol: string) => Promise<NewsArticle[]>;
   addStock: (symbol: string) => void;
   removeStock: (symbol: string) => void;
 }
 
+const WS_SYMBOL_MAP: Record<string, string> = {
+  BTC: 'btcusdt',
+  ETH: 'ethusdt',
+};
+
 export const useStocks = create<StockState>((set, get) => ({
   quotes: {},
   pollers: {},
+  ws: {},
   symbols: [],
   news: {},
   fetchQuote: async (symbol) => {
@@ -137,6 +146,48 @@ export const useStocks = create<StockState>((set, get) => ({
     set((state) => ({ pollers: { ...state.pollers, [sym]: id } }));
     get().fetchQuote(sym);
   },
+  startRealtime: (symbol) => {
+    const sym = symbol.toUpperCase();
+    const { ws } = get();
+    if (ws[sym]) return;
+    const pair = WS_SYMBOL_MAP[sym];
+    if (!pair || !(globalThis as any).WebSocket) return;
+    const socket = new WebSocket(`wss://stream.binance.com:9443/ws/${pair}@trade`);
+    socket.onmessage = (ev) => {
+      try {
+        const data = JSON.parse(ev.data as string);
+        const price = parseFloat(data.p);
+        set((state) => {
+          const prev = state.quotes[sym];
+          const prevPrice = prev?.price ?? price;
+          const changePercent = prevPrice ? ((price - prevPrice) / prevPrice) * 100 : 0;
+          return {
+            quotes: {
+              ...state.quotes,
+              [sym]: {
+                price,
+                changePercent,
+                volume: prev?.volume ?? 0,
+                history: prev?.history ?? [],
+                marketStatus: prev?.marketStatus ?? '',
+                lastFetched: Date.now(),
+                error: undefined,
+              },
+            },
+          };
+        });
+      } catch {
+        // ignore malformed messages
+      }
+    };
+    socket.onclose = () => {
+      set((state) => {
+        const { [sym]: _, ...rest } = state.ws;
+        return { ws: rest };
+      });
+    };
+    set((state) => ({ ws: { ...state.ws, [sym]: socket } }));
+  },
   stopPolling: (symbol) => {
     const sym = symbol.toUpperCase();
     const { pollers } = get();
@@ -145,6 +196,16 @@ export const useStocks = create<StockState>((set, get) => ({
     set((state) => {
       const { [sym]: _, ...rest } = state.pollers;
       return { pollers: rest };
+    });
+  },
+  stopRealtime: (symbol) => {
+    const sym = symbol.toUpperCase();
+    const { ws } = get();
+    const socket = ws[sym];
+    if (socket) socket.close();
+    set((state) => {
+      const { [sym]: _, ...rest } = state.ws;
+      return { ws: rest };
     });
   },
   forecast: async (symbol) => {
@@ -166,11 +227,13 @@ export const useStocks = create<StockState>((set, get) => ({
         : { symbols: [...state.symbols, sym] }
     );
     get().startPolling(sym);
+    get().startRealtime(sym);
   },
   removeStock: (symbol) => {
     const sym = symbol.toUpperCase();
     set((state) => ({ symbols: state.symbols.filter((s) => s !== sym) }));
     get().stopPolling(sym);
+    get().stopRealtime(sym);
   },
 }));
 
