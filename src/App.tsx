@@ -21,6 +21,7 @@ import Chores from "./pages/Chores";
 import User from "./pages/User";
 import SystemInfo from "./pages/SystemInfo";
 import Fusion from "./pages/Fusion";
+import Transcription from "./pages/Transcription";
 
 export default function App() {
   return (
@@ -45,6 +46,7 @@ export default function App() {
         <Route path="/shorts" element={<Shorts />} />
         <Route path="/chores" element={<Chores />} />
         <Route path="/system" element={<SystemInfo />} />
+        <Route path="/transcription" element={<Transcription />} />
         <Route path="/dnd" element={<DND />} />
         <Route path="/user" element={<User />} />
         <Route path="*" element={<NotFound />} />
