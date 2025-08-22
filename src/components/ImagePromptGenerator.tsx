@@ -47,6 +47,20 @@ const effectOptions = [
   "Long exposure",
 ];
 
+const cinematicOptions = [
+  "cinematography by Roger Deakins",
+  "2.35:1 aspect ratio",
+  "shot on 35mm film",
+  "color graded like Blade Runner 2049",
+  "natural bounce lighting",
+  "low-key lighting setup",
+  "moody shadows",
+  "subtle lens distortion",
+  "slow zoom composition",
+  "wide shot with soft focus",
+  "introspective framing",
+];
+
 const lofiOptions = [
   "Studio Ghibli–inspired framing",
   "soft depth of field",
@@ -83,6 +97,7 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
   const [camera, setCamera] = useState<string | null>(null);
   const [lens, setLens] = useState<string | null>(null);
   const [effects, setEffects] = useState<string[]>([]);
+  const [cinematic, setCinematic] = useState<string[]>([]);
   const [lofi, setLofi] = useState<string[]>([]);
   const [cosmic, setCosmic] = useState<string[]>([]);
 
@@ -96,6 +111,12 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
 
   const toggleEffect = (opt: string) => {
     setEffects((prev) =>
+      prev.includes(opt) ? prev.filter((o) => o !== opt) : [...prev, opt]
+    );
+  };
+
+  const toggleCinematic = (opt: string) => {
+    setCinematic((prev) =>
       prev.includes(opt) ? prev.filter((o) => o !== opt) : [...prev, opt]
     );
   };
@@ -117,6 +138,7 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
     if (camera) prompt += ` ${camera}`;
     if (lens) prompt += ` ${lens}`;
     if (effects.length) prompt += ` ${effects.join(" ")}`;
+    if (cinematic.length) prompt += ` ${cinematic.join(" ")}`;
     if (lofi.length) prompt += ` ${lofi.join(" ")}`;
     if (cosmic.length) prompt += ` ${cosmic.join(" ")}`;
     onGenerate(prompt.trim());
@@ -125,6 +147,7 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
     setCamera(null);
     setLens(null);
     setEffects([]);
+    setCinematic([]);
     setLofi([]);
     setCosmic([]);
   };
@@ -186,6 +209,25 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
                   <Checkbox
                     checked={effects.includes(opt)}
                     onChange={() => toggleEffect(opt)}
+                  />
+                }
+                label={opt}
+              />
+            ))}
+          </FormGroup>
+          <Typography sx={{ mt: 2, mb: 1 }}>🎬 CINEMATIC / FILMIC</Typography>
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            Use for storytelling or mood-heavy scenes — horror, drama, romance,
+            etc.
+          </Typography>
+          <FormGroup>
+            {cinematicOptions.map((opt) => (
+              <FormControlLabel
+                key={opt}
+                control={
+                  <Checkbox
+                    checked={cinematic.includes(opt)}
+                    onChange={() => toggleCinematic(opt)}
                   />
                 }
                 label={opt}
