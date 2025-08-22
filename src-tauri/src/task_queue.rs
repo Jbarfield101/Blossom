@@ -2,11 +2,14 @@ use std::collections::{HashMap, HashSet};
 use std::process::Command as PCommand;
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tokio::sync::{mpsc, Semaphore};
+use tokio::time::sleep;
 use tauri::async_runtime::{self, JoinHandle};
+use sysinfo::System;
 
 use crate::commands::ShortSpec;
 
@@ -60,17 +63,26 @@ pub struct TaskQueue {
     tasks: Arc<Mutex<HashMap<u64, Task>>>,
     handles: Arc<Mutex<HashMap<u64, JoinHandle<()>>>>,
     cancelled: Arc<Mutex<HashSet<u64>>>,
+    limits: Arc<Mutex<ResourceLimits>>,
+}
+
+#[derive(Clone)]
+struct ResourceLimits {
+    cpu: f32,
+    memory: f32,
 }
 
 impl TaskQueue {
-    pub fn new(concurrency: usize) -> Self {
+    pub fn new(concurrency: usize, cpu_limit: f32, memory_limit: f32) -> Self {
         let (tx, mut rx) = mpsc::channel(100);
         let tasks = Arc::new(Mutex::new(HashMap::new()));
         let handles = Arc::new(Mutex::new(HashMap::new()));
         let cancelled = Arc::new(Mutex::new(HashSet::new()));
+        let limits = Arc::new(Mutex::new(ResourceLimits { cpu: cpu_limit, memory: memory_limit }));
         let tasks_worker = tasks.clone();
         let handles_worker = handles.clone();
         let cancelled_worker = cancelled.clone();
+        let limits_worker = limits.clone();
         async_runtime::spawn(async move {
             let semaphore = Arc::new(Semaphore::new(concurrency));
             while let Some(msg) = rx.recv().await {
@@ -87,10 +99,32 @@ impl TaskQueue {
                             continue;
                         }
                         let tasks_clone = tasks_worker.clone();
+                        let limits_clone = limits_worker.clone();
                         let command = task.command.clone();
                         let permit = semaphore.clone().acquire_owned().await.unwrap();
                         let id = task.id;
                         let handle = async_runtime::spawn(async move {
+                            loop {
+                                let (cpu_limit, mem_limit) = {
+                                    let l = limits_clone.lock().unwrap();
+                                    (l.cpu, l.memory)
+                                };
+                                let mut sys = System::new();
+                                sys.refresh_cpu();
+                                std::thread::sleep(Duration::from_millis(100));
+                                sys.refresh_cpu();
+                                sys.refresh_memory();
+                                let cpu_usage = sys.global_cpu_info().cpu_usage();
+                                let mem_usage = if sys.total_memory() > 0 {
+                                    (sys.used_memory() as f32 / sys.total_memory() as f32) * 100.0
+                                } else {
+                                    0.0
+                                };
+                                if cpu_usage < cpu_limit && mem_usage < mem_limit {
+                                    break;
+                                }
+                                sleep(Duration::from_secs(1)).await;
+                            }
                             {
                                 let mut map = tasks_clone.lock().unwrap();
                                 if let Some(t) = map.get_mut(&id) {
@@ -174,7 +208,7 @@ impl TaskQueue {
                 }
             }
         });
-        Self { tx, tasks, handles, cancelled }
+        Self { tx, tasks, handles, cancelled, limits }
     }
 
     pub async fn enqueue(&self, label: String, command: TaskCommand) -> u64 {
@@ -202,6 +236,12 @@ impl TaskQueue {
 
     pub async fn cancel(&self, id: u64) -> bool {
         self.tx.send(Message::Cancel(id)).await.is_ok()
+    }
+
+    pub fn set_limits(&self, cpu: f32, memory: f32) {
+        let mut l = self.limits.lock().unwrap();
+        l.cpu = cpu;
+        l.memory = memory;
     }
 }
 

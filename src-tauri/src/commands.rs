@@ -1177,3 +1177,9 @@ pub async fn cancel_task(queue: State<'_, TaskQueue>, id: u64) -> Result<bool, S
 pub async fn list_tasks(queue: State<'_, TaskQueue>) -> Result<Vec<Task>, String> {
     Ok(queue.list())
 }
+
+#[tauri::command]
+pub async fn set_task_limits(queue: State<'_, TaskQueue>, cpu: f32, memory: f32) -> Result<(), String> {
+    queue.set_limits(cpu, memory);
+    Ok(())
+}

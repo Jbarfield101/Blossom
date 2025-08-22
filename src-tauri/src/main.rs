@@ -10,7 +10,7 @@ use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
 
 fn main() {
     env_logger::init();
-    let queue = TaskQueue::new(1);
+    let queue = TaskQueue::new(1, 90.0, 90.0);
     tauri::Builder::default()
         .manage(queue)
         .plugin(tauri_plugin_dialog::init())
@@ -80,6 +80,7 @@ fn main() {
             commands::task_status,
             commands::cancel_task,
             commands::list_tasks,
+            commands::set_task_limits,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
