@@ -57,6 +57,10 @@ body.theme-mono {
   color: #fff;
 }
 
+body.theme-pastel {
+  background: radial-gradient(circle at center, #ffe4e1, #e0e7ff, #e8ffe8);
+}
+
 body.theme-rainy {
   background: radial-gradient(circle at center, #0a1e3d, #081229);
   overflow: hidden;
@@ -111,6 +115,22 @@ body.theme-mono input:hover,
 body.theme-mono select:hover,
 body.theme-mono textarea:hover {
   background: #eee;
+}
+
+body.theme-pastel button,
+body.theme-pastel input,
+body.theme-pastel select,
+body.theme-pastel textarea {
+  background: rgba(255, 255, 255, 0.85);
+  color: #555;
+  border: 1px solid #d8bfd8;
+}
+
+body.theme-pastel button:hover,
+body.theme-pastel input:hover,
+body.theme-pastel select:hover,
+body.theme-pastel textarea:hover {
+  background: rgba(255, 255, 255, 0.9);
 }
 
 body.theme-studio button:hover,
