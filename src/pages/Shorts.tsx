@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button, List, ListItemButton, ListItemText, Tabs, Tab } from "@mui/material";
 import { invoke } from "@tauri-apps/api/core";
 import { useShorts } from "../features/shorts/useShorts";
+import TaskList from "../components/TaskQueue/TaskList";
 
 export default function Shorts() {
   const { shorts, selectedId, create, select } = useShorts();
@@ -21,6 +22,7 @@ export default function Shorts() {
             </ListItemButton>
           ))}
         </List>
+        <TaskList />
       </div>
     );
   }
@@ -51,6 +53,7 @@ export default function Shorts() {
           </Button>
         </div>
       )}
+      <TaskList />
     </div>
   );
 }
