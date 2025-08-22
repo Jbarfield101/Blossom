@@ -38,3 +38,19 @@ export interface EncounterData extends DndBase {
   scaling: string;
   theme: DndTheme;
 }
+
+export interface RuleData extends DndBase {
+  description: string;
+  tags: string[];
+}
+
+export interface SpellData extends DndBase {
+  level: number;
+  school: string;
+  castingTime: string;
+  range: string;
+  components: string[];
+  duration: string;
+  description: string;
+  tags: string[];
+}

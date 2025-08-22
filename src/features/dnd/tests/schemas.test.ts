@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { zLore, zQuest, zEncounter } from "../schemas";
+import { zLore, zQuest, zEncounter, zRule, zSpell } from "../schemas";
 import { zNpc } from "../../../dnd/schemas/npc";
 
 describe("dnd schemas", () => {
@@ -229,5 +229,56 @@ describe("dnd schemas", () => {
       theme: "Minimal",
     } as any;
     expect(() => zEncounter.parse(encounter)).toThrowError();
+  });
+
+  it("parses Rule data", () => {
+    const rule = {
+      id: "r1",
+      name: "Flanking",
+      description: "Gain advantage when allies surround an enemy",
+      tags: ["combat"],
+    };
+    expect(zRule.parse(rule)).toEqual(rule);
+  });
+
+  it("rejects Rules missing required fields", () => {
+    const rule = {
+      id: "r1",
+      description: "Gain advantage",
+      tags: ["combat"],
+    };
+    expect(() => zRule.parse(rule)).toThrowError();
+  });
+
+  it("parses Spell data", () => {
+    const spell = {
+      id: "s1",
+      name: "Fireball",
+      level: 3,
+      school: "Evocation",
+      castingTime: "1 action",
+      range: "150 feet",
+      components: ["V", "S", "M"],
+      duration: "Instantaneous",
+      description: "A bright streak flashes from your pointing finger to a point you choose.",
+      tags: ["damage"],
+    };
+    expect(zSpell.parse(spell)).toEqual(spell);
+  });
+
+  it("rejects Spells with invalid level type", () => {
+    const spell = {
+      id: "s1",
+      name: "Fireball",
+      level: "3",
+      school: "Evocation",
+      castingTime: "1 action",
+      range: "150 feet",
+      components: ["V", "S", "M"],
+      duration: "Instantaneous",
+      description: "A bright streak flashes from your pointing finger to a point you choose.",
+      tags: ["damage"],
+    } as any;
+    expect(() => zSpell.parse(spell)).toThrowError();
   });
 });
