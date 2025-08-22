@@ -47,12 +47,28 @@ const effectOptions = [
   "Long exposure",
 ];
 
+const lofiOptions = [
+  "Studio Ghibli–inspired framing",
+  "soft depth of field",
+  "dreamy pastel tones",
+  "cinematic lighting",
+  "light film grain",
+  "sunset golden hour",
+  "bokeh background",
+  "ambient haze",
+  "tilt-shift lens effect",
+  "whimsical color grading",
+  "cozy cottagecore",
+  "16:9 ratio, soft vignette",
+];
+
 export default function ImagePromptGenerator({ onGenerate }: Props) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [camera, setCamera] = useState<string | null>(null);
   const [lens, setLens] = useState<string | null>(null);
   const [effects, setEffects] = useState<string[]>([]);
+  const [lofi, setLofi] = useState<string[]>([]);
 
   const toggleCamera = (opt: string) => {
     setCamera((prev) => (prev === opt ? null : opt));
@@ -68,17 +84,25 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
     );
   };
 
+  const toggleLofi = (opt: string) => {
+    setLofi((prev) =>
+      prev.includes(opt) ? prev.filter((o) => o !== opt) : [...prev, opt]
+    );
+  };
+
   const handleSend = () => {
     let prompt = text;
     if (camera) prompt += ` ${camera}`;
     if (lens) prompt += ` ${lens}`;
     if (effects.length) prompt += ` ${effects.join(" ")}`;
+    if (lofi.length) prompt += ` ${lofi.join(" ")}`;
     onGenerate(prompt.trim());
     setOpen(false);
     setText("");
     setCamera(null);
     setLens(null);
     setEffects([]);
+    setLofi([]);
   };
 
   return (
@@ -138,6 +162,24 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
                   <Checkbox
                     checked={effects.includes(opt)}
                     onChange={() => toggleEffect(opt)}
+                  />
+                }
+                label={opt}
+              />
+            ))}
+          </FormGroup>
+          <Typography sx={{ mt: 2, mb: 1 }}>🌅 LOFI / DREAMY / RELAXED</Typography>
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            Use for cozy, anime-style, soft-vibe loops and stills.
+          </Typography>
+          <FormGroup>
+            {lofiOptions.map((opt) => (
+              <FormControlLabel
+                key={opt}
+                control={
+                  <Checkbox
+                    checked={lofi.includes(opt)}
+                    onChange={() => toggleLofi(opt)}
                   />
                 }
                 label={opt}

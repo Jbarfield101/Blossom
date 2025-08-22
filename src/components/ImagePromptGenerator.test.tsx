@@ -18,12 +18,15 @@ describe('ImagePromptGenerator', () => {
 
     const wide = screen.getByLabelText(/Wide-angle lens/i);
     fireEvent.click(wide);
-    const tilt = screen.getByLabelText(/Tilt-shift lens effect/i);
+    const tilt = screen.getAllByLabelText(/Tilt-shift lens effect/i)[0];
     expect(tilt).toBeDisabled();
+
+    const ghibli = screen.getByLabelText(/Studio Ghibli/i);
+    fireEvent.click(ghibli);
 
     fireEvent.click(screen.getByRole('button', { name: /generate/i }));
     expect(onGenerate).toHaveBeenCalledWith(
-      'sunset Shot on Kodak Portra 400 (warm, soft film aesthetic) Wide-angle lens, 24mm'
+      'sunset Shot on Kodak Portra 400 (warm, soft film aesthetic) Wide-angle lens, 24mm Studio Ghibli–inspired framing'
     );
   });
 });
