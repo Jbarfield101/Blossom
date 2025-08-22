@@ -358,6 +358,12 @@ pub struct SpellRecord {
     pub description: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RuleRecord {
+    pub name: String,
+    pub description: String,
+}
+
 #[tauri::command]
 pub async fn pdf_add<R: Runtime>(app: AppHandle<R>, path: String) -> Result<Value, String> {
     let out = run_pdf_tool(&app, &["add", &path])?;
@@ -424,6 +430,16 @@ pub async fn parse_spell_pdf<R: Runtime>(
     let out = run_pdf_tool(&app, &["spells", &path])?;
     let v: Value = serde_json::from_str(&out).map_err(|e| e.to_string())?;
     serde_json::from_value(v["spells"].clone()).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn parse_rule_pdf<R: Runtime>(
+    app: AppHandle<R>,
+    path: String,
+) -> Result<Vec<RuleRecord>, String> {
+    let out = run_pdf_tool(&app, &["rules", &path])?;
+    let v: Value = serde_json::from_str(&out).map_err(|e| e.to_string())?;
+    serde_json::from_value(v["rules"].clone()).map_err(|e| e.to_string())
 }
 
 /* ==============================

@@ -1,15 +1,15 @@
 use std::collections::{HashMap, HashSet};
 use std::process::Command as PCommand;
-use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use sysinfo::System;
+use tauri::async_runtime::{self, JoinHandle};
 use tokio::sync::{mpsc, Semaphore};
 use tokio::time::sleep;
-use tauri::async_runtime::{self, JoinHandle};
-use sysinfo::System;
 
 use crate::commands::ShortSpec;
 
@@ -78,7 +78,10 @@ impl TaskQueue {
         let tasks = Arc::new(Mutex::new(HashMap::new()));
         let handles = Arc::new(Mutex::new(HashMap::new()));
         let cancelled = Arc::new(Mutex::new(HashSet::new()));
-        let limits = Arc::new(Mutex::new(ResourceLimits { cpu: cpu_limit, memory: memory_limit }));
+        let limits = Arc::new(Mutex::new(ResourceLimits {
+            cpu: cpu_limit,
+            memory: memory_limit,
+        }));
         let tasks_worker = tasks.clone();
         let handles_worker = handles.clone();
         let cancelled_worker = cancelled.clone();
@@ -133,7 +136,13 @@ impl TaskQueue {
                             }
                             let res: Result<Value, String> = match command {
                                 TaskCommand::Example => Ok(Value::Null),
-                                TaskCommand::LofiGenerateGpu { py, script, prompt, duration, seed } => {
+                                TaskCommand::LofiGenerateGpu {
+                                    py,
+                                    script,
+                                    prompt,
+                                    duration,
+                                    seed,
+                                } => {
                                     let output = PCommand::new(&py)
                                         .arg("-u")
                                         .arg(&script)
@@ -147,9 +156,14 @@ impl TaskQueue {
                                         .map_err(|e| format!("Failed to start python: {e}"))?;
                                     if !output.status.success() {
                                         let stderr = String::from_utf8_lossy(&output.stderr);
-                                        Err(format!("Python exited with status {}:\n{}", output.status, stderr))
+                                        Err(format!(
+                                            "Python exited with status {}:\n{}",
+                                            output.status, stderr
+                                        ))
                                     } else {
-                                        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                                        let stdout = String::from_utf8_lossy(&output.stdout)
+                                            .trim()
+                                            .to_string();
                                         if stdout.is_empty() {
                                             Err("Python returned no path".into())
                                         } else {
@@ -166,10 +180,14 @@ impl TaskQueue {
                                         .map_err(|e| format!("Failed to start python: {e}"))?;
                                     if !output.status.success() {
                                         let stderr = String::from_utf8_lossy(&output.stderr);
-                                        Err(format!("Python exited with status {}:\n{}", output.status, stderr))
+                                        Err(format!(
+                                            "Python exited with status {}:\n{}",
+                                            output.status, stderr
+                                        ))
                                     } else {
                                         let stdout = String::from_utf8_lossy(&output.stdout);
-                                        serde_json::from_str::<Value>(&stdout).map_err(|e| e.to_string())
+                                        serde_json::from_str::<Value>(&stdout)
+                                            .map_err(|e| e.to_string())
                                     }
                                 }
                                 TaskCommand::GenerateShort { spec } => {
@@ -208,7 +226,13 @@ impl TaskQueue {
                 }
             }
         });
-        Self { tx, tasks, handles, cancelled, limits }
+        Self {
+            tx,
+            tasks,
+            handles,
+            cancelled,
+            limits,
+        }
     }
 
     pub async fn enqueue(&self, label: String, command: TaskCommand) -> u64 {
@@ -244,4 +268,3 @@ impl TaskQueue {
         l.memory = memory;
     }
 }
-
