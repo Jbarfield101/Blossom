@@ -1,9 +1,14 @@
-import type { CalendarEvent } from './types';
-import { colors } from '../../theme';
+import { useTheme } from "@mui/material/styles";
+import type { CalendarEvent } from "./types";
 
-export const statusColors: Record<CalendarEvent['status'], string> = {
-  scheduled: colors.status.scheduled,
-  canceled: colors.status.canceled,
-  missed: colors.status.missed,
-  completed: colors.status.completed,
-};
+// Provide status colors that adapt to the current MUI theme.
+export function useStatusColors(): Record<CalendarEvent["status"], string> {
+  const theme = useTheme();
+  return {
+    scheduled: theme.palette.primary.main,
+    canceled: theme.palette.error.main,
+    missed: theme.palette.warning.main,
+    completed: theme.palette.success.main,
+  };
+}
+
