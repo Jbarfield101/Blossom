@@ -24,9 +24,12 @@ describe('ImagePromptGenerator', () => {
     const ghibli = screen.getByLabelText(/Studio Ghibli/i);
     fireEvent.click(ghibli);
 
+    const deakins = screen.getByLabelText(/cinematography by Roger Deakins/i);
+    fireEvent.click(deakins);
+
     fireEvent.click(screen.getByRole('button', { name: /generate/i }));
     expect(onGenerate).toHaveBeenCalledWith(
-      'sunset Shot on Kodak Portra 400 (warm, soft film aesthetic) Wide-angle lens, 24mm Studio Ghibli–inspired framing'
+      'sunset Shot on Kodak Portra 400 (warm, soft film aesthetic) Wide-angle lens, 24mm cinematography by Roger Deakins Studio Ghibli–inspired framing'
     );
   });
 });
