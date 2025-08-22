@@ -69,6 +69,13 @@
         "portrait": {
           "type": "string"
         },
+        "icon": {
+          "type": "string"
+        },
+        "sections": {
+          "type": "object",
+          "additionalProperties": {}
+        },
         "statblock": {
           "type": "object",
           "additionalProperties": {}

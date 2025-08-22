@@ -18,6 +18,8 @@ export const zNpc = z.object({
   quirks: z.array(z.string()).optional(),
   voice: zVoice,
   portrait: z.string().optional(),
+  icon: z.string().optional(),
+  sections: z.record(z.unknown()).optional(),
   statblock: z.record(z.unknown()),
   tags: z.array(z.string()).nonempty(),
 });

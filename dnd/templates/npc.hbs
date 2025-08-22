@@ -1,5 +1,8 @@
 <div class="npc">
   <div class="header">
+    {{#if icon}}
+    <img class="icon" src="{{icon}}" alt="{{name}} icon" />
+    {{/if}}
     {{#if portrait}}
     <img class="portrait" src="{{portrait}}" alt="{{name}} portrait" />
     {{/if}}
@@ -59,6 +62,15 @@
       {{/each}}
     </ul>
   </section>
+  {{/if}}
+
+  {{#if sections}}
+    {{#each sections}}
+    <section class="custom-section">
+      <h2>{{@key}}</h2>
+      <p>{{this}}</p>
+    </section>
+    {{/each}}
   {{/if}}
 </div>
 

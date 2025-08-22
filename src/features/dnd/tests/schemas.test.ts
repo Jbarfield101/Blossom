@@ -12,6 +12,8 @@ describe("dnd schemas", () => {
       alignment: "CE",
       hooks: ["steal"],
       voice: { style: "gravelly", provider: "acme", preset: "goblin" },
+      icon: "icon.png",
+      sections: { bio: "Lives in cave" },
       statblock: {},
       tags: ["monster"],
     };
@@ -72,6 +74,22 @@ describe("dnd schemas", () => {
       // hooks should be an array of strings
       hooks: "steal",
       voice: { style: "gravelly", provider: "acme", preset: "goblin" },
+      statblock: {},
+      tags: ["monster"],
+    };
+    expect(() => zNpc.parse(npc)).toThrowError();
+  });
+
+  it("rejects NPCs with invalid sections type", () => {
+    const npc = {
+      id: "1",
+      name: "Goblin Scout",
+      species: "Goblinoid",
+      role: "Scout",
+      alignment: "CE",
+      hooks: ["steal"],
+      voice: { style: "gravelly", provider: "acme", preset: "goblin" },
+      sections: "not-an-object" as any,
       statblock: {},
       tags: ["monster"],
     };
