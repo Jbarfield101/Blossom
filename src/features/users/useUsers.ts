@@ -28,24 +28,28 @@ const defaultModules: ModulesState = {
   shorts: true,
 };
 
-interface User {
-  id: string;
-  name: string;
-  theme: Theme;
-  mode: PaletteMode;
-  money: number;
-  modules: ModulesState;
-}
+  interface User {
+    id: string;
+    name: string;
+    theme: Theme;
+    mode: PaletteMode;
+    money: number;
+    modules: ModulesState;
+    cpuLimit: number;
+    memLimit: number;
+  }
 
-interface UsersState {
-  users: Record<string, User>;
-  currentUserId: string | null;
-  addUser: (name: string) => void;
-  switchUser: (id: string) => void;
-  setTheme: (theme: Theme) => void;
-  setMode: (mode: PaletteMode) => void;
-  toggleModule: (key: ModuleKey) => void;
-}
+  interface UsersState {
+    users: Record<string, User>;
+    currentUserId: string | null;
+    addUser: (name: string) => void;
+    switchUser: (id: string) => void;
+    setTheme: (theme: Theme) => void;
+    setMode: (mode: PaletteMode) => void;
+    toggleModule: (key: ModuleKey) => void;
+    setCpuLimit: (limit: number) => void;
+    setMemLimit: (limit: number) => void;
+  }
 
 export const useUsers = create<UsersState>()(
   persist(
@@ -54,21 +58,23 @@ export const useUsers = create<UsersState>()(
       currentUserId: null,
       addUser: (name) => {
         const id = Date.now().toString();
-        set((state) => ({
-          users: {
-            ...state.users,
-            [id]: {
-              id,
-              name,
-              theme: 'default',
-              mode: 'dark',
-              money: 5000,
-              modules: { ...defaultModules },
+          set((state) => ({
+            users: {
+              ...state.users,
+              [id]: {
+                id,
+                name,
+                theme: 'default',
+                mode: 'dark',
+                money: 5000,
+                modules: { ...defaultModules },
+                cpuLimit: 90,
+                memLimit: 90,
+              },
             },
-          },
-          currentUserId: id,
-        }));
-      },
+            currentUserId: id,
+          }));
+        },
       switchUser: (id) => set(() => ({ currentUserId: id })),
       setTheme: (theme) => {
         const id = get().currentUserId;
@@ -90,25 +96,45 @@ export const useUsers = create<UsersState>()(
           },
         }));
       },
-      toggleModule: (key) => {
-        const id = get().currentUserId;
-        if (!id) return;
-        set((state) => {
-          const user = state.users[id];
-          return {
+        toggleModule: (key) => {
+          const id = get().currentUserId;
+          if (!id) return;
+          set((state) => {
+            const user = state.users[id];
+            return {
+              users: {
+                ...state.users,
+                [id]: {
+                  ...user,
+                  modules: { ...user.modules, [key]: !user.modules[key] },
+                },
+              },
+            };
+          });
+        },
+        setCpuLimit: (limit) => {
+          const id = get().currentUserId;
+          if (!id) return;
+          set((state) => ({
             users: {
               ...state.users,
-              [id]: {
-                ...user,
-                modules: { ...user.modules, [key]: !user.modules[key] },
-              },
+              [id]: { ...state.users[id], cpuLimit: limit },
             },
-          };
-        });
-      },
-    }),
-    { name: 'user-store' }
-  )
-);
+          }));
+        },
+        setMemLimit: (limit) => {
+          const id = get().currentUserId;
+          if (!id) return;
+          set((state) => ({
+            users: {
+              ...state.users,
+              [id]: { ...state.users[id], memLimit: limit },
+            },
+          }));
+        },
+      }),
+      { name: 'user-store' }
+    )
+  );
 
 export { type ModuleKey, type ModulesState, defaultModules };
