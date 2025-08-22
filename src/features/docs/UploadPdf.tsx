@@ -1,5 +1,6 @@
 import { open } from "@tauri-apps/plugin-dialog";
 import { useDocs } from "./useDocs";
+import TaskList from "../../components/TaskQueue/TaskList";
 
 export function UploadPdf() {
   const { addDoc } = useDocs();
@@ -11,5 +12,10 @@ export function UploadPdf() {
     }
   }
 
-  return <button onClick={handleClick}>Upload PDF</button>;
+  return (
+    <div>
+      <button onClick={handleClick}>Upload PDF</button>
+      <TaskList />
+    </div>
+  );
 }
