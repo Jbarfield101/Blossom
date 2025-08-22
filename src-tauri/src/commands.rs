@@ -11,13 +11,13 @@ use std::{
 use dirs;
 
 use crate::stocks::{stocks_fetch as stocks_fetch_impl, StockBundle};
-use crate::task_queue::{TaskQueue, Task, TaskCommand};
+use crate::task_queue::{Task, TaskCommand, TaskQueue};
 use chrono::{Local, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use tauri::{AppHandle, Emitter, Manager, Runtime, Window, State};
-use which::which;
 use sysinfo::{CpuExt, System, SystemExt};
+use tauri::{AppHandle, Emitter, Manager, Runtime, State, Window};
+use which::which;
 
 /* ==============================
 ComfyUI launcher (no extra crate)
@@ -407,9 +407,7 @@ pub async fn pdf_ingest<R: Runtime>(
         script: script.to_string_lossy().to_string(),
         doc_id: doc_id.clone(),
     };
-    Ok(queue
-        .enqueue(format!("pdf_ingest {doc_id}"), cmd)
-        .await)
+    Ok(queue.enqueue(format!("pdf_ingest {doc_id}"), cmd).await)
 }
 
 /* ==============================
@@ -545,9 +543,7 @@ pub async fn lofi_generate_gpu<R: Runtime>(
         duration: dur,
         seed,
     };
-    Ok(queue
-        .enqueue("lofi_generate_gpu".into(), cmd)
-        .await)
+    Ok(queue.enqueue("lofi_generate_gpu".into(), cmd).await)
 }
 
 /// Run full-song generation based on a structured spec (typed, camelCase-friendly).
@@ -915,6 +911,42 @@ pub async fn general_chat<R: Runtime>(
 }
 
 #[tauri::command]
+pub async fn detect_intent(query: String) -> Result<String, String> {
+    let client = reqwest::Client::new();
+    let resp = client
+        .post("http://127.0.0.1:11434/api/chat")
+        .json(&serde_json::json!({
+            "model": "gpt-oss:20b",
+            "stream": false,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are an intent classifier. Reply with sys for system information, music for music generation, or chat for anything else.",
+                },
+                { "role": "user", "content": query },
+            ],
+        }))
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let json: Value = resp.json().await.map_err(|e| e.to_string())?;
+    let content = json["message"]["content"]
+        .as_str()
+        .or_else(|| json["content"].as_str())
+        .unwrap_or("chat")
+        .trim()
+        .to_lowercase();
+
+    let intent = match content.as_str() {
+        "sys" => "sys",
+        "music" => "music",
+        _ => "chat",
+    };
+    Ok(intent.to_string())
+}
+
+#[tauri::command]
 pub async fn stocks_fetch<R: Runtime>(
     app: AppHandle<R>,
     tickers: Vec<String>,
@@ -1100,10 +1132,7 @@ pub async fn save_shorts(specs: Vec<ShortSpec>) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub async fn generate_short(
-    queue: State<'_, TaskQueue>,
-    spec: ShortSpec,
-) -> Result<u64, String> {
+pub async fn generate_short(queue: State<'_, TaskQueue>, spec: ShortSpec) -> Result<u64, String> {
     let label = format!("generate_short {}", spec.id);
     let cmd = TaskCommand::GenerateShort { spec };
     Ok(queue.enqueue(label, cmd).await)
@@ -1179,7 +1208,11 @@ pub async fn list_tasks(queue: State<'_, TaskQueue>) -> Result<Vec<Task>, String
 }
 
 #[tauri::command]
-pub async fn set_task_limits(queue: State<'_, TaskQueue>, cpu: f32, memory: f32) -> Result<(), String> {
+pub async fn set_task_limits(
+    queue: State<'_, TaskQueue>,
+    cpu: f32,
+    memory: f32,
+) -> Result<(), String> {
     queue.set_limits(cpu, memory);
     Ok(())
 }
