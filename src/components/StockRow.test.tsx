@@ -8,6 +8,7 @@ const baseQuote = {
   changePercent: 1,
   history: [1, 2, 3],
   marketStatus: 'OPEN',
+  volume: 1000,
   lastFetched: Date.now(),
 };
 
@@ -28,14 +29,24 @@ describe('StockRow', () => {
 
   it('renders quote data', async () => {
     useStocks.setState({ quotes: { AAPL: baseQuote } });
-    const { asFragment } = render(<StockRow symbol="AAPL" />);
+    const { asFragment } = render(
+      <StockRow
+        symbol="AAPL"
+        metrics={{ price: true, change: true, volume: true, trend: true }}
+      />
+    );
     await Promise.resolve();
     expect(asFragment()).toMatchSnapshot();
   });
 
   it('renders error message when present', () => {
     useStocks.setState({ quotes: { AAPL: { ...baseQuote, error: 'fail' } } });
-    const { getByText } = render(<StockRow symbol="AAPL" />);
+    const { getByText } = render(
+      <StockRow
+        symbol="AAPL"
+        metrics={{ price: true, change: true, volume: true, trend: true }}
+      />
+    );
     expect(getByText('fail')).toBeInTheDocument();
   });
 });

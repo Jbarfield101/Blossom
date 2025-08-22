@@ -4,7 +4,14 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import Sparkline from "./Sparkline";
 import { useStocks } from "../store/stocks";
 
-function StockRow({ symbol }: { symbol: string }) {
+interface MetricConfig {
+  price: boolean;
+  change: boolean;
+  volume: boolean;
+  trend: boolean;
+}
+
+function StockRow({ symbol, metrics }: { symbol: string; metrics: MetricConfig }) {
   const quote = useStocks((state) => state.quotes[symbol]);
   const removeStock = useStocks((state) => state.removeStock);
   const [forecast, setForecast] = useState<{ shortTerm: string; longTerm: string } | null>(null);
@@ -48,12 +55,25 @@ function StockRow({ symbol }: { symbol: string }) {
               </Typography>
             ) : (
               <Fade in={!!quote}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Typography sx={{ width: 120, color }}>
-                    {quote.price.toFixed(2)} ({quote.changePercent.toFixed(2)}%)
-                  </Typography>
-                  <Typography sx={{ width: 80 }}>{quote.marketStatus}</Typography>
-                  <Sparkline data={quote.history} color={color} />
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+                  {metrics.price && (
+                    <Typography sx={{ width: 100, color }}>
+                      {quote.price.toFixed(2)}
+                    </Typography>
+                  )}
+                  {metrics.change && (
+                    <Typography sx={{ width: 100, color }}>
+                      {quote.changePercent.toFixed(2)}%
+                    </Typography>
+                  )}
+                  {metrics.volume && (
+                    <Typography sx={{ width: 120 }}>
+                      {quote.volume ? quote.volume.toLocaleString() : "N/A"}
+                    </Typography>
+                  )}
+                  {metrics.trend && (
+                    <Sparkline data={quote.history} color={color} />
+                  )}
                 </Box>
               </Fade>
             )
