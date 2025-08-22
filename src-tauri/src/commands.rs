@@ -921,7 +921,7 @@ pub async fn detect_intent(query: String) -> Result<String, String> {
             "messages": [
                 {
                     "role": "system",
-                    "content": "You are an intent classifier. Reply with sys for system information, music for music generation, or chat for anything else.",
+                    "content": "You are an intent classifier. Reply in JSON with fields intent and confidence (0-1). intent must be sys for system information, music for music generation, or chat for anything else. Examples: 'can you show system stats?' -> {\"intent\":\"sys\",\"confidence\":1}. 'generate a chill song with three tracks' -> {\"intent\":\"music\",\"confidence\":1}.",
                 },
                 { "role": "user", "content": query },
             ],
@@ -934,16 +934,51 @@ pub async fn detect_intent(query: String) -> Result<String, String> {
     let content = json["message"]["content"]
         .as_str()
         .or_else(|| json["content"].as_str())
-        .unwrap_or("chat")
-        .trim()
-        .to_lowercase();
+        .unwrap_or("chat");
+    Ok(extract_intent(content))
+}
 
-    let intent = match content.as_str() {
-        "sys" => "sys",
-        "music" => "music",
-        _ => "chat",
-    };
-    Ok(intent.to_string())
+fn extract_intent(content: &str) -> String {
+    let trimmed = content.trim();
+    if let Ok(v) = serde_json::from_str::<Value>(trimmed) {
+        let intent = v["intent"].as_str().unwrap_or("chat");
+        let confidence = v["confidence"].as_f64().unwrap_or(0.0);
+        if confidence < 0.5 {
+            return "chat".to_string();
+        }
+        return match intent {
+            "sys" => "sys".to_string(),
+            "music" => "music".to_string(),
+            _ => "chat".to_string(),
+        };
+    }
+    match trimmed.to_lowercase().as_str() {
+        "sys" => "sys".to_string(),
+        "music" => "music".to_string(),
+        _ => "chat".to_string(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_json_high_confidence() {
+        let content = "{\"intent\":\"music\",\"confidence\":0.9}";
+        assert_eq!(extract_intent(content), "music");
+    }
+
+    #[test]
+    fn parse_json_low_confidence_defaults_to_chat() {
+        let content = "{\"intent\":\"sys\",\"confidence\":0.4}";
+        assert_eq!(extract_intent(content), "chat");
+    }
+
+    #[test]
+    fn parse_plain_string() {
+        assert_eq!(extract_intent("sys"), "sys");
+    }
 }
 
 #[tauri::command]
