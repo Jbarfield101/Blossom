@@ -724,7 +724,7 @@ export default function SongForm() {
         <div className={styles.small}>{outDir || "No output folder selected"}</div>
 
         {/* core knobs */}
-        <details className="mt-3" open>
+        <details className="mt-3">
           <summary className="cursor-pointer text-xs opacity-80">Core</summary>
           <div className={styles.grid3}>
           <div className={styles.panel}>
@@ -785,7 +785,7 @@ export default function SongForm() {
         </details>
 
         {/* structure editor */}
-        <details className={clsx(styles.panel, "mt-3")} open>
+        <details className={clsx(styles.panel, "mt-3")}>
           <summary className="cursor-pointer text-xs opacity-80">Structure</summary>
           <div className="mt-2">
           <div className={clsx(styles.row, "mb-2")}>

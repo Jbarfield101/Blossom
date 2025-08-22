@@ -30,6 +30,10 @@ function openSection(id: string) {
   fireEvent.click(summary);
 }
 
+function openDetails(title: string) {
+  fireEvent.click(screen.getByText(title));
+}
+
 describe('SongForm', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -73,6 +77,11 @@ describe('SongForm', () => {
     render(<SongForm />);
     fireEvent.click(screen.getByText(/choose folder/i));
     await screen.findByText('/tmp/out');
+
+    fireEvent.change(
+      screen.getByPlaceholderText(/song title base/i),
+      { target: { value: 'Test Song' } }
+    );
 
     const autoPlay = screen.getByText(/Auto‑play last successful render/).previousSibling as HTMLInputElement;
     fireEvent.click(autoPlay);
@@ -129,11 +138,13 @@ describe('SongForm', () => {
 
   it('remembers last used template', () => {
     render(<SongForm />);
+    openDetails('Structure');
     const select = screen.getByLabelText(/song templates/i) as HTMLSelectElement;
     fireEvent.change(select, { target: { value: 'Study Session' } });
     expect(select.value).toBe('Study Session');
     cleanup();
     render(<SongForm />);
+    openDetails('Structure');
     expect(
       (screen.getByLabelText(/song templates/i) as HTMLSelectElement).value
     ).toBe('Study Session');
@@ -171,37 +182,44 @@ describe('SongForm', () => {
 
   it('shows Arcane Clash template option', () => {
     render(<SongForm />);
+    openDetails('Structure');
     expect(screen.getAllByText('Arcane Clash')[0]).toBeInTheDocument();
   });
 
   it('shows Bossa Nova template option', () => {
     render(<SongForm />);
+    openDetails('Structure');
     expect(screen.getAllByText('Bossa Nova')[0]).toBeInTheDocument();
   });
 
   it("shows King's Last Stand template option", () => {
     render(<SongForm />);
+    openDetails('Structure');
     expect(screen.getAllByText("King's Last Stand")[0]).toBeInTheDocument();
   });
 
   it('shows Ocean Breeze template option', () => {
     render(<SongForm />);
+    openDetails('Structure');
     expect(screen.getAllByText('Ocean Breeze')[0]).toBeInTheDocument();
   });
 
   it('shows City Lights template option', () => {
     render(<SongForm />);
+    openDetails('Structure');
     expect(screen.getAllByText('City Lights')[0]).toBeInTheDocument();
   });
 
   it('applies Bossa Nova template', () => {
     render(<SongForm />);
+    openDetails('Structure');
     const select = screen.getByLabelText(/song templates/i) as HTMLSelectElement;
     fireEvent.change(select, { target: { value: 'Bossa Nova' } });
     openSection('rhythm-section');
     const label = screen.getByText('Drum Pattern');
     const drumSelect = label.parentElement!.querySelector('select') as HTMLSelectElement;
     expect(drumSelect.value).toBe('bossa_nova');
+    openDetails('Core');
     const bpmSlider = screen.getAllByRole('slider')[0] as HTMLInputElement;
     expect(bpmSlider.value).toBe('120');
   });
@@ -220,6 +238,7 @@ describe('SongForm', () => {
       JSON.stringify({ Foo: PRESET_TEMPLATES['Classic Lofi'] })
     );
     render(<SongForm />);
+    openDetails('Structure');
     const select = screen.getByLabelText(/song templates/i) as HTMLSelectElement;
     const options = Array.from(select.options).map((o) => o.value);
     expect(options).toContain('Bossa Nova');
@@ -234,6 +253,11 @@ describe('SongForm', () => {
 
     fireEvent.click(screen.getByText(/choose folder/i));
     await screen.findByText('/tmp/out');
+
+    fireEvent.change(
+      screen.getByPlaceholderText(/song title base/i),
+      { target: { value: 'Test Song' } }
+    );
 
     ['rhodes', 'nylon guitar', 'upright bass'].forEach((name) =>
       fireEvent.click(screen.getByText(name))
@@ -258,6 +282,11 @@ describe('SongForm', () => {
 
     fireEvent.click(screen.getByText(/choose folder/i));
     await screen.findByText('/tmp/out');
+
+    fireEvent.change(
+      screen.getByPlaceholderText(/song title base/i),
+      { target: { value: 'Test Song' } }
+    );
 
     fireEvent.click(screen.getByRole('radio', { name: 'flute' }));
 
@@ -290,6 +319,11 @@ describe('SongForm', () => {
 
     fireEvent.click(screen.getByText(/choose folder/i));
     await screen.findByText('/tmp/out');
+
+    fireEvent.change(
+      screen.getByPlaceholderText(/song title base/i),
+      { target: { value: 'Test Song' } }
+    );
 
     fireEvent.click(screen.getByLabelText(/album mode/i));
     fireEvent.click(screen.getByText(/create album/i));
