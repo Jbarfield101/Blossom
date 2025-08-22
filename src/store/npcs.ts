@@ -14,8 +14,9 @@ export interface NPC {
   personality: string;
   background: string;
   appearance: string;
-  portrait?: string;
-  icon?: string;
+  portrait: string;
+  icon: string;
+  playerCharacter: boolean;
   hooks?: string[];
   quirks?: string[];
   secrets?: string[];

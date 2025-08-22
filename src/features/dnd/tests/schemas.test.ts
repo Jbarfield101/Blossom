@@ -10,8 +10,10 @@ describe("dnd schemas", () => {
       species: "Goblinoid",
       role: "Scout",
       alignment: "CE",
+      playerCharacter: false,
       hooks: ["steal"],
       voice: { style: "gravelly", provider: "acme", preset: "goblin" },
+      portrait: "portrait.png",
       icon: "icon.png",
       sections: { bio: "Lives in cave" },
       statblock: {},
@@ -27,8 +29,11 @@ describe("dnd schemas", () => {
       species: "Goblinoid",
       role: "Scout",
       alignment: "CE",
+      playerCharacter: false,
       hooks: ["steal"],
       voice: { style: "", provider: "", preset: "" },
+      portrait: "portrait.png",
+      icon: "icon.png",
       statblock: {},
       tags: ["monster"],
     };
@@ -41,8 +46,11 @@ describe("dnd schemas", () => {
       species: "Goblinoid",
       role: "Scout",
       alignment: "CE",
+      playerCharacter: false,
       hooks: ["steal"],
       voice: { style: "gravelly", provider: "acme", preset: "goblin" },
+      portrait: "portrait.png",
+      icon: "icon.png",
       statblock: {},
       tags: ["monster"],
     };
@@ -56,8 +64,11 @@ describe("dnd schemas", () => {
       species: "Goblinoid",
       role: "Scout",
       alignment: "CE",
+      playerCharacter: false,
       hooks: [], // empty array
       voice: { style: "gravelly", provider: "acme", preset: "goblin" },
+      portrait: "portrait.png",
+      icon: "icon.png",
       statblock: {},
       tags: ["monster"],
     } as any;
@@ -74,6 +85,8 @@ describe("dnd schemas", () => {
       // hooks should be an array of strings
       hooks: "steal",
       voice: { style: "gravelly", provider: "acme", preset: "goblin" },
+      portrait: "portrait.png",
+      icon: "icon.png",
       statblock: {},
       tags: ["monster"],
     };
@@ -90,6 +103,8 @@ describe("dnd schemas", () => {
       hooks: ["steal"],
       voice: { style: "gravelly", provider: "acme", preset: "goblin" },
       sections: "not-an-object" as any,
+      portrait: "portrait.png",
+      icon: "icon.png",
       statblock: {},
       tags: ["monster"],
     };

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { Button, Stack, TextField, Typography, Alert, CircularProgress, Snackbar } from '@mui/material';
+import { Button, Stack, TextField, Typography, Alert, CircularProgress, Snackbar, FormControlLabel, Checkbox } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import Center from './_Center';
@@ -17,6 +17,9 @@ export default function NPCMaker() {
     personality: '',
     background: '',
     appearance: '',
+    portrait: 'placeholder.png',
+    icon: 'placeholder-icon.png',
+    playerCharacter: false,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
@@ -95,7 +98,7 @@ export default function NPCMaker() {
     }
   }
 
-  function handleChange(field: keyof Omit<NPC, 'id'>, value: string) {
+  function handleChange(field: keyof Omit<NPC, 'id'>, value: string | boolean) {
     setNpc((prev) => ({ ...prev, [field]: value }));
   }
 
@@ -108,9 +111,12 @@ export default function NPCMaker() {
       'personality',
       'background',
       'appearance',
+      'portrait',
+      'icon',
     ];
     for (const field of required) {
-      if (!npc[field].trim()) {
+      const value = npc[field];
+      if (typeof value !== 'string' || !value.trim()) {
         setError('Please fill in all fields before saving.');
         return;
       }
@@ -125,6 +131,9 @@ export default function NPCMaker() {
         personality: '',
         background: '',
         appearance: '',
+        portrait: 'placeholder.png',
+        icon: 'placeholder-icon.png',
+        playerCharacter: false,
       });
       setSnackbarOpen(true);
     } catch (e) {
@@ -186,6 +195,27 @@ export default function NPCMaker() {
           multiline
           value={npc.appearance}
           onChange={(e) => handleChange('appearance', e.target.value)}
+          fullWidth
+        />
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={npc.playerCharacter}
+              onChange={(e) => handleChange('playerCharacter', e.target.checked)}
+            />
+          }
+          label="Player Character"
+        />
+        <TextField
+          label="Portrait URL"
+          value={npc.portrait}
+          onChange={(e) => handleChange('portrait', e.target.value)}
+          fullWidth
+        />
+        <TextField
+          label="Icon URL"
+          value={npc.icon}
+          onChange={(e) => handleChange('icon', e.target.value)}
           fullWidth
         />
         <Button variant="contained" onClick={save} disabled={loading}>

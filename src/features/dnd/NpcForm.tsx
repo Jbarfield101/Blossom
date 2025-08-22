@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Typography, TextField, Button } from "@mui/material";
+import { Typography, TextField, Button, FormControlLabel, Checkbox } from "@mui/material";
 import { z } from "zod";
 import { zNpc } from "../../dnd/schemas/npc";
 import { NpcData } from "./types";
@@ -9,6 +9,7 @@ export default function NpcForm() {
   const [species, setSpecies] = useState("");
   const [role, setRole] = useState("");
   const [alignment, setAlignment] = useState("");
+  const [playerCharacter, setPlayerCharacter] = useState(false);
   const [backstory, setBackstory] = useState("");
   const [location, setLocation] = useState("");
   const [hooks, setHooks] = useState("");
@@ -51,6 +52,7 @@ export default function NpcForm() {
       species,
       role,
       alignment,
+      playerCharacter,
       backstory: backstory || undefined,
       location: location || undefined,
       hooks: hooks.split(",").map((h) => h.trim()).filter(Boolean),
@@ -60,8 +62,8 @@ export default function NpcForm() {
         provider: voiceProvider,
         preset: voicePreset,
       },
-      portrait: portrait || undefined,
-      icon: icon || undefined,
+      portrait: portrait || "placeholder.png",
+      icon: icon || "placeholder-icon.png",
       sections: Object.keys(parsedSections).length ? parsedSections : undefined,
       statblock: parsedStatblock,
       tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
@@ -132,6 +134,15 @@ export default function NpcForm() {
         margin="normal"
         error={Boolean(errors.alignment)}
         helperText={errors.alignment}
+      />
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={playerCharacter}
+            onChange={(e) => setPlayerCharacter(e.target.checked)}
+          />
+        }
+        label="Player Character"
       />
       <TextField
         label="Backstory"
