@@ -193,201 +193,451 @@ exports[`SongForm > renders default form 1`] = `
       >
         No output folder selected
       </div>
-      <div
-        class="_grid3_62bdff"
+      <details
+        class="mt-3"
+        open=""
       >
-        <div
-          class="_panel_62bdff"
+        <summary
+          class="cursor-pointer text-xs opacity-80"
         >
-          <label
-            class="_label_62bdff"
-          >
-            BPM: 80
-            <svg
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="margin-left: 4px; cursor: help; opacity: 0.6;"
-              viewBox="0 0 512 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <title>
-                Song tempo in beats per minute
-              </title>
-              <path
-                d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
-              />
-            </svg>
-          </label>
-          <input
-            class="_input_62bdff p-0"
-            max="200"
-            min="60"
-            type="range"
-            value="80"
-          />
-        </div>
+          Core
+        </summary>
         <div
-          class="_panel_62bdff"
+          class="_grid3_62bdff"
         >
-          <label
-            class="_label_62bdff"
-          >
-            Key
-            <svg
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="margin-left: 4px; cursor: help; opacity: 0.6;"
-              viewBox="0 0 512 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <title>
-                Musical key; choose Auto for random
-              </title>
-              <path
-                d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
-              />
-            </svg>
-          </label>
           <div
-            class="_row_62bdff"
+            class="_panel_62bdff"
+          >
+            <label
+              class="_label_62bdff"
+            >
+              BPM: 80
+              <svg
+                fill="currentColor"
+                height="1em"
+                stroke="currentColor"
+                stroke-width="0"
+                style="margin-left: 4px; cursor: help; opacity: 0.6;"
+                viewBox="0 0 512 512"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <title>
+                  Song tempo in beats per minute
+                </title>
+                <path
+                  d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
+                />
+              </svg>
+            </label>
+            <input
+              class="_input_62bdff p-0"
+              max="200"
+              min="60"
+              type="range"
+              value="80"
+            />
+          </div>
+          <div
+            class="_panel_62bdff"
+          >
+            <label
+              class="_label_62bdff"
+            >
+              Key
+              <svg
+                fill="currentColor"
+                height="1em"
+                stroke="currentColor"
+                stroke-width="0"
+                style="margin-left: 4px; cursor: help; opacity: 0.6;"
+                viewBox="0 0 512 512"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <title>
+                  Musical key; choose Auto for random
+                </title>
+                <path
+                  d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
+                />
+              </svg>
+            </label>
+            <div
+              class="_row_62bdff"
+            >
+              <select
+                class="_input_62bdff py-2 px-3"
+              >
+                <option
+                  value="Auto"
+                >
+                  Auto
+                </option>
+                <option
+                  value="C"
+                >
+                  C
+                </option>
+                <option
+                  value="C#"
+                >
+                  C♯
+                </option>
+                <option
+                  value="D"
+                >
+                  D
+                </option>
+                <option
+                  value="D#"
+                >
+                  D♯
+                </option>
+                <option
+                  value="E"
+                >
+                  E
+                </option>
+                <option
+                  value="F"
+                >
+                  F
+                </option>
+                <option
+                  value="F#"
+                >
+                  F♯
+                </option>
+                <option
+                  value="G"
+                >
+                  G
+                </option>
+                <option
+                  value="G#"
+                >
+                  G♯
+                </option>
+                <option
+                  value="A"
+                >
+                  A
+                </option>
+                <option
+                  value="A#"
+                >
+                  A♯
+                </option>
+                <option
+                  value="B"
+                >
+                  B
+                </option>
+                <option
+                  value="Db"
+                >
+                  D♭
+                </option>
+                <option
+                  value="Eb"
+                >
+                  E♭
+                </option>
+                <option
+                  value="Gb"
+                >
+                  G♭
+                </option>
+                <option
+                  value="Ab"
+                >
+                  A♭
+                </option>
+                <option
+                  value="Bb"
+                >
+                  B♭
+                </option>
+                <option
+                  value="Am"
+                >
+                  Am
+                </option>
+                <option
+                  value="Em"
+                >
+                  Em
+                </option>
+                <option
+                  value="Dm"
+                >
+                  Dm
+                </option>
+              </select>
+            </div>
+            <div
+              class="_toggle_62bdff mt-2"
+            >
+              <input
+                disabled=""
+                type="checkbox"
+              />
+              <span
+                class="_small_62bdff"
+              >
+                Rotate key per song (disabled: Auto)
+              </span>
+            </div>
+          </div>
+          <div
+            class="_panel_62bdff"
+          >
+            <label
+              class="_label_62bdff"
+            >
+              Seed
+              <svg
+                fill="currentColor"
+                height="1em"
+                stroke="currentColor"
+                stroke-width="0"
+                style="margin-left: 4px; cursor: help; opacity: 0.6;"
+                viewBox="0 0 512 512"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <title>
+                  Randomness seed for reproducibility
+                </title>
+                <path
+                  d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
+                />
+              </svg>
+            </label>
+            <input
+              class="_input_62bdff"
+              type="number"
+              value="12345"
+            />
+            <div
+              class="_row_62bdff mt-2"
+            >
+              <label
+                class="_small_62bdff flex-1"
+              >
+                <input
+                  name="seedmode"
+                  type="radio"
+                />
+                 Increment (base + i)
+              </label>
+              <label
+                class="_small_62bdff flex-1"
+              >
+                <input
+                  checked=""
+                  name="seedmode"
+                  type="radio"
+                />
+                 Deterministic random
+              </label>
+            </div>
+          </div>
+        </div>
+      </details>
+      <details
+        class="_panel_62bdff mt-3"
+        open=""
+      >
+        <summary
+          class="cursor-pointer text-xs opacity-80"
+        >
+          Structure
+        </summary>
+        <div
+          class="mt-2"
+        >
+          <div
+            class="_row_62bdff mb-2"
           >
             <select
               class="_input_62bdff py-2 px-3"
             >
               <option
-                value="Auto"
+                value=""
               >
-                Auto
+                Custom
               </option>
               <option
-                value="C"
+                value="Classic Lofi"
               >
-                C
+                Classic Lofi
               </option>
               <option
-                value="C#"
+                value="Study Session"
               >
-                C♯
+                Study Session
               </option>
               <option
-                value="D"
+                value="Jazz Cafe"
               >
-                D
+                Jazz Cafe
               </option>
               <option
-                value="D#"
+                value="Midnight Drive"
               >
-                D♯
+                Midnight Drive
               </option>
               <option
-                value="E"
+                value="Rain & Coffee"
               >
-                E
+                Rain & Coffee
               </option>
               <option
-                value="F"
+                value="Bossa Nova"
               >
-                F
+                Bossa Nova
               </option>
               <option
-                value="F#"
+                value="Quick Beat"
               >
-                F♯
+                Quick Beat
               </option>
               <option
-                value="G"
+                value="New Fantasy"
               >
-                G
+                New Fantasy
               </option>
               <option
-                value="G#"
+                value="Sleep"
               >
-                G♯
+                Sleep
               </option>
               <option
-                value="A"
+                value="Sunset Sketches"
               >
-                A
+                Sunset Sketches
               </option>
               <option
-                value="A#"
+                value="Neon Rain"
               >
-                A♯
+                Neon Rain
               </option>
               <option
-                value="B"
+                value="Loft Morning"
               >
-                B
+                Loft Morning
               </option>
               <option
-                value="Db"
+                value="Late Night Coding"
               >
-                D♭
+                Late Night Coding
               </option>
               <option
-                value="Eb"
+                value="Forest Spirits"
               >
-                E♭
+                Forest Spirits
               </option>
               <option
-                value="Gb"
+                value="Linear Drift"
               >
-                G♭
+                Linear Drift
               </option>
               <option
-                value="Ab"
+                value="Odd Odyssey"
               >
-                A♭
+                Odd Odyssey
               </option>
               <option
-                value="Bb"
+                value="Arcane Clash"
               >
-                B♭
+                Arcane Clash
               </option>
               <option
-                value="Am"
+                value="King's Last Stand"
               >
-                Am
+                King's Last Stand
               </option>
               <option
-                value="Em"
+                value="Ocean Breeze"
               >
-                Em
+                Ocean Breeze
               </option>
               <option
-                value="Dm"
+                value="City Lights"
               >
-                Dm
+                City Lights
+              </option>
+              <option
+                value="Starlit Voyage"
+              >
+                Starlit Voyage
+              </option>
+              <option
+                value="Sunset VHS"
+              >
+                Sunset VHS
+              </option>
+              <option
+                value="Neon Palms"
+              >
+                Neon Palms
+              </option>
+              <option
+                value="Night Swim"
+              >
+                Night Swim
+              </option>
+            </select>
+            <button
+              class="_btn_62bdff"
+            >
+              New Template
+            </button>
+          </div>
+          <div
+            class="_row_62bdff mb-2"
+          >
+            <select
+              class="_input_62bdff py-2 px-3"
+            >
+              <option
+                value=""
+              >
+                Preset layout…
+              </option>
+              <option
+                value="Intro(4)-A(8)-B(8)-Break(4)-A(8)-Outro(4)"
+              >
+                Intro(4)-A(8)-B(8)-Break(4)-A(8)-Outro(4)
+              </option>
+              <option
+                value="A(16)-B(16)-Outro(8)"
+              >
+                A(16)-B(16)-Outro(8)
+              </option>
+              <option
+                value="A(8)x4"
+              >
+                A(8)x4
+              </option>
+              <option
+                value="Intro(4)-A(8)-B(8)-C(8)-D(8)-E(8)-F(8)-Outro(4)"
+              >
+                Intro(4)-A(8)-B(8)-C(8)-D(8)-E(8)-F(8)-Outro(4)
+              </option>
+              <option
+                value="Intro(4)-A(7)-B(5)-C(7)-D(5)-E(7)-F(5)-Outro(4)"
+              >
+                Intro(4)-A(7)-B(5)-C(7)-D(5)-E(7)-F(5)-Outro(4)
               </option>
             </select>
           </div>
-          <div
-            class="_toggle_62bdff mt-2"
-          >
-            <input
-              disabled=""
-              type="checkbox"
-            />
-            <span
-              class="_small_62bdff"
-            >
-              Rotate key per song (disabled: Auto)
-            </span>
-          </div>
-        </div>
-        <div
-          class="_panel_62bdff"
-        >
           <label
             class="_label_62bdff"
           >
-            Seed
+            Structure (bars)
             <svg
               fill="currentColor"
               height="1em"
@@ -399,1315 +649,1113 @@ exports[`SongForm > renders default form 1`] = `
               xmlns="http://www.w3.org/2000/svg"
             >
               <title>
-                Randomness seed for reproducibility
+                Order of song sections with lengths and chords
               </title>
               <path
                 d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
               />
             </svg>
           </label>
-          <input
-            class="_input_62bdff"
-            type="number"
-            value="12345"
-          />
           <div
-            class="_row_62bdff mt-2"
+            class="flex gap-2 flex-wrap"
           >
-            <label
-              class="_small_62bdff flex-1"
+            <div
+              class="p-2 rounded-lg min-w-[120px]"
+              style="background-color: rgba(0, 0, 0, 0.04);"
             >
+              <div
+                class="_small_62bdff"
+              >
+                Intro
+              </div>
               <input
-                name="seedmode"
-                type="radio"
+                class="_input_62bdff"
+                type="number"
+                value="4"
               />
-               Increment (base + i)
-            </label>
-            <label
-              class="_small_62bdff flex-1"
+              <input
+                class="_input_62bdff mt-1"
+                placeholder="Chords"
+                type="text"
+                value=""
+              />
+            </div>
+            <div
+              class="p-2 rounded-lg min-w-[120px]"
+              style="background-color: rgba(0, 0, 0, 0.04);"
             >
+              <div
+                class="_small_62bdff"
+              >
+                A
+              </div>
               <input
-                checked=""
-                name="seedmode"
-                type="radio"
+                class="_input_62bdff"
+                type="number"
+                value="8"
               />
-               Deterministic random
-            </label>
+              <input
+                class="_input_62bdff mt-1"
+                placeholder="Chords"
+                type="text"
+                value=""
+              />
+            </div>
+            <div
+              class="p-2 rounded-lg min-w-[120px]"
+              style="background-color: rgba(0, 0, 0, 0.04);"
+            >
+              <div
+                class="_small_62bdff"
+              >
+                B
+              </div>
+              <input
+                class="_input_62bdff"
+                type="number"
+                value="8"
+              />
+              <input
+                class="_input_62bdff mt-1"
+                placeholder="Chords"
+                type="text"
+                value=""
+              />
+            </div>
+            <div
+              class="p-2 rounded-lg min-w-[120px]"
+              style="background-color: rgba(0, 0, 0, 0.04);"
+            >
+              <div
+                class="_small_62bdff"
+              >
+                A
+              </div>
+              <input
+                class="_input_62bdff"
+                type="number"
+                value="8"
+              />
+              <input
+                class="_input_62bdff mt-1"
+                placeholder="Chords"
+                type="text"
+                value=""
+              />
+            </div>
+            <div
+              class="p-2 rounded-lg min-w-[120px]"
+              style="background-color: rgba(0, 0, 0, 0.04);"
+            >
+              <div
+                class="_small_62bdff"
+              >
+                B
+              </div>
+              <input
+                class="_input_62bdff"
+                type="number"
+                value="8"
+              />
+              <input
+                class="_input_62bdff mt-1"
+                placeholder="Chords"
+                type="text"
+                value=""
+              />
+            </div>
+            <div
+              class="p-2 rounded-lg min-w-[120px]"
+              style="background-color: rgba(0, 0, 0, 0.04);"
+            >
+              <div
+                class="_small_62bdff"
+              >
+                Outro
+              </div>
+              <input
+                class="_input_62bdff"
+                type="number"
+                value="4"
+              />
+              <input
+                class="_input_62bdff mt-1"
+                placeholder="Chords"
+                type="text"
+                value=""
+              />
+            </div>
+          </div>
+          <div
+            class="_small_62bdff"
+          >
+            Total Bars: 40 — Est. Time: 2:00
           </div>
         </div>
-      </div>
-      <div
-        class="_panel_62bdff mt-3"
+      </details>
+      <details
+        class="mt-3"
+        data-testid="vibe-section"
       >
+        <summary
+          class="cursor-pointer text-xs opacity-80"
+        >
+          Vibe
+        </summary>
         <div
-          class="_row_62bdff mb-2"
+          class="mt-2"
         >
-          <select
-            class="_input_62bdff py-2 px-3"
+          <div
+            class="_grid3_62bdff"
           >
-            <option
-              value=""
+            <div
+              class="_panel_62bdff"
             >
-              Custom
-            </option>
-            <option
-              value="Classic Lofi"
+              <label
+                class="_label_62bdff"
+              >
+                Mood
+                <svg
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  style="margin-left: 4px; cursor: help; opacity: 0.6;"
+                  viewBox="0 0 512 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <title>
+                    Tags describing the vibe
+                  </title>
+                  <path
+                    d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
+                  />
+                </svg>
+              </label>
+              <div
+                class="_optionGrid_62bdff"
+              >
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    calm
+                  </span>
+                  <input
+                    checked=""
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    melancholy
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    cozy
+                  </span>
+                  <input
+                    checked=""
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    nostalgic
+                  </span>
+                  <input
+                    checked=""
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    fantasy
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    dreamy
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+              </div>
+            </div>
+            <div
+              class="_panel_62bdff"
             >
-              Classic Lofi
-            </option>
-            <option
-              value="Study Session"
+              <label
+                class="_label_62bdff"
+              >
+                Instruments
+                <svg
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  style="margin-left: 4px; cursor: help; opacity: 0.6;"
+                  viewBox="0 0 512 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <title>
+                    Select instruments to include
+                  </title>
+                  <path
+                    d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
+                  />
+                </svg>
+              </label>
+              <div
+                class="_optionGrid_62bdff"
+              >
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    rhodes
+                  </span>
+                  <input
+                    checked=""
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    nylon guitar
+                  </span>
+                  <input
+                    checked=""
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    upright bass
+                  </span>
+                  <input
+                    checked=""
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    pads
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    electric piano
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    piano
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    clean electric guitar
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    airy pads
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    vinyl sounds
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    acoustic guitar
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    violin
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    cello
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    flute
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    saxophone
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    trumpet
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    synth lead
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    string squeaks
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    key clicks
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    breath noise
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    harp
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    lute
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    pan flute
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    brush kit
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    shaker
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    tambourine
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    808 sub-kick
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    wurlitzer
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    celesta
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    music box
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    glockenspiel
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    vibraphone
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    marimba
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    muted electric guitar
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    muted trumpet
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    clarinet
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    oboe
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    field recordings
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    synth plucks
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    timpani
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    pipe organ
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    choir
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+              </div>
+              <div
+                class="_small_62bdff"
+              >
+                Drums are synthesized automatically.
+              </div>
+            </div>
+            <div
+              class="_panel_62bdff"
             >
-              Study Session
-            </option>
-            <option
-              value="Jazz Cafe"
+              <label
+                class="_label_62bdff"
+              >
+                Lead Instrument
+                <svg
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  style="margin-left: 4px; cursor: help; opacity: 0.6;"
+                  viewBox="0 0 512 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <title>
+                    Main instrument for the melody
+                  </title>
+                  <path
+                    d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
+                  />
+                </svg>
+              </label>
+              <div
+                class="_optionGrid_62bdff"
+              >
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    flute
+                  </span>
+                  <input
+                    name="leadInstrument"
+                    type="radio"
+                    value="flute"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    sax
+                  </span>
+                  <input
+                    name="leadInstrument"
+                    type="radio"
+                    value="saxophone"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    synth
+                  </span>
+                  <input
+                    checked=""
+                    name="leadInstrument"
+                    type="radio"
+                    value="synth lead"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    violin
+                  </span>
+                  <input
+                    name="leadInstrument"
+                    type="radio"
+                    value="violin"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    clarinet
+                  </span>
+                  <input
+                    name="leadInstrument"
+                    type="radio"
+                    value="clarinet"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    oboe
+                  </span>
+                  <input
+                    name="leadInstrument"
+                    type="radio"
+                    value="oboe"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    muted trumpet
+                  </span>
+                  <input
+                    name="leadInstrument"
+                    type="radio"
+                    value="muted trumpet"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    glockenspiel
+                  </span>
+                  <input
+                    name="leadInstrument"
+                    type="radio"
+                    value="glockenspiel"
+                  />
+                </label>
+              </div>
+            </div>
+            <div
+              class="_panel_62bdff"
             >
-              Jazz Cafe
-            </option>
-            <option
-              value="Midnight Drive"
-            >
-              Midnight Drive
-            </option>
-            <option
-              value="Rain & Coffee"
-            >
-              Rain & Coffee
-            </option>
-            <option
-              value="Bossa Nova"
-            >
-              Bossa Nova
-            </option>
-            <option
-              value="Quick Beat"
-            >
-              Quick Beat
-            </option>
-            <option
-              value="New Fantasy"
-            >
-              New Fantasy
-            </option>
-            <option
-              value="Sleep"
-            >
-              Sleep
-            </option>
-            <option
-              value="Sunset Sketches"
-            >
-              Sunset Sketches
-            </option>
-            <option
-              value="Neon Rain"
-            >
-              Neon Rain
-            </option>
-            <option
-              value="Loft Morning"
-            >
-              Loft Morning
-            </option>
-            <option
-              value="Late Night Coding"
-            >
-              Late Night Coding
-            </option>
-            <option
-              value="Forest Spirits"
-            >
-              Forest Spirits
-            </option>
-            <option
-              value="Linear Drift"
-            >
-              Linear Drift
-            </option>
-            <option
-              value="Odd Odyssey"
-            >
-              Odd Odyssey
-            </option>
-            <option
-              value="Arcane Clash"
-            >
-              Arcane Clash
-            </option>
-            <option
-              value="King's Last Stand"
-            >
-              King's Last Stand
-            </option>
-            <option
-              value="Ocean Breeze"
-            >
-              Ocean Breeze
-            </option>
-            <option
-              value="City Lights"
-            >
-              City Lights
-            </option>
-            <option
-              value="Starlit Voyage"
-            >
-              Starlit Voyage
-            </option>
-            <option
-              value="Sunset VHS"
-            >
-              Sunset VHS
-            </option>
-            <option
-              value="Neon Palms"
-            >
-              Neon Palms
-            </option>
-            <option
-              value="Night Swim"
-            >
-              Night Swim
-            </option>
-          </select>
-          <button
-            class="_btn_62bdff"
-          >
-            New Template
-          </button>
+              <label
+                class="_label_62bdff"
+                for="ambience-select"
+              >
+                Ambience
+                <svg
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  style="margin-left: 4px; cursor: help; opacity: 0.6;"
+                  viewBox="0 0 512 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <title>
+                    Background ambience sounds
+                  </title>
+                  <path
+                    d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
+                  />
+                </svg>
+              </label>
+              <select
+                class="_input_62bdff"
+                id="ambience-select"
+                multiple=""
+              >
+                <option
+                  value="rain"
+                >
+                  rain
+                </option>
+                <option
+                  value="cafe"
+                >
+                  cafe
+                </option>
+                <option
+                  value="street"
+                >
+                  street
+                </option>
+                <option
+                  value="birds"
+                >
+                  birds
+                </option>
+                <option
+                  value="cicadas"
+                >
+                  cicadas
+                </option>
+                <option
+                  value="train"
+                >
+                  train
+                </option>
+                <option
+                  value="vinyl"
+                >
+                  vinyl
+                </option>
+                <option
+                  value="forest"
+                >
+                  forest
+                </option>
+                <option
+                  value="fireplace"
+                >
+                  fireplace
+                </option>
+                <option
+                  value="ocean"
+                >
+                  ocean
+                </option>
+              </select>
+              <input
+                class="_slider_62bdff"
+                max="1"
+                min="0"
+                step="0.01"
+                type="range"
+                value="0.5"
+              />
+              <div
+                class="_small_62bdff"
+              >
+                50% intensity
+              </div>
+            </div>
+          </div>
         </div>
-        <div
-          class="_row_62bdff mb-2"
-        >
-          <select
-            class="_input_62bdff py-2 px-3"
-          >
-            <option
-              value=""
-            >
-              Preset layout…
-            </option>
-            <option
-              value="Intro(4)-A(8)-B(8)-Break(4)-A(8)-Outro(4)"
-            >
-              Intro(4)-A(8)-B(8)-Break(4)-A(8)-Outro(4)
-            </option>
-            <option
-              value="A(16)-B(16)-Outro(8)"
-            >
-              A(16)-B(16)-Outro(8)
-            </option>
-            <option
-              value="A(8)x4"
-            >
-              A(8)x4
-            </option>
-            <option
-              value="Intro(4)-A(8)-B(8)-C(8)-D(8)-E(8)-F(8)-Outro(4)"
-            >
-              Intro(4)-A(8)-B(8)-C(8)-D(8)-E(8)-F(8)-Outro(4)
-            </option>
-            <option
-              value="Intro(4)-A(7)-B(5)-C(7)-D(5)-E(7)-F(5)-Outro(4)"
-            >
-              Intro(4)-A(7)-B(5)-C(7)-D(5)-E(7)-F(5)-Outro(4)
-            </option>
-          </select>
-        </div>
-        <label
-          class="_label_62bdff"
-        >
-          Structure (bars)
-          <svg
-            fill="currentColor"
-            height="1em"
-            stroke="currentColor"
-            stroke-width="0"
-            style="margin-left: 4px; cursor: help; opacity: 0.6;"
-            viewBox="0 0 512 512"
-            width="1em"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <title>
-              Order of song sections with lengths and chords
-            </title>
-            <path
-              d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
-            />
-          </svg>
-        </label>
-        <div
-          class="flex gap-2 flex-wrap"
-        >
-          <div
-            class="p-2 rounded-lg min-w-[120px]"
-            style="background-color: rgba(0, 0, 0, 0.04);"
-          >
-            <div
-              class="_small_62bdff"
-            >
-              Intro
-            </div>
-            <input
-              class="_input_62bdff"
-              type="number"
-              value="4"
-            />
-            <input
-              class="_input_62bdff mt-1"
-              placeholder="Chords"
-              type="text"
-              value=""
-            />
-          </div>
-          <div
-            class="p-2 rounded-lg min-w-[120px]"
-            style="background-color: rgba(0, 0, 0, 0.04);"
-          >
-            <div
-              class="_small_62bdff"
-            >
-              A
-            </div>
-            <input
-              class="_input_62bdff"
-              type="number"
-              value="8"
-            />
-            <input
-              class="_input_62bdff mt-1"
-              placeholder="Chords"
-              type="text"
-              value=""
-            />
-          </div>
-          <div
-            class="p-2 rounded-lg min-w-[120px]"
-            style="background-color: rgba(0, 0, 0, 0.04);"
-          >
-            <div
-              class="_small_62bdff"
-            >
-              B
-            </div>
-            <input
-              class="_input_62bdff"
-              type="number"
-              value="8"
-            />
-            <input
-              class="_input_62bdff mt-1"
-              placeholder="Chords"
-              type="text"
-              value=""
-            />
-          </div>
-          <div
-            class="p-2 rounded-lg min-w-[120px]"
-            style="background-color: rgba(0, 0, 0, 0.04);"
-          >
-            <div
-              class="_small_62bdff"
-            >
-              A
-            </div>
-            <input
-              class="_input_62bdff"
-              type="number"
-              value="8"
-            />
-            <input
-              class="_input_62bdff mt-1"
-              placeholder="Chords"
-              type="text"
-              value=""
-            />
-          </div>
-          <div
-            class="p-2 rounded-lg min-w-[120px]"
-            style="background-color: rgba(0, 0, 0, 0.04);"
-          >
-            <div
-              class="_small_62bdff"
-            >
-              B
-            </div>
-            <input
-              class="_input_62bdff"
-              type="number"
-              value="8"
-            />
-            <input
-              class="_input_62bdff mt-1"
-              placeholder="Chords"
-              type="text"
-              value=""
-            />
-          </div>
-          <div
-            class="p-2 rounded-lg min-w-[120px]"
-            style="background-color: rgba(0, 0, 0, 0.04);"
-          >
-            <div
-              class="_small_62bdff"
-            >
-              Outro
-            </div>
-            <input
-              class="_input_62bdff"
-              type="number"
-              value="4"
-            />
-            <input
-              class="_input_62bdff mt-1"
-              placeholder="Chords"
-              type="text"
-              value=""
-            />
-          </div>
-        </div>
-        <div
-          class="_small_62bdff"
-        >
-          Total Bars: 40 — Est. Time: 2:00
-        </div>
-      </div>
-      <div
-        class="_grid3_62bdff"
+      </details>
+      <details
+        class="mt-3"
+        data-testid="rhythm-section"
       >
-        <div
-          class="_panel_62bdff"
+        <summary
+          class="cursor-pointer text-xs opacity-80"
         >
-          <label
-            class="_label_62bdff"
-          >
-            Mood
-            <svg
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="margin-left: 4px; cursor: help; opacity: 0.6;"
-              viewBox="0 0 512 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <title>
-                Tags describing the vibe
-              </title>
-              <path
-                d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
-              />
-            </svg>
-          </label>
+          Rhythm
+        </summary>
+        <div
+          class="mt-2"
+        >
           <div
-            class="_optionGrid_62bdff"
+            class="_grid3_62bdff"
           >
-            <label
-              class="_optionCard_62bdff"
+            <div
+              class="_panel_62bdff"
             >
-              <span>
-                calm
-              </span>
-              <input
-                checked=""
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
+              <label
+                class="_label_62bdff"
+              >
+                Drum Pattern
+                <svg
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  style="margin-left: 4px; cursor: help; opacity: 0.6;"
+                  viewBox="0 0 512 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <title>
+                    Choose a groove style or no drums
+                  </title>
+                  <path
+                    d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
+                  />
+                </svg>
+              </label>
+              <select
+                class="_input_62bdff py-2 px-3"
+              >
+                <option
+                  value="random"
+                >
+                  random
+                </option>
+                <option
+                  value="no_drums"
+                >
+                  no_drums
+                </option>
+                <option
+                  value="boom_bap_A"
+                >
+                  boom_bap_A
+                </option>
+                <option
+                  value="boom_bap_B"
+                >
+                  boom_bap_B
+                </option>
+                <option
+                  value="laidback"
+                >
+                  laidback
+                </option>
+                <option
+                  value="half_time"
+                >
+                  half_time
+                </option>
+                <option
+                  value="swing"
+                >
+                  swing
+                </option>
+                <option
+                  value="half_time_shuffle"
+                >
+                  half_time_shuffle
+                </option>
+                <option
+                  value="bossa_nova"
+                >
+                  bossa_nova
+                </option>
+              </select>
+              <div
+                class="_small_62bdff"
+              >
+                Choose a groove or leave random.
+              </div>
+            </div>
+            <div
+              class="_panel_62bdff"
             >
-              <span>
-                melancholy
-              </span>
+              <label
+                class="_label_62bdff"
+              >
+                Variety
+                <svg
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  style="margin-left: 4px; cursor: help; opacity: 0.6;"
+                  viewBox="0 0 512 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <title>
+                    Amount of fills and swing
+                  </title>
+                  <path
+                    d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
+                  />
+                </svg>
+              </label>
               <input
-                type="checkbox"
+                class="_slider_62bdff"
+                max="100"
+                min="0"
+                type="range"
+                value="45"
               />
-            </label>
-            <label
-              class="_optionCard_62bdff"
+              <div
+                class="_small_62bdff"
+              >
+                45% fills & swing
+              </div>
+            </div>
+            <div
+              class="_panel_62bdff"
             >
-              <span>
-                cozy
-              </span>
-              <input
-                checked=""
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                nostalgic
-              </span>
-              <input
-                checked=""
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                fantasy
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                dreamy
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
+              <label
+                class="_label_62bdff"
+              >
+                Chord Span
+                <svg
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  style="margin-left: 4px; cursor: help; opacity: 0.6;"
+                  viewBox="0 0 512 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <title>
+                    Number of beats each chord lasts
+                  </title>
+                  <path
+                    d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
+                  />
+                </svg>
+              </label>
+              <select
+                class="_input_62bdff py-2 px-3"
+              >
+                <option
+                  value="2"
+                >
+                  ½ bar
+                </option>
+                <option
+                  value="4"
+                >
+                  1 bar
+                </option>
+                <option
+                  value="8"
+                >
+                  2 bars
+                </option>
+              </select>
+            </div>
           </div>
         </div>
-        <div
-          class="_panel_62bdff"
-        >
-          <label
-            class="_label_62bdff"
-          >
-            Instruments
-            <svg
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="margin-left: 4px; cursor: help; opacity: 0.6;"
-              viewBox="0 0 512 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <title>
-                Select instruments to include
-              </title>
-              <path
-                d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
-              />
-            </svg>
-          </label>
-          <div
-            class="_optionGrid_62bdff"
-          >
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                rhodes
-              </span>
-              <input
-                checked=""
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                nylon guitar
-              </span>
-              <input
-                checked=""
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                upright bass
-              </span>
-              <input
-                checked=""
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                pads
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                electric piano
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                piano
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                clean electric guitar
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                airy pads
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                vinyl sounds
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                acoustic guitar
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                violin
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                cello
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                flute
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                saxophone
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                trumpet
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                synth lead
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                string squeaks
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                key clicks
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                breath noise
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                harp
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                lute
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                pan flute
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                brush kit
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                shaker
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                tambourine
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                808 sub-kick
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                wurlitzer
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                celesta
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                music box
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                glockenspiel
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                vibraphone
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                marimba
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                muted electric guitar
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                muted trumpet
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                clarinet
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                oboe
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                field recordings
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                synth plucks
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                timpani
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                pipe organ
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                choir
-              </span>
-              <input
-                type="checkbox"
-              />
-            </label>
-          </div>
-          <div
-            class="_small_62bdff"
-          >
-            Drums are synthesized automatically.
-          </div>
-        </div>
-        <div
-          class="_panel_62bdff"
-        >
-          <label
-            class="_label_62bdff"
-          >
-            Lead Instrument
-            <svg
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="margin-left: 4px; cursor: help; opacity: 0.6;"
-              viewBox="0 0 512 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <title>
-                Main instrument for the melody
-              </title>
-              <path
-                d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
-              />
-            </svg>
-          </label>
-          <div
-            class="_optionGrid_62bdff"
-          >
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                flute
-              </span>
-              <input
-                name="leadInstrument"
-                type="radio"
-                value="flute"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                sax
-              </span>
-              <input
-                name="leadInstrument"
-                type="radio"
-                value="saxophone"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                synth
-              </span>
-              <input
-                checked=""
-                name="leadInstrument"
-                type="radio"
-                value="synth lead"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                violin
-              </span>
-              <input
-                name="leadInstrument"
-                type="radio"
-                value="violin"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                clarinet
-              </span>
-              <input
-                name="leadInstrument"
-                type="radio"
-                value="clarinet"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                oboe
-              </span>
-              <input
-                name="leadInstrument"
-                type="radio"
-                value="oboe"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                muted trumpet
-              </span>
-              <input
-                name="leadInstrument"
-                type="radio"
-                value="muted trumpet"
-              />
-            </label>
-            <label
-              class="_optionCard_62bdff"
-            >
-              <span>
-                glockenspiel
-              </span>
-              <input
-                name="leadInstrument"
-                type="radio"
-                value="glockenspiel"
-              />
-            </label>
-          </div>
-        </div>
-        <div
-          class="_panel_62bdff"
-        >
-          <label
-            class="_label_62bdff"
-            for="ambience-select"
-          >
-            Ambience
-            <svg
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="margin-left: 4px; cursor: help; opacity: 0.6;"
-              viewBox="0 0 512 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <title>
-                Background ambience sounds
-              </title>
-              <path
-                d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
-              />
-            </svg>
-          </label>
-          <select
-            class="_input_62bdff"
-            id="ambience-select"
-            multiple=""
-          >
-            <option
-              value="rain"
-            >
-              rain
-            </option>
-            <option
-              value="cafe"
-            >
-              cafe
-            </option>
-            <option
-              value="street"
-            >
-              street
-            </option>
-            <option
-              value="birds"
-            >
-              birds
-            </option>
-            <option
-              value="cicadas"
-            >
-              cicadas
-            </option>
-            <option
-              value="train"
-            >
-              train
-            </option>
-            <option
-              value="vinyl"
-            >
-              vinyl
-            </option>
-            <option
-              value="forest"
-            >
-              forest
-            </option>
-            <option
-              value="fireplace"
-            >
-              fireplace
-            </option>
-            <option
-              value="ocean"
-            >
-              ocean
-            </option>
-          </select>
-          <input
-            class="_slider_62bdff"
-            max="1"
-            min="0"
-            step="0.01"
-            type="range"
-            value="0.5"
-          />
-          <div
-            class="_small_62bdff"
-          >
-            50% intensity
-          </div>
-        </div>
-      </div>
-      <div
-        class="_grid3_62bdff"
-      >
-        <div
-          class="_panel_62bdff"
-        >
-          <label
-            class="_label_62bdff"
-          >
-            Drum Pattern
-            <svg
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="margin-left: 4px; cursor: help; opacity: 0.6;"
-              viewBox="0 0 512 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <title>
-                Choose a groove style or no drums
-              </title>
-              <path
-                d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
-              />
-            </svg>
-          </label>
-          <select
-            class="_input_62bdff py-2 px-3"
-          >
-            <option
-              value="random"
-            >
-              random
-            </option>
-            <option
-              value="no_drums"
-            >
-              no_drums
-            </option>
-            <option
-              value="boom_bap_A"
-            >
-              boom_bap_A
-            </option>
-            <option
-              value="boom_bap_B"
-            >
-              boom_bap_B
-            </option>
-            <option
-              value="laidback"
-            >
-              laidback
-            </option>
-            <option
-              value="half_time"
-            >
-              half_time
-            </option>
-            <option
-              value="swing"
-            >
-              swing
-            </option>
-            <option
-              value="half_time_shuffle"
-            >
-              half_time_shuffle
-            </option>
-            <option
-              value="bossa_nova"
-            >
-              bossa_nova
-            </option>
-          </select>
-          <div
-            class="_small_62bdff"
-          >
-            Choose a groove or leave random.
-          </div>
-        </div>
-        <div
-          class="_panel_62bdff"
-        >
-          <label
-            class="_label_62bdff"
-          >
-            Variety
-            <svg
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="margin-left: 4px; cursor: help; opacity: 0.6;"
-              viewBox="0 0 512 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <title>
-                Amount of fills and swing
-              </title>
-              <path
-                d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
-              />
-            </svg>
-          </label>
-          <input
-            class="_slider_62bdff"
-            max="100"
-            min="0"
-            type="range"
-            value="45"
-          />
-          <div
-            class="_small_62bdff"
-          >
-            45% fills & swing
-          </div>
-        </div>
-        <div
-          class="_panel_62bdff"
-        >
-          <label
-            class="_label_62bdff"
-          >
-            Chord Span
-            <svg
-              fill="currentColor"
-              height="1em"
-              stroke="currentColor"
-              stroke-width="0"
-              style="margin-left: 4px; cursor: help; opacity: 0.6;"
-              viewBox="0 0 512 512"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <title>
-                Number of beats each chord lasts
-              </title>
-              <path
-                d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
-              />
-            </svg>
-          </label>
-          <select
-            class="_input_62bdff py-2 px-3"
-          >
-            <option
-              value="2"
-            >
-              ½ bar
-            </option>
-            <option
-              value="4"
-            >
-              1 bar
-            </option>
-            <option
-              value="8"
-            >
-              2 bars
-            </option>
-          </select>
-        </div>
-      </div>
+      </details>
       <div
         class="_panel_62bdff mt-3"
       >

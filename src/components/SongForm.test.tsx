@@ -23,6 +23,11 @@ vi.mock('../features/lofi/SongForm', () => ({
   }),
 }));
 
+function openSection(id: string) {
+  const summary = screen.getByTestId(id).querySelector('summary') as HTMLElement;
+  fireEvent.click(summary);
+}
+
 describe('SongForm', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -134,6 +139,7 @@ describe('SongForm', () => {
 
   it('offers a no drums option', () => {
     render(<SongForm />);
+    openSection('rhythm-section');
     const label = screen.getByText('Drum Pattern');
     const select = label.parentElement!.querySelector('select') as HTMLSelectElement;
     const values = Array.from(select.options).map((o) => o.value);
@@ -142,6 +148,7 @@ describe('SongForm', () => {
 
   it('offers a bossa_nova option', () => {
     render(<SongForm />);
+    openSection('rhythm-section');
     const label = screen.getByText('Drum Pattern');
     const select = label.parentElement!.querySelector('select') as HTMLSelectElement;
     const values = Array.from(select.options).map((o) => o.value);
@@ -150,11 +157,13 @@ describe('SongForm', () => {
 
   it('shows fantasy mood option', () => {
     render(<SongForm />);
+    openSection('vibe-section');
     expect(screen.getByText('fantasy')).toBeInTheDocument();
   });
 
   it('shows dreamy mood option', () => {
     render(<SongForm />);
+    openSection('vibe-section');
     expect(screen.getByRole('checkbox', { name: 'dreamy' })).toBeInTheDocument();
   });
 
@@ -187,6 +196,7 @@ describe('SongForm', () => {
     render(<SongForm />);
     const select = screen.getByLabelText(/song templates/i) as HTMLSelectElement;
     fireEvent.change(select, { target: { value: 'Bossa Nova' } });
+    openSection('rhythm-section');
     const label = screen.getByText('Drum Pattern');
     const drumSelect = label.parentElement!.querySelector('select') as HTMLSelectElement;
     expect(drumSelect.value).toBe('bossa_nova');
@@ -196,6 +206,7 @@ describe('SongForm', () => {
 
   it('shows ambience options', () => {
     render(<SongForm />);
+    openSection('vibe-section');
     ['street', 'vinyl', 'forest', 'fireplace', 'ocean'].forEach((name) => {
       expect(screen.getByText(name)).toBeInTheDocument();
     });

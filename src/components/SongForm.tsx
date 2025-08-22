@@ -670,7 +670,9 @@ export default function SongForm() {
         <div className={styles.small}>{outDir || "No output folder selected"}</div>
 
         {/* core knobs */}
-        <div className={styles.grid3}>
+        <details className="mt-3" open>
+          <summary className="cursor-pointer text-xs opacity-80">Core</summary>
+          <div className={styles.grid3}>
           <div className={styles.panel}>
             <label className={styles.label}>
               BPM: {bpm}
@@ -722,10 +724,13 @@ export default function SongForm() {
               </label>
             </div>
           </div>
-        </div>
+          </div>
+        </details>
 
         {/* structure editor */}
-        <div className={clsx(styles.panel, "mt-3")}>
+        <details className={clsx(styles.panel, "mt-3")} open>
+          <summary className="cursor-pointer text-xs opacity-80">Structure</summary>
+          <div className="mt-2">
           <div className={clsx(styles.row, "mb-2")}>
             <select
               value={selectedTemplate}
@@ -901,36 +906,47 @@ export default function SongForm() {
           <div className={styles.small}>
             Total Bars: {totalBars} — Est. Time: {estMinutes}:{estSecs}
           </div>
-        </div>
+          </div>
+        </details>
 
         {/* vibe controls */}
-        <VibeControls
-          MOODS={MOODS}
-          INSTR={INSTR}
-          LEAD_INSTR={LEAD_INSTR}
-          AMBI={AMBI}
-          mood={mood}
-          setMood={setMood}
-          instruments={instruments}
-          setInstruments={setInstruments}
-          leadInstrument={leadInstrument}
-          setLeadInstrument={setLeadInstrument}
-          ambience={ambience}
-          setAmbience={setAmbience}
-          ambienceLevel={ambienceLevel}
-          setAmbienceLevel={setAmbienceLevel}
-        />
+        <details className="mt-3" data-testid="vibe-section">
+          <summary className="cursor-pointer text-xs opacity-80">Vibe</summary>
+          <div className="mt-2">
+            <VibeControls
+              MOODS={MOODS}
+              INSTR={INSTR}
+              LEAD_INSTR={LEAD_INSTR}
+              AMBI={AMBI}
+              mood={mood}
+              setMood={setMood}
+              instruments={instruments}
+              setInstruments={setInstruments}
+              leadInstrument={leadInstrument}
+              setLeadInstrument={setLeadInstrument}
+              ambience={ambience}
+              setAmbience={setAmbience}
+              ambienceLevel={ambienceLevel}
+              setAmbienceLevel={setAmbienceLevel}
+            />
+          </div>
+        </details>
 
         {/* rhythm & feel */}
-        <RhythmControls
-          DRUM_PATS={DRUM_PATS}
-          drumPattern={drumPattern}
-          setDrumPattern={setDrumPattern}
-          variety={variety}
-          setVariety={setVariety}
-          chordSpanBeats={chordSpanBeats}
-          setChordSpanBeats={setChordSpanBeats}
-        />
+        <details className="mt-3" data-testid="rhythm-section">
+          <summary className="cursor-pointer text-xs opacity-80">Rhythm</summary>
+          <div className="mt-2">
+            <RhythmControls
+              DRUM_PATS={DRUM_PATS}
+              drumPattern={drumPattern}
+              setDrumPattern={setDrumPattern}
+              variety={variety}
+              setVariety={setVariety}
+              chordSpanBeats={chordSpanBeats}
+              setChordSpanBeats={setChordSpanBeats}
+            />
+          </div>
+        </details>
 
         {/* polish accordion */}
         <PolishControls
