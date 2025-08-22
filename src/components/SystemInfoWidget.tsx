@@ -12,6 +12,10 @@ const themeColors: Record<Theme, string> = {
   studio: "rgba(0,255,255,0.22)",
   galaxy: "rgba(150,200,255,0.22)",
   retro: "rgba(0,255,0,0.22)",
+  noir: "rgba(50,50,50,0.22)",
+  aurora: "rgba(150,255,210,0.22)",
+  rainy: "rgba(0,120,255,0.22)",
+  pastel: "rgba(255,182,193,0.22)",
   mono: "rgba(128,128,128,0.22)",
 };
 
