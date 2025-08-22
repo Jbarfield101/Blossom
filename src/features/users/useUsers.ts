@@ -14,7 +14,8 @@ type ModuleKey =
   | 'dnd'
   | 'stocks'
   | 'shorts'
-  | 'chores';
+  | 'chores'
+  | 'construction';
 
 type ModulesState = Record<ModuleKey, boolean>;
 
@@ -30,6 +31,7 @@ const defaultModules: ModulesState = {
   stocks: true,
   shorts: true,
   chores: true,
+  construction: true,
 };
 
   interface User {
