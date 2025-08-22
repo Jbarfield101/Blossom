@@ -41,6 +41,11 @@ describe('SongForm', () => {
     cleanup();
   });
 
+  it('renders default form', () => {
+    const { asFragment } = render(<SongForm />);
+    expect(asFragment()).toMatchSnapshot();
+  });
+
   it('adds a job and shows progress', async () => {
     (open as any).mockResolvedValue('/tmp/out');
     let resolveRun: (p: string) => void;

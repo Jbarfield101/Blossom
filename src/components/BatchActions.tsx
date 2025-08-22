@@ -1,8 +1,9 @@
 import React from "react";
 import HelpIcon from "./HelpIcon";
+import styles from "./SongForm.module.css";
+import clsx from "clsx";
 
 interface Props {
-  S: Record<string, React.CSSProperties>;
   numSongs: number;
   setNumSongs: (val: number) => void;
   titleSuffixMode: string;
@@ -24,7 +25,6 @@ interface Props {
 }
 
 export default function BatchActions({
-  S,
   numSongs,
   setNumSongs,
   titleSuffixMode,
@@ -46,9 +46,9 @@ export default function BatchActions({
 }: Props) {
   return (
     <>
-      <div style={S.grid2}>
-        <div style={S.panel}>
-          <label style={S.label}>
+      <div className={styles.grid2}>
+        <div className={styles.panel}>
+          <label className={styles.label}>
             How many songs?
             <HelpIcon text="Number of songs to render in this batch" />
           </label>
@@ -57,20 +57,14 @@ export default function BatchActions({
             min={1}
             value={numSongs}
             onChange={(e) => setNumSongs(Math.max(1, Number(e.target.value || 1)))}
-            style={S.input}
+            className={styles.input}
           />
-          <div style={{ ...S.small, marginTop: 8 }}>
+          <div className={clsx(styles.small, "mt-2")}>
             Titles will be suffixed with{" "}
             <select
               value={titleSuffixMode}
               onChange={(e) => setTitleSuffixMode(e.target.value)}
-              style={{
-                ...S.input,
-                padding: "4px 8px",
-                display: "inline-block",
-                width: 160,
-                marginLeft: 6,
-              }}
+              className={clsx(styles.input, "py-1 px-2 inline-block w-[160px] ml-1")}
             >
               <option value="number"># (1, 2, 3…)</option>
               <option value="timestamp">timestamp</option>
@@ -78,8 +72,8 @@ export default function BatchActions({
           </div>
         </div>
 
-        <div style={S.panel}>
-          <label style={S.label}>
+        <div className={styles.panel}>
+          <label className={styles.label}>
             BPM Jitter (per song)
             <HelpIcon text="Random tempo variation around base BPM" />
           </label>
@@ -89,23 +83,23 @@ export default function BatchActions({
             max={30}
             value={bpmJitterPct}
             onChange={(e) => setBpmJitterPct(Number(e.target.value))}
-            style={S.slider}
+            className={styles.slider}
           />
-          <div style={S.small}>±{bpmJitterPct}% around the base BPM</div>
-          <div style={{ ...S.toggle, marginTop: 8 }}>
+          <div className={styles.small}>±{bpmJitterPct}% around the base BPM</div>
+          <div className={clsx(styles.toggle, "mt-2") }>
             <input
               type="checkbox"
               checked={playLast}
               onChange={(e) => setPlayLast(e.target.checked)}
             />
-            <span style={S.small}>Auto‑play last successful render</span>
+            <span className={styles.small}>Auto‑play last successful render</span>
           </div>
         </div>
       </div>
 
-      <div style={S.actions}>
+      <div className={styles.actions}>
         <button
-          style={S.btn}
+          className={styles.btn}
           disabled={busy || !outDir || !titleBase || hasInvalidBars}
           onClick={onRender}
         >
@@ -118,11 +112,11 @@ export default function BatchActions({
             : "Render Songs"}
         </button>
 
-        <button style={S.playBtn} onClick={onPreview}>
+        <button className={styles.playBtn} onClick={onPreview}>
           {previewPlaying ? "Stop preview" : "Preview in browser"}
         </button>
 
-        <button style={S.playBtn} onClick={onPlayLastTrack}>
+        <button className={styles.playBtn} onClick={onPlayLastTrack}>
           {isPlaying ? "Pause" : "Play last track"}
         </button>
       </div>

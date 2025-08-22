@@ -1,9 +1,10 @@
 import HelpIcon from "./HelpIcon";
 import type { TemplateSpec } from "./SongForm";
 import React from "react";
+import styles from "./SongForm.module.css";
+import clsx from "clsx";
 
 interface Props {
-  S: Record<string, React.CSSProperties>;
   templates: Record<string, TemplateSpec>;
   selectedTemplate: string;
   setSelectedTemplate: (name: string) => void;
@@ -11,15 +12,14 @@ interface Props {
 }
 
 export default function TemplateSelector({
-  S,
   templates,
   selectedTemplate,
   setSelectedTemplate,
   applyTemplate,
 }: Props) {
   return (
-    <div style={S.panel}>
-      <label style={S.label}>
+    <div className={styles.panel}>
+      <label className={styles.label}>
         Song Templates
         <HelpIcon text="Select a preset arrangement and settings" />
       </label>
@@ -33,7 +33,7 @@ export default function TemplateSelector({
             applyTemplate(templates[templateName]);
           }
         }}
-        style={{ ...S.input, padding: "8px 12px" }}
+        className={clsx(styles.input, "py-2 px-3")}
       >
         <option value="">Custom Structure</option>
         {Object.keys(templates).map((name) => (

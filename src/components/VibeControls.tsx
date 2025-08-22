@@ -1,8 +1,8 @@
 import React from "react";
 import HelpIcon from "./HelpIcon";
+import styles from "./SongForm.module.css";
 
 interface Props {
-  S: Record<string, React.CSSProperties>;
   MOODS: string[];
   INSTR: string[];
   LEAD_INSTR: { value: string; label: string }[];
@@ -24,7 +24,6 @@ function toggle(list: string[], val: string) {
 }
 
 export default function VibeControls({
-  S,
   MOODS,
   INSTR,
   LEAD_INSTR,
@@ -41,15 +40,15 @@ export default function VibeControls({
   setAmbienceLevel,
 }: Props) {
   return (
-    <div style={S.grid3}>
-      <div style={S.panel}>
-        <label style={S.label}>
+    <div className={styles.grid3}>
+      <div className={styles.panel}>
+        <label className={styles.label}>
           Mood
           <HelpIcon text="Tags describing the vibe" />
         </label>
-        <div style={S.optionGrid}>
+        <div className={styles.optionGrid}>
           {MOODS.map((m) => (
-            <label key={m} style={S.optionCard}>
+            <label key={m} className={styles.optionCard}>
               <span>{m}</span>
               <input
                 type="checkbox"
@@ -61,14 +60,14 @@ export default function VibeControls({
         </div>
       </div>
 
-      <div style={S.panel}>
-        <label style={S.label}>
+      <div className={styles.panel}>
+        <label className={styles.label}>
           Instruments
           <HelpIcon text="Select instruments to include" />
         </label>
-        <div style={S.optionGrid}>
+        <div className={styles.optionGrid}>
           {INSTR.map((i) => (
-            <label key={i} style={S.optionCard}>
+            <label key={i} className={styles.optionCard}>
               <span>{i}</span>
               <input
                 type="checkbox"
@@ -78,17 +77,17 @@ export default function VibeControls({
             </label>
           ))}
         </div>
-        <div style={S.small}>Drums are synthesized automatically.</div>
+        <div className={styles.small}>Drums are synthesized automatically.</div>
       </div>
 
-      <div style={S.panel}>
-        <label style={S.label}>
+      <div className={styles.panel}>
+        <label className={styles.label}>
           Lead Instrument
           <HelpIcon text="Main instrument for the melody" />
         </label>
-        <div style={S.optionGrid}>
+        <div className={styles.optionGrid}>
           {LEAD_INSTR.map((l) => (
-            <label key={l.value} style={S.optionCard}>
+            <label key={l.value} className={styles.optionCard}>
               <span>{l.label}</span>
               <input
                 type="radio"
@@ -102,8 +101,8 @@ export default function VibeControls({
         </div>
       </div>
 
-      <div style={S.panel}>
-        <label style={S.label} htmlFor="ambience-select">
+      <div className={styles.panel}>
+        <label className={styles.label} htmlFor="ambience-select">
           Ambience
           <HelpIcon text="Background ambience sounds" />
         </label>
@@ -114,7 +113,7 @@ export default function VibeControls({
           onChange={(e) =>
             setAmbience(Array.from(e.target.selectedOptions).map((o) => o.value))
           }
-          style={S.input}
+          className={styles.input}
         >
           {AMBI.map((a) => (
             <option key={a} value={a}>
@@ -129,9 +128,9 @@ export default function VibeControls({
           step={0.01}
           value={ambienceLevel}
           onChange={(e) => setAmbienceLevel(Number(e.target.value))}
-          style={S.slider}
+          className={styles.slider}
         />
-        <div style={S.small}>{Math.round(ambienceLevel * 100)}% intensity</div>
+        <div className={styles.small}>{Math.round(ambienceLevel * 100)}% intensity</div>
       </div>
     </div>
   );

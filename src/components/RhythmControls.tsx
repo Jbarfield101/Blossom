@@ -1,8 +1,9 @@
 import React from "react";
 import HelpIcon from "./HelpIcon";
+import styles from "./SongForm.module.css";
+import clsx from "clsx";
 
 interface Props {
-  S: Record<string, React.CSSProperties>;
   DRUM_PATS: string[];
   drumPattern: string;
   setDrumPattern: (val: string) => void;
@@ -13,7 +14,6 @@ interface Props {
 }
 
 export default function RhythmControls({
-  S,
   DRUM_PATS,
   drumPattern,
   setDrumPattern,
@@ -23,16 +23,16 @@ export default function RhythmControls({
   setChordSpanBeats,
 }: Props) {
   return (
-    <div style={S.grid3}>
-      <div style={S.panel}>
-        <label style={S.label}>
+    <div className={styles.grid3}>
+      <div className={styles.panel}>
+        <label className={styles.label}>
           Drum Pattern
           <HelpIcon text="Choose a groove style or no drums" />
         </label>
         <select
           value={drumPattern}
           onChange={(e) => setDrumPattern(e.target.value)}
-          style={{ ...S.input, padding: "8px 12px" }}
+          className={clsx(styles.input, "py-2 px-3")}
         >
           {DRUM_PATS.map((p) => (
             <option key={p} value={p}>
@@ -40,11 +40,11 @@ export default function RhythmControls({
             </option>
           ))}
         </select>
-        <div style={S.small}>Choose a groove or leave random.</div>
+        <div className={styles.small}>Choose a groove or leave random.</div>
       </div>
 
-      <div style={S.panel}>
-        <label style={S.label}>
+      <div className={styles.panel}>
+        <label className={styles.label}>
           Variety
           <HelpIcon text="Amount of fills and swing" />
         </label>
@@ -54,20 +54,20 @@ export default function RhythmControls({
           max={100}
           value={variety}
           onChange={(e) => setVariety(Number(e.target.value))}
-          style={S.slider}
+          className={styles.slider}
         />
-        <div style={S.small}>{variety}% fills & swing</div>
+        <div className={styles.small}>{variety}% fills & swing</div>
       </div>
 
-      <div style={S.panel}>
-        <label style={S.label}>
+      <div className={styles.panel}>
+        <label className={styles.label}>
           Chord Span
           <HelpIcon text="Number of beats each chord lasts" />
         </label>
         <select
           value={chordSpanBeats}
           onChange={(e) => setChordSpanBeats(Number(e.target.value))}
-          style={{ ...S.input, padding: "8px 12px" }}
+          className={clsx(styles.input, "py-2 px-3")}
         >
           <option value={2}>½ bar</option>
           <option value={4}>1 bar</option>
