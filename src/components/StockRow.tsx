@@ -58,7 +58,11 @@ function StockRow({ symbol, metrics }: { symbol: string; metrics: MetricConfig }
     <ListItem
       key={symbol}
       secondaryAction={
-        <IconButton edge="end" onClick={() => removeStock(symbol)}>
+        <IconButton
+          edge="end"
+          onClick={() => removeStock(symbol)}
+          aria-label={`Remove ${symbol}`}
+        >
           <DeleteIcon />
         </IconButton>
       }
