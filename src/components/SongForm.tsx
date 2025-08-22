@@ -75,6 +75,13 @@ type Job = {
   progress?: number;
 };
 
+function friendlyError(msg: string): string {
+  if (/ffmpeg/i.test(msg)) {
+    return "FFmpeg is missing; install it or update PATH.";
+  }
+  return msg;
+}
+
 const KEYS_BASE = [
   "C",
   "C#",
@@ -1023,7 +1030,7 @@ export default function SongForm() {
         )}
         {err && (
           <div className={styles.err} style={{ color: theme.palette.error.main }}>
-            Error: {err}
+            Error: {friendlyError(err)}
           </div>
         )}
 
@@ -1031,10 +1038,12 @@ export default function SongForm() {
           <table className={styles.table}>
             <thead>
               <tr>
+                <th className={styles.th}>Job ID</th>
                 <th className={styles.th}>Title</th>
                 <th className={styles.th}>Key</th>
                 <th className={styles.th}>BPM</th>
                 <th className={styles.th}>Seed</th>
+                <th className={styles.th}>Progress</th>
                 <th className={styles.th}>Status</th>
                 <th className={styles.th}>Output</th>
               </tr>
@@ -1042,13 +1051,24 @@ export default function SongForm() {
             <tbody>
               {jobs.map((j) => (
                 <tr key={j.id}>
+                  <td className={styles.td}>{j.id}</td>
                   <td className={styles.td}>{j.title}</td>
                   <td className={styles.td}>{showKey(j.spec.key)}</td>
                   <td className={styles.td}>{j.spec.bpm}</td>
                   <td className={styles.td}>{j.spec.seed}</td>
                   <td className={styles.td}>
+                    <div className={styles.progressOuter} style={{ marginTop: 0 }}>
+                      <div
+                        className={styles.progressInner}
+                        style={{ width: `${j.progress ?? 0}%` }}
+                      />
+                    </div>
+                  </td>
+                  <td className={styles.td}>
                     {j.error ? (
-                      <span style={{ color: theme.palette.error.main }}>error</span>
+                      <span style={{ color: theme.palette.error.main }}>
+                        {friendlyError(j.error)}
+                      </span>
                     ) : (
                       j.status || "—"
                     )}
