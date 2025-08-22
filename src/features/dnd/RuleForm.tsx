@@ -11,6 +11,7 @@ import {
 import { zRule } from "./schemas";
 import type { RuleData } from "./types";
 import rulesIndex from "../../../dnd/rules/index.json";
+import RulePdfUpload from "./RulePdfUpload";
 
 const ruleFiles = import.meta.glob("../../../dnd/rules/*.md", {
   as: "raw",
@@ -67,6 +68,7 @@ export default function RuleForm() {
   return (
     <form onSubmit={handleSubmit}>
       <Typography variant="h6">Rulebook</Typography>
+      <RulePdfUpload />
       <FormControl fullWidth margin="normal">
         <InputLabel id="rule-select-label">Base Rule</InputLabel>
         <Select

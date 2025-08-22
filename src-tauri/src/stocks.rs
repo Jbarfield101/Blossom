@@ -142,9 +142,7 @@ impl Provider for YahooProvider {
             .and_then(|v| v.as_str())
             .unwrap_or("UNKNOWN")
             .to_string();
-        let volume = result
-            .get("regularMarketVolume")
-            .and_then(|v| v.as_u64());
+        let volume = result.get("regularMarketVolume").and_then(|v| v.as_u64());
         log::info!(
             "quote {} fetched in {} ms ({} bytes)",
             ticker,
