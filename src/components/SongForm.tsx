@@ -17,6 +17,7 @@ import { PRESET_TEMPLATES, SECTION_PRESETS } from "./songTemplates";
 import styles from "./SongForm.module.css";
 import clsx from "clsx";
 import { useTheme } from "@mui/material/styles";
+import { MOODS, INSTR } from "../utils/musicData";
 
 export type Section = { name: string; bars: number; chords: string[]; barsStr?: string };
 
@@ -102,50 +103,6 @@ const KEYS = ["Auto", ...KEYS_BASE, ...EXTRA_KEYS];
 const displayKey = (k: string) => k.replace("#", "♯").replace("b", "♭");
 const showKey = (k: SongSpec["key"]) =>
   typeof k === "string" ? displayKey(k) : displayKey(k.key + (k.mode === "minor" ? "m" : ""));
-const MOODS = ["calm", "melancholy", "cozy", "nostalgic", "fantasy", "dreamy"];
-const INSTR = [
-  "rhodes",
-  "nylon guitar",
-  "upright bass",
-  "pads",
-  "electric piano",
-  "piano",
-  "clean electric guitar",
-  "airy pads",
-  "vinyl sounds",
-  "acoustic guitar",
-  "violin",
-  "cello",
-  "flute",
-  "saxophone",
-  "trumpet",
-  "synth lead",
-  "string squeaks",
-  "key clicks",
-  "breath noise",
-  "harp",
-  "lute",
-  "pan flute",
-  "brush kit",
-  "shaker",
-  "tambourine",
-  "808 sub-kick",
-  "wurlitzer",
-  "celesta",
-  "music box",
-  "glockenspiel",
-  "vibraphone",
-  "marimba",
-  "muted electric guitar",
-  "muted trumpet",
-  "clarinet",
-  "oboe",
-  "field recordings",
-  "synth plucks",
-  "timpani",
-  "pipe organ",
-  "choir",
-];
 const AMBI = [
   "rain",
   "cafe",

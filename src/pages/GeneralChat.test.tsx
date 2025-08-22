@@ -246,5 +246,39 @@ describe('GeneralChat', () => {
       await screen.findByText(/Please specify template and track count/)
     ).toBeInTheDocument();
   });
+
+  it('handles music prompt generator flow', async () => {
+    (invoke as any).mockImplementation((cmd: string, args: any) => {
+      if (cmd === 'start_ollama') return Promise.resolve();
+      if (cmd === 'detect_intent') return Promise.resolve('music');
+      if (cmd === 'generate_album') return Promise.resolve();
+      return Promise.resolve();
+    });
+    (listen as any).mockImplementation(() => Promise.resolve(() => {}));
+
+    render(<GeneralChat />);
+    await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
+
+    fireEvent.click(screen.getByRole('button', { name: /music prompt/i }));
+    fireEvent.change(screen.getByPlaceholderText(/describe vibe/i), {
+      target: { value: 'calm flute' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /check/i }));
+    const trackInput = screen.getByLabelText('track count');
+    fireEvent.change(trackInput, { target: { value: '2' } });
+    fireEvent.click(screen.getByRole('button', { name: /generate/i }));
+
+    await waitFor(() =>
+      expect(invoke).toHaveBeenCalledWith('detect_intent', {
+        query: 'calm flute template="Classic Lofi" tracks=2',
+      })
+    );
+    const genCall = (invoke as any).mock.calls.find(
+      ([cmd]: [string]) => cmd === 'generate_album'
+    );
+    expect(genCall[1]).toEqual({
+      meta: { track_count: 2, title_base: 'calm flute', template: 'Classic Lofi' },
+    });
+  });
 });
 
