@@ -641,7 +641,8 @@ exports[`SongForm > renders default form 1`] = `
           class="flex gap-2 flex-wrap"
         >
           <div
-            class="bg-[#17191d] p-2 rounded-lg min-w-[120px]"
+            class="p-2 rounded-lg min-w-[120px]"
+            style="background-color: rgba(0, 0, 0, 0.04);"
           >
             <div
               class="_small_62bdff"
@@ -661,7 +662,8 @@ exports[`SongForm > renders default form 1`] = `
             />
           </div>
           <div
-            class="bg-[#17191d] p-2 rounded-lg min-w-[120px]"
+            class="p-2 rounded-lg min-w-[120px]"
+            style="background-color: rgba(0, 0, 0, 0.04);"
           >
             <div
               class="_small_62bdff"
@@ -681,7 +683,8 @@ exports[`SongForm > renders default form 1`] = `
             />
           </div>
           <div
-            class="bg-[#17191d] p-2 rounded-lg min-w-[120px]"
+            class="p-2 rounded-lg min-w-[120px]"
+            style="background-color: rgba(0, 0, 0, 0.04);"
           >
             <div
               class="_small_62bdff"
@@ -701,7 +704,8 @@ exports[`SongForm > renders default form 1`] = `
             />
           </div>
           <div
-            class="bg-[#17191d] p-2 rounded-lg min-w-[120px]"
+            class="p-2 rounded-lg min-w-[120px]"
+            style="background-color: rgba(0, 0, 0, 0.04);"
           >
             <div
               class="_small_62bdff"
@@ -721,7 +725,8 @@ exports[`SongForm > renders default form 1`] = `
             />
           </div>
           <div
-            class="bg-[#17191d] p-2 rounded-lg min-w-[120px]"
+            class="p-2 rounded-lg min-w-[120px]"
+            style="background-color: rgba(0, 0, 0, 0.04);"
           >
             <div
               class="_small_62bdff"
@@ -741,7 +746,8 @@ exports[`SongForm > renders default form 1`] = `
             />
           </div>
           <div
-            class="bg-[#17191d] p-2 rounded-lg min-w-[120px]"
+            class="p-2 rounded-lg min-w-[120px]"
+            style="background-color: rgba(0, 0, 0, 0.04);"
           >
             <div
               class="_small_62bdff"
