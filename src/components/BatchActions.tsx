@@ -74,7 +74,7 @@ export default function BatchActions({
 
         <div className={styles.panel}>
           <label className={styles.label}>
-            BPM Jitter (per song)
+            BPM Jitter (0-30%, per song)
             <HelpIcon text="Random tempo variation around base BPM" />
           </label>
           <input
