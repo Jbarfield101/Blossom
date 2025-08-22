@@ -42,6 +42,7 @@ export interface EncounterData extends DndBase {
 export interface RuleData extends DndBase {
   description: string;
   tags: string[];
+  sourceId?: string;
 }
 
 export interface SpellData extends DndBase {
