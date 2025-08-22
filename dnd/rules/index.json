@@ -1,0 +1,14 @@
+[
+  {
+    "id": "rule_ability_checks",
+    "name": "Ability Checks",
+    "tags": ["core", "ability", "mechanic"],
+    "path": "dnd/rules/ability-checks.md"
+  },
+  {
+    "id": "rule_advantage_disadvantage",
+    "name": "Advantage and Disadvantage",
+    "tags": ["core", "dice"],
+    "path": "dnd/rules/advantage-disadvantage.md"
+  }
+]
