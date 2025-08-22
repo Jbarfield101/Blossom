@@ -83,6 +83,26 @@ body.theme-rainy::before {
   animation: rain 0.5s linear infinite;
 }
 
+body.theme-eclipse {
+  background: radial-gradient(circle at center, #000, #1a1a1a);
+  overflow: hidden;
+}
+
+body.theme-eclipse::before {
+  content: "";
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 200vmax;
+  height: 200vmax;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 204, 0, 0.25) 40%, rgba(255, 204, 0, 0) 60%);
+  border-radius: 50%;
+  animation: coronaRotate 120s linear infinite;
+  transform: translate(-50%, -50%);
+  z-index: -1;
+}
+
 body.theme-studio button,
 body.theme-studio input,
 body.theme-studio select {
@@ -165,6 +185,15 @@ body.theme-studio input[type="range"]::-moz-range-thumb {
   }
   100% {
     background-position: 0 10px;
+  }
+}
+
+@keyframes coronaRotate {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
   }
 }
 

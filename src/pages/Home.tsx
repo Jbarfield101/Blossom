@@ -32,6 +32,7 @@ export default function Home() {
     rainy: "rgba(0,120,255,0.22)",
     pastel: "rgba(255,182,193,0.22)",
     mono: "rgba(128,128,128,0.22)",
+    eclipse: "rgba(255,204,0,0.22)",
   };
   const [hoverColor, setHoverColor] = useState(themeColors[theme]);
   useEffect(() => {

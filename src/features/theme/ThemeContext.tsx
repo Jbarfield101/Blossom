@@ -25,7 +25,8 @@ export type Theme =
   | "aurora"
   | "rainy"
   | "pastel"
-  | "mono";
+  | "mono"
+  | "eclipse";
 
 interface ThemeContextType {
   theme: Theme;
@@ -63,6 +64,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       "theme-rainy",
       "theme-pastel",
       "theme-mono",
+      "theme-eclipse",
     ];
     document.body.classList.remove(...classes);
     document.body.classList.add(`theme-${theme}`);
