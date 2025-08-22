@@ -23,6 +23,8 @@ import SystemInfo from "./pages/SystemInfo";
 import Fusion from "./pages/Fusion";
 import Transcription from "./pages/Transcription";
 import Construction from "./pages/Construction";
+import Simulation from "./pages/Simulation";
+import BigBrother from "./pages/BigBrother";
 
 export default function App() {
   return (
@@ -49,6 +51,8 @@ export default function App() {
         <Route path="/chores" element={<Chores />} />
         <Route path="/system" element={<SystemInfo />} />
         <Route path="/transcription" element={<Transcription />} />
+        <Route path="/simulation" element={<Simulation />} />
+        <Route path="/big-brother" element={<BigBrother />} />
         <Route path="/dnd" element={<DND />} />
         <Route path="/user" element={<User />} />
         <Route path="*" element={<NotFound />} />
