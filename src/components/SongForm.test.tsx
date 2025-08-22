@@ -2,11 +2,13 @@ import { fireEvent, render, screen, waitFor, cleanup } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import SongForm from './SongForm';
 import { PRESET_TEMPLATES } from "./songTemplates";
-import { open } from '@tauri-apps/plugin-dialog';
+import { open as openDialog } from '@tauri-apps/plugin-dialog';
+import { open as openOpener } from '@tauri-apps/plugin-opener';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 
 vi.mock('@tauri-apps/plugin-dialog', () => ({ open: vi.fn() }));
+vi.mock('@tauri-apps/plugin-opener', () => ({ open: vi.fn() }));
 vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn(),
   convertFileSrc: (p: string) => p,
@@ -52,7 +54,7 @@ describe('SongForm', () => {
   });
 
   it('adds a job and shows progress', async () => {
-    (open as any).mockResolvedValue('/tmp/out');
+    (openDialog as any).mockResolvedValue('/tmp/out');
     let resolveRun: (p: string) => void;
     (invoke as any).mockImplementation((cmd: string) => {
       if (cmd === 'run_lofi_song') {
@@ -224,7 +226,7 @@ describe('SongForm', () => {
   });
 
   it('passes selected instruments in spec', async () => {
-    (open as any).mockResolvedValue('/tmp/out');
+    (openDialog as any).mockResolvedValue('/tmp/out');
     (invoke as any).mockResolvedValue('');
     (listen as any).mockResolvedValue(() => {});
 
@@ -248,7 +250,7 @@ describe('SongForm', () => {
   });
 
   it('passes lead instrument in spec', async () => {
-    (open as any).mockResolvedValue('/tmp/out');
+    (openDialog as any).mockResolvedValue('/tmp/out');
     (invoke as any).mockResolvedValue('');
     (listen as any).mockResolvedValue(() => {});
 
@@ -280,7 +282,7 @@ describe('SongForm', () => {
   });
 
   it('calls generate_album when album mode enabled', async () => {
-    (open as any).mockResolvedValue('/tmp/out');
+    (openDialog as any).mockResolvedValue('/tmp/out');
     (invoke as any).mockResolvedValue({});
     (listen as any).mockResolvedValue(() => {});
 
