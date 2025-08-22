@@ -13,6 +13,8 @@ import PolishControls from "./PolishControls";
 import BatchActions from "./BatchActions";
 import HelpIcon from "./HelpIcon";
 import { PRESET_TEMPLATES, SECTION_PRESETS } from "./songTemplates";
+import styles from "./SongForm.module.css";
+import clsx from "clsx";
 
 export type Section = { name: string; bars: number; chords: string[]; barsStr?: string };
 
@@ -635,41 +637,13 @@ export default function SongForm() {
     return new Promise((r) => setJobs((prev) => (r(prev), prev)));
   }
 
-  const S: Record<string, React.CSSProperties> = {
-    page: { position: "relative", minHeight: "100vh", background: "#0f0f10", color: "#fff", padding: 16 },
-    card: { background: "#17181b", borderRadius: 16, padding: 16, boxShadow: "0 10px 24px rgba(0,0,0,.32)", color: "#fff", maxWidth: 1100, margin: "0 auto" },
-    h1: { margin: "0 0 12px 0", fontSize: 22, fontWeight: 800 },
-    row: { display: "flex", gap: 8, alignItems: "center" },
-    input: { flex: 1, padding: "10px 12px", borderRadius: 10, border: "1px solid #2b2e33", background: "#0e0f12", color: "#e7e7ea" },
-    btn: { padding: "10px 14px", borderRadius: 10, border: "none", background: "#3a82f6", color: "#fff", cursor: "pointer", minWidth: 140 },
-    small: { fontSize: 12, opacity: 0.75, marginTop: 4 },
-    grid3: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 12, marginTop: 12 },
-    grid2: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: 12, marginTop: 12 },
-    panel: { background: "#0e0f12", borderRadius: 10, padding: 12 },
-    label: { fontSize: 12, opacity: 0.8, marginBottom: 6, display: "block" },
-    actions: { marginTop: 12, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" },
-    status: { marginTop: 10, fontSize: 12, opacity: 0.8 },
-    err: { marginTop: 8, color: "#ff7b7b", fontSize: 12 },
-    table: { width: "100%", marginTop: 12, borderCollapse: "collapse", fontSize: 13 },
-    th: { textAlign: "left", padding: "8px 6px", borderBottom: "1px solid #2b2e33", opacity: 0.8 },
-    td: { padding: "8px 6px", borderBottom: "1px solid #1e2025" },
-    optionGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px,1fr))", gap: 8 },
-    optionCard: { background: "#17191d", borderRadius: 8, padding: "8px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" },
-    toggle: { display: "flex", gap: 8, alignItems: "center" },
-    slider: { width: "100%" },
-    playBtn: { padding: "10px 14px", borderRadius: 10, border: "1px solid #2b2e33", background: "transparent", color: "#e7e7ea", cursor: "pointer", minWidth: 120 },
-    progressOuter: { height: 6, background: "#2b2e33", borderRadius: 3, overflow: "hidden", marginTop: 8 },
-    progressInner: { height: "100%", background: "#3a82f6", width: "0%", transition: "width 0.3s" },
-  };
-
   return (
-    <div style={S.page}>
-      <div style={S.card}>
-        <div style={S.h1}>Blossom — Song Builder (Batch + Vibes)</div>
+    <div className={styles.page}>
+      <div className={styles.card}>
+        <div className={styles.h1}>Blossom — Song Builder (Batch + Vibes)</div>
 
         {/* template selector */}
         <TemplateSelector
-          S={S}
           templates={SONG_TEMPLATES}
           selectedTemplate={selectedTemplate}
           setSelectedTemplate={setSelectedTemplate}
@@ -677,26 +651,26 @@ export default function SongForm() {
         />
 
         {/* title + output folder */}
-        <div style={S.row}>
+        <div className={styles.row}>
           <input
-            style={S.input}
+            className={styles.input}
             placeholder="Song title base"
             value={titleBase}
             onChange={(e) => setTitleBase(e.target.value)}
           />
-          <button style={S.btn} onClick={generateTitle} disabled={genTitleLoading}>
+          <button className={styles.btn} onClick={generateTitle} disabled={genTitleLoading}>
             {genTitleLoading ? "Generating..." : "Generate Title"}
           </button>
-          <button style={S.btn} onClick={pickFolder}>
+          <button className={styles.btn} onClick={pickFolder}>
             {outDir ? "Change folder" : "Choose folder"}
           </button>
         </div>
-        <div style={S.small}>{outDir || "No output folder selected"}</div>
+        <div className={styles.small}>{outDir || "No output folder selected"}</div>
 
         {/* core knobs */}
-        <div style={S.grid3}>
-          <div style={S.panel}>
-            <label style={S.label}>
+        <div className={styles.grid3}>
+          <div className={styles.panel}>
+            <label className={styles.label}>
               BPM: {bpm}
               <HelpIcon text="Song tempo in beats per minute" />
             </label>
@@ -706,28 +680,28 @@ export default function SongForm() {
               max={200}
               value={bpm}
               onChange={(e) => setBpm(Number(e.target.value))}
-              style={{ ...S.input, padding: 0 }}
+              className={clsx(styles.input, "p-0")}
             />
           </div>
-          <div style={S.panel}>
-            <label style={S.label}>
+          <div className={styles.panel}>
+            <label className={styles.label}>
               Key
               <HelpIcon text="Musical key; choose Auto for random" />
             </label>
-            <div style={S.row}>
-              <select value={key} onChange={(e) => setKey(e.target.value)} style={{ ...S.input, padding: "8px 12px" }}>
+            <div className={styles.row}>
+              <select value={key} onChange={(e) => setKey(e.target.value)} className={clsx(styles.input, "py-2 px-3") }>
                 {KEYS.map((k) => (
                   <option key={k} value={k}>{displayKey(k)}</option>
                 ))}
               </select>
             </div>
-            <div style={{ ...S.toggle, marginTop: 8 }}>
+            <div className={clsx(styles.toggle, "mt-2") }>
               <input type="checkbox" checked={autoKeyPerSong} onChange={(e) => setAutoKeyPerSong(e.target.checked)} disabled={key === "Auto"} />
-              <span style={S.small}>Rotate key per song{key === "Auto" ? " (disabled: Auto)" : ""}</span>
+              <span className={styles.small}>Rotate key per song{key === "Auto" ? " (disabled: Auto)" : ""}</span>
             </div>
           </div>
-          <div style={S.panel}>
-            <label style={S.label}>
+          <div className={styles.panel}>
+            <label className={styles.label}>
               Seed
               <HelpIcon text="Randomness seed for reproducibility" />
             </label>
@@ -735,13 +709,13 @@ export default function SongForm() {
               type="number"
               value={seedBase}
               onChange={(e) => setSeedBase(Number(e.target.value || 0))}
-              style={S.input}
+              className={styles.input}
             />
-            <div style={{ ...S.row, marginTop: 8 }}>
-              <label style={{ ...S.small, flex: 1 }}>
+            <div className={clsx(styles.row, "mt-2") }>
+              <label className={clsx(styles.small, "flex-1") }>
                 <input type="radio" name="seedmode" checked={seedMode === "increment"} onChange={() => setSeedMode("increment")} /> Increment (base + i)
               </label>
-              <label style={{ ...S.small, flex: 1 }}>
+              <label className={clsx(styles.small, "flex-1") }>
                 <input type="radio" name="seedmode" checked={seedMode === "random"} onChange={() => setSeedMode("random")} /> Deterministic random
               </label>
             </div>
@@ -749,8 +723,8 @@ export default function SongForm() {
         </div>
 
         {/* structure editor */}
-        <div style={{ ...S.panel, marginTop: 12 }}>
-          <div style={{ ...S.row, marginBottom: 8 }}>
+        <div className={clsx(styles.panel, "mt-3")}>
+          <div className={clsx(styles.row, "mb-2")}>
             <select
               value={selectedTemplate}
               onChange={(e) => {
@@ -762,7 +736,7 @@ export default function SongForm() {
                   applyTemplate(templates[name]);
                 }
               }}
-              style={{ ...S.input, padding: "8px 12px" }}
+              className={clsx(styles.input, "py-2 px-3")}
             >
               <option value="">Custom</option>
               {Object.keys(templates).map((name) => (
@@ -775,13 +749,13 @@ export default function SongForm() {
               (creatingTemplate ? (
                 <>
                   <input
-                    style={S.input}
+                    className={styles.input}
                     placeholder="Template name"
                     value={newTemplateName}
                     onChange={(e) => setNewTemplateName(e.target.value)}
                   />
                   <button
-                    style={S.btn}
+                    className={styles.btn}
                     onClick={() => {
                       const nm = newTemplateName.trim();
                       if (!nm) return;
@@ -823,7 +797,7 @@ export default function SongForm() {
                 </>
               ) : (
                 <button
-                  style={S.btn}
+                  className={styles.btn}
                   onClick={() => {
                     setSelectedTemplate("");
                     setCreatingTemplate(true);
@@ -834,7 +808,7 @@ export default function SongForm() {
                 </button>
               ))}
           </div>
-          <div style={{ ...S.row, marginBottom: 8 }}>
+          <div className={clsx(styles.row, "mb-2")}>
             <select
               value={sectionPreset}
               onChange={(e) => {
@@ -845,7 +819,7 @@ export default function SongForm() {
                   setSelectedTemplate("");
                 }
               }}
-              style={{ ...S.input, padding: "8px 12px" }}
+              className={clsx(styles.input, "py-2 px-3")}
             >
               <option value="">Preset layout…</option>
               {Object.keys(SECTION_PRESETS).map((name) => (
@@ -855,14 +829,14 @@ export default function SongForm() {
               ))}
             </select>
           </div>
-          <label style={S.label}>
+          <label className={styles.label}>
             Structure (bars)
             <HelpIcon text="Order of song sections with lengths and chords" />
           </label>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <div className="flex gap-2 flex-wrap">
             {structure.map((sec, i) => (
-              <div key={i} style={{ background: "#17191d", padding: 8, borderRadius: 8, minWidth: 120 }}>
-                <div style={S.small}>{sec.name}</div>
+              <div key={i} className="bg-[#17191d] p-2 rounded-lg min-w-[120px]">
+                <div className={styles.small}>{sec.name}</div>
                 <input
                   type="number"
                   value={sec.barsStr ?? String(sec.bars)}
@@ -881,8 +855,8 @@ export default function SongForm() {
                     setSelectedTemplate("");
                     setSectionPreset("");
                   }}
+                  className={styles.input}
                   style={{
-                    ...S.input,
                     border:
                       !/^[0-9]+$/.test(sec.barsStr ?? String(sec.bars)) ||
                       parseInt(sec.barsStr ?? String(sec.bars), 10) < 1
@@ -892,7 +866,7 @@ export default function SongForm() {
                 />
                 {!/^[0-9]+$/.test(sec.barsStr ?? String(sec.bars)) ||
                 parseInt(sec.barsStr ?? String(sec.bars), 10) < 1 ? (
-                  <div style={S.err}>Enter bars ≥1</div>
+                  <div className={styles.err}>Enter bars ≥1</div>
                 ) : null}
                 <input
                   type="text"
@@ -911,19 +885,18 @@ export default function SongForm() {
                     setSelectedTemplate("");
                     setSectionPreset("");
                   }}
-                  style={{ ...S.input, marginTop: 4 }}
+                  className={clsx(styles.input, "mt-1")}
                 />
               </div>
             ))}
           </div>
-          <div style={S.small}>
+          <div className={styles.small}>
             Total Bars: {totalBars} — Est. Time: {estMinutes}:{estSecs}
           </div>
         </div>
 
         {/* vibe controls */}
         <VibeControls
-          S={S}
           MOODS={MOODS}
           INSTR={INSTR}
           LEAD_INSTR={LEAD_INSTR}
@@ -942,7 +915,6 @@ export default function SongForm() {
 
         {/* rhythm & feel */}
         <RhythmControls
-          S={S}
           DRUM_PATS={DRUM_PATS}
           drumPattern={drumPattern}
           setDrumPattern={setDrumPattern}
@@ -954,7 +926,6 @@ export default function SongForm() {
 
         {/* polish accordion */}
         <PolishControls
-          S={S}
           hqStereo={hqStereo}
           setHqStereo={setHqStereo}
           hqReverb={hqReverb}
@@ -969,17 +940,17 @@ export default function SongForm() {
           setDither={setDither}
         />
         {/* album mode toggle */}
-        <div style={S.panel}>
-          <label style={S.toggle}>
+        <div className={styles.panel}>
+          <label className={styles.toggle}>
             <input type="checkbox" checked={albumMode} onChange={(e) => setAlbumMode(e.target.checked)} />
-            <span style={S.small}>
+            <span className={styles.small}>
               Album mode
               <HelpIcon text="Render multiple tracks as an album" />
             </span>
           </label>
           {albumMode && (
             <>
-              <label style={S.label}>
+              <label className={styles.label}>
                 Track Count
                 <HelpIcon text="Number of tracks in album mode" />
               </label>
@@ -993,14 +964,13 @@ export default function SongForm() {
                     Math.max(3, Math.min(12, Number(e.target.value || 3)))
                   )
                 }
-                style={S.input}
+                className={styles.input}
               />
             </>
           )}
         </div>
 
         <BatchActions
-          S={S}
           numSongs={numSongs}
           setNumSongs={setNumSongs}
           titleSuffixMode={titleSuffixMode}
@@ -1021,48 +991,48 @@ export default function SongForm() {
           onPlayLastTrack={handlePlayLastTrack}
         />
 
-        {globalStatus && <div style={S.status}>Status: {globalStatus}</div>}
+        {globalStatus && <div className={styles.status}>Status: {globalStatus}</div>}
         {busy && (
-          <div style={S.progressOuter}>
-            <div style={{ ...S.progressInner, width: `${progress}%` }} />
+          <div className={styles.progressOuter}>
+            <div className={styles.progressInner} style={{ width: `${progress}%` }} />
           </div>
         )}
-        {err && <div style={S.err}>Error: {err}</div>}
+        {err && <div className={styles.err}>Error: {err}</div>}
 
         {jobs.length > 0 && (
-          <table style={S.table}>
+          <table className={styles.table}>
             <thead>
               <tr>
-                <th style={S.th}>Title</th>
-                <th style={S.th}>Key</th>
-                <th style={S.th}>BPM</th>
-                <th style={S.th}>Seed</th>
-                <th style={S.th}>Status</th>
-                <th style={S.th}>Output</th>
+                <th className={styles.th}>Title</th>
+                <th className={styles.th}>Key</th>
+                <th className={styles.th}>BPM</th>
+                <th className={styles.th}>Seed</th>
+                <th className={styles.th}>Status</th>
+                <th className={styles.th}>Output</th>
               </tr>
             </thead>
             <tbody>
               {jobs.map((j) => (
                 <tr key={j.id}>
-                  <td style={S.td}>{j.title}</td>
-                  <td style={S.td}>{showKey(j.spec.key)}</td>
-                  <td style={S.td}>{j.spec.bpm}</td>
-                  <td style={S.td}>{j.spec.seed}</td>
-                  <td style={S.td}>
-                    {j.error ? <span style={{ color: "#ff7b7b" }}>error</span> : j.status || "—"}
+                  <td className={styles.td}>{j.title}</td>
+                  <td className={styles.td}>{showKey(j.spec.key)}</td>
+                  <td className={styles.td}>{j.spec.bpm}</td>
+                  <td className={styles.td}>{j.spec.seed}</td>
+                  <td className={styles.td}>
+                    {j.error ? <span className="text-[#ff7b7b]">error</span> : j.status || "—"}
                     {j.error && (
-                      <details style={{ marginTop: 4 }}>
-                        <summary style={{ opacity: 0.8, cursor: "pointer" }}>details</summary>
-                        <pre style={{ whiteSpace: "pre-wrap" }}>{j.error}</pre>
+                      <details className="mt-1">
+                        <summary className="opacity-80 cursor-pointer">details</summary>
+                        <pre className="whitespace-pre-wrap">{j.error}</pre>
                       </details>
                     )}
                   </td>
-                  <td style={S.td}>
+                  <td className={styles.td}>
                     {j.outPath ? (
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div className="flex items-center gap-2">
                         <Waveform src={convertFileSrc(j.outPath!.replace(/\\/g, "/"))} />
                         <button
-                          style={S.playBtn}
+                          className={styles.playBtn}
                           onClick={async () => {
                             const url = convertFileSrc(j.outPath!.replace(/\\/g, "/"));
                             const a = audioRef.current!;
