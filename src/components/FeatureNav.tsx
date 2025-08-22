@@ -13,6 +13,7 @@ import {
   FaDiceD20,
   FaChartLine,
   FaFilm,
+  FaBroom,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useSettings } from "../features/settings/useSettings";
@@ -44,6 +45,7 @@ const ITEMS: Item[] = [
   { key: "dnd", icon: <FaDiceD20 />, label: "DND", path: "/dnd", color: "rgba(255,200,220,0.55)" },
   { key: "stocks", icon: <FaChartLine />, label: "Stocks", path: "/stocks", color: "rgba(200,255,200,0.55)" },
   { key: "shorts", icon: <FaFilm />, label: "Shorts", path: "/shorts", color: "rgba(200,200,200,0.55)" },
+  { key: "chores", icon: <FaBroom />, label: "Chores", path: "/chores", color: "rgba(200,200,255,0.55)" },
 ];
 
 export default function FeatureNav({

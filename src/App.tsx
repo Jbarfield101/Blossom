@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import DND from "./pages/DND";
 import Stocks from "./pages/Stocks";
 import Shorts from "./pages/Shorts";
+import Chores from "./pages/Chores";
 import User from "./pages/User";
 import SystemInfo from "./pages/SystemInfo";
 import Fusion from "./pages/Fusion";
@@ -42,6 +43,7 @@ export default function App() {
         <Route path="/lofi" element={<Lofi />} />
         <Route path="/stocks" element={<Stocks />} />
         <Route path="/shorts" element={<Shorts />} />
+        <Route path="/chores" element={<Chores />} />
         <Route path="/system" element={<SystemInfo />} />
         <Route path="/dnd" element={<DND />} />
         <Route path="/user" element={<User />} />
