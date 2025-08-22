@@ -72,7 +72,7 @@ const lofiOptions = [
   "sunset golden hour",
   "bokeh background",
   "ambient haze",
-  "tilt-shift lens effect",
+  "Tilt-shift miniature effect",
   "whimsical color grading",
   "cozy cottagecore",
   "16:9 ratio, soft vignette",
