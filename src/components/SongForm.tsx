@@ -166,7 +166,7 @@ export default function SongForm() {
   } = useAudioDefaults();
 
   // THEME (applies to all songs)
-  const [titleBase, setTitleBase] = useState("Midnight Coffee");
+  const [titleBase, setTitleBase] = useState("");
   const [outDir, setOutDir] = useState(localStorage.getItem("outDir") ?? "");
   const [bpm, setBpm] = useState(defaultBpm);
   const [key, setKey] = useState<string>(defaultKey);
@@ -679,7 +679,7 @@ export default function SongForm() {
   function restoreDefaults() {
     setSelectedTemplate("");
     applyTemplate(PRESET_TEMPLATES["Classic Lofi"]);
-    setTitleBase("Midnight Coffee");
+    setTitleBase("");
     setOutDir("");
     setAutoKeyPerSong(false);
   }
