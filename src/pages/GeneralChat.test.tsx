@@ -187,5 +187,64 @@ describe('GeneralChat', () => {
       )
     ).toBeInTheDocument();
   });
+
+  it('classifies natural system stats request', async () => {
+    (invoke as any).mockImplementation((cmd: string) => {
+      if (cmd === 'start_ollama') return Promise.resolve();
+      if (cmd === 'detect_intent') return Promise.resolve('sys');
+      if (cmd === 'system_info')
+        return Promise.resolve({ cpu_usage: 1, mem_usage: 2, gpu_usage: 3 });
+      return Promise.resolve();
+    });
+    (listen as any).mockImplementation(() => Promise.resolve(() => {}));
+
+    render(<GeneralChat />);
+    await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
+
+    fireEvent.change(screen.getAllByRole('textbox')[0], {
+      target: { value: 'can you show system stats?' },
+    });
+    fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
+
+    expect(await screen.findByText(/CPU: 1%/)).toBeInTheDocument();
+    const chatCalls = (invoke as any).mock.calls.filter(
+      ([cmd]: [string]) => cmd === 'general_chat'
+    );
+    expect(chatCalls).toHaveLength(0);
+  });
+
+  it('classifies natural music request', async () => {
+    (invoke as any).mockImplementation((cmd: string, args: any) => {
+      if (cmd === 'start_ollama') return Promise.resolve();
+      if (cmd === 'detect_intent') return Promise.resolve('music');
+      if (cmd === 'generate_album') return Promise.resolve();
+      return Promise.resolve();
+    });
+    (listen as any).mockImplementation(() => Promise.resolve(() => {}));
+
+    render(<GeneralChat />);
+    await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
+
+    fireEvent.change(screen.getAllByRole('textbox')[0], {
+      target: { value: 'generate a chill song with three tracks' },
+    });
+    fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
+
+    await waitFor(() => {
+      const detect = (invoke as any).mock.calls.find(
+        ([cmd]: [string]) => cmd === 'detect_intent'
+      );
+      expect(detect[1]).toEqual({
+        query: 'generate a chill song with three tracks',
+      });
+      const genCalls = (invoke as any).mock.calls.filter(
+        ([cmd]: [string]) => cmd === 'generate_album'
+      );
+      expect(genCalls).toHaveLength(0);
+    });
+    expect(
+      await screen.findByText(/Please specify template and track count/)
+    ).toBeInTheDocument();
+  });
 });
 
