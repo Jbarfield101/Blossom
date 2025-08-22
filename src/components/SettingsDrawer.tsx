@@ -19,6 +19,7 @@ import { usePaths } from "../features/paths/usePaths";
 import { useOutput } from "../features/output/useOutput";
 import { useAudioDefaults } from "../features/audioDefaults/useAudioDefaults";
 import { useTheme, type Theme } from "../features/theme/ThemeContext";
+import { useComfyTutorial } from "../features/comfyTutorial/useComfyTutorial";
 import HelpIcon from "./HelpIcon";
 
 const KEY_OPTIONS = [
@@ -156,6 +157,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
     toggleHqChorus,
   } = useAudioDefaults();
   const { theme, setTheme, mode, setMode } = useTheme();
+  const { showTutorial, setShowTutorial } = useComfyTutorial();
   const [audioSaved, setAudioSaved] = useState(false);
   const [pathsSaved, setPathsSaved] = useState(false);
   const [appearanceSaved, setAppearanceSaved] = useState(false);
@@ -200,6 +202,14 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
           >
             Save Paths
           </Button>
+        </Box>
+
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle1">Guides</Typography>
+          <FormControlLabel
+            control={<Switch checked={showTutorial} onChange={(e) => setShowTutorial(e.target.checked)} />}
+            label="Show ComfyUI Tutorial"
+          />
         </Box>
 
         <Box sx={{ mb: 3 }}>
