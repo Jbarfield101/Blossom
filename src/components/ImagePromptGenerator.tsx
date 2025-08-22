@@ -8,6 +8,8 @@ import {
   FormControlLabel,
   Checkbox,
   Typography,
+  RadioGroup,
+  Radio,
 } from "@mui/material";
 
 interface Props {
@@ -102,11 +104,11 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
   const [cosmic, setCosmic] = useState<string[]>([]);
 
   const toggleCamera = (opt: string) => {
-    setCamera((prev) => (prev === opt ? null : opt));
+    setCamera(opt);
   };
 
   const toggleLens = (opt: string) => {
-    setLens((prev) => (prev === opt ? null : opt));
+    setLens(opt);
   };
 
   const toggleEffect = (opt: string) => {
@@ -169,37 +171,30 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
           <Typography sx={{ mt: 2, mb: 1 }}>
             📸 Camera Style / Photographic Aesthetic
           </Typography>
-          <FormGroup>
+          <RadioGroup
+            value={camera ?? ""}
+            onChange={(_, value) => toggleCamera(value)}
+          >
             {cameraOptions.map((opt) => (
               <FormControlLabel
                 key={opt}
-                control={
-                  <Checkbox
-                    checked={camera === opt}
-                    onChange={() => toggleCamera(opt)}
-                    disabled={!!camera && camera !== opt}
-                  />
-                }
+                value={opt}
+                control={<Radio />}
                 label={opt}
               />
             ))}
-          </FormGroup>
+          </RadioGroup>
           <Typography sx={{ mt: 2, mb: 1 }}>Lens Options</Typography>
-          <FormGroup>
+          <RadioGroup value={lens ?? ""} onChange={(_, value) => toggleLens(value)}>
             {lensOptions.map((opt) => (
               <FormControlLabel
                 key={opt}
-                control={
-                  <Checkbox
-                    checked={lens === opt}
-                    onChange={() => toggleLens(opt)}
-                    disabled={!!lens && lens !== opt}
-                  />
-                }
+                value={opt}
+                control={<Radio />}
                 label={opt}
               />
             ))}
-          </FormGroup>
+          </RadioGroup>
           <Typography sx={{ mt: 2, mb: 1 }}>Effects</Typography>
           <FormGroup>
             {effectOptions.map((opt) => (
