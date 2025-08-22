@@ -167,3 +167,11 @@
   width: 0%;
   transition: width 0.3s;
 }
+
+.nextSteps {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}

@@ -112,9 +112,12 @@ export default function BatchActions({
             : "Render Songs"}
         </button>
 
-        <button className={styles.playBtn} onClick={onPreview}>
-          {previewPlaying ? "Stop preview" : "Preview in browser"}
-        </button>
+        <div className={styles.row}>
+          <button className={styles.playBtn} onClick={onPreview}>
+            {previewPlaying ? "Stop preview" : "Preview snippet"}
+          </button>
+          <HelpIcon text="Play a quick 5-second preview" />
+        </div>
 
         <button className={styles.playBtn} onClick={onPlayLastTrack}>
           {isPlaying ? "Pause" : "Play last track"}

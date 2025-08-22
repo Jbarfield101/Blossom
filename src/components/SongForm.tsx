@@ -1,7 +1,8 @@
 // src/components/SongForm.tsx — HQ wiring for lofi renderer
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAudioDefaults } from "../features/audioDefaults/useAudioDefaults";
-import { open } from "@tauri-apps/plugin-dialog";
+import { open as openDialog } from "@tauri-apps/plugin-dialog";
+import { open as openPath } from "@tauri-apps/plugin-opener";
 import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useLofi } from "../features/lofi/SongForm";
@@ -196,6 +197,7 @@ const SONG_TEMPLATES = PRESET_TEMPLATES;
 
 export default function SongForm() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const previewTimer = useRef<number | null>(null);
   const theme = useTheme();
   const {
     bpm: defaultBpm,
@@ -353,6 +355,14 @@ export default function SongForm() {
   }, []);
 
   useEffect(() => {
+    return () => {
+      if (previewTimer.current) {
+        clearTimeout(previewTimer.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem("outDir", outDir);
     return () => {
       localStorage.setItem("outDir", outDir);
@@ -445,7 +455,7 @@ export default function SongForm() {
 
   async function pickFolder() {
     try {
-      const dir = await open({ directory: true, multiple: false });
+      const dir = await openDialog({ directory: true, multiple: false });
       if (dir) {
         setOutDir(dir as string);
         localStorage.setItem("outDir", dir as string);
@@ -637,11 +647,39 @@ export default function SongForm() {
   async function handlePreview() {
     if (previewPlaying) {
       previewStop();
+      if (previewTimer.current) {
+        clearTimeout(previewTimer.current);
+        previewTimer.current = null;
+      }
     } else {
       setPreviewBpm(bpm);
       setPreviewKey(key === "Auto" ? "C" : key);
       setPreviewSeed(seedBase);
       await previewPlay();
+      previewTimer.current = window.setTimeout(() => {
+        previewStop();
+        previewTimer.current = null;
+      }, 5000);
+    }
+  }
+
+  async function openOutputFolder() {
+    if (!outDir) return;
+    try {
+      await openPath(outDir);
+    } catch (e: any) {
+      setErr(e?.message || String(e));
+    }
+  }
+
+  async function handleCopyLast() {
+    const last = [...jobs].reverse().find((j) => j.outPath);
+    if (last?.outPath) {
+      try {
+        await navigator.clipboard.writeText(last.outPath);
+      } catch (e: any) {
+        setErr(e?.message || String(e));
+      }
     }
   }
 
@@ -1161,6 +1199,21 @@ export default function SongForm() {
               ))}
             </tbody>
           </table>
+        )}
+        {jobs.some((j) => j.outPath) && (
+          <div className={styles.nextSteps}>
+            <span className={styles.small}>Next steps:</span>
+            <button className={styles.playBtn} onClick={handlePlayLastTrack}>
+              Listen
+            </button>
+            <button className={styles.btn} onClick={openOutputFolder}>
+              Open folder
+            </button>
+            <button className={styles.btn} onClick={handleCopyLast}>
+              Copy path
+            </button>
+            <HelpIcon text="Open the output folder, listen, or share the file path" />
+          </div>
         )}
       </div>
     </div>
