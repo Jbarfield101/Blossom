@@ -1,20 +1,17 @@
 import { useState } from "react";
-import { generatePrompt } from "../utils/promptGenerator";
+import { generatePrompt, type PromptType } from "../utils/promptGenerator";
 
 export default function PromptManager() {
   const [open, setOpen] = useState(false);
   const [prompt, setPrompt] = useState("");
 
-  const handleVideo = () => {
-    console.log("Video Prompt:", generatePrompt(prompt, "video"));
-  };
-
-  const handleImage = () => {
-    console.log("Image Prompt:", generatePrompt(prompt, "image"));
+  const handlePrompt = (type: PromptType) => {
+    const label = type.charAt(0).toUpperCase() + type.slice(1);
+    console.log(`${label} Prompt:`, generatePrompt(prompt, type));
   };
 
   return (
-    <div style={{ position: "relative" }}>
+    <div>
       <button onClick={() => setOpen((o) => !o)} style={styles.btn}>
         Prompt Manager
       </button>
@@ -27,11 +24,29 @@ export default function PromptManager() {
             placeholder="Enter prompt"
           />
           <div style={styles.actions}>
-            <button onClick={handleVideo} style={styles.actionBtn}>
-              Video Prompt
+            <button
+              onClick={() => handlePrompt("image")}
+              style={styles.actionBtn}
+            >
+              Image
             </button>
-            <button onClick={handleImage} style={styles.actionBtn}>
-              Image Prompt
+            <button
+              onClick={() => handlePrompt("video")}
+              style={styles.actionBtn}
+            >
+              Video
+            </button>
+            <button
+              onClick={() => handlePrompt("music")}
+              style={styles.actionBtn}
+            >
+              Music
+            </button>
+            <button
+              onClick={() => handlePrompt("dnd")}
+              style={styles.actionBtn}
+            >
+              DND
             </button>
           </div>
         </div>
@@ -50,15 +65,15 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
   },
   panel: {
-    position: "absolute",
-    top: "100%",
-    right: 0,
-    marginTop: 8,
+    position: "fixed",
+    top: 10,
+    left: "50%",
+    transform: "translateX(-50%)",
     padding: 12,
     background: "#121214",
     border: "1px solid #333",
     borderRadius: 10,
-    width: 300,
+    width: 400,
     zIndex: 10,
   },
   textarea: {
@@ -75,7 +90,7 @@ const styles: Record<string, React.CSSProperties> = {
   actions: {
     display: "flex",
     gap: 8,
-    justifyContent: "flex-end",
+    justifyContent: "center",
   },
   actionBtn: {
     padding: "6px 10px",
