@@ -209,7 +209,6 @@ exports[`SongForm > renders default form 1`] = `
       </div>
       <details
         class="mt-3"
-        open=""
       >
         <summary
           class="cursor-pointer text-xs opacity-80"
@@ -467,7 +466,6 @@ exports[`SongForm > renders default form 1`] = `
       </details>
       <details
         class="_panel_62bdff mt-3"
-        open=""
       >
         <summary
           class="cursor-pointer text-xs opacity-80"
