@@ -2,13 +2,39 @@
   {
     "id": "rule_ability_checks",
     "name": "Ability Checks",
-    "tags": ["core", "ability", "mechanic"],
+    "tags": [
+      "core",
+      "ability",
+      "mechanic"
+    ],
     "path": "dnd/rules/ability-checks.md"
   },
   {
     "id": "rule_advantage_disadvantage",
     "name": "Advantage and Disadvantage",
-    "tags": ["core", "dice"],
+    "tags": [
+      "core",
+      "dice"
+    ],
     "path": "dnd/rules/advantage-disadvantage.md"
+  },
+  {
+    "id": "rule_critical_hits",
+    "name": "Critical Hits",
+    "tags": [
+      "core",
+      "combat"
+    ],
+    "path": "dnd/rules/critical-hits.md"
+  },
+  {
+    "id": "rule_saving_throws",
+    "name": "Saving Throws",
+    "tags": [
+      "core",
+      "ability",
+      "defense"
+    ],
+    "path": "dnd/rules/saving-throws.md"
   }
 ]
