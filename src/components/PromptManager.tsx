@@ -1,15 +1,16 @@
 import { useState } from "react";
+import { generatePrompt } from "../utils/promptGenerator";
 
 export default function PromptManager() {
   const [open, setOpen] = useState(false);
   const [prompt, setPrompt] = useState("");
 
   const handleVideo = () => {
-    console.log("Video Prompt:", prompt);
+    console.log("Video Prompt:", generatePrompt(prompt, "video"));
   };
 
   const handleImage = () => {
-    console.log("Image Prompt:", prompt);
+    console.log("Image Prompt:", generatePrompt(prompt, "image"));
   };
 
   return (
