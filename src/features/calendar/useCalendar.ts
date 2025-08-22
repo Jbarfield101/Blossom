@@ -8,11 +8,18 @@ interface Actions {
   updateEvent: (id: string, patch: Partial<CalendarEvent>) => void;
   removeEvent: (id: string) => void;
   setSelectedCountdownId: (id: string | null) => void;
+  /** Schedule a task and tag it for the calendar */
+  scheduleTask: (
+    title: string,
+    date: string,
+    end: string,
+    tags?: string[]
+  ) => void;
 }
 
 export const useCalendar = create<CalendarState & Actions>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       events: [],
       selectedCountdownId: null,
       tagTotals: {},
@@ -34,6 +41,15 @@ export const useCalendar = create<CalendarState & Actions>()(
           return { events, tagTotals };
         });
       },
+      scheduleTask: (title, date, end, tags = []) =>
+        get().addEvent({
+          title,
+          date,
+          end,
+          tags: ['task', ...tags],
+          status: 'scheduled',
+          hasCountdown: false,
+        }),
       updateEvent: (id, patch) =>
         set((state) => {
           const ev = state.events.find((e) => e.id === id);

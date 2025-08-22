@@ -23,6 +23,19 @@ describe('useCalendar store', () => {
     expect(state.events[0].title).toBe('Test');
   });
 
+  it('schedules a task with tags', () => {
+    useCalendar.getState().scheduleTask(
+      'Music gen',
+      '2024-01-01T09:00',
+      '2024-01-01T10:00',
+      ['music']
+    );
+    const ev = useCalendar.getState().events[0];
+    expect(ev.title).toBe('Music gen');
+    expect(ev.tags).toEqual(['task', 'music']);
+    expect(ev.status).toBe('scheduled');
+  });
+
   it('rejects invalid additions', () => {
     const add = useCalendar.getState().addEvent;
     add({
