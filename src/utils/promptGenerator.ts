@@ -8,7 +8,7 @@ export function generatePrompt(text: string, type: PromptType): string {
     case 'video':
       return `Generate a short video about ${cleaned}.`;
     case 'image':
-      return `Generate a detailed image of ${cleaned}.`;
+      return `Generate a detailed image combining ${cleaned}.`;
     case 'music':
       return `Compose a short piece of music about ${cleaned}.`;
     case 'dnd':
