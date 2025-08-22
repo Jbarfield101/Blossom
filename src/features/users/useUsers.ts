@@ -11,6 +11,7 @@ type ModuleKey =
   | 'assistant'
   | 'laser'
   | 'fusion'
+  | 'simulation'
   | 'dnd'
   | 'stocks'
   | 'shorts'
@@ -27,6 +28,7 @@ const defaultModules: ModulesState = {
   assistant: true,
   laser: true,
   fusion: true,
+  simulation: true,
   dnd: true,
   stocks: true,
   shorts: true,
