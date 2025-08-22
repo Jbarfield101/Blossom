@@ -199,6 +199,22 @@ def reindex():
     return {"added": added, "updated": updated}
 
 
+def extract_spells(path: str):
+    """Extract simple spell entries from a PDF file."""
+    pdf_path = Path(path)
+    spells = []
+    with pdfplumber.open(pdf_path) as pdf:
+        text = "\n".join(page.extract_text() or "" for page in pdf.pages)
+    for block in text.split("\n\n"):
+        lines = [ln.strip() for ln in block.splitlines() if ln.strip()]
+        if not lines:
+            continue
+        name = lines[0]
+        desc = " ".join(lines[1:])
+        spells.append({"name": name, "description": desc})
+    return {"spells": spells}
+
+
 def search(query: str, k: int = 3):
     ensure_dirs()
     conn = get_db()
@@ -371,6 +387,8 @@ def main():
     p = sub.add_parser("ingest")
     p.add_argument("doc_id")
     sub.add_parser("list")
+    p = sub.add_parser("spells")
+    p.add_argument("path")
     args = parser.parse_args()
 
     if args.cmd == "add":
@@ -388,6 +406,8 @@ def main():
         out = ingest_doc(args.doc_id)
     elif args.cmd == "list":
         out = list_docs()
+    elif args.cmd == "spells":
+        out = extract_spells(args.path)
     else:
         out = {}
     json.dump(out, fp=os.fdopen(1, "w"))
