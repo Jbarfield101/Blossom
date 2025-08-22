@@ -61,6 +61,7 @@ fn main() {
             commands::pdf_list,
             commands::pdf_search,
             commands::pdf_ingest,
+            commands::parse_spell_pdf,
             // Blender:
             commands::blender_run_script,
             commands::save_npc,

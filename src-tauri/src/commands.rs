@@ -352,6 +352,12 @@ pub struct PdfSearchHit {
     pub score: f32,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SpellRecord {
+    pub name: String,
+    pub description: String,
+}
+
 #[tauri::command]
 pub async fn pdf_add<R: Runtime>(app: AppHandle<R>, path: String) -> Result<Value, String> {
     let out = run_pdf_tool(&app, &["add", &path])?;
@@ -408,6 +414,16 @@ pub async fn pdf_ingest<R: Runtime>(
         doc_id: doc_id.clone(),
     };
     Ok(queue.enqueue(format!("pdf_ingest {doc_id}"), cmd).await)
+}
+
+#[tauri::command]
+pub async fn parse_spell_pdf<R: Runtime>(
+    app: AppHandle<R>,
+    path: String,
+) -> Result<Vec<SpellRecord>, String> {
+    let out = run_pdf_tool(&app, &["spells", &path])?;
+    let v: Value = serde_json::from_str(&out).map_err(|e| e.to_string())?;
+    serde_json::from_value(v["spells"].clone()).map_err(|e| e.to_string())
 }
 
 /* ==============================

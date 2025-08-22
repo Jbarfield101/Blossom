@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Typography, TextField, Button } from "@mui/material";
+import SpellPdfUpload from "./SpellPdfUpload";
 import { zSpell } from "./schemas";
 import type { SpellData } from "./types";
 
@@ -36,6 +37,7 @@ export default function SpellForm() {
   return (
     <form onSubmit={handleSubmit}>
       <Typography variant="h6">Spellbook</Typography>
+      <SpellPdfUpload />
       <TextField
         label="Name"
         value={name}
