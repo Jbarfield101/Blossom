@@ -19,6 +19,7 @@ import Stocks from "./pages/Stocks";
 import Shorts from "./pages/Shorts";
 import User from "./pages/User";
 import SystemInfo from "./pages/SystemInfo";
+import Fusion from "./pages/Fusion";
 
 export default function App() {
   return (
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="/dnd/npcs-maker" element={<NPCMaker />} />
         <Route path="/dnd/npcs-library" element={<NPCList />} />
         <Route path="/laser" element={<Laser />} />
+        <Route path="/fusion" element={<Fusion />} />
         <Route path="/lofi" element={<Lofi />} />
         <Route path="/stocks" element={<Stocks />} />
         <Route path="/shorts" element={<Shorts />} />
