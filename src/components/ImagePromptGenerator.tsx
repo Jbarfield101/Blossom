@@ -62,6 +62,21 @@ const lofiOptions = [
   "16:9 ratio, soft vignette",
 ];
 
+const cosmicOptions = [
+  "shot like NASA Hubble imagery",
+  "cosmic lens flare",
+  "nebula-inspired palette",
+  "high dynamic range",
+  "glowing atmosphere",
+  "starlit gradient",
+  "astronomical contrast",
+  "Nat Geo meets Moebius style",
+  "deep space photography aesthetic",
+  "shot with a telephoto lens from orbit",
+  "space documentary realism",
+  "galactic dust haze",
+];
+
 export default function ImagePromptGenerator({ onGenerate }: Props) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
@@ -69,6 +84,7 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
   const [lens, setLens] = useState<string | null>(null);
   const [effects, setEffects] = useState<string[]>([]);
   const [lofi, setLofi] = useState<string[]>([]);
+  const [cosmic, setCosmic] = useState<string[]>([]);
 
   const toggleCamera = (opt: string) => {
     setCamera((prev) => (prev === opt ? null : opt));
@@ -90,12 +106,19 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
     );
   };
 
+  const toggleCosmic = (opt: string) => {
+    setCosmic((prev) =>
+      prev.includes(opt) ? prev.filter((o) => o !== opt) : [...prev, opt]
+    );
+  };
+
   const handleSend = () => {
     let prompt = text;
     if (camera) prompt += ` ${camera}`;
     if (lens) prompt += ` ${lens}`;
     if (effects.length) prompt += ` ${effects.join(" ")}`;
     if (lofi.length) prompt += ` ${lofi.join(" ")}`;
+    if (cosmic.length) prompt += ` ${cosmic.join(" ")}`;
     onGenerate(prompt.trim());
     setOpen(false);
     setText("");
@@ -103,6 +126,7 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
     setLens(null);
     setEffects([]);
     setLofi([]);
+    setCosmic([]);
   };
 
   return (
@@ -180,6 +204,24 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
                   <Checkbox
                     checked={lofi.includes(opt)}
                     onChange={() => toggleLofi(opt)}
+                  />
+                }
+                label={opt}
+              />
+            ))}
+          </FormGroup>
+          <Typography sx={{ mt: 2, mb: 1 }}>🚀 SPACE / COSMIC / SURREAL</Typography>
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            Use for psychedelic, surreal, or space-themed visuals.
+          </Typography>
+          <FormGroup>
+            {cosmicOptions.map((opt) => (
+              <FormControlLabel
+                key={opt}
+                control={
+                  <Checkbox
+                    checked={cosmic.includes(opt)}
+                    onChange={() => toggleCosmic(opt)}
                   />
                 }
                 label={opt}
