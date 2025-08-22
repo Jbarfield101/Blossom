@@ -14,7 +14,7 @@ interface Props {
   leadInstrument: string;
   setLeadInstrument: (val: string) => void;
   ambience: string[];
-  setAmbience: (vals: string[]) => void;
+  setAmbience: (updater: (prev: string[]) => string[]) => void;
   ambienceLevel: number;
   setAmbienceLevel: (val: number) => void;
 }
@@ -102,25 +102,22 @@ export default function VibeControls({
       </div>
 
       <div className={styles.panel}>
-        <label className={styles.label} htmlFor="ambience-select">
+        <label className={styles.label}>
           Ambience
           <HelpIcon text="Background ambience sounds" />
         </label>
-        <select
-          id="ambience-select"
-          multiple
-          value={ambience}
-          onChange={(e) =>
-            setAmbience(Array.from(e.target.selectedOptions).map((o) => o.value))
-          }
-          className={styles.input}
-        >
+        <div className={styles.optionGrid}>
           {AMBI.map((a) => (
-            <option key={a} value={a}>
-              {a}
-            </option>
+            <label key={a} className={styles.optionCard}>
+              <span>{a}</span>
+              <input
+                type="checkbox"
+                checked={ambience.includes(a)}
+                onChange={() => setAmbience((prev) => toggle(prev, a))}
+              />
+            </label>
           ))}
-        </select>
+        </div>
         <input
           type="range"
           min={0}
