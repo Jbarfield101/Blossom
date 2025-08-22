@@ -1,6 +1,6 @@
 import { Box, Typography, Tooltip } from '@mui/material';
 import React, { useCallback } from 'react';
-import { statusColors } from '../features/calendar/statusColors';
+import { useStatusColors } from '../features/calendar/statusColors';
 import type { CalendarEvent } from '../features/calendar/types';
 
 interface Props {
@@ -25,6 +25,7 @@ const CalendarDay = React.memo(
     isSelected,
     holiday,
   }: Props) => {
+    const statusColors = useStatusColors();
     if (!day) {
       return <Box sx={{ minHeight: 96, bgcolor: 'grey.50' }} />;
     }

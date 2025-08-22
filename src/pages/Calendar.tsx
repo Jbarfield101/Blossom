@@ -13,6 +13,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -24,7 +25,7 @@ import TagStats from "../components/TagStats";
 import WeekView from "../components/WeekView";
 import AgendaView from "../components/AgendaView";
 import { useCalendar } from "../features/calendar/useCalendar";
-import { statusColors } from "../features/calendar/statusColors";
+import { useStatusColors } from "../features/calendar/statusColors";
 import type { CalendarEvent } from "../features/calendar/types";
 import { toLocalNaive } from "../utils/time";
 
@@ -74,6 +75,8 @@ export default function Calendar() {
   const addEvent = useCalendar((s) => s.addEvent);
   const updateEvent = useCalendar((s) => s.updateEvent);
   const removeEvent = useCalendar((s) => s.removeEvent);
+  const statusColors = useStatusColors();
+  const theme = useTheme();
   const eventsRef = useRef(events);
   useEffect(() => {
     eventsRef.current = events;
@@ -382,7 +385,9 @@ export default function Calendar() {
                             py: 0.25,
                             borderRadius: 1,
                             bgcolor: statusColors[ev.status],
-                            color: "#fff",
+                            color: theme.palette.getContrastText(
+                              statusColors[ev.status]
+                            ),
                             fontSize: 12,
                           }}
                         >
@@ -554,7 +559,9 @@ export default function Calendar() {
                           py: 0.25,
                           borderRadius: 1,
                           bgcolor: statusColors[ev.status],
-                          color: "#fff",
+                          color: theme.palette.getContrastText(
+                            statusColors[ev.status]
+                          ),
                           fontSize: 12,
                         }}
                       >
