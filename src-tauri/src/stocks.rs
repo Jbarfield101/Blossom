@@ -26,6 +26,8 @@ pub struct Quote {
     pub change_percent: f64,
     pub status: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub volume: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
 }
 
@@ -140,6 +142,9 @@ impl Provider for YahooProvider {
             .and_then(|v| v.as_str())
             .unwrap_or("UNKNOWN")
             .to_string();
+        let volume = result
+            .get("regularMarketVolume")
+            .and_then(|v| v.as_u64());
         log::info!(
             "quote {} fetched in {} ms ({} bytes)",
             ticker,
@@ -151,6 +156,7 @@ impl Provider for YahooProvider {
             price,
             change_percent,
             status,
+            volume,
             error: None,
         })
     }
@@ -208,6 +214,7 @@ impl Provider for StubProvider {
             price: 100.0,
             change_percent: 0.0,
             status: "STUB".into(),
+            volume: Some(0),
             error: None,
         })
     }

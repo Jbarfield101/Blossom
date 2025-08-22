@@ -19,7 +19,7 @@ describe('useStocks store', () => {
 
   it('fetches quotes through the backend', async () => {
     (invoke as any).mockResolvedValue({
-      quotes: [{ price: 123, change_percent: 1, status: 'OPEN' }],
+      quotes: [{ price: 123, change_percent: 1, status: 'OPEN', volume: 1000 }],
       series: [{ points: [{ close: 1 }, { close: 2 }, { close: 3 }] }],
       market: { phase: 'OPEN' },
       stale: false,
@@ -31,7 +31,7 @@ describe('useStocks store', () => {
 
   it('captures quote errors from the backend', async () => {
     (invoke as any).mockResolvedValue({
-      quotes: [{ price: 0, change_percent: 0, status: 'CLOSED', error: 'fail' }],
+      quotes: [{ price: 0, change_percent: 0, status: 'CLOSED', volume: 0, error: 'fail' }],
       series: [{ points: [] }],
       market: { phase: 'CLOSED' },
       stale: false,
@@ -50,7 +50,7 @@ describe('useStocks store', () => {
   it('polls for updates when started', async () => {
     vi.useFakeTimers();
     (invoke as any).mockResolvedValue({
-      quotes: [{ price: 100, change_percent: 0, status: 'CLOSED' }],
+      quotes: [{ price: 100, change_percent: 0, status: 'CLOSED', volume: 0 }],
       series: [{ points: [{ close: 100 }] }],
       market: { phase: 'CLOSED' },
       stale: false,
@@ -65,7 +65,7 @@ describe('useStocks store', () => {
   it('ignores duplicate polling requests', async () => {
     vi.useFakeTimers();
     (invoke as any).mockResolvedValue({
-      quotes: [{ price: 100, change_percent: 0, status: 'CLOSED' }],
+      quotes: [{ price: 100, change_percent: 0, status: 'CLOSED', volume: 0 }],
       series: [{ points: [{ close: 100 }] }],
       market: { phase: 'CLOSED' },
       stale: false,

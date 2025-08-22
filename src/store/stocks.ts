@@ -11,6 +11,7 @@ interface Quote {
   changePercent: number;
   history: number[];
   marketStatus: string;
+  volume: number;
   lastFetched: number;
   // Optional error message from backend
   error?: string;
@@ -52,7 +53,7 @@ export const useStocks = create<StockState>((set, get) => ({
     const fetchSym = SYMBOL_MAP[sym] ?? sym;
     try {
       const bundle = await invoke<{
-        quotes: { price: number; change_percent: number; status: string; error?: string }[];
+        quotes: { price: number; change_percent: number; status: string; volume?: number; error?: string }[];
         series: { points: { ts: number; close: number }[] }[];
         market: { phase: string };
         stale: boolean;
@@ -67,6 +68,7 @@ export const useStocks = create<StockState>((set, get) => ({
           [sym]: {
             price: quote?.price ?? 0,
             changePercent: quote?.change_percent ?? 0,
+            volume: quote?.volume ?? 0,
             history,
             marketStatus: market_status,
             lastFetched: Date.now(),
@@ -82,6 +84,7 @@ export const useStocks = create<StockState>((set, get) => ({
           state.quotes[sym] ?? {
             price: NaN,
             changePercent: NaN,
+            volume: 0,
             history: [],
             marketStatus: '',
             lastFetched: Date.now(),
