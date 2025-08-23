@@ -1,11 +1,11 @@
 import argparse
 import json
-import io
 import os
 from typing import List
 
+import numpy as np
 from pydub import AudioSegment
-from gtts import gTTS
+from TTS.api import TTS
 
 from lofi.renderer import render_from_spec
 from lofi.io_utils import ensure_wav_bitdepth
@@ -19,12 +19,46 @@ def tempo_align(seg: AudioSegment, source_bpm: float, target_bpm: float) -> Audi
     return seg._spawn(seg.raw_data, overrides={"frame_rate": new_rate}).set_frame_rate(seg.frame_rate)
 
 
-def tts_audio(text: str) -> AudioSegment:
-    tts = gTTS(text=text)
-    buf = io.BytesIO()
-    tts.write_to_fp(buf)
-    buf.seek(0)
-    return AudioSegment.from_file(buf, format="mp3")
+def tts_audio(
+    text: str,
+    model_path: str,
+    config_path: str,
+    speaker: str | None = None,
+    language: str | None = None,
+) -> AudioSegment:
+    """Synthesize *text* using a Coqui TTS model.
+
+    Parameters
+    ----------
+    text: str
+        The text to synthesize.
+    model_path: str
+        Path to the trained model file.
+    config_path: str
+        Path to the model configuration JSON.
+    speaker: str | None
+        Optional speaker identifier for multi-speaker models.
+    language: str | None
+        Optional language identifier for multi-lingual models.
+
+    Returns
+    -------
+    AudioSegment
+        The generated speech as a 16-bit PCM audio segment.
+    """
+
+    tts = TTS(model_path=model_path, config_path=config_path)
+    wav = tts.tts(text=text, speaker=speaker, language=language)
+
+    audio = np.array(wav)
+    # Normalize to int16 range and build AudioSegment.
+    audio = (audio / np.max(np.abs(audio)) * (2**15 - 1)).astype(np.int16)
+    return AudioSegment(
+        audio.tobytes(),
+        frame_rate=tts.synthesizer.output_sample_rate,
+        sample_width=2,
+        channels=1,
+    )
 
 
 def main() -> None:
@@ -33,13 +67,25 @@ def main() -> None:
     parser.add_argument("--out", required=True, help="Output WAV path for the mix")
     parser.add_argument("--crossfade-ms", type=int, default=5000, help="Crossfade duration in ms")
     parser.add_argument("--host", action="store_true", help="Insert radio host voice intros")
+    parser.add_argument("--tts-model", required=True, help="Path to Coqui TTS model")
+    parser.add_argument("--tts-config", required=True, help="Path to Coqui TTS config")
+    parser.add_argument("--tts-speaker", help="Speaker ID for multi-speaker models")
+    parser.add_argument("--tts-language", help="Language ID for multi-lingual models")
     args = parser.parse_args()
 
     segments: List[AudioSegment] = []
     target_bpm = None
 
     if args.host:
-        segments.append(tts_audio("Welcome back to Blossom Radio."))
+        segments.append(
+            tts_audio(
+                "Welcome back to Blossom Radio.",
+                args.tts_model,
+                args.tts_config,
+                args.tts_speaker,
+                args.tts_language,
+            )
+        )
 
     for idx, path in enumerate(args.specs):
         with open(path) as f:
@@ -51,7 +97,15 @@ def main() -> None:
             song = tempo_align(song, bpm, target_bpm)
         if args.host:
             intro = spec.get("intro") or f"Now playing track {idx + 1}."
-            segments.append(tts_audio(intro))
+            segments.append(
+                tts_audio(
+                    intro,
+                    args.tts_model,
+                    args.tts_config,
+                    args.tts_speaker,
+                    args.tts_language,
+                )
+            )
         segments.append(song)
 
     if not segments:
