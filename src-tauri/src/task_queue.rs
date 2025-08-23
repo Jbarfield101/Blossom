@@ -38,6 +38,13 @@ pub enum TaskCommand {
         path: String,
         world: String,
     },
+    ParseSpellPdf {
+        #[serde(default = "crate::commands::conda_python_string")]
+        py: String,
+        #[serde(default = "crate::commands::pdf_tools_path_string")]
+        script: String,
+        path: String,
+    },
     ParseLorePdf {
         #[serde(default = "crate::commands::conda_python_string")]
         py: String,
@@ -212,6 +219,25 @@ impl TaskQueue {
                                     let output = PCommand::new(&py)
                                         .arg(&script)
                                         .arg("npcs")
+                                        .arg(&path)
+                                        .output()
+                                        .map_err(|e| format!("Failed to start python: {e}"))?;
+                                    if !output.status.success() {
+                                        let stderr = String::from_utf8_lossy(&output.stderr);
+                                        Err(format!(
+                                            "Python exited with status {}:\n{}",
+                                            output.status, stderr
+                                        ))
+                                    } else {
+                                        let stdout = String::from_utf8_lossy(&output.stdout);
+                                        serde_json::from_str::<Value>(&stdout)
+                                            .map_err(|e| e.to_string())
+                                    }
+                                }
+                                TaskCommand::ParseSpellPdf { py, script, path } => {
+                                    let output = PCommand::new(&py)
+                                        .arg(&script)
+                                        .arg("spells")
                                         .arg(&path)
                                         .output()
                                         .map_err(|e| format!("Failed to start python: {e}"))?;

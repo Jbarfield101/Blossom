@@ -1,51 +1,56 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
+import { useTasks } from "../../store/tasks";
+import type { SpellData } from "./types";
 
-interface SpellRecord {
+interface SpellIndexEntry {
+  id: string;
   name: string;
-  description: string;
 }
-
-interface ParsedSpell extends SpellRecord {
-  origin: "official" | "custom";
-}
-
-const OFFICIAL_SPELLS = new Set([
-  "Fireball",
-  "Magic Missile",
-  "Cure Wounds",
-]);
 
 export default function SpellPdfUpload() {
-  const [spells, setSpells] = useState<ParsedSpell[]>([]);
+  const enqueueTask = useTasks((s) => s.enqueueTask);
+  const tasks = useTasks((s) => s.tasks);
+  const [taskId, setTaskId] = useState<number | null>(null);
 
   async function handleUpload() {
     const selected = await open({ filters: [{ name: "PDF", extensions: ["pdf"] }] });
     if (typeof selected === "string") {
-      const extracted = await invoke<SpellRecord[]>("parse_spell_pdf", { path: selected });
-      const classified = extracted.map((s) => ({
-        ...s,
-        origin: OFFICIAL_SPELLS.has(s.name) ? "official" : "custom",
-      }));
-      setSpells(classified);
+      const id = await enqueueTask("Import Spell PDF", {
+        ParseSpellPdf: { path: selected },
+      });
+      setTaskId(id);
     }
   }
+
+  useEffect(() => {
+    if (!taskId) return;
+    const task = tasks[taskId];
+    if (task && task.status === "completed" && Array.isArray(task.result)) {
+      const parsed = task.result as SpellData[];
+      (async () => {
+        const existing = await invoke<SpellIndexEntry[]>("list_spells");
+        for (const spell of parsed) {
+          const dup = existing.find((e) => e.id === spell.id || e.name === spell.name);
+          let overwrite = true;
+          if (dup) {
+            overwrite = window.confirm(`Spell ${spell.name} exists. Overwrite?`);
+          }
+          if (overwrite) {
+            await invoke("save_spell", { spell, overwrite });
+          }
+        }
+      })();
+    }
+  }, [taskId, tasks]);
 
   return (
     <div>
       <button type="button" onClick={handleUpload}>
         Upload Spell PDF
       </button>
-      {spells.length > 0 && (
-        <ul>
-          {spells.map((s) => (
-            <li key={s.name}>
-              {s.name} – {s.origin}
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }
+
