@@ -22,7 +22,8 @@ export class CombatEngine {
         weapon.diceSides,
         abilityMod + (weapon.modifier ?? 0)
       );
-      return { ...attack, damage: damage.total };
+      const totalDamage = attack.critical ? damage.total * 2 : damage.total;
+      return { ...attack, damage: totalDamage };
     }
     return { ...attack, damage: 0 };
   }
