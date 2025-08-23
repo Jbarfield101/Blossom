@@ -1,8 +1,9 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import ImagePromptGenerator from './ImagePromptGenerator';
 
 describe('ImagePromptGenerator', () => {
+  afterEach(cleanup);
   it('persists selections after generating and clears on reset', () => {
     const onGenerate = vi.fn();
     render(<ImagePromptGenerator onGenerate={onGenerate} />);
@@ -40,5 +41,25 @@ describe('ImagePromptGenerator', () => {
     expect(polaroid).not.toBeChecked();
     expect(macro).not.toBeChecked();
     expect(ghibli).not.toBeChecked();
+  });
+
+  it('updates preview as selections change', () => {
+    render(<ImagePromptGenerator onGenerate={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /image prompt/i }));
+
+    const textInput = screen.getByPlaceholderText(/describe the image/i);
+    fireEvent.change(textInput, { target: { value: 'mountain' } });
+    const preview = screen.getByLabelText(/preview/i);
+    expect(preview).toHaveValue('mountain');
+
+    fireEvent.click(screen.getByLabelText(/Shot on Polaroid/i));
+    expect(preview).toHaveValue(
+      'mountain Shot on Polaroid (vintage, instant photo look)'
+    );
+
+    fireEvent.click(screen.getByLabelText(/Macro lens photography/i));
+    expect(preview).toHaveValue(
+      'mountain Shot on Polaroid (vintage, instant photo look) Macro lens photography'
+    );
   });
 });
