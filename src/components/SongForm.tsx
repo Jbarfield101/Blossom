@@ -252,10 +252,32 @@ export default function SongForm() {
   }, [instruments]);
 
   // Album mode
+  const storedAlbumMeta = useMemo(() => {
+    try {
+      const raw = localStorage.getItem("albumMeta");
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  }, []);
   const [albumMode, setAlbumMode] = useState(false);
   const [trackCount, setTrackCount] = useState(6);
-  const [albumName, setAlbumName] = useState("");
-  const [trackNames, setTrackNames] = useState<string[]>([]);
+  const [albumName, setAlbumName] = useState<string>(
+    storedAlbumMeta.albumName ?? ""
+  );
+  const [trackNames, setTrackNames] = useState<string[]>(
+    storedAlbumMeta.trackNames ?? []
+  );
+  const [albumImagePrompt, setAlbumImagePrompt] = useState<string>(
+    storedAlbumMeta.imagePrompt ?? ""
+  );
+  const [albumImageUrl, setAlbumImageUrl] = useState<string>(
+    storedAlbumMeta.imagePrompt
+      ? `https://image.pollinations.ai/prompt/${encodeURIComponent(
+          storedAlbumMeta.imagePrompt
+        )}`
+      : ""
+  );
 
   useEffect(() => {
     setTrackNames((prev) => {
@@ -266,6 +288,17 @@ export default function SongForm() {
       return arr.slice(0, trackCount);
     });
   }, [trackCount]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "albumMeta",
+      JSON.stringify({
+        albumName,
+        trackNames,
+        imagePrompt: albumImagePrompt,
+      })
+    );
+  }, [albumName, trackNames, albumImagePrompt]);
 
   const albumReady =
     albumName.trim() !== "" &&
@@ -441,6 +474,30 @@ export default function SongForm() {
     }
   }
 
+  async function generateAlbumArtPrompt(name: string) {
+    try {
+      const reply: string = await invoke("general_chat", {
+        messages: [
+          {
+            role: "system",
+            content:
+              "You craft vivid, concise prompts for album cover images. Respond with only the prompt.",
+          },
+          { role: "user", content: `Album theme: ${name}` },
+        ],
+      });
+      const line = reply.split("\n")[0].trim();
+      if (line) {
+        setAlbumImagePrompt(line);
+        setAlbumImageUrl(
+          `https://image.pollinations.ai/prompt/${encodeURIComponent(line)}`
+        );
+      }
+    } catch (e: any) {
+      setErr(e?.message || String(e));
+    }
+  }
+
   async function generateTitle() {
     try {
       setGenTitleLoading(true);
@@ -459,9 +516,13 @@ export default function SongForm() {
             },
           ],
         });
+        let artName = albumName;
         try {
           const parsed = JSON.parse(reply);
-          if (parsed.album) setAlbumName(parsed.album);
+          if (parsed.album) {
+            setAlbumName(parsed.album);
+            artName = parsed.album;
+          }
           if (Array.isArray(parsed.tracks)) {
             setTrackNames((prev) => {
               const updated = [...parsed.tracks.slice(0, trackCount)];
@@ -474,6 +535,7 @@ export default function SongForm() {
           const lines = reply.split("\n").filter(Boolean);
           if (lines.length > 0) {
             setAlbumName(lines[0]);
+            artName = lines[0];
             setTrackNames((prev) => {
               const updated = lines.slice(1, trackCount + 1);
               return updated.length < trackCount
@@ -482,6 +544,7 @@ export default function SongForm() {
             });
           }
         }
+        await generateAlbumArtPrompt(artName);
       } else {
         const reply: string = await invoke("general_chat", {
           messages: [
@@ -1262,6 +1325,19 @@ export default function SongForm() {
               Copy path
             </button>
             <HelpIcon text="Open the output folder, listen, or share the file path" />
+          </div>
+        )}
+        {albumMode && albumImagePrompt && (
+          <div className={styles.albumArt}>
+            <div className={styles.small}>Album art prompt:</div>
+            <div className={styles.promptBox}>{albumImagePrompt}</div>
+            {albumImageUrl && (
+              <img
+                src={albumImageUrl}
+                alt="Album art preview"
+                className={styles.artPreview}
+              />
+            )}
           </div>
         )}
       </div>

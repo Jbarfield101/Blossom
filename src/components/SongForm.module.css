@@ -175,3 +175,20 @@
   flex-wrap: wrap;
   align-items: center;
 }
+
+.albumArt {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.promptBox {
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.artPreview {
+  margin-top: 8px;
+  max-width: 100%;
+  border-radius: 8px;
+}

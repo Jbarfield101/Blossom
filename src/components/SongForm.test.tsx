@@ -350,5 +350,34 @@ describe('SongForm', () => {
       expect(call[1].meta.track_names).toEqual(['T1', 'T2', 'T3']);
     });
   });
+
+  it('generates image prompt for album', async () => {
+    let gcCount = 0;
+    (invoke as any).mockImplementation((cmd: string) => {
+      if (cmd === 'start_ollama') return Promise.resolve();
+      if (cmd === 'general_chat') {
+        gcCount++;
+        if (gcCount === 1)
+          return Promise.resolve(
+            JSON.stringify({ album: 'Cool Album', tracks: ['T1', 'T2', 'T3'] })
+          );
+        return Promise.resolve('a cozy night cityscape with neon lights');
+      }
+      return Promise.resolve('');
+    });
+
+    render(<SongForm />);
+    fireEvent.click(screen.getByLabelText(/album mode/i));
+    fireEvent.click(screen.getByText(/generate album titles/i));
+
+    await screen.findByText(/album art prompt/i);
+    expect(
+      screen.getByText('a cozy night cityscape with neon lights')
+    ).toBeInTheDocument();
+    const img = screen.getByAltText('Album art preview') as HTMLImageElement;
+    expect(img.src).toContain(
+      'a%20cozy%20night%20cityscape%20with%20neon%20lights'
+    );
+  });
 });
 
