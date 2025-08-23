@@ -11,6 +11,30 @@ from lofi.renderer import render_from_spec
 from lofi.io_utils import ensure_wav_bitdepth
 
 
+def _load_config() -> dict:
+    """Load configuration defaults for the CLI.
+
+    Search order:
+    1. Path specified by the ``DJ_MIX_CONFIG`` environment variable.
+    2. ``~/.config/dj_mix.json`` in the user's home directory.
+    3. ``dj_mix_config.json`` next to this script.
+    """
+
+    candidates = [
+        os.environ.get("DJ_MIX_CONFIG"),
+        os.path.expanduser("~/.config/dj_mix.json"),
+        os.path.join(os.path.dirname(__file__), "dj_mix_config.json"),
+    ]
+    for path in candidates:
+        if path and os.path.isfile(path):
+            try:
+                with open(path) as f:
+                    return json.load(f)
+            except Exception:
+                return {}
+    return {}
+
+
 def tempo_align(seg: AudioSegment, source_bpm: float, target_bpm: float) -> AudioSegment:
     if source_bpm <= 0 or target_bpm <= 0 or source_bpm == target_bpm:
         return seg
@@ -62,16 +86,54 @@ def tts_audio(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate a DJ-style mix from multiple SongSpec JSON files.")
-    parser.add_argument("--specs", nargs="+", required=True, help="Paths to song spec JSON files")
+    config = _load_config()
+
+    default_model = os.environ.get("TTS_MODEL_PATH") or config.get("tts_model_path")
+    default_config = os.environ.get("TTS_CONFIG_PATH") or config.get("tts_config_path")
+    default_speaker = os.environ.get("TTS_SPEAKER") or config.get("tts_speaker")
+    default_language = os.environ.get("TTS_LANGUAGE") or config.get("tts_language")
+
+    parser = argparse.ArgumentParser(
+        description="Generate a DJ-style mix from multiple SongSpec JSON files."
+    )
+    parser.add_argument(
+        "--specs", nargs="+", required=True, help="Paths to song spec JSON files"
+    )
     parser.add_argument("--out", required=True, help="Output WAV path for the mix")
-    parser.add_argument("--crossfade-ms", type=int, default=5000, help="Crossfade duration in ms")
-    parser.add_argument("--host", action="store_true", help="Insert radio host voice intros")
-    parser.add_argument("--tts-model", required=True, help="Path to Coqui TTS model")
-    parser.add_argument("--tts-config", required=True, help="Path to Coqui TTS config")
-    parser.add_argument("--tts-speaker", help="Speaker ID for multi-speaker models")
-    parser.add_argument("--tts-language", help="Language ID for multi-lingual models")
+    parser.add_argument(
+        "--crossfade-ms", type=int, default=5000, help="Crossfade duration in ms"
+    )
+    parser.add_argument(
+        "--host", action="store_true", help="Insert radio host voice intros"
+    )
+    parser.add_argument(
+        "--tts-model-path",
+        "--tts-model",
+        dest="tts_model_path",
+        default=default_model,
+        help="Path to Coqui TTS model",
+    )
+    parser.add_argument(
+        "--tts-config",
+        default=default_config,
+        help="Path to Coqui TTS config",
+    )
+    parser.add_argument(
+        "--tts-speaker",
+        default=default_speaker,
+        help="Speaker ID for multi-speaker models",
+    )
+    parser.add_argument(
+        "--tts-language",
+        default=default_language,
+        help="Language ID for multi-lingual models",
+    )
     args = parser.parse_args()
+
+    if not args.tts_model_path or not args.tts_config:
+        parser.error(
+            "TTS model path and config are required. Provide via CLI, env vars, or config file."
+        )
 
     segments: List[AudioSegment] = []
     target_bpm = None
@@ -80,7 +142,7 @@ def main() -> None:
         segments.append(
             tts_audio(
                 "Welcome back to Blossom Radio.",
-                args.tts_model,
+                args.tts_model_path,
                 args.tts_config,
                 args.tts_speaker,
                 args.tts_language,
@@ -100,7 +162,7 @@ def main() -> None:
             segments.append(
                 tts_audio(
                     intro,
-                    args.tts_model,
+                    args.tts_model_path,
                     args.tts_config,
                     args.tts_speaker,
                     args.tts_language,
