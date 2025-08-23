@@ -168,6 +168,10 @@ pub struct AppConfig {
     pub python_path: Option<String>,
     pub comfy_path: Option<String>,
     pub alphavantage_api_key: Option<String>,
+    pub tts_model_path: Option<String>,
+    pub tts_config_path: Option<String>,
+    pub tts_speaker: Option<String>,
+    pub tts_language: Option<String>,
 }
 
 fn config_path() -> PathBuf {
@@ -211,6 +215,10 @@ pub async fn load_paths() -> Result<AppConfig, String> {
 pub async fn save_paths(
     python_path: Option<String>,
     comfy_path: Option<String>,
+    tts_model_path: Option<String>,
+    tts_config_path: Option<String>,
+    tts_speaker: Option<String>,
+    tts_language: Option<String>,
 ) -> Result<(), String> {
     let mut cfg = load_config();
     if python_path.is_some() {
@@ -218,6 +226,18 @@ pub async fn save_paths(
     }
     if comfy_path.is_some() {
         cfg.comfy_path = comfy_path;
+    }
+    if tts_model_path.is_some() {
+        cfg.tts_model_path = tts_model_path;
+    }
+    if tts_config_path.is_some() {
+        cfg.tts_config_path = tts_config_path;
+    }
+    if tts_speaker.is_some() {
+        cfg.tts_speaker = tts_speaker;
+    }
+    if tts_language.is_some() {
+        cfg.tts_language = tts_language;
     }
     save_config(&cfg)
 }
@@ -1339,6 +1359,20 @@ fn transcribe_script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
         .join("transcribe.py")
 }
 
+fn dj_mix_script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
+    if let Ok(cwd) = std::env::current_dir() {
+        let dev = cwd.join("src-tauri").join("python").join("dj_mix.py");
+        if dev.exists() {
+            return dev;
+        }
+    }
+    app.path()
+        .resource_dir()
+        .expect("resource dir")
+        .join("python")
+        .join("dj_mix.py")
+}
+
 fn run_transcribe_script<R: Runtime>(app: &AppHandle<R>, audio: &Path) -> Result<String, String> {
     let py = conda_python();
     if !py.exists() {
@@ -1406,6 +1440,59 @@ pub async fn transcribe_audio<R: Runtime>(
     save_transcripts(&entries)?;
 
     Ok(text)
+}
+
+#[tauri::command]
+pub async fn dj_mix<R: Runtime>(
+    app: AppHandle<R>,
+    specs: Vec<String>,
+    out: String,
+    host: bool,
+    tts_model_path: Option<String>,
+    tts_config: Option<String>,
+    tts_speaker: Option<String>,
+    tts_language: Option<String>,
+) -> Result<(), String> {
+    let py = conda_python();
+    if !py.exists() {
+        return Err(format!("Python not found at {}", py.display()));
+    }
+    let script = dj_mix_script_path(&app);
+    if !script.exists() {
+        return Err(format!("Script not found at {}", script.display()));
+    }
+    let mut cmd = PCommand::new(py);
+    cmd.arg(&script)
+        .arg("--specs")
+        .args(&specs)
+        .arg("--out")
+        .arg(&out);
+    if host {
+        cmd.arg("--host");
+    }
+    if let Some(p) = tts_model_path {
+        cmd.arg("--tts-model-path").arg(p);
+    }
+    if let Some(p) = tts_config {
+        cmd.arg("--tts-config").arg(p);
+    }
+    if let Some(p) = tts_speaker {
+        cmd.arg("--tts-speaker").arg(p);
+    }
+    if let Some(p) = tts_language {
+        cmd.arg("--tts-language").arg(p);
+    }
+    let output = cmd
+        .output()
+        .map_err(|e| format!("Failed to start python: {e}"))?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!(
+            "Python exited with status {}:\n{}",
+            output.status, stderr
+        ));
+    }
+    Ok(())
 }
 
 #[derive(Serialize)]

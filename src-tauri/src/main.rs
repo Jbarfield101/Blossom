@@ -46,6 +46,7 @@ fn main() {
             commands::run_lofi_song,
             commands::generate_album,
             commands::cancel_album,
+            commands::dj_mix,
             // ComfyUI:
             commands::comfy_status,
             commands::comfy_start,

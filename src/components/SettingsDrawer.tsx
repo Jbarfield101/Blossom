@@ -140,7 +140,20 @@ function PathField({
 }
 
 export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
-  const { pythonPath, setPythonPath, comfyPath, setComfyPath } = usePaths();
+  const {
+    pythonPath,
+    setPythonPath,
+    comfyPath,
+    setComfyPath,
+    ttsModelPath,
+    setTtsModelPath,
+    ttsConfigPath,
+    setTtsConfigPath,
+    ttsSpeaker,
+    setTtsSpeaker,
+    ttsLanguage,
+    setTtsLanguage,
+  } = usePaths();
   const { folder, setFolder } = useOutput();
   const {
     bpm,
@@ -165,12 +178,20 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
 
   const [pythonDraft, setPythonDraft] = useState(pythonPath);
   const [comfyDraft, setComfyDraft] = useState(comfyPath);
+  const [ttsModelDraft, setTtsModelDraft] = useState(ttsModelPath);
+  const [ttsConfigDraft, setTtsConfigDraft] = useState(ttsConfigPath);
+  const [ttsSpeakerDraft, setTtsSpeakerDraft] = useState(ttsSpeaker);
+  const [ttsLanguageDraft, setTtsLanguageDraft] = useState(ttsLanguage);
   const [folderDraft, setFolderDraft] = useState(folder);
   const [themeDraft, setThemeDraft] = useState<Theme>(theme);
   const [modeDraft, setModeDraft] = useState(mode);
 
   useEffect(() => setPythonDraft(pythonPath), [pythonPath]);
   useEffect(() => setComfyDraft(comfyPath), [comfyPath]);
+  useEffect(() => setTtsModelDraft(ttsModelPath), [ttsModelPath]);
+  useEffect(() => setTtsConfigDraft(ttsConfigPath), [ttsConfigPath]);
+  useEffect(() => setTtsSpeakerDraft(ttsSpeaker), [ttsSpeaker]);
+  useEffect(() => setTtsLanguageDraft(ttsLanguage), [ttsLanguage]);
   useEffect(() => setFolderDraft(folder), [folder]);
   useEffect(() => setThemeDraft(theme), [theme]);
   useEffect(() => setModeDraft(mode), [mode]);
@@ -191,12 +212,40 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
             onChange={setComfyDraft}
             directory
           />
+          <PathField
+            label="TTS Model Path"
+            value={ttsModelDraft}
+            onChange={setTtsModelDraft}
+          />
+          <PathField
+            label="TTS Config Path"
+            value={ttsConfigDraft}
+            onChange={setTtsConfigDraft}
+          />
+          <TextField
+            label="TTS Speaker"
+            value={ttsSpeakerDraft}
+            onChange={(e) => setTtsSpeakerDraft(e.target.value)}
+            fullWidth
+            sx={{ mt: 1 }}
+          />
+          <TextField
+            label="TTS Language"
+            value={ttsLanguageDraft}
+            onChange={(e) => setTtsLanguageDraft(e.target.value)}
+            fullWidth
+            sx={{ mt: 1 }}
+          />
           <Button
             variant="contained"
             sx={{ mt: 2 }}
             onClick={() => {
               setPythonPath(pythonDraft);
               setComfyPath(comfyDraft);
+              setTtsModelPath(ttsModelDraft);
+              setTtsConfigPath(ttsConfigDraft);
+              setTtsSpeaker(ttsSpeakerDraft);
+              setTtsLanguage(ttsLanguageDraft);
               setPathsSaved(true);
             }}
           >
