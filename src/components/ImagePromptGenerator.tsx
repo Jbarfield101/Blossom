@@ -95,7 +95,7 @@ const cosmicOptions = [
 
 export default function ImagePromptGenerator({ onGenerate }: Props) {
   const [open, setOpen] = useState(false);
-  const [text, setText] = useState("");
+  const [basePrompt, setBasePrompt] = useState("");
   const [camera, setCamera] = useState<string | null>(null);
   const [lens, setLens] = useState<string | null>(null);
   const [effects, setEffects] = useState<string[]>([]);
@@ -104,7 +104,7 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
   const [cosmic, setCosmic] = useState<string[]>([]);
 
   const preview = useMemo(() => {
-    let prompt = text;
+    let prompt = basePrompt;
     if (camera) prompt += ` ${camera}`;
     if (lens) prompt += ` ${lens}`;
     if (effects.length) prompt += ` ${effects.join(" ")}`;
@@ -112,7 +112,7 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
     if (lofi.length) prompt += ` ${lofi.join(" ")}`;
     if (cosmic.length) prompt += ` ${cosmic.join(" ")}`;
     return prompt.trim();
-  }, [text, camera, lens, effects, cinematic, lofi, cosmic]);
+  }, [basePrompt, camera, lens, effects, cinematic, lofi, cosmic]);
 
   const toggleCamera = (opt: string) => {
     setCamera(opt);
@@ -147,11 +147,18 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
   };
 
   const handleSend = () => {
-    onGenerate(preview);
+    let prompt = basePrompt;
+    if (camera) prompt += ` ${camera}`;
+    if (lens) prompt += ` ${lens}`;
+    if (effects.length) prompt += ` ${effects.join(" ")}`;
+    if (cinematic.length) prompt += ` ${cinematic.join(" ")}`;
+    if (lofi.length) prompt += ` ${lofi.join(" ")}`;
+    if (cosmic.length) prompt += ` ${cosmic.join(" ")}`;
+    onGenerate(prompt.trim());
   };
 
   const handleClear = () => {
-    setText("");
+    setBasePrompt("");
     setCamera(null);
     setLens(null);
     setEffects([]);
@@ -170,9 +177,9 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
           <TextField
             fullWidth
             multiline
-            placeholder="Describe the image"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
+            placeholder="Base prompt"
+            value={basePrompt}
+            onChange={(e) => setBasePrompt(e.target.value)}
           />
           <Typography sx={{ mt: 2, mb: 1 }}>
             📸 Camera Style / Photographic Aesthetic
@@ -280,7 +287,7 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
             sx={{ mt: 2 }}
           />
           <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-            <Button onClick={handleSend} disabled={!text.trim()}>
+            <Button onClick={handleSend} disabled={!basePrompt.trim()}>
               Generate
             </Button>
             <Button variant="outlined" onClick={handleClear}>

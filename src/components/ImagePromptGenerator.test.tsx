@@ -9,8 +9,8 @@ describe('ImagePromptGenerator', () => {
     render(<ImagePromptGenerator onGenerate={onGenerate} />);
     fireEvent.click(screen.getByRole('button', { name: /image prompt/i }));
 
-    const textInput = screen.getByPlaceholderText(/describe the image/i);
-    fireEvent.change(textInput, { target: { value: 'sunset' } });
+    const baseInput = screen.getByPlaceholderText(/base prompt/i);
+    fireEvent.change(baseInput, { target: { value: 'sunset' } });
 
     const polaroid = screen.getByLabelText(/Shot on Polaroid/i);
     fireEvent.click(polaroid);
@@ -30,14 +30,14 @@ describe('ImagePromptGenerator', () => {
     );
 
     // State should persist after generating
-    expect(textInput).toHaveValue('sunset');
+    expect(baseInput).toHaveValue('sunset');
     expect(polaroid).toBeChecked();
     expect(macro).toBeChecked();
     expect(ghibli).toBeChecked();
 
     // Reset clears all selections
     fireEvent.click(screen.getByRole('button', { name: /reset/i }));
-    expect(textInput).toHaveValue('');
+    expect(baseInput).toHaveValue('');
     expect(polaroid).not.toBeChecked();
     expect(macro).not.toBeChecked();
     expect(ghibli).not.toBeChecked();
@@ -47,8 +47,8 @@ describe('ImagePromptGenerator', () => {
     render(<ImagePromptGenerator onGenerate={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: /image prompt/i }));
 
-    const textInput = screen.getByPlaceholderText(/describe the image/i);
-    fireEvent.change(textInput, { target: { value: 'mountain' } });
+    const baseInput = screen.getByPlaceholderText(/base prompt/i);
+    fireEvent.change(baseInput, { target: { value: 'mountain' } });
     const preview = screen.getByLabelText(/preview/i);
     expect(preview).toHaveValue('mountain');
 
@@ -60,6 +60,24 @@ describe('ImagePromptGenerator', () => {
     fireEvent.click(screen.getByLabelText(/Macro lens photography/i));
     expect(preview).toHaveValue(
       'mountain Shot on Polaroid (vintage, instant photo look) Macro lens photography'
+    );
+  });
+
+  it('combines base prompt with modifiers on generate', () => {
+    const onGenerate = vi.fn();
+    render(<ImagePromptGenerator onGenerate={onGenerate} />);
+    fireEvent.click(screen.getByRole('button', { name: /image prompt/i }));
+
+    const baseInput = screen.getByPlaceholderText(/base prompt/i);
+    fireEvent.change(baseInput, { target: { value: 'forest' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /generate/i }));
+    expect(onGenerate).toHaveBeenCalledWith('forest');
+
+    fireEvent.click(screen.getByLabelText(/Shot on Polaroid/i));
+    fireEvent.click(screen.getByRole('button', { name: /generate/i }));
+    expect(onGenerate).toHaveBeenLastCalledWith(
+      'forest Shot on Polaroid (vintage, instant photo look)'
     );
   });
 });
