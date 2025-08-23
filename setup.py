@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='blossom-audio',
-    version='0.1.5',
+    version='0.1.8',
     install_requires=[
         'scipy>=1.9.0',
         'pyloudnorm>=0.1.0',
