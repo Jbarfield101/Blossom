@@ -1,10 +1,10 @@
-import { Character } from "../characters";
+import { Character, type Ability } from "../characters";
 import { attackRoll, calculateDamage } from "./core";
 
 export interface Weapon {
   diceCount: number;
   diceSides: number;
-  ability: string;
+  ability: Ability;
   modifier?: number;
 }
 

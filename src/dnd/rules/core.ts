@@ -1,9 +1,9 @@
-import { Character } from "../characters";
+import { Character, type Ability } from "../characters";
 import { rollDice } from "./dice";
 
 export function abilityCheck(
   character: Character,
-  ability: string,
+  ability: Ability,
   dc: number
 ) {
   const roll = rollDice(20);
@@ -14,7 +14,7 @@ export function abilityCheck(
 
 export function attackRoll(
   attacker: Character,
-  ability: string,
+  ability: Ability,
   targetAC: number
 ) {
   const roll = rollDice(20);
@@ -38,7 +38,7 @@ export function calculateDamage(
 
 export function savingThrow(
   character: Character,
-  ability: string,
+  ability: Ability,
   dc: number
 ) {
   const roll = rollDice(20);

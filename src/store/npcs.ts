@@ -1,13 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { invoke } from '@tauri-apps/api/core';
+import type { Ability } from '../dnd/characters';
 
 export interface NPC {
   id: string;
   name: string;
   race: string;
   class: string;
-  abilities?: Record<string, number>;
+  abilities?: Record<Ability, number>;
   level?: number;
   hp?: number;
   inventory?: string[];

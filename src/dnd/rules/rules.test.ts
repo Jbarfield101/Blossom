@@ -11,7 +11,14 @@ import * as dice from "./dice";
 
 describe("dnd rules", () => {
   const baseChar: Character = {
-    abilities: { strength: 3, dexterity: 2 },
+    abilities: {
+      strength: 3,
+      dexterity: 2,
+      constitution: 0,
+      intelligence: 0,
+      wisdom: 0,
+      charisma: 0,
+    },
     class: "fighter",
     level: 1,
     hp: 10,

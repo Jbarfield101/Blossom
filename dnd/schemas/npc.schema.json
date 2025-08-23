@@ -96,6 +96,16 @@
           "type": "object",
           "additionalProperties": {
             "type": "number"
+          },
+          "propertyNames": {
+            "enum": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "intelligence",
+              "wisdom",
+              "charisma"
+            ]
           }
         },
         "level": {

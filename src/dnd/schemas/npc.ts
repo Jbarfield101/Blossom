@@ -1,10 +1,27 @@
 import { z } from "zod";
+import type { Ability } from "../characters";
 
 export const zVoice = z.object({
   style: z.string().min(1),
   provider: z.string().min(1),
   preset: z.string().min(1),
 });
+
+const abilities: [
+  Ability,
+  Ability,
+  Ability,
+  Ability,
+  Ability,
+  Ability,
+] = [
+  "strength",
+  "dexterity",
+  "constitution",
+  "intelligence",
+  "wisdom",
+  "charisma",
+];
 
 export const zNpc = z.object({
   id: z.string().min(1),
@@ -23,7 +40,7 @@ export const zNpc = z.object({
   sections: z.record(z.unknown()).optional(),
   statblock: z.record(z.unknown()),
   tags: z.array(z.string()).nonempty(),
-  abilities: z.record(z.number()).optional(),
+  abilities: z.record(z.enum(abilities), z.number()).optional(),
   level: z.number().int().min(1).optional(),
   hp: z.number().int().min(0).optional(),
   inventory: z.array(z.string()).optional(),
