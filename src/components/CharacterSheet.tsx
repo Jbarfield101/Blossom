@@ -34,6 +34,8 @@ export default function CharacterSheet() {
       spellSlots: {},
     }
   );
+  const [levelError, setLevelError] = useState(false);
+  const [hpError, setHpError] = useState(false);
 
   const updateAbility = (key: Ability, value: number) =>
     setCharacterState((prev) => ({
@@ -57,23 +59,39 @@ export default function CharacterSheet() {
         label="Level"
         type="number"
         value={character.level}
-        onChange={(e) =>
+        error={levelError}
+        helperText={levelError ? 'Enter a valid level' : undefined}
+        onChange={(e) => {
+          const parsed = parseInt(e.target.value, 10);
+          if (Number.isNaN(parsed)) {
+            setLevelError(true);
+            return;
+          }
+          setLevelError(false);
           setCharacterState({
             ...character,
-            level: parseInt(e.target.value, 10) || 0,
-          })
-        }
+            level: Math.max(0, parsed),
+          });
+        }}
       />
       <TextField
         label="HP"
         type="number"
         value={character.hp}
-        onChange={(e) =>
+        error={hpError}
+        helperText={hpError ? 'Enter a valid HP' : undefined}
+        onChange={(e) => {
+          const parsed = parseInt(e.target.value, 10);
+          if (Number.isNaN(parsed)) {
+            setHpError(true);
+            return;
+          }
+          setHpError(false);
           setCharacterState({
             ...character,
-            hp: parseInt(e.target.value, 10) || 0,
-          })
-        }
+            hp: Math.max(0, parsed),
+          });
+        }}
       />
       <Typography variant="h6">Abilities</Typography>
       <Stack direction="row" spacing={1}>
