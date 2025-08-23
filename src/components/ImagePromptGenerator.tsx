@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -103,6 +103,17 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
   const [lofi, setLofi] = useState<string[]>([]);
   const [cosmic, setCosmic] = useState<string[]>([]);
 
+  const preview = useMemo(() => {
+    let prompt = text;
+    if (camera) prompt += ` ${camera}`;
+    if (lens) prompt += ` ${lens}`;
+    if (effects.length) prompt += ` ${effects.join(" ")}`;
+    if (cinematic.length) prompt += ` ${cinematic.join(" ")}`;
+    if (lofi.length) prompt += ` ${lofi.join(" ")}`;
+    if (cosmic.length) prompt += ` ${cosmic.join(" ")}`;
+    return prompt.trim();
+  }, [text, camera, lens, effects, cinematic, lofi, cosmic]);
+
   const toggleCamera = (opt: string) => {
     setCamera(opt);
   };
@@ -136,14 +147,7 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
   };
 
   const handleSend = () => {
-    let prompt = text;
-    if (camera) prompt += ` ${camera}`;
-    if (lens) prompt += ` ${lens}`;
-    if (effects.length) prompt += ` ${effects.join(" ")}`;
-    if (cinematic.length) prompt += ` ${cinematic.join(" ")}`;
-    if (lofi.length) prompt += ` ${lofi.join(" ")}`;
-    if (cosmic.length) prompt += ` ${cosmic.join(" ")}`;
-    onGenerate(prompt.trim());
+    onGenerate(preview);
   };
 
   const handleClear = () => {
@@ -254,19 +258,27 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
             Use for psychedelic, surreal, or space-themed visuals.
           </Typography>
           <FormGroup>
-            {cosmicOptions.map((opt) => (
-              <FormControlLabel
-                key={opt}
-                control={
-                  <Checkbox
-                    checked={cosmic.includes(opt)}
-                    onChange={() => toggleCosmic(opt)}
-                  />
-                }
-                label={opt}
-              />
-            ))}
-          </FormGroup>
+          {cosmicOptions.map((opt) => (
+            <FormControlLabel
+              key={opt}
+              control={
+                <Checkbox
+                  checked={cosmic.includes(opt)}
+                  onChange={() => toggleCosmic(opt)}
+                />
+              }
+              label={opt}
+            />
+          ))}
+        </FormGroup>
+          <TextField
+            label="Preview"
+            value={preview}
+            fullWidth
+            multiline
+            InputProps={{ readOnly: true }}
+            sx={{ mt: 2 }}
+          />
           <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
             <Button onClick={handleSend} disabled={!text.trim()}>
               Generate
