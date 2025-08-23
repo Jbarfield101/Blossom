@@ -1,8 +1,17 @@
 import { useState } from "react";
-import { Typography, TextField, Button, FormControlLabel, Checkbox } from "@mui/material";
+import {
+  Typography,
+  TextField,
+  Button,
+  FormControlLabel,
+  Checkbox,
+  MenuItem,
+} from "@mui/material";
 import { z } from "zod";
 import { zNpc } from "../../dnd/schemas/npc";
 import { NpcData } from "./types";
+import { useWorlds } from "../../store/worlds";
+import NpcPdfUpload from "./NpcPdfUpload";
 
 export default function NpcForm() {
   const [name, setName] = useState("");
@@ -24,6 +33,8 @@ export default function NpcForm() {
   const [tags, setTags] = useState("");
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [result, setResult] = useState<NpcData | null>(null);
+  const worlds = useWorlds((s) => s.worlds);
+  const [world, setWorld] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,6 +98,21 @@ export default function NpcForm() {
   return (
     <form onSubmit={handleSubmit}>
       <Typography variant="h6">NPC Form</Typography>
+      <TextField
+        select
+        label="World"
+        value={world}
+        onChange={(e) => setWorld(e.target.value)}
+        fullWidth
+        margin="normal"
+      >
+        {worlds.map((w) => (
+          <MenuItem key={w} value={w}>
+            {w}
+          </MenuItem>
+        ))}
+      </TextField>
+      {world && <NpcPdfUpload world={world} />}
       <TextField
         label="Name"
         value={name}
