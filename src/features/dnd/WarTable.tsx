@@ -1,4 +1,12 @@
-import { Box, Button } from "@mui/material";
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
+} from "@mui/material";
 import { useState } from "react";
 import { useWarTableStore } from "../../store/warTable";
 
@@ -12,6 +20,11 @@ export default function WarTable() {
     addMarker,
   } = useWarTableStore();
   const [mode, setMode] = useState<"party" | "area" | null>(null);
+  const [newMarker, setNewMarker] = useState<{ x: number; y: number } | null>(
+    null
+  );
+  const [noteInput, setNoteInput] = useState("");
+  const [viewNote, setViewNote] = useState<string | null>(null);
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -28,11 +41,25 @@ export default function WarTable() {
     const y = (e.clientY - rect.top) / rect.height;
     if (mode === "party") {
       setPartyPosition({ x, y });
+      setMode(null);
     } else if (mode === "area") {
-      const note = window.prompt("Area note?");
-      if (note) addMarker({ x, y, note });
+      setNewMarker({ x, y });
+      setNoteInput("");
+      setMode(null);
     }
-    setMode(null);
+  };
+
+  const handleSaveMarker = () => {
+    if (newMarker && noteInput.trim()) {
+      addMarker({ x: newMarker.x, y: newMarker.y, note: noteInput });
+    }
+    setNewMarker(null);
+    setNoteInput("");
+  };
+
+  const handleCancelMarker = () => {
+    setNewMarker(null);
+    setNoteInput("");
   };
 
   return (
@@ -63,6 +90,7 @@ export default function WarTable() {
           overflow: "hidden",
         }}
         onClick={handleMapClick}
+        data-testid="map"
       >
         {mapImage && (
           <Box
@@ -94,7 +122,7 @@ export default function WarTable() {
             key={m.id}
             onClick={(ev) => {
               ev.stopPropagation();
-              window.alert(m.note);
+              setViewNote(m.note);
             }}
             sx={{
               position: "absolute",
@@ -111,6 +139,31 @@ export default function WarTable() {
           />
         ))}
       </Box>
+      <Dialog open={!!newMarker} onClose={handleCancelMarker}>
+        <DialogTitle>Add Area Note</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            label="Area Note"
+            value={noteInput}
+            onChange={(e) => setNoteInput(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelMarker}>Cancel</Button>
+          <Button onClick={handleSaveMarker}>Save</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={viewNote !== null} onClose={() => setViewNote(null)}>
+        <DialogTitle>Area Note</DialogTitle>
+        <DialogContent>
+          <Box>{viewNote}</Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setViewNote(null)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
