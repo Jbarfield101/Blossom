@@ -8,5 +8,6 @@ Pillow>=9.0.0
 feedparser>=6.0.0
 requests>=2.31.0
 aiohttp>=3.9.0
-gTTS>=2.5.1
+TTS>=0.15
+torch>=2.0
 vosk>=0.3.45
