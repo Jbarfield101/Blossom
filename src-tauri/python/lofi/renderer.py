@@ -1533,6 +1533,7 @@ def main():
         INSTRUMENTS_DATA = _load_instruments(args.instruments_file)
 
     spec = json.loads(args.song_json)
+    album = spec.get("album")
 
     logger.info({"stage": "generate", "message": "building sections"})
     song, _ = render_from_spec(spec)
@@ -1541,12 +1542,24 @@ def main():
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     tmp_path = out_path.replace(".wav", ".tmp.wav")
 
-    song.export(tmp_path, format="wav", parameters=["-acodec", "pcm_s16le"])
+    tags = {"title": spec.get("title")}
+    if album:
+        tags["album"] = album
+
+    song.export(
+        tmp_path,
+        format="wav",
+        parameters=["-acodec", "pcm_s16le"],
+        tags=tags,
+    )
     if os.path.exists(out_path):
         os.remove(out_path)
     os.replace(tmp_path, out_path)
 
-    logger.info({"stage": "done", "message": "saved", "path": out_path})
+    info = {"stage": "done", "message": "saved", "path": out_path}
+    if album:
+        info["album"] = album
+    logger.info(info)
 
 if __name__ == "__main__":
     main()

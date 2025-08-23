@@ -506,12 +506,14 @@ pub struct Section {
     pub chords: Option<Vec<String>>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "snake_case")] // serialize to Python-friendly keys
 pub struct SongSpec {
     #[serde(alias = "outDir")]
     pub out_dir: String,
     pub title: String,
+    #[serde(alias = "album", skip_serializing_if = "Option::is_none")]
+    pub album: Option<String>,
     pub bpm: u32,
     pub key: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -551,12 +553,27 @@ pub struct AlbumRequest {
     pub title_base: Option<String>,
     #[serde(alias = "out_dir", skip_serializing_if = "Option::is_none")]
     pub out_dir: Option<String>,
+    #[serde(alias = "album_name", skip_serializing_if = "Option::is_none")]
+    pub album_name: Option<String>,
+    #[serde(alias = "track_names", skip_serializing_if = "Option::is_none")]
+    pub track_names: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub specs: Option<Vec<SongSpec>>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub struct TrackMeta {
+    pub name: String,
+    pub path: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub struct AlbumMeta {
     pub track_count: u32,
+    pub album_dir: String,
+    pub tracks: Vec<TrackMeta>,
 }
 
 #[cfg(test)]
@@ -708,9 +725,40 @@ pub async fn run_lofi_song<R: Runtime>(
 }
 
 #[tauri::command]
-pub async fn generate_album(meta: AlbumRequest) -> Result<AlbumMeta, String> {
+pub async fn generate_album<R: Runtime>(
+    window: Window<R>,
+    app: AppHandle<R>,
+    meta: AlbumRequest,
+) -> Result<AlbumMeta, String> {
+    let album_name = meta
+        .album_name
+        .clone()
+        .unwrap_or_else(|| "album".to_string());
+    let base_out = meta.out_dir.clone().unwrap_or_else(|| ".".to_string());
+    let album_dir = PathBuf::from(base_out).join(&album_name);
+    fs::create_dir_all(&album_dir).map_err(|e| e.to_string())?;
+
+    let track_names = meta.track_names.unwrap_or_default();
+    let specs = meta
+        .specs
+        .ok_or_else(|| "missing track specs".to_string())?;
+    if specs.len() != track_names.len() {
+        return Err("track names/specs length mismatch".into());
+    }
+
+    let mut tracks = Vec::new();
+    for (name, mut spec) in track_names.into_iter().zip(specs.into_iter()) {
+        spec.title = name.clone();
+        spec.out_dir = album_dir.to_string_lossy().to_string();
+        spec.album = Some(album_name.clone());
+        let path = run_lofi_song(window.clone(), app.clone(), spec).await?;
+        tracks.push(TrackMeta { name, path });
+    }
+
     Ok(AlbumMeta {
-        track_count: meta.track_count,
+        track_count: tracks.len() as u32,
+        album_dir: album_dir.to_string_lossy().to_string(),
+        tracks,
     })
 }
 
@@ -801,10 +849,7 @@ pub async fn save_npc<R: Runtime>(
 }
 
 #[tauri::command]
-pub async fn list_npcs<R: Runtime>(
-    app: AppHandle<R>,
-    world: String,
-) -> Result<Vec<Value>, String> {
+pub async fn list_npcs<R: Runtime>(app: AppHandle<R>, world: String) -> Result<Vec<Value>, String> {
     let dir = npc_storage_dir(&app, &world)?;
     let mut npcs = Vec::new();
     if dir.exists() {
@@ -1310,7 +1355,10 @@ fn run_transcribe_script<R: Runtime>(app: &AppHandle<R>, audio: &Path) -> Result
         .map_err(|e| format!("Failed to start python: {e}"))?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("Python exited with status {}:\n{}", output.status, stderr));
+        return Err(format!(
+            "Python exited with status {}:\n{}",
+            output.status, stderr
+        ));
     }
     Ok(String::from_utf8_lossy(&output.stdout).to_string())
 }
@@ -1335,7 +1383,10 @@ pub async fn load_transcripts() -> Result<Vec<TranscriptEntry>, String> {
 }
 
 #[tauri::command]
-pub async fn transcribe_audio<R: Runtime>(app: AppHandle<R>, data: Vec<u8>) -> Result<String, String> {
+pub async fn transcribe_audio<R: Runtime>(
+    app: AppHandle<R>,
+    data: Vec<u8>,
+) -> Result<String, String> {
     if data.is_empty() {
         return Err("no audio data provided".into());
     }
