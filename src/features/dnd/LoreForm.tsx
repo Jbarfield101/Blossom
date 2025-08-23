@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Typography, TextField, Button } from "@mui/material";
+import { Typography, TextField, Button, MenuItem } from "@mui/material";
 import { zLore } from "./schemas";
 import { LoreData } from "./types";
+import { useWorlds } from "../../store/worlds";
+import LorePdfUpload from "./LorePdfUpload";
 
 export default function LoreForm() {
   const [name, setName] = useState("");
@@ -10,6 +12,8 @@ export default function LoreForm() {
   const [hooks, setHooks] = useState("");
   const [tags, setTags] = useState("");
   const [result, setResult] = useState<LoreData | null>(null);
+  const worlds = useWorlds((s) => s.worlds);
+  const [world, setWorld] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +34,21 @@ export default function LoreForm() {
   return (
     <form onSubmit={handleSubmit}>
       <Typography variant="h6">Lore Form</Typography>
+      <TextField
+        select
+        label="World"
+        value={world}
+        onChange={(e) => setWorld(e.target.value)}
+        fullWidth
+        margin="normal"
+      >
+        {worlds.map((w) => (
+          <MenuItem key={w} value={w}>
+            {w}
+          </MenuItem>
+        ))}
+      </TextField>
+      {world && <LorePdfUpload world={world} />}
       <TextField
         label="Name"
         value={name}
