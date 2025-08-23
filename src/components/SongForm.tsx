@@ -710,7 +710,7 @@ export default function SongForm() {
 
     try {
       setBusy(true);
-      await invoke("generate_album", {
+      const res: { album_dir: string } = await invoke("generate_album", {
         meta: {
           track_count: trackCount,
           title_base: titleBase,
@@ -719,6 +719,7 @@ export default function SongForm() {
           out_dir: outDir,
         },
       });
+      setOutDir(res.album_dir);
     } catch (e: any) {
       const message = e?.message || String(e);
       setErr(message);

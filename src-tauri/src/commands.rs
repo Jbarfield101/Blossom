@@ -752,10 +752,9 @@ pub async fn generate_album<R: Runtime>(
 ) -> Result<AlbumMeta, String> {
     let album_name = meta
         .album_name
-        .clone()
         .unwrap_or_else(|| "album".to_string());
-    let base_out = meta.out_dir.clone().unwrap_or_else(|| ".".to_string());
-    let album_dir = PathBuf::from(base_out).join(&album_name);
+    let base_out = meta.out_dir.unwrap_or_else(|| ".".to_string());
+    let album_dir = PathBuf::from(&base_out).join(&album_name);
     fs::create_dir_all(&album_dir).map_err(|e| e.to_string())?;
 
     let track_names = meta.track_names.unwrap_or_default();
