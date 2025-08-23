@@ -91,6 +91,26 @@
             "type": "string"
           },
           "minItems": 1
+        },
+        "abilities": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "level": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "hp": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "inventory": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [

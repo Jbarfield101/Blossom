@@ -7,6 +7,10 @@ export interface NPC {
   name: string;
   race: string;
   class: string;
+  abilities?: Record<string, number>;
+  level?: number;
+  hp?: number;
+  inventory?: string[];
   role?: string;
   cr?: number;
   locale?: string;
