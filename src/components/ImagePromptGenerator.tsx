@@ -144,7 +144,9 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
     if (lofi.length) prompt += ` ${lofi.join(" ")}`;
     if (cosmic.length) prompt += ` ${cosmic.join(" ")}`;
     onGenerate(prompt.trim());
-    setOpen(false);
+  };
+
+  const handleClear = () => {
     setText("");
     setCamera(null);
     setLens(null);
@@ -268,6 +270,9 @@ export default function ImagePromptGenerator({ onGenerate }: Props) {
           <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
             <Button onClick={handleSend} disabled={!text.trim()}>
               Generate
+            </Button>
+            <Button variant="outlined" onClick={handleClear}>
+              Reset
             </Button>
           </Stack>
         </Box>
