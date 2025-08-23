@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
-import SpellPdfUpload from "../SpellPdfUpload";
 import { open } from "@tauri-apps/plugin-dialog";
-import { invoke } from "@tauri-apps/api/core";
-
+const enqueueTask = vi.fn().mockResolvedValue(1);
+vi.mock("../../../store/tasks", () => ({
+  useTasks: (selector: any) => selector({ enqueueTask, tasks: {} }),
+}));
 vi.mock("@tauri-apps/plugin-dialog", () => ({ open: vi.fn() }));
-vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
+import SpellPdfUpload from "../SpellPdfUpload";
 
 describe("SpellPdfUpload", () => {
   afterEach(() => {
@@ -13,15 +14,13 @@ describe("SpellPdfUpload", () => {
     vi.resetAllMocks();
   });
 
-  it("uploads and classifies spells", async () => {
+  it("queues spell parsing task", async () => {
     (open as any).mockResolvedValue("/tmp/spells.pdf");
-    (invoke as any).mockResolvedValue([{ name: "Fireball", description: "boom" }]);
 
     render(<SpellPdfUpload />);
     fireEvent.click(screen.getByText(/upload spell pdf/i));
 
     await waitFor(() => expect(open).toHaveBeenCalled());
-    await waitFor(() => expect(invoke).toHaveBeenCalled());
-    await screen.findByText(/Fireball/i);
+    await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
   });
 });

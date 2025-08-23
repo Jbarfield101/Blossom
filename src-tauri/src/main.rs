@@ -71,6 +71,8 @@ fn main() {
             commands::blender_run_script,
             commands::save_npc,
             commands::list_npcs,
+            commands::save_spell,
+            commands::list_spells,
             commands::save_lore,
             commands::list_lore,
             // Paths:

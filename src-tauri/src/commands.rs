@@ -15,6 +15,7 @@ use crate::task_queue::{Task, TaskCommand, TaskQueue};
 use chrono::{Local, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use serde_yaml;
 use sysinfo::{CpuExt, System, SystemExt};
 use tauri::{AppHandle, Emitter, Manager, Runtime, State, Window};
 use which::which;
@@ -821,6 +822,102 @@ pub async fn blender_run_script(code: String) -> Result<(), String> {
 
 fn blender_path() -> PathBuf {
     PathBuf::from("blender")
+}
+
+/* ==============================
+Spell storage
+============================== */
+
+fn spell_storage_dir<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|_| "app data dir".to_string())?
+        .join("dnd")
+        .join("spells");
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    Ok(dir)
+}
+
+fn validate_spell(spell: &Value) -> Result<Value, String> {
+    let script = PathBuf::from("scripts").join("validate-dnd.ts");
+    let json = serde_json::to_string(spell).map_err(|e| e.to_string())?;
+    let output = PCommand::new("npx")
+        .arg("tsx")
+        .arg(&script)
+        .arg("spell")
+        .arg(&json)
+        .output()
+        .map_err(|e| e.to_string())?;
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    serde_json::from_str(&stdout).map_err(|e| e.to_string())
+}
+
+fn update_spell_index<R: Runtime>(app: &AppHandle<R>, entry: &Value) -> Result<(), String> {
+    let dir = spell_storage_dir(app)?;
+    let index_path = dir.join("index.json");
+    let mut entries: Vec<Value> = if index_path.exists() {
+        let contents = fs::read_to_string(&index_path).map_err(|e| e.to_string())?;
+        serde_json::from_str(&contents).map_err(|e| e.to_string())?
+    } else {
+        Vec::new()
+    };
+    entries.retain(|e| e["id"] != entry["id"]);
+    entries.push(entry.clone());
+    let json = serde_json::to_string_pretty(&entries).map_err(|e| e.to_string())?;
+    fs::write(index_path, json).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn save_spell<R: Runtime>(
+    app: AppHandle<R>,
+    spell: Value,
+    overwrite: Option<bool>,
+) -> Result<(), String> {
+    let validated = validate_spell(&spell)?;
+    let id = validated["id"]
+        .as_str()
+        .ok_or_else(|| "missing id".to_string())?;
+    let dir = spell_storage_dir(&app)?;
+    let path = dir.join(format!("{id}.md"));
+    if path.exists() && !overwrite.unwrap_or(false) {
+        return Err("exists".into());
+    }
+    let mut front = validated.clone();
+    let body = front
+        .get("description")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+    front.as_object_mut().map(|o| o.remove("description"));
+    front.as_object_mut().map(|o| o.insert("type".into(), Value::String("spell".into())));
+    let yaml = serde_yaml::to_string(&front).map_err(|e| e.to_string())?;
+    let md = format!("---\n{yaml}---\n{body}\n");
+    fs::write(&path, md).map_err(|e| e.to_string())?;
+    let index_entry = serde_json::json!({
+        "id": id,
+        "name": validated["name"].clone(),
+        "level": validated["level"].clone(),
+        "school": validated["school"].clone(),
+        "path": format!("dnd/spells/{id}.md"),
+    });
+    update_spell_index(&app, &index_entry)?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn list_spells<R: Runtime>(app: AppHandle<R>) -> Result<Vec<Value>, String> {
+    let dir = spell_storage_dir(&app)?;
+    let index_path = dir.join("index.json");
+    if !index_path.exists() {
+        return Ok(Vec::new());
+    }
+    let contents = fs::read_to_string(index_path).map_err(|e| e.to_string())?;
+    serde_json::from_str(&contents).map_err(|e| e.to_string())
 }
 
 /* ==============================
