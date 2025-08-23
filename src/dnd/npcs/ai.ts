@@ -6,7 +6,8 @@ export type TargetStrategy = "random" | "lowest-hp";
 export function selectTarget(
   self: Npc,
   combatants: Npc[],
-  strategy: TargetStrategy = "random"
+  strategy: TargetStrategy = "random",
+  rng: () => number = Math.random
 ): Npc | undefined {
   const targets = combatants.filter(
     (c) => c.name !== self.name && c.hp > 0
@@ -17,16 +18,18 @@ export function selectTarget(
   if (strategy === "lowest-hp") {
     return targets.reduce((lowest, c) => (c.hp < lowest.hp ? c : lowest));
   }
-  const index = Math.floor(Math.random() * targets.length);
+  const index = Math.floor(rng() * targets.length);
   return targets[index];
 }
 
 export function attack(
   attacker: Npc,
   target: Npc,
-  roll: number = rollDice(20)
+  roll?: number,
+  rng: () => number = Math.random
 ): boolean {
-  const hit = roll + attacker.attackBonus >= target.ac;
+  const actualRoll = roll ?? rollDice(20, rng);
+  const hit = actualRoll + attacker.attackBonus >= target.ac;
   if (hit) {
     target.hp = Math.max(0, target.hp - attacker.damage);
   }

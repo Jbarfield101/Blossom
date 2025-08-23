@@ -1,7 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { Encounter } from "../encounters";
 import { attack, selectTarget, MonsterAI, type Npc } from "./index";
-import * as rules from "../rules";
 
 describe("Monster AI", () => {
   const baseGoblin: Npc = {
@@ -26,10 +25,8 @@ describe("Monster AI", () => {
     const goblin = { ...baseGoblin };
     const hero = { ...baseHero, name: "hero1" };
     const ally = { ...baseHero, name: "hero2" };
-    const spy = vi.spyOn(Math, "random").mockReturnValue(0.9);
-    const target = selectTarget(goblin, [hero, ally], "random");
+    const target = selectTarget(goblin, [hero, ally], "random", () => 0.9);
     expect(target).toBe(ally);
-    spy.mockRestore();
   });
 
   it("selects target with lowest HP", () => {
@@ -43,10 +40,8 @@ describe("Monster AI", () => {
   it("applies damage on hit", () => {
     const goblin = { ...baseGoblin };
     const hero = { ...baseHero };
-    const spy = vi.spyOn(rules, "rollDice").mockReturnValue(15);
-    attack(goblin, hero);
+    attack(goblin, hero, undefined, () => 0.7);
     expect(hero.hp).toBe(5);
-    spy.mockRestore();
   });
 
   it("plays monster turn in encounter", () => {
@@ -57,11 +52,9 @@ describe("Monster AI", () => {
       { name: hero.name, initiative: 10 },
     ]);
     const ai = new MonsterAI([goblin, hero]);
-    const spy = vi.spyOn(rules, "rollDice").mockReturnValue(15);
-    const next = ai.takeTurn(encounter);
+    const next = ai.takeTurn(encounter, () => 0.7);
     expect(ai.combatants[hero.name].hp).toBe(5);
     expect(next.current).toBe(1);
-    spy.mockRestore();
   });
 
   it("plays monster turn targeting lowest HP opponent", () => {
@@ -74,10 +67,8 @@ describe("Monster AI", () => {
       { name: wounded.name, initiative: 5 },
     ]);
     const ai = new MonsterAI([goblin, healthy, wounded], "lowest-hp");
-    const spy = vi.spyOn(rules, "rollDice").mockReturnValue(15);
-    ai.takeTurn(encounter);
+    ai.takeTurn(encounter, () => 0.7);
     expect(ai.combatants[wounded.name].hp).toBe(0);
     expect(ai.combatants[healthy.name].hp).toBe(10);
-    spy.mockRestore();
   });
 });
