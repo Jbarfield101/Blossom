@@ -43,6 +43,7 @@ export interface RuleData extends DndBase {
   description: string;
   tags: string[];
   sourceId?: string;
+  sections?: Record<string, string>;
 }
 
 export interface SpellData extends DndBase {

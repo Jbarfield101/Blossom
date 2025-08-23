@@ -53,6 +53,7 @@ export const zRule = zDndBase.extend({
   description: z.string().min(1),
   tags: z.array(z.string()).nonempty(),
   sourceId: z.string().min(1).optional(),
+  sections: z.record(z.string()).optional(),
 });
 
 export const zSpell = zDndBase.extend({

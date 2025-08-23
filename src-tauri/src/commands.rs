@@ -825,6 +825,116 @@ fn blender_path() -> PathBuf {
 }
 
 /* ==============================
+Rule storage
+============================== */
+
+fn rule_storage_dir<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|_| "app data dir".to_string())?
+        .join("dnd")
+        .join("rules");
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    Ok(dir)
+}
+
+fn validate_rule(rule: &Value) -> Result<Value, String> {
+    let script = PathBuf::from("scripts").join("validate-dnd.ts");
+    let json = serde_json::to_string(rule).map_err(|e| e.to_string())?;
+    let output = PCommand::new("npx")
+        .arg("tsx")
+        .arg(&script)
+        .arg("rule")
+        .arg(&json)
+        .output()
+        .map_err(|e| e.to_string())?;
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    serde_json::from_str(&stdout).map_err(|e| e.to_string())
+}
+
+fn update_rule_index<R: Runtime>(app: &AppHandle<R>, entry: &Value) -> Result<(), String> {
+    let dir = rule_storage_dir(app)?;
+    let index_path = dir.join("index.json");
+    let mut entries: Vec<Value> = if index_path.exists() {
+        let contents = fs::read_to_string(&index_path).map_err(|e| e.to_string())?;
+        serde_json::from_str(&contents).map_err(|e| e.to_string())?
+    } else {
+        Vec::new()
+    };
+    entries.retain(|e| e["id"] != entry["id"]);
+    entries.push(entry.clone());
+    let json = serde_json::to_string_pretty(&entries).map_err(|e| e.to_string())?;
+    fs::write(index_path, json).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn save_rule<R: Runtime>(
+    app: AppHandle<R>,
+    rule: Value,
+    overwrite: Option<bool>,
+) -> Result<(), String> {
+    let validated = validate_rule(&rule)?;
+    let id = validated["id"]
+        .as_str()
+        .ok_or_else(|| "missing id".to_string())?;
+    let dir = rule_storage_dir(&app)?;
+    let path = dir.join(format!("{id}.md"));
+    if path.exists() && !overwrite.unwrap_or(false) {
+        return Err("exists".into());
+    }
+    let mut front = validated.clone();
+    let body = front
+        .get("description")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+    front.as_object_mut().map(|o| o.remove("description"));
+    if let (Some(orig), Some(valid)) = (rule.as_object(), validated.as_object()) {
+        let mut sections = serde_json::Map::new();
+        for (k, v) in orig {
+            if !valid.contains_key(k) {
+                sections.insert(k.clone(), v.clone());
+            }
+        }
+        if !sections.is_empty() {
+            front
+                .as_object_mut()
+                .map(|o| o.insert("sections".into(), Value::Object(sections)));
+        }
+    }
+    front
+        .as_object_mut()
+        .map(|o| o.insert("type".into(), Value::String("rule".into())));
+    let yaml = serde_yaml::to_string(&front).map_err(|e| e.to_string())?;
+    let md = format!("---\n{yaml}---\n{body}\n");
+    fs::write(&path, md).map_err(|e| e.to_string())?;
+    let index_entry = serde_json::json!({
+        "id": id,
+        "name": validated["name"].clone(),
+        "tags": validated["tags"].clone(),
+        "path": format!("dnd/rules/{id}.md"),
+    });
+    update_rule_index(&app, &index_entry)?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn list_rules<R: Runtime>(app: AppHandle<R>) -> Result<Vec<Value>, String> {
+    let dir = rule_storage_dir(&app)?;
+    let index_path = dir.join("index.json");
+    if !index_path.exists() {
+        return Ok(Vec::new());
+    }
+    let contents = fs::read_to_string(index_path).map_err(|e| e.to_string())?;
+    serde_json::from_str(&contents).map_err(|e| e.to_string())
+}
+
+/* ==============================
 Spell storage
 ============================== */
 

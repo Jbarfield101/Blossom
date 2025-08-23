@@ -270,6 +270,7 @@ describe("dnd schemas", () => {
       name: "Flanking",
       description: "Gain advantage when allies surround an enemy",
       tags: ["combat"],
+      sections: { example: "some text" },
     };
     expect(zRule.parse(rule)).toEqual(rule);
   });
