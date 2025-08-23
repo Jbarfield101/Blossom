@@ -20,7 +20,10 @@ export function attackRoll(
   const roll = rollDice(20);
   const modifier = attacker.abilities[ability] ?? 0;
   const total = roll + modifier;
-  return { roll, total, hit: total >= targetAC };
+  const critical = roll === 20;
+  const fumble = roll === 1;
+  const hit = critical ? true : fumble ? false : total >= targetAC;
+  return { roll, total, hit, critical, fumble };
 }
 
 export function calculateDamage(

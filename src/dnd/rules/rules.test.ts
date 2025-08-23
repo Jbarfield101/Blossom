@@ -37,7 +37,39 @@ describe("dnd rules", () => {
   it("determines attack hits", () => {
     const spy = vi.spyOn(dice, "rollDice").mockReturnValue(12);
     const result = attackRoll(baseChar, "strength", 15);
-    expect(result).toEqual({ roll: 12, total: 15, hit: true });
+    expect(result).toEqual({
+      roll: 12,
+      total: 15,
+      hit: true,
+      critical: false,
+      fumble: false,
+    });
+    spy.mockRestore();
+  });
+
+  it("identifies critical hits on natural 20", () => {
+    const spy = vi.spyOn(dice, "rollDice").mockReturnValue(20);
+    const result = attackRoll(baseChar, "strength", 50);
+    expect(result).toEqual({
+      roll: 20,
+      total: 23,
+      hit: true,
+      critical: true,
+      fumble: false,
+    });
+    spy.mockRestore();
+  });
+
+  it("identifies fumbles on natural 1", () => {
+    const spy = vi.spyOn(dice, "rollDice").mockReturnValue(1);
+    const result = attackRoll(baseChar, "strength", 1);
+    expect(result).toEqual({
+      roll: 1,
+      total: 4,
+      hit: false,
+      critical: false,
+      fumble: true,
+    });
     spy.mockRestore();
   });
 
@@ -64,18 +96,51 @@ describe("dnd rules", () => {
       diceSides: 8,
       ability: "strength",
     });
-    expect(result).toEqual({ roll: 14, total: 17, hit: true, damage: 9 });
+    expect(result).toEqual({
+      roll: 14,
+      total: 17,
+      hit: true,
+      critical: false,
+      fumble: false,
+      damage: 9,
+    });
     spy.mockRestore();
   });
 
-  it("returns zero damage on missed attacks", () => {
-    const spy = vi.spyOn(dice, "rollDice").mockReturnValue(1);
-    const result = CombatEngine.resolveAttack(baseChar, 20, {
+  it("applies double damage on critical hits", () => {
+    const spy = vi.spyOn(dice, "rollDice");
+    spy.mockReturnValueOnce(20).mockReturnValueOnce(6);
+    const result = CombatEngine.resolveAttack(baseChar, 30, {
       diceCount: 1,
       diceSides: 8,
       ability: "strength",
     });
-    expect(result).toEqual({ roll: 1, total: 4, hit: false, damage: 0 });
+    expect(result).toEqual({
+      roll: 20,
+      total: 23,
+      hit: true,
+      critical: true,
+      fumble: false,
+      damage: 18,
+    });
+    spy.mockRestore();
+  });
+
+  it("returns zero damage on natural 1 even if total beats AC", () => {
+    const spy = vi.spyOn(dice, "rollDice").mockReturnValue(1);
+    const result = CombatEngine.resolveAttack(baseChar, 2, {
+      diceCount: 1,
+      diceSides: 8,
+      ability: "strength",
+    });
+    expect(result).toEqual({
+      roll: 1,
+      total: 4,
+      hit: false,
+      critical: false,
+      fumble: true,
+      damage: 0,
+    });
     spy.mockRestore();
   });
 });
