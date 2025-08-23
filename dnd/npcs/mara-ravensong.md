@@ -21,12 +21,12 @@ statblock:
   hp: 22
   speed: "30 ft."
   abilities:
-    str: 10
-    dex: 14
-    con: 12
-    int: 13
-    wis: 11
-    cha: 15
+    strength: 10
+    dexterity: 14
+    constitution: 12
+    intelligence: 13
+    wisdom: 11
+    charisma: 15
 tags: [port, underworld, rumor-broker, music:melancholy, biome:coastal, vibe:rainy]
 relationships:
   - { type: contact, target: npc_jax_caldwell, note: "buys maps" }

@@ -1,16 +1,31 @@
 import { useState } from 'react';
 import { Stack, TextField, Button, Typography } from '@mui/material';
 import { useCharacter } from '../store/character';
-import type { Character } from '../dnd/characters';
+import type { Ability, Character } from '../dnd/characters';
 import InventoryPanel from './InventoryPanel';
 import SpellBook from './SpellBook';
 
 export default function CharacterSheet() {
   const stored = useCharacter((s) => s.character);
   const setCharacter = useCharacter((s) => s.setCharacter);
+  const abilityKeys: Ability[] = [
+    'strength',
+    'dexterity',
+    'constitution',
+    'intelligence',
+    'wisdom',
+    'charisma',
+  ];
   const [character, setCharacterState] = useState<Character>(
     stored ?? {
-      abilities: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
+      abilities: {
+        strength: 10,
+        dexterity: 10,
+        constitution: 10,
+        intelligence: 10,
+        wisdom: 10,
+        charisma: 10,
+      },
       class: '',
       level: 1,
       hp: 0,
@@ -20,7 +35,7 @@ export default function CharacterSheet() {
     }
   );
 
-  const updateAbility = (key: string, value: number) =>
+  const updateAbility = (key: Ability, value: number) =>
     setCharacterState((prev) => ({
       ...prev,
       abilities: { ...prev.abilities, [key]: value },
@@ -62,7 +77,7 @@ export default function CharacterSheet() {
       />
       <Typography variant="h6">Abilities</Typography>
       <Stack direction="row" spacing={1}>
-        {['str', 'dex', 'con', 'int', 'wis', 'cha'].map((key) => (
+        {abilityKeys.map((key) => (
           <TextField
             key={key}
             label={key.toUpperCase()}
