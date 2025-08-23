@@ -1,4 +1,5 @@
 export interface QuestObjective {
+  id: string;
   description: string;
   completed: boolean;
 }
@@ -11,17 +12,20 @@ export interface QuestReward {
 export type QuestStatus = 'active' | 'completed';
 
 export class Quest {
+  id: string;
   title: string;
   objectives: QuestObjective[];
   reward: QuestReward;
   status: QuestStatus;
 
   constructor(
+    id: string,
     title: string,
     objectives: QuestObjective[],
     reward: QuestReward,
     status: QuestStatus = 'active'
   ) {
+    this.id = id;
     this.title = title;
     this.objectives = objectives;
     this.reward = reward;

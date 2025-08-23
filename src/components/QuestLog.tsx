@@ -10,12 +10,12 @@ export default function QuestLog({ quests }: Props) {
   const completed = quests.filter((q) => q.status === 'completed');
 
   const renderQuest = (quest: Quest) => (
-    <ListItem key={quest.title} alignItems="flex-start">
+    <ListItem key={quest.id} alignItems="flex-start">
       <Stack>
         <Typography variant="subtitle1">{quest.title}</Typography>
         <List sx={{ pl: 2 }}>
-          {quest.objectives.map((obj, idx) => (
-            <ListItem key={idx} sx={{ display: 'list-item' }}>
+          {quest.objectives.map((obj) => (
+            <ListItem key={obj.id} sx={{ display: 'list-item' }}>
               <Typography variant="body2">
                 {obj.completed ? '✓ ' : ''}
                 {obj.description}
