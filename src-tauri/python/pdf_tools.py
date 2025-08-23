@@ -4,6 +4,7 @@ import json
 import os
 import sqlite3
 from pathlib import Path
+import uuid
 
 import numpy as np
 import pdfplumber
@@ -215,6 +216,65 @@ def extract_spells(path: str):
     return {"spells": spells}
 
 
+def extract_npcs(path: str):
+    pdf_path = Path(path)
+    npcs = []
+    with pdfplumber.open(pdf_path) as pdf:
+        text = "\n".join(page.extract_text() or "" for page in pdf.pages)
+    for block in text.split("\n\n"):
+        lines = [ln.strip() for ln in block.splitlines() if ln.strip()]
+        if not lines:
+            continue
+        data = {}
+        for line in lines:
+            if ":" in line:
+                k, v = line.split(":", 1)
+                data[k.strip().lower()] = v.strip()
+        if not data:
+            continue
+        npc = {
+            "id": str(uuid.uuid4()),
+            "name": data.get("name", "Unknown"),
+            "species": data.get("species", "Unknown"),
+            "role": data.get("role", "Unknown"),
+            "alignment": data.get("alignment", "Neutral"),
+            "playerCharacter": data.get("playercharacter", "false").lower()
+            == "true",
+            "backstory": data.get("backstory"),
+            "location": data.get("location"),
+            "hooks": [h.strip() for h in data.get("hooks", "hook").split(",") if h.strip()],
+            "quirks": [q.strip() for q in data.get("quirks", "").split(",") if q.strip()] or None,
+            "voice": {"style": "", "provider": "", "preset": ""},
+            "portrait": data.get("portrait", ""),
+            "icon": data.get("icon", ""),
+            "statblock": {},
+            "tags": [t.strip() for t in data.get("tags", "npc").split(",") if t.strip()],
+        }
+        sections = {
+            k: v
+            for k, v in data.items()
+            if k
+            not in {
+                "name",
+                "species",
+                "role",
+                "alignment",
+                "playercharacter",
+                "backstory",
+                "location",
+                "hooks",
+                "quirks",
+                "portrait",
+                "icon",
+                "tags",
+            }
+        }
+        if sections:
+            npc["sections"] = sections
+        npcs.append(npc)
+    return {"npcs": npcs}
+
+
 def extract_rules(path: str):
     """Extract simple rule entries from a PDF file."""
     pdf_path = Path(path)
@@ -407,6 +467,8 @@ def main():
     p.add_argument("path")
     p = sub.add_parser("rules")
     p.add_argument("path")
+    p = sub.add_parser("npcs")
+    p.add_argument("path")
     args = parser.parse_args()
 
     if args.cmd == "add":
@@ -428,6 +490,8 @@ def main():
         out = extract_spells(args.path)
     elif args.cmd == "rules":
         out = extract_rules(args.path)
+    elif args.cmd == "npcs":
+        out = extract_npcs(args.path)
     else:
         out = {}
     json.dump(out, fp=os.fdopen(1, "w"))

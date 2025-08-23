@@ -268,8 +268,12 @@ fn resolve_python_path() -> PathBuf {
 }
 
 /// Absolute path to python. Falls back to system default if unset.
-fn conda_python() -> PathBuf {
+pub fn conda_python() -> PathBuf {
     resolve_python_path()
+}
+
+pub fn conda_python_string() -> String {
+    conda_python().to_string_lossy().to_string()
 }
 
 fn default_comfy_path() -> PathBuf {
@@ -310,6 +314,20 @@ fn pdf_tools_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
         .expect("resource dir")
         .join("python")
         .join("pdf_tools.py")
+}
+
+pub fn pdf_tools_path_default() -> PathBuf {
+    if let Ok(cwd) = std::env::current_dir() {
+        let dev = cwd.join("src-tauri").join("python").join("pdf_tools.py");
+        if dev.exists() {
+            return dev;
+        }
+    }
+    PathBuf::from("pdf_tools.py")
+}
+
+pub fn pdf_tools_path_string() -> String {
+    pdf_tools_path_default().to_string_lossy().to_string()
 }
 
 fn run_pdf_tool<R: Runtime>(app: &AppHandle<R>, args: &[&str]) -> Result<String, String> {
@@ -362,6 +380,16 @@ pub struct SpellRecord {
 pub struct RuleRecord {
     pub name: String,
     pub description: String,
+}
+
+#[tauri::command]
+pub async fn parse_npc_pdf<R: Runtime>(
+    app: AppHandle<R>,
+    path: String,
+) -> Result<Vec<Value>, String> {
+    let out = run_pdf_tool(&app, &["npcs", &path])?;
+    let v: Value = serde_json::from_str(&out).map_err(|e| e.to_string())?;
+    serde_json::from_value(v["npcs"].clone()).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -440,6 +468,30 @@ pub async fn parse_rule_pdf<R: Runtime>(
     let out = run_pdf_tool(&app, &["rules", &path])?;
     let v: Value = serde_json::from_str(&out).map_err(|e| e.to_string())?;
     serde_json::from_value(v["rules"].clone()).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn enqueue_parse_npc_pdf<R: Runtime>(
+    app: AppHandle<R>,
+    queue: State<'_, TaskQueue>,
+    path: String,
+    world: String,
+) -> Result<u64, String> {
+    let py = conda_python();
+    if !py.exists() {
+        return Err(format!("Python not found at {}", py.display()));
+    }
+    let script = pdf_tools_path(&app);
+    if !script.exists() {
+        return Err(format!("Script not found at {}", script.display()));
+    }
+    let cmd = TaskCommand::ParseNpcPdf {
+        py: py.to_string_lossy().to_string(),
+        script: script.to_string_lossy().to_string(),
+        path,
+        world,
+    };
+    Ok(queue.enqueue("Import NPC PDF".into(), cmd).await)
 }
 
 /* ==============================
@@ -698,80 +750,75 @@ fn blender_path() -> PathBuf {
 NPC storage
 ============================== */
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct NPCData {
-    pub name: String,
-    pub race: String,
-    pub class: String,
-    pub personality: String,
-    pub background: String,
-    pub appearance: String,
-}
-
-fn npc_storage_dir<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
+fn npc_storage_dir<R: Runtime>(app: &AppHandle<R>, world: &str) -> Result<PathBuf, String> {
     let dir = app
         .path()
         .app_data_dir()
         .map_err(|_| "app data dir".to_string())?
-        .join("npc-storage");
+        .join("worlds")
+        .join(world)
+        .join("npcs");
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     Ok(dir)
 }
 
+fn validate_npc(npc: &Value) -> Result<Value, String> {
+    let script = PathBuf::from("scripts").join("validate-dnd.ts");
+    let json = serde_json::to_string(npc).map_err(|e| e.to_string())?;
+    let output = PCommand::new("npx")
+        .arg("tsx")
+        .arg(&script)
+        .arg("npc")
+        .arg(&json)
+        .output()
+        .map_err(|e| e.to_string())?;
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    serde_json::from_str(&stdout).map_err(|e| e.to_string())
+}
+
 #[tauri::command]
-pub async fn save_npc<R: Runtime>(app: AppHandle<R>, npc: NPCData) -> Result<(), String> {
-    let dir = npc_storage_dir(&app)?;
-    let file_name = format!(
-        "{}_{}.json",
-        npc.name.replace(' ', "_"),
-        Local::now().format("%Y%m%d%H%M%S")
-    );
-    let path = dir.join(file_name);
-    let json = serde_json::to_string_pretty(&npc).map_err(|e| e.to_string())?;
+pub async fn save_npc<R: Runtime>(
+    app: AppHandle<R>,
+    world: String,
+    npc: Value,
+    overwrite: Option<bool>,
+) -> Result<(), String> {
+    let validated = validate_npc(&npc)?;
+    let id = validated["id"]
+        .as_str()
+        .ok_or_else(|| "missing id".to_string())?;
+    let dir = npc_storage_dir(&app, &world)?;
+    let path = dir.join(format!("{}.json", id));
+    if path.exists() && !overwrite.unwrap_or(false) {
+        return Err("exists".into());
+    }
+    let json = serde_json::to_string_pretty(&validated).map_err(|e| e.to_string())?;
     fs::write(path, json).map_err(|e| e.to_string())?;
     Ok(())
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct NPC {
-    pub id: String,
-    pub name: String,
-    pub race: String,
-    pub class: String,
-    pub personality: String,
-    pub background: String,
-    pub appearance: String,
-}
-
 #[tauri::command]
-pub async fn list_npcs<R: Runtime>(app: AppHandle<R>) -> Result<Vec<NPC>, String> {
-    let dir = npc_storage_dir(&app)?;
+pub async fn list_npcs<R: Runtime>(
+    app: AppHandle<R>,
+    world: String,
+) -> Result<Vec<Value>, String> {
+    let dir = npc_storage_dir(&app, &world)?;
     let mut npcs = Vec::new();
-    let entries = fs::read_dir(&dir).map_err(|e| e.to_string())?;
-
-    for entry in entries {
-        let entry = entry.map_err(|e| e.to_string())?;
-        let path = entry.path();
-        if path.extension().and_then(|s| s.to_str()) == Some("json") {
-            let contents = fs::read_to_string(&path).map_err(|e| e.to_string())?;
-            let data: NPCData = serde_json::from_str(&contents).map_err(|e| e.to_string())?;
-            let id = path
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap_or_default()
-                .to_string();
-            npcs.push(NPC {
-                id,
-                name: data.name,
-                race: data.race,
-                class: data.class,
-                personality: data.personality,
-                background: data.background,
-                appearance: data.appearance,
-            });
+    if dir.exists() {
+        let entries = fs::read_dir(&dir).map_err(|e| e.to_string())?;
+        for entry in entries {
+            let entry = entry.map_err(|e| e.to_string())?;
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) == Some("json") {
+                let contents = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+                let data: Value = serde_json::from_str(&contents).map_err(|e| e.to_string())?;
+                npcs.push(data);
+            }
         }
     }
-
     Ok(npcs)
 }
 
