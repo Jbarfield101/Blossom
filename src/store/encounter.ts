@@ -21,7 +21,43 @@ export const useEncounterStore = create<EncounterState>()(
         ),
       endEncounter: () => set({ encounter: null }),
     }),
-    { name: 'encounter-store' }
+    {
+      name: 'encounter-store',
+      serialize: (state) =>
+        JSON.stringify({
+          state: {
+            ...state.state,
+            encounter: state.state.encounter
+              ? {
+                  participants: state.state.encounter.participants,
+                  current: state.state.encounter.current,
+                }
+              : null,
+          },
+          version: state.version,
+        }),
+      deserialize: (str) => {
+        const parsed = JSON.parse(str) as {
+          state: {
+            encounter: { participants: Participant[]; current: number } | null;
+          };
+          version: number;
+        };
+        return {
+          state: {
+            ...parsed.state,
+            encounter: parsed.state.encounter
+              ? new Encounter(
+                  parsed.state.encounter.participants,
+                  parsed.state.encounter.current,
+                  true,
+                )
+              : null,
+          },
+          version: parsed.version,
+        };
+      },
+    }
   )
 );
 
