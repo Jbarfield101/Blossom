@@ -13,7 +13,10 @@ export class MonsterAI {
     this.strategy = strategy;
   }
 
-  takeTurn(encounter: Encounter, roll?: number): Encounter {
+  takeTurn(
+    encounter: Encounter,
+    rng: () => number = Math.random
+  ): Encounter {
     if (encounter.participants.length === 0) {
       return encounter;
     }
@@ -27,9 +30,9 @@ export class MonsterAI {
       .filter(
         (c): c is Npc => !!c && c.name !== actor.name && c.hp > 0
       );
-    const target = selectTarget(actor, candidates, this.strategy);
+    const target = selectTarget(actor, candidates, this.strategy, rng);
     if (target) {
-      attack(actor, target, roll);
+      attack(actor, target, undefined, rng);
     }
     return encounter.advance();
   }
