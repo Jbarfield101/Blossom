@@ -254,6 +254,23 @@ export default function SongForm() {
   // Album mode
   const [albumMode, setAlbumMode] = useState(false);
   const [trackCount, setTrackCount] = useState(6);
+  const [albumName, setAlbumName] = useState("");
+  const [trackNames, setTrackNames] = useState<string[]>([]);
+
+  useEffect(() => {
+    setTrackNames((prev) => {
+      const arr = [...prev];
+      if (arr.length < trackCount) {
+        return [...arr, ...Array(trackCount - arr.length).fill("")];
+      }
+      return arr.slice(0, trackCount);
+    });
+  }, [trackCount]);
+
+  const albumReady =
+    albumName.trim() !== "" &&
+    trackNames.length === trackCount &&
+    trackNames.every((t) => t.trim() !== "");
 
   // VARIATION / BATCH
   const [numSongs, setNumSongs] = useState(1);
@@ -428,18 +445,60 @@ export default function SongForm() {
     try {
       setGenTitleLoading(true);
       await invoke("start_ollama");
-      const reply: string = await invoke("general_chat", {
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a creative assistant that suggests short, catchy lofi song titles. Respond with only the title.",
-          },
-          { role: "user", content: "Give me a lofi song title." },
-        ],
-      });
-      const line = reply.split("\n")[0].replace(/^['\"]|['\"]$/g, "").trim();
-      if (line) setTitleBase(line);
+      if (albumMode) {
+        const reply: string = await invoke("general_chat", {
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are a creative assistant that suggests lofi album names and track titles. Respond with JSON {\"album\":\"Album Name\",\"tracks\":[\"Track 1\",...]}.",
+            },
+            {
+              role: "user",
+              content: `Theme: ${titleBase}. Number of tracks: ${trackCount}`,
+            },
+          ],
+        });
+        try {
+          const parsed = JSON.parse(reply);
+          if (parsed.album) setAlbumName(parsed.album);
+          if (Array.isArray(parsed.tracks)) {
+            setTrackNames((prev) => {
+              const updated = [...parsed.tracks.slice(0, trackCount)];
+              return updated.length < trackCount
+                ? [...updated, ...Array(trackCount - updated.length).fill("")]
+                : updated;
+            });
+          }
+        } catch {
+          const lines = reply.split("\n").filter(Boolean);
+          if (lines.length > 0) {
+            setAlbumName(lines[0]);
+            setTrackNames((prev) => {
+              const updated = lines.slice(1, trackCount + 1);
+              return updated.length < trackCount
+                ? [...updated, ...Array(trackCount - updated.length).fill("")]
+                : updated;
+            });
+          }
+        }
+      } else {
+        const reply: string = await invoke("general_chat", {
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are a creative assistant that suggests short, catchy lofi song titles. Respond with only the title.",
+            },
+            { role: "user", content: "Give me a lofi song title." },
+          ],
+        });
+        const line = reply
+          .split("\n")[0]
+          .replace(/^['\"]|['\"]$/g, "")
+          .trim();
+        if (line) setTitleBase(line);
+      }
     } catch (e: any) {
       setErr(e?.message || String(e));
     } finally {
@@ -520,8 +579,8 @@ export default function SongForm() {
     setIsPlaying(false);
     setProgress(0);
 
-    if (!titleBase || !outDir) {
-      setErr("Please set a title and choose an output folder.");
+    if (!titleBase || !outDir || (albumMode && !albumReady)) {
+      setErr("Please set required titles and choose an output folder.");
       return;
     }
     if (numSongs < 1) {
@@ -589,7 +648,13 @@ export default function SongForm() {
     try {
       setBusy(true);
       await invoke("generate_album", {
-        meta: { track_count: trackCount, title_base: titleBase, out_dir: outDir },
+        meta: {
+          track_count: trackCount,
+          title_base: titleBase,
+          album_name: albumName,
+          track_names: trackNames,
+          out_dir: outDir,
+        },
       });
     } catch (e: any) {
       const message = e?.message || String(e);
@@ -717,7 +782,11 @@ export default function SongForm() {
             onChange={(e) => setTitleBase(e.target.value)}
           />
           <button className={styles.btn} onClick={generateTitle} disabled={genTitleLoading}>
-            {genTitleLoading ? "Generating..." : "Generate Title"}
+            {genTitleLoading
+              ? "Generating..."
+              : albumMode
+              ? "Generate Album Titles"
+              : "Generate Title"}
           </button>
           <button className={styles.btn} onClick={pickFolder}>
             {outDir ? "Change folder" : "Choose folder"}
@@ -1049,6 +1118,26 @@ export default function SongForm() {
                 }
                 className={styles.input}
               />
+              <label className={styles.label}>Album Name</label>
+              <input
+                className={styles.input}
+                placeholder="Album name"
+                value={albumName}
+                onChange={(e) => setAlbumName(e.target.value)}
+              />
+              {trackNames.map((name, i) => (
+                <input
+                  key={i}
+                  className={styles.input}
+                  placeholder={`Track ${i + 1} name`}
+                  value={name}
+                  onChange={(e) => {
+                    const arr = [...trackNames];
+                    arr[i] = e.target.value;
+                    setTrackNames(arr);
+                  }}
+                />
+              ))}
             </>
           )}
         </div>
@@ -1067,6 +1156,7 @@ export default function SongForm() {
           titleBase={titleBase}
           hasInvalidBars={hasInvalidBars}
           albumMode={albumMode}
+          albumReady={albumReady}
           onRender={handleRender}
           previewPlaying={previewPlaying}
           onPreview={handlePreview}

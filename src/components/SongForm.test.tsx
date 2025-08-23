@@ -326,11 +326,28 @@ describe('SongForm', () => {
     );
 
     fireEvent.click(screen.getByLabelText(/album mode/i));
+    const tcInput = screen.getByDisplayValue('6') as HTMLInputElement;
+    fireEvent.change(tcInput, { target: { value: '3' } });
+    fireEvent.change(screen.getByPlaceholderText(/album name/i), {
+      target: { value: 'My Album' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Track 1 name'), {
+      target: { value: 'T1' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Track 2 name'), {
+      target: { value: 'T2' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Track 3 name'), {
+      target: { value: 'T3' },
+    });
     fireEvent.click(screen.getByText(/create album/i));
 
     await waitFor(() => {
-      const calls = (invoke as any).mock.calls.map(([c]: any) => c);
-      expect(calls).toContain('generate_album');
+      const call = (invoke as any).mock.calls.find(
+        ([c]: any) => c === 'generate_album'
+      );
+      expect(call[1].meta.album_name).toBe('My Album');
+      expect(call[1].meta.track_names).toEqual(['T1', 'T2', 'T3']);
     });
   });
 });
