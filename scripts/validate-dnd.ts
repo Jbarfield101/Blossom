@@ -1,10 +1,11 @@
-import { zNpc, zLore, zQuest, zSpell } from "../src/features/dnd/schemas";
+import { zNpc, zLore, zQuest, zSpell, zRule } from "../src/features/dnd/schemas";
 
 const schemas: Record<string, any> = {
   npc: zNpc,
   lore: zLore,
   quest: zQuest,
   spell: zSpell,
+  rule: zRule,
 };
 
 const [, , kind, jsonStr] = process.argv;
