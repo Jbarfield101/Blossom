@@ -49,6 +49,46 @@ fn conda_python() -> PathBuf {
 Activate your Python environment first. The high‑quality generator lives at
 `src-tauri/python/lofi/renderer.py`.
 
+## Text-to-Speech (TTS) models
+
+Blossom can announce track titles or host voice‑overs using the
+[Coqui TTS](https://github.com/coqui-ai/TTS) library.
+
+1. **Install the library**
+
+   ```bash
+   pip install TTS
+   ```
+
+2. **Download a model** – use `tts --list_models` to view available voices and
+   download one. For example, to grab the English VITS model (≈500 MB):
+
+   ```bash
+    tts --model_name tts_models/en/vctk/vits --output_path ~/blossom_tts
+   ```
+
+   The download produces a `model.pth` and matching `config.json`. Store them in
+   any directory. High‑quality multi‑speaker models can exceed 1 GB.
+
+3. **Point the scripts to the model** – pass the path with `--tts-model-path`
+   and the config alongside it:
+
+   ```bash
+   python src-tauri/python/dj_mix.py \
+     --specs song1.json song2.json \
+     --out mix.wav \
+     --tts-model-path ~/blossom_tts/model.pth \
+     --tts-config ~/blossom_tts/config.json
+   ```
+
+   You can also set the `TTS_MODEL_PATH` and `TTS_CONFIG_PATH` environment
+   variables to avoid passing the arguments each time.
+
+4. **GPU notes** – inference runs fastest on a modern NVIDIA GPU. A 16 GB card
+   such as an RTX 4080 is recommended for real‑time speech; slower GPUs or CPU
+   mode will work but take longer.
+
+
 ## Testing
 
 Run the test suite to verify the application:
