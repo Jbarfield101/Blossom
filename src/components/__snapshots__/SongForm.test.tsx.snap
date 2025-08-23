@@ -138,6 +138,21 @@ exports[`SongForm > renders default form 1`] = `
             King's Last Stand
           </option>
           <option
+            value="Dragon's Fury"
+          >
+            Dragon's Fury
+          </option>
+          <option
+            value="Siege of Stormkeep"
+          >
+            Siege of Stormkeep
+          </option>
+          <option
+            value="Final Hour at the Citadel"
+          >
+            Final Hour at the Citadel
+          </option>
+          <option
             value="Ocean Breeze"
           >
             Ocean Breeze
@@ -575,6 +590,21 @@ exports[`SongForm > renders default form 1`] = `
                 value="King's Last Stand"
               >
                 King's Last Stand
+              </option>
+              <option
+                value="Dragon's Fury"
+              >
+                Dragon's Fury
+              </option>
+              <option
+                value="Siege of Stormkeep"
+              >
+                Siege of Stormkeep
+              </option>
+              <option
+                value="Final Hour at the Citadel"
+              >
+                Final Hour at the Citadel
               </option>
               <option
                 value="Ocean Breeze"
@@ -1103,6 +1133,16 @@ exports[`SongForm > renders default form 1`] = `
                   class="_optionCard_62bdff"
                 >
                   <span>
+                    french horn
+                  </span>
+                  <input
+                    type="checkbox"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
                     synth lead
                   </span>
                   <input
@@ -1477,6 +1517,18 @@ exports[`SongForm > renders default form 1`] = `
                     name="leadInstrument"
                     type="radio"
                     value="muted trumpet"
+                  />
+                </label>
+                <label
+                  class="_optionCard_62bdff"
+                >
+                  <span>
+                    french horn
+                  </span>
+                  <input
+                    name="leadInstrument"
+                    type="radio"
+                    value="french horn"
                   />
                 </label>
                 <label
