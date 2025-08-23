@@ -22,11 +22,22 @@ describe("Monster AI", () => {
     isMonster: false,
   };
 
-  it("selects first valid target", () => {
+  it("selects random valid target", () => {
     const goblin = { ...baseGoblin };
-    const hero = { ...baseHero };
-    const target = selectTarget(goblin, [goblin, hero]);
-    expect(target).toBe(hero);
+    const hero = { ...baseHero, name: "hero1" };
+    const ally = { ...baseHero, name: "hero2" };
+    const spy = vi.spyOn(Math, "random").mockReturnValue(0.9);
+    const target = selectTarget(goblin, [hero, ally], "random");
+    expect(target).toBe(ally);
+    spy.mockRestore();
+  });
+
+  it("selects target with lowest HP", () => {
+    const goblin = { ...baseGoblin };
+    const healthy = { ...baseHero, name: "healthy" };
+    const wounded = { ...baseHero, name: "wounded", hp: 4 };
+    const target = selectTarget(goblin, [healthy, wounded], "lowest-hp");
+    expect(target).toBe(wounded);
   });
 
   it("applies damage on hit", () => {
@@ -50,6 +61,23 @@ describe("Monster AI", () => {
     const next = ai.takeTurn(encounter);
     expect(ai.combatants[hero.name].hp).toBe(5);
     expect(next.current).toBe(1);
+    spy.mockRestore();
+  });
+
+  it("plays monster turn targeting lowest HP opponent", () => {
+    const goblin = { ...baseGoblin };
+    const healthy = { ...baseHero, name: "healthy" };
+    const wounded = { ...baseHero, name: "wounded", hp: 4 };
+    const encounter = new Encounter([
+      { name: goblin.name, initiative: 15 },
+      { name: healthy.name, initiative: 10 },
+      { name: wounded.name, initiative: 5 },
+    ]);
+    const ai = new MonsterAI([goblin, healthy, wounded], "lowest-hp");
+    const spy = vi.spyOn(rules, "rollDice").mockReturnValue(15);
+    ai.takeTurn(encounter);
+    expect(ai.combatants[wounded.name].hp).toBe(0);
+    expect(ai.combatants[healthy.name].hp).toBe(10);
     spy.mockRestore();
   });
 });
