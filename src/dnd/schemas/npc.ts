@@ -23,6 +23,10 @@ export const zNpc = z.object({
   sections: z.record(z.unknown()).optional(),
   statblock: z.record(z.unknown()),
   tags: z.array(z.string()).nonempty(),
+  abilities: z.record(z.number()).optional(),
+  level: z.number().int().min(1).optional(),
+  hp: z.number().int().min(0).optional(),
+  inventory: z.array(z.string()).optional(),
 });
 
 export type Npc = z.infer<typeof zNpc>;
