@@ -23,6 +23,7 @@ export const INSTR = [
   "flute",
   "saxophone",
   "trumpet",
+  "french horn",
   "synth lead",
   "string squeaks",
   "key clicks",

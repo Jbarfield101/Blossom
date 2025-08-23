@@ -123,6 +123,7 @@ const LEAD_INSTR = [
   { value: "clarinet", label: "clarinet" },
   { value: "oboe", label: "oboe" },
   { value: "muted trumpet", label: "muted trumpet" },
+  { value: "french horn", label: "french horn" },
   { value: "glockenspiel", label: "glockenspiel" },
 ];
 const DRUM_PATS = [
@@ -144,6 +145,7 @@ function inferLeadInstrument(instrs: string[]): string {
   if (instrs.includes("clarinet")) return "clarinet";
   if (instrs.includes("oboe")) return "oboe";
   if (instrs.includes("muted trumpet")) return "muted trumpet";
+  if (instrs.includes("french horn")) return "french horn";
   if (instrs.includes("glockenspiel")) return "glockenspiel";
   if (instrs.includes("synth lead")) return "synth lead";
   return "synth lead";
