@@ -491,6 +491,16 @@ pub async fn parse_rule_pdf<R: Runtime>(
 }
 
 #[tauri::command]
+pub async fn parse_lore_pdf<R: Runtime>(
+    app: AppHandle<R>,
+    path: String,
+) -> Result<Vec<Value>, String> {
+    let out = run_pdf_tool(&app, &["lore", &path])?;
+    let v: Value = serde_json::from_str(&out).map_err(|e| e.to_string())?;
+    serde_json::from_value(v["lore"].clone()).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 pub async fn enqueue_parse_npc_pdf<R: Runtime>(
     app: AppHandle<R>,
     queue: State<'_, TaskQueue>,
@@ -812,6 +822,109 @@ pub async fn blender_run_script(code: String) -> Result<(), String> {
 
 fn blender_path() -> PathBuf {
     PathBuf::from("blender")
+}
+
+/* ==============================
+Lore storage
+============================== */
+
+fn lore_storage_dir<R: Runtime>(app: &AppHandle<R>, world: &str) -> Result<PathBuf, String> {
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|_| "app data dir".to_string())?
+        .join("worlds")
+        .join(world)
+        .join("lore");
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    Ok(dir)
+}
+
+fn validate_lore(lore: &Value) -> Result<Value, String> {
+    let script = PathBuf::from("scripts").join("validate-dnd.ts");
+    let json = serde_json::to_string(lore).map_err(|e| e.to_string())?;
+    let output = PCommand::new("npx")
+        .arg("tsx")
+        .arg(&script)
+        .arg("lore")
+        .arg(&json)
+        .output()
+        .map_err(|e| e.to_string())?;
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    serde_json::from_str(&stdout).map_err(|e| e.to_string())
+}
+
+fn update_lore_index<R: Runtime>(app: &AppHandle<R>, world: &str) -> Result<(), String> {
+    let dir = lore_storage_dir(app, world)?;
+    let mut entries = Vec::new();
+    if dir.exists() {
+        let iter = fs::read_dir(&dir).map_err(|e| e.to_string())?;
+        for entry in iter {
+            let entry = entry.map_err(|e| e.to_string())?;
+            let path = entry.path();
+            if path.file_name() == Some(std::ffi::OsStr::new("index.json")) {
+                continue;
+            }
+            if path.extension().and_then(|s| s.to_str()) == Some("json") {
+                let contents = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+                let data: Value = serde_json::from_str(&contents).map_err(|e| e.to_string())?;
+                entries.push(serde_json::json!({
+                    "id": data["id"].clone(),
+                    "name": data["name"].clone(),
+                    "tags": data["tags"].clone(),
+                    "path": path.to_string_lossy().to_string(),
+                }));
+            }
+        }
+    }
+    let index_path = dir.join("index.json");
+    let json = serde_json::to_string_pretty(&entries).map_err(|e| e.to_string())?;
+    fs::write(index_path, json).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn save_lore<R: Runtime>(
+    app: AppHandle<R>,
+    world: String,
+    lore: Value,
+    overwrite: Option<bool>,
+) -> Result<(), String> {
+    let validated = validate_lore(&lore)?;
+    let id = validated["id"]
+        .as_str()
+        .ok_or_else(|| "missing id".to_string())?;
+    let dir = lore_storage_dir(&app, &world)?;
+    let path = dir.join(format!("{}.json", id));
+    if path.exists() && !overwrite.unwrap_or(false) {
+        return Err("exists".into());
+    }
+    let json = serde_json::to_string_pretty(&validated).map_err(|e| e.to_string())?;
+    fs::write(&path, json).map_err(|e| e.to_string())?;
+    update_lore_index(&app, &world)?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn list_lore<R: Runtime>(app: AppHandle<R>, world: String) -> Result<Vec<Value>, String> {
+    let dir = lore_storage_dir(&app, &world)?;
+    let mut lore = Vec::new();
+    if dir.exists() {
+        let entries = fs::read_dir(&dir).map_err(|e| e.to_string())?;
+        for entry in entries {
+            let entry = entry.map_err(|e| e.to_string())?;
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) == Some("json") {
+                let contents = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+                let data: Value = serde_json::from_str(&contents).map_err(|e| e.to_string())?;
+                lore.push(data);
+            }
+        }
+    }
+    Ok(lore)
 }
 
 /* ==============================

@@ -275,6 +275,41 @@ def extract_npcs(path: str):
     return {"npcs": npcs}
 
 
+def extract_lore(path: str):
+    pdf_path = Path(path)
+    lore_list = []
+    with pdfplumber.open(pdf_path) as pdf:
+        text = "\n".join(page.extract_text() or "" for page in pdf.pages)
+    for block in text.split("\n\n"):
+        lines = [ln.strip() for ln in block.splitlines() if ln.strip()]
+        if not lines:
+            continue
+        data = {}
+        for line in lines:
+            if ":" in line:
+                k, v = line.split(":", 1)
+                data[k.strip().lower()] = v.strip()
+        if not data:
+            continue
+        lore = {
+            "id": str(uuid.uuid4()),
+            "name": data.get("name", "Unknown"),
+            "summary": data.get("summary", ""),
+            "location": data.get("location"),
+            "hooks": [h.strip() for h in data.get("hooks", "").split(",") if h.strip()] or None,
+            "tags": [t.strip() for t in data.get("tags", "lore").split(",") if t.strip()],
+        }
+        sections = {
+            k: v
+            for k, v in data.items()
+            if k not in {"name", "summary", "location", "hooks", "tags"}
+        }
+        if sections:
+            lore["sections"] = sections
+        lore_list.append(lore)
+    return {"lore": lore_list}
+
+
 def extract_rules(path: str):
     """Extract simple rule entries from a PDF file."""
     pdf_path = Path(path)
@@ -469,6 +504,8 @@ def main():
     p.add_argument("path")
     p = sub.add_parser("npcs")
     p.add_argument("path")
+    p = sub.add_parser("lore")
+    p.add_argument("path")
     args = parser.parse_args()
 
     if args.cmd == "add":
@@ -492,6 +529,8 @@ def main():
         out = extract_rules(args.path)
     elif args.cmd == "npcs":
         out = extract_npcs(args.path)
+    elif args.cmd == "lore":
+        out = extract_lore(args.path)
     else:
         out = {}
     json.dump(out, fp=os.fdopen(1, "w"))

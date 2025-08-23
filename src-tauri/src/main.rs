@@ -66,10 +66,13 @@ fn main() {
             commands::parse_rule_pdf,
             commands::parse_npc_pdf,
             commands::enqueue_parse_npc_pdf,
+            commands::parse_lore_pdf,
             // Blender:
             commands::blender_run_script,
             commands::save_npc,
             commands::list_npcs,
+            commands::save_lore,
+            commands::list_lore,
             // Paths:
             commands::load_paths,
             commands::save_paths,

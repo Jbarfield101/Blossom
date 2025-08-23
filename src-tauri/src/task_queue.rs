@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
-use std::process::Command as PCommand;
+use std::io::{BufRead, BufReader};
+use std::process::{Command as PCommand, Stdio};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -30,6 +31,14 @@ pub enum TaskCommand {
         doc_id: String,
     },
     ParseNpcPdf {
+        #[serde(default = "crate::commands::conda_python_string")]
+        py: String,
+        #[serde(default = "crate::commands::pdf_tools_path_string")]
+        script: String,
+        path: String,
+        world: String,
+    },
+    ParseLorePdf {
         #[serde(default = "crate::commands::conda_python_string")]
         py: String,
         #[serde(default = "crate::commands::pdf_tools_path_string")]
@@ -111,6 +120,7 @@ impl TaskQueue {
                         }
                         let tasks_clone = tasks_worker.clone();
                         let limits_clone = limits_worker.clone();
+                        let cancelled_clone = cancelled_worker.clone();
                         let command = task.command.clone();
                         let permit = semaphore.clone().acquire_owned().await.unwrap();
                         let id = task.id;
@@ -215,6 +225,53 @@ impl TaskQueue {
                                         let stdout = String::from_utf8_lossy(&output.stdout);
                                         serde_json::from_str::<Value>(&stdout)
                                             .map_err(|e| e.to_string())
+                                    }
+                                }
+                                TaskCommand::ParseLorePdf { py, script, path, world: _ } => {
+                                    let mut cmd = PCommand::new(&py);
+                                    cmd.arg(&script)
+                                        .arg("lore")
+                                        .arg(&path)
+                                        .stdout(Stdio::piped())
+                                        .stderr(Stdio::piped());
+                                    let mut child = cmd
+                                        .spawn()
+                                        .map_err(|e| format!("Failed to start python: {e}"))?;
+                                    let stdout = child.stdout.take().ok_or("no stdout".to_string())?;
+                                    let mut reader = BufReader::new(stdout);
+                                    let mut output = String::new();
+                                    loop {
+                                        let mut line = String::new();
+                                        let n = reader.read_line(&mut line).map_err(|e| e.to_string())?;
+                                        if n == 0 {
+                                            break;
+                                        }
+                                        if let Ok(p) = line.trim().parse::<f32>() {
+                                            let mut map = tasks_clone.lock().unwrap();
+                                            if let Some(t) = map.get_mut(&id) {
+                                                t.progress = p;
+                                            }
+                                        } else {
+                                            output.push_str(&line);
+                                        }
+                                        if cancelled_clone.lock().unwrap().contains(&id) {
+                                            let _ = child.kill();
+                                            return Err("cancelled".into());
+                                        }
+                                    }
+                                    let status = child.wait().map_err(|e| e.to_string())?;
+                                    if !status.success() {
+                                        let mut err = String::new();
+                                        if let Some(mut e) = child.stderr.take() {
+                                            use std::io::Read;
+                                            let _ = e.read_to_string(&mut err);
+                                        }
+                                        Err(format!(
+                                            "Python exited with status {}:\n{}",
+                                            status, err
+                                        ))
+                                    } else {
+                                        serde_json::from_str::<Value>(&output).map_err(|e| e.to_string())
                                     }
                                 }
                                 TaskCommand::GenerateShort { spec } => {
