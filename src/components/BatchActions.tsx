@@ -17,6 +17,7 @@ interface Props {
   titleBase: string;
   hasInvalidBars: boolean;
   albumMode: boolean;
+  albumReady: boolean;
   onRender: () => void;
   previewPlaying: boolean;
   onPreview: () => Promise<void> | void;
@@ -38,6 +39,7 @@ export default function BatchActions({
   titleBase,
   hasInvalidBars,
   albumMode,
+  albumReady,
   onRender,
   previewPlaying,
   onPreview,
@@ -47,30 +49,37 @@ export default function BatchActions({
   return (
     <>
       <div className={styles.grid2}>
-        <div className={styles.panel}>
-          <label className={styles.label}>
-            How many songs?
-            <HelpIcon text="Number of songs to render in this batch" />
-          </label>
-          <input
-            type="number"
-            min={1}
-            value={numSongs}
-            onChange={(e) => setNumSongs(Math.max(1, Number(e.target.value || 1)))}
-            className={styles.input}
-          />
-          <div className={clsx(styles.small, "mt-2")}>
-            Titles will be suffixed with{" "}
-            <select
-              value={titleSuffixMode}
-              onChange={(e) => setTitleSuffixMode(e.target.value)}
-              className={clsx(styles.input, "py-1 px-2 inline-block w-[160px] ml-1")}
-            >
-              <option value="number"># (1, 2, 3…)</option>
-              <option value="timestamp">timestamp</option>
-            </select>
+        {!albumMode && (
+          <div className={styles.panel}>
+            <label className={styles.label}>
+              How many songs?
+              <HelpIcon text="Number of songs to render in this batch" />
+            </label>
+            <input
+              type="number"
+              min={1}
+              value={numSongs}
+              onChange={(e) =>
+                setNumSongs(Math.max(1, Number(e.target.value || 1)))
+              }
+              className={styles.input}
+            />
+            <div className={clsx(styles.small, "mt-2")}>
+              Titles will be suffixed with{" "}
+              <select
+                value={titleSuffixMode}
+                onChange={(e) => setTitleSuffixMode(e.target.value)}
+                className={clsx(
+                  styles.input,
+                  "py-1 px-2 inline-block w-[160px] ml-1"
+                )}
+              >
+                <option value="number"># (1, 2, 3…)</option>
+                <option value="timestamp">timestamp</option>
+              </select>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className={styles.panel}>
           <label className={styles.label}>
@@ -100,7 +109,13 @@ export default function BatchActions({
       <div className={styles.actions}>
         <button
           className={styles.btn}
-          disabled={busy || !outDir || !titleBase || hasInvalidBars}
+          disabled={
+            busy ||
+            !outDir ||
+            !titleBase ||
+            hasInvalidBars ||
+            (albumMode && !albumReady)
+          }
           onClick={onRender}
         >
           {albumMode
