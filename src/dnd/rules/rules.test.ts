@@ -16,6 +16,8 @@ describe("dnd rules", () => {
     level: 1,
     hp: 10,
     inventory: [],
+    spells: [],
+    spellSlots: {},
   };
 
   it("passes ability checks when total meets DC", () => {

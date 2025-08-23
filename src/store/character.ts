@@ -33,7 +33,7 @@ export const useCharacter = create<CharacterState>()(
           abilities: char.abilities,
           level: char.level,
           hp: char.hp,
-          inventory: char.inventory,
+          inventory: char.inventory.map((i) => i.name),
         });
       },
       clearCharacter: () => set({ character: null }),

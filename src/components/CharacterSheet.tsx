@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Stack, TextField, Button, Typography } from '@mui/material';
 import { useCharacter } from '../store/character';
 import type { Character } from '../dnd/characters';
+import InventoryPanel from './InventoryPanel';
+import SpellBook from './SpellBook';
 
 export default function CharacterSheet() {
   const stored = useCharacter((s) => s.character);
@@ -13,6 +15,8 @@ export default function CharacterSheet() {
       level: 1,
       hp: 0,
       inventory: [],
+      spells: [],
+      spellSlots: {},
     }
   );
 
@@ -20,15 +24,6 @@ export default function CharacterSheet() {
     setCharacterState((prev) => ({
       ...prev,
       abilities: { ...prev.abilities, [key]: value },
-    }));
-
-  const updateInventory = (value: string) =>
-    setCharacterState((prev) => ({
-      ...prev,
-      inventory: value
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean),
     }));
 
   const save = () => setCharacter(character);
@@ -80,10 +75,21 @@ export default function CharacterSheet() {
           />
         ))}
       </Stack>
-      <TextField
-        label="Inventory"
-        value={character.inventory.join(', ')}
-        onChange={(e) => updateInventory(e.target.value)}
+      <InventoryPanel
+        items={character.inventory}
+        onChange={(items) =>
+          setCharacterState((prev) => ({ ...prev, inventory: items }))
+        }
+      />
+      <SpellBook
+        spells={character.spells}
+        spellSlots={character.spellSlots}
+        onSpellsChange={(spells) =>
+          setCharacterState((prev) => ({ ...prev, spells }))
+        }
+        onSlotsChange={(slots) =>
+          setCharacterState((prev) => ({ ...prev, spellSlots: slots }))
+        }
       />
       <Button variant="contained" onClick={save}>
         Save
