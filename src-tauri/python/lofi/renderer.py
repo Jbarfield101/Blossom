@@ -35,6 +35,7 @@ from typing import List, Dict, Tuple, Any, Optional
 
 import numpy as np
 from pydub import AudioSegment
+from pydub.exceptions import CouldntDecodeError
 
 from .dsp import (
     SR,
@@ -341,17 +342,21 @@ def _load_ambience_sample(name: str, n: int, rng=None) -> Optional[np.ndarray]:
     if not files:
         return None
     choice = rng.choice(files) if rng is not None else random.choice(files)
-    seg = AudioSegment.from_file(os.path.join(amb_dir, choice))
-    seg = seg.set_frame_rate(SR).set_channels(1)
-    arr = np.array(seg.get_array_of_samples()).astype(np.float32)
-    max_int = float(2 ** (8 * seg.sample_width - 1))
-    arr = arr / max_int
-    if len(arr) < n:
-        reps = int(np.ceil(n / len(arr)))
-        arr = np.tile(arr, reps)
-    arr = arr[:n]
-    arr = _butter_highpass(arr, 200)
-    arr = _butter_lowpass(arr, 5000)
+    try:
+        seg = AudioSegment.from_file(os.path.join(amb_dir, choice))
+        seg = seg.set_frame_rate(SR).set_channels(1)
+        arr = np.array(seg.get_array_of_samples()).astype(np.float32)
+        max_int = float(2 ** (8 * seg.sample_width - 1))
+        arr = arr / max_int
+        if len(arr) < n:
+            reps = int(np.ceil(n / len(arr)))
+            arr = np.tile(arr, reps)
+        arr = arr[:n]
+        arr = _butter_highpass(arr, 200)
+        arr = _butter_lowpass(arr, 5000)
+    except (FileNotFoundError, CouldntDecodeError) as e:
+        logger.warning({"stage": "warn", "message": f"ambience load failed for {choice}: {e}"})
+        return None
     return arr * 0.002
 
 # ---------- Harmony helpers ----------
