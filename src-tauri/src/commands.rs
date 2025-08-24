@@ -12,7 +12,7 @@ use dirs;
 
 use crate::stocks::{stocks_fetch as stocks_fetch_impl, StockBundle};
 use crate::task_queue::{Task, TaskCommand, TaskQueue};
-use chrono::{Local, NaiveDateTime};
+use chrono::{DateTime, Local, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use serde_yaml;
@@ -1483,7 +1483,7 @@ pub async fn stock_forecast<R: Runtime>(
     let mut recent_parts = Vec::new();
     for (ts, close) in timestamps.iter().zip(closes.iter()) {
         if let (Some(ts), Some(price)) = (ts.as_i64(), close.as_f64()) {
-            if let Some(dt) = NaiveDateTime::from_timestamp_opt(ts, 0) {
+            if let Some(dt) = DateTime::<Utc>::from_timestamp(ts, 0) {
                 let date = dt.format("%Y-%m-%d").to_string();
                 recent_parts.push(format!("{date}: {:.2}", price));
             }
@@ -1507,7 +1507,7 @@ pub async fn stock_forecast<R: Runtime>(
     let mut long_parts = Vec::new();
     for (ts, close) in timestamps.iter().zip(closes.iter()) {
         if let (Some(ts), Some(price)) = (ts.as_i64(), close.as_f64()) {
-            if let Some(dt) = NaiveDateTime::from_timestamp_opt(ts, 0) {
+            if let Some(dt) = DateTime::<Utc>::from_timestamp(ts, 0) {
                 let date = dt.format("%Y-%m-%d").to_string();
                 long_parts.push(format!("{date}: {:.2}", price));
             }
@@ -1575,7 +1575,7 @@ pub async fn fetch_stock_news(symbol: String) -> Result<Vec<NewsArticle>, String
         let summary = item["summary"].as_str().unwrap_or("").to_string();
         let ts = item["time_published"].as_str().unwrap_or("");
         let timestamp = NaiveDateTime::parse_from_str(ts, "%Y%m%dT%H%M%S")
-            .map(|dt| dt.timestamp())
+            .map(|dt| dt.and_utc().timestamp())
             .unwrap_or(0);
         if !title.is_empty() && !link.is_empty() {
             out.push(NewsArticle {
