@@ -71,6 +71,52 @@ describe('Calendar time validation', () => {
     expect(endInput.value).toMatch(/T10:00/);
   });
 
+  it('auto fills end time when typing start', () => {
+    render(<Calendar />);
+    fireEvent.change(screen.getByLabelText('Title'), {
+      target: { value: 'Auto' },
+    });
+    fireEvent.change(screen.getByTestId('date-input'), {
+      target: { value: '2024-01-01T09:00' },
+    });
+    const endInput = screen.getByTestId('end-input') as HTMLInputElement;
+    expect(endInput.value).toBe('2024-01-01T10:00');
+  });
+
+  it('toggles advanced fields with More options', () => {
+    render(<Calendar />);
+    expect(screen.queryByLabelText('Tags')).toBeNull();
+    fireEvent.click(screen.getByTestId('toggle-advanced'));
+    expect(screen.getByLabelText('Tags')).toBeInTheDocument();
+  });
+
+  it('warns about overlapping events but allows saving', () => {
+    render(<Calendar />);
+    fireEvent.change(screen.getByLabelText('Title'), {
+      target: { value: 'One' },
+    });
+    fireEvent.change(screen.getByTestId('date-input'), {
+      target: { value: '2024-01-01T09:00' },
+    });
+    fireEvent.change(screen.getByTestId('end-input'), {
+      target: { value: '2024-01-01T10:00' },
+    });
+    fireEvent.click(screen.getByTestId('add-button'));
+
+    fireEvent.change(screen.getByLabelText('Title'), {
+      target: { value: 'Two' },
+    });
+    fireEvent.change(screen.getByTestId('date-input'), {
+      target: { value: '2024-01-01T09:30' },
+    });
+    fireEvent.change(screen.getByTestId('end-input'), {
+      target: { value: '2024-01-01T10:30' },
+    });
+    expect(screen.getByTestId('overlap-warning')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('add-button'));
+    expect(useCalendar.getState().events.some((e) => e.title === 'Two')).toBe(true);
+  });
+
   it('adds quick events with custom time and duration', () => {
     render(<Calendar />);
     const day1 = screen.getByTestId('day-1');
