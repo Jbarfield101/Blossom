@@ -1,6 +1,8 @@
 import HelpIcon from "./HelpIcon";
 import type { TemplateSpec } from "./SongForm";
 import React from "react";
+import Autocomplete from "@mui/material/Autocomplete";
+import TextField from "@mui/material/TextField";
 import styles from "./SongForm.module.css";
 import clsx from "clsx";
 
@@ -17,31 +19,63 @@ export default function TemplateSelector({
   setSelectedTemplate,
   applyTemplate,
 }: Props) {
+  const templateOptions = React.useMemo(
+    () => [
+      { label: "Custom Structure", value: "" },
+      ...Object.keys(templates).map((name) => ({ label: name, value: name })),
+    ],
+    [templates]
+  );
+
+  const selectedOption = templateOptions.find(
+    (o) => o.value === selectedTemplate
+  ) ?? null;
+
+  const tpl = selectedTemplate ? templates[selectedTemplate] : null;
+
   return (
     <div className={styles.panel}>
       <div className={styles.label}>
         Song Templates
         <HelpIcon text="Select a preset arrangement and settings" />
       </div>
-      <select
-        aria-label="Song Templates"
-        value={selectedTemplate}
-        onChange={(e) => {
-          const templateName = e.target.value;
+      <Autocomplete
+        options={templateOptions}
+        value={selectedOption}
+        onChange={(_e, newValue) => {
+          const templateName = newValue?.value ?? "";
           setSelectedTemplate(templateName);
           if (templateName && templates[templateName]) {
             applyTemplate(templates[templateName]);
           }
         }}
-        className={clsx(styles.input, "py-2 px-3")}
-      >
-        <option value="">Custom Structure</option>
-        {Object.keys(templates).map((name) => (
-          <option key={name} value={name}>
-            {name}
-          </option>
-        ))}
-      </select>
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            inputProps={{
+              ...params.inputProps,
+              "aria-label": "Song Templates",
+              className: clsx(styles.input, "py-2 px-3"),
+            }}
+            placeholder="Select template"
+          />
+        )}
+      />
+      {tpl && (
+        <div className={clsx(styles.small, "mt-2")}
+        >
+          <div>
+            <strong>Structure:</strong>{" "}
+            {tpl.structure.map((s) => `${s.name} (${s.bars})`).join(", ")}
+          </div>
+          <div>
+            <strong>BPM:</strong> {tpl.bpm}
+          </div>
+          <div>
+            <strong>Mood:</strong> {tpl.mood.join(", ")}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

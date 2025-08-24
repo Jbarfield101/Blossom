@@ -38,6 +38,22 @@ function openDetails(title: string) {
   fireEvent.click(screen.getByText(title));
 }
 
+function openTemplateOptions() {
+  openDetails('Structure');
+  const input = screen.getByLabelText(/song templates/i);
+  fireEvent.mouseDown(input);
+  return input;
+}
+
+function selectTemplate(name: string) {
+  const input = openTemplateOptions();
+  const option = screen
+    .getAllByRole('option', { name })
+    .find((el) => el.tagName === 'LI');
+  if (option) fireEvent.click(option);
+  return input;
+}
+
 describe('SongForm', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -142,15 +158,15 @@ describe('SongForm', () => {
 
   it('remembers last used template', () => {
     render(<SongForm />);
-    openDetails('Structure');
-    const select = screen.getByLabelText(/song templates/i) as HTMLSelectElement;
-    fireEvent.change(select, { target: { value: 'Study Session' } });
-    expect(select.value).toBe('Study Session');
+    selectTemplate('Study Session');
+    expect(
+      (screen.getByLabelText(/song templates/i) as HTMLInputElement).value
+    ).toBe('Study Session');
     cleanup();
     render(<SongForm />);
     openDetails('Structure');
     expect(
-      (screen.getByLabelText(/song templates/i) as HTMLSelectElement).value
+      (screen.getByLabelText(/song templates/i) as HTMLInputElement).value
     ).toBe('Study Session');
   });
 
@@ -186,39 +202,52 @@ describe('SongForm', () => {
 
   it('shows Arcane Clash template option', () => {
     render(<SongForm />);
-    openDetails('Structure');
-    expect(screen.getAllByText('Arcane Clash')[0]).toBeInTheDocument();
+    const input = openTemplateOptions();
+    expect(
+      screen.getAllByRole('option', { name: 'Arcane Clash' })[0]
+    ).toBeInTheDocument();
+    fireEvent.keyDown(input, { key: 'Escape' });
   });
 
   it('shows Bossa Nova template option', () => {
     render(<SongForm />);
-    openDetails('Structure');
-    expect(screen.getAllByText('Bossa Nova')[0]).toBeInTheDocument();
+    const input = openTemplateOptions();
+    expect(
+      screen.getAllByRole('option', { name: 'Bossa Nova' })[0]
+    ).toBeInTheDocument();
+    fireEvent.keyDown(input, { key: 'Escape' });
   });
 
   it("shows King's Last Stand template option", () => {
     render(<SongForm />);
-    openDetails('Structure');
-    expect(screen.getAllByText("King's Last Stand")[0]).toBeInTheDocument();
+    const input = openTemplateOptions();
+    expect(
+      screen.getAllByRole('option', { name: "King's Last Stand" })[0]
+    ).toBeInTheDocument();
+    fireEvent.keyDown(input, { key: 'Escape' });
   });
 
   it('shows Ocean Breeze template option', () => {
     render(<SongForm />);
-    openDetails('Structure');
-    expect(screen.getAllByText('Ocean Breeze')[0]).toBeInTheDocument();
+    const input = openTemplateOptions();
+    expect(
+      screen.getAllByRole('option', { name: 'Ocean Breeze' })[0]
+    ).toBeInTheDocument();
+    fireEvent.keyDown(input, { key: 'Escape' });
   });
 
   it('shows City Lights template option', () => {
     render(<SongForm />);
-    openDetails('Structure');
-    expect(screen.getAllByText('City Lights')[0]).toBeInTheDocument();
+    const input = openTemplateOptions();
+    expect(
+      screen.getAllByRole('option', { name: 'City Lights' })[0]
+    ).toBeInTheDocument();
+    fireEvent.keyDown(input, { key: 'Escape' });
   });
 
   it('applies Bossa Nova template', () => {
     render(<SongForm />);
-    openDetails('Structure');
-    const select = screen.getByLabelText(/song templates/i) as HTMLSelectElement;
-    fireEvent.change(select, { target: { value: 'Bossa Nova' } });
+    selectTemplate('Bossa Nova');
     openSection('rhythm-section');
     const label = screen.getByText('Drum Pattern');
     const drumSelect = label.parentElement!.querySelector('select') as HTMLSelectElement;
@@ -242,10 +271,11 @@ describe('SongForm', () => {
       JSON.stringify({ Foo: PRESET_TEMPLATES['Classic Lofi'] })
     );
     render(<SongForm />);
-    openDetails('Structure');
-    const select = screen.getByLabelText(/song templates/i) as HTMLSelectElement;
-    const options = Array.from(select.options).map((o) => o.value);
-    expect(options).toContain('Bossa Nova');
+    const input = openTemplateOptions();
+    expect(
+      screen.getAllByRole('option', { name: 'Bossa Nova' })[0]
+    ).toBeInTheDocument();
+    fireEvent.keyDown(input, { key: 'Escape' });
   });
 
   it('passes selected instruments in spec', async () => {
