@@ -20,7 +20,11 @@ export default function TopBar() {
       <Tooltip title="Home">
         <IconButton
           onClick={() => nav("/")}
-          sx={{ ...fixedIconButtonSx, left: 12, ...activeSx("/") }}
+          sx={{
+            ...fixedIconButtonSx,
+            left: { xs: 8, sm: 12 },
+            ...activeSx("/"),
+          }}
           aria-label="Home"
           aria-current={pathname === "/" ? "page" : undefined}
         >
@@ -31,7 +35,11 @@ export default function TopBar() {
       <Tooltip title="User">
         <IconButton
           onClick={() => nav("/user")}
-          sx={{ ...fixedIconButtonSx, left: 60, ...activeSx("/user") }}
+          sx={{
+            ...fixedIconButtonSx,
+            left: { xs: 44, sm: 60 },
+            ...activeSx("/user"),
+          }}
           aria-label="User"
           aria-current={pathname === "/user" ? "page" : undefined}
         >
@@ -44,7 +52,7 @@ export default function TopBar() {
           onClick={() => setOpen(true)}
           sx={{
             ...fixedIconButtonSx,
-            right: 12,
+            right: { xs: 8, sm: 12 },
             ...(open
               ? { color: "#000", backgroundColor: "#fff", borderRadius: 4 }
               : { color: "white" }),
