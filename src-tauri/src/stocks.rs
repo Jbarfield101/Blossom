@@ -103,7 +103,7 @@ pub struct StockBundle {
 // ========================
 
 #[async_trait]
-trait Provider: Send + Sync {
+trait StockProvider: Send + Sync {
     async fn fetch_quote(&self, ticker: &str) -> Result<Quote, String>;
     async fn fetch_series(&self, ticker: &str, range: &Range) -> Result<Vec<SeriesPoint>, String>;
 }
@@ -111,7 +111,7 @@ trait Provider: Send + Sync {
 struct YahooProvider;
 
 #[async_trait]
-impl Provider for YahooProvider {
+impl StockProvider for YahooProvider {
     async fn fetch_quote(&self, ticker: &str) -> Result<Quote, String> {
         let url = format!(
             "https://query1.finance.yahoo.com/v7/finance/quote?symbols={}",
@@ -205,7 +205,7 @@ impl Provider for YahooProvider {
 struct StubProvider;
 
 #[async_trait]
-impl Provider for StubProvider {
+impl StockProvider for StubProvider {
     async fn fetch_quote(&self, ticker: &str) -> Result<Quote, String> {
         Ok(Quote {
             ticker: ticker.to_string(),
@@ -229,11 +229,11 @@ impl Provider for StubProvider {
     }
 }
 
-fn provider_from_env() -> Box<dyn Provider> {
+fn provider_from_env() -> Arc<dyn StockProvider + Send + Sync> {
     if std::env::var("STOCKS_PROVIDER").unwrap_or_default() == "stub" {
-        Box::new(StubProvider)
+        Arc::new(StubProvider)
     } else {
-        Box::new(YahooProvider)
+        Arc::new(YahooProvider)
     }
 }
 
@@ -493,7 +493,7 @@ pub async fn stocks_fetch<R: Runtime>(
     let range = Range::parse(&range).ok_or_else(|| "bad range".to_string())?;
 
     sweep_cache().await;
-    let provider = Arc::from(provider_from_env());
+    let provider: Arc<dyn StockProvider + Send + Sync> = provider_from_env();
     let pool = get_pool();
 
     let mut futures = Vec::new();
@@ -554,6 +554,7 @@ pub async fn stocks_fetch<R: Runtime>(
                                     price: 0.0,
                                     change_percent: 0.0,
                                     status: "error".into(),
+                                    volume: None,
                                     error: None,
                                 });
                                 q.error = Some(e.clone());
@@ -619,7 +620,7 @@ pub async fn stocks_fetch<R: Runtime>(
                     } else {
                         let fetch_start = Instant::now();
                         let res = provider.fetch_series(&ticker, &range).await;
-                        let p = match res {
+                        let p: Vec<SeriesPoint> = match res {
                             Ok(p) => {
                                 let _ = save_series_db(pool, &ticker, &range, &p).await;
                                 {
