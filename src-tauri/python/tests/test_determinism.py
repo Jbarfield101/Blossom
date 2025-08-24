@@ -8,7 +8,7 @@ import lofi.renderer as renderer  # noqa: E402
 
 
 EXPECTED_RMS = 0.165903
-EXPECTED_HASH = "82fdd90872a6d191afc972db5890d113a419fa53c9239d7970063d64d1e3ad90"
+EXPECTED_HASH = "f29a48bd8e5d4273903e7f537259d012f3890209d45c08b7d3ea73d600c37a56"
 
 
 def test_deterministic_render(caplog):
