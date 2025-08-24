@@ -48,7 +48,7 @@ export default function TaskList() {
             </Typography>
             <LinearProgress
               variant="determinate"
-              value={task.progress}
+              value={Math.max(0, Math.min(100, task.progress * 100))}
               sx={{ my: 0.5 }}
             />
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
