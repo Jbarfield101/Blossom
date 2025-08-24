@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAudioDefaults } from "../features/audioDefaults/useAudioDefaults";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
-import { open as openPath } from "@tauri-apps/plugin-opener";
+import { openPath } from "@tauri-apps/plugin-opener";
 import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useLofi } from "../features/lofi/SongForm";
