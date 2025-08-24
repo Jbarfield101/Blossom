@@ -11,6 +11,11 @@ import {
   Select,
   MenuItem,
   Snackbar,
+  List,
+  ListItemButton,
+  ListItemText,
+  Autocomplete,
+  Breadcrumbs,
 } from "@mui/material";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
@@ -104,11 +109,13 @@ interface SettingsDrawerProps {
 }
 
 function PathField({
+  id,
   label,
   value,
   onChange,
   directory,
 }: {
+  id: string;
   label: string;
   value: string;
   onChange: (p: string) => void;
@@ -133,7 +140,7 @@ function PathField({
   }, [value]);
 
   return (
-    <Box sx={{ mt: 1 }}>
+    <Box sx={{ mt: 1 }} id={id}>
       <TextField
         label={label}
         value={value}
@@ -211,229 +218,325 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   useEffect(() => setTtsLanguageDraft(ttsLanguage), [ttsLanguage]);
   useEffect(() => setFolderDraft(folder), [folder]);
   useEffect(() => setThemeDraft(theme), [theme]);
+  type Section = "environment" | "editor" | "appearance" | "integrations";
+  const sectionLabels: Record<Section, string> = {
+    environment: "Environment",
+    editor: "Editor",
+    appearance: "Appearance",
+    integrations: "Integrations",
+  };
+  const [section, setSection] = useState<Section>("environment");
+  const [searchValue, setSearchValue] = useState("");
+
+  const baseIndex = [
+    { label: "Python Path", section: "environment" as Section, elementId: "python-path" },
+    { label: "ComfyUI Folder", section: "environment" as Section, elementId: "comfy-path" },
+    { label: "TTS Model Path", section: "environment" as Section, elementId: "tts-model-path" },
+    { label: "TTS Config Path", section: "environment" as Section, elementId: "tts-config-path" },
+    { label: "TTS Speaker", section: "environment" as Section, elementId: "tts-speaker" },
+    { label: "TTS Language", section: "environment" as Section, elementId: "tts-language" },
+    { label: "Default Save Folder", section: "environment" as Section, elementId: "output-folder" },
+    { label: "BPM", section: "editor" as Section, elementId: "bpm" },
+    { label: "Key", section: "editor" as Section, elementId: "key" },
+    { label: "HQ Stereo", section: "editor" as Section, elementId: "hq-stereo" },
+    { label: "HQ Reverb", section: "editor" as Section, elementId: "hq-reverb" },
+    { label: "HQ Sidechain", section: "editor" as Section, elementId: "hq-sidechain" },
+    { label: "HQ Chorus", section: "editor" as Section, elementId: "hq-chorus" },
+    { label: "Theme", section: "appearance" as Section, elementId: "theme" },
+    { label: "Show ComfyUI Tutorial", section: "integrations" as Section, elementId: "show-tutorial" },
+  ];
+  const moduleIndex = (Object.entries(MODULE_LABELS) as [ModuleKey, string][]) .map(
+    ([key, label]) => ({ label, section: "integrations" as Section, elementId: `module-${key}` })
+  );
+  const searchIndex = [...baseIndex, ...moduleIndex];
+
+  const handleSearchSelect = (value: string | null) => {
+    if (!value) return;
+    const item = searchIndex.find((i) => i.label === value);
+    if (item) {
+      setSection(item.section);
+      setTimeout(() => {
+        document.getElementById(item.elementId)?.scrollIntoView({ behavior: "smooth" });
+      }, 0);
+    }
+  };
+
+  const EnvironmentSection = () => (
+    <>
+      <Typography variant="subtitle1">Paths</Typography>
+      <PathField id="python-path" label="Python Path" value={pythonDraft} onChange={setPythonDraft} />
+      <PathField
+        id="comfy-path"
+        label="ComfyUI Folder"
+        value={comfyDraft}
+        onChange={setComfyDraft}
+        directory
+      />
+      <PathField
+        id="tts-model-path"
+        label="TTS Model Path"
+        value={ttsModelDraft}
+        onChange={setTtsModelDraft}
+      />
+      <PathField
+        id="tts-config-path"
+        label="TTS Config Path"
+        value={ttsConfigDraft}
+        onChange={setTtsConfigDraft}
+      />
+      <Box id="tts-speaker" sx={{ mt: 1 }}>
+        <TextField
+          label="TTS Speaker"
+          value={ttsSpeakerDraft}
+          onChange={(e) => setTtsSpeakerDraft(e.target.value)}
+          fullWidth
+        />
+      </Box>
+      <Box id="tts-language" sx={{ mt: 1 }}>
+        <TextField
+          label="TTS Language"
+          value={ttsLanguageDraft}
+          onChange={(e) => setTtsLanguageDraft(e.target.value)}
+          fullWidth
+        />
+      </Box>
+      <Button
+        variant="contained"
+        sx={{ mt: 2 }}
+        onClick={() => {
+          setPythonPath(pythonDraft);
+          setComfyPath(comfyDraft);
+          setTtsModelPath(ttsModelDraft);
+          setTtsConfigPath(ttsConfigDraft);
+          setTtsSpeaker(ttsSpeakerDraft);
+          setTtsLanguage(ttsLanguageDraft);
+          setPathsSaved(true);
+        }}
+      >
+        Save Paths
+      </Button>
+      <Typography variant="subtitle1" sx={{ mt: 3 }}>
+        Output
+      </Typography>
+      <PathField
+        id="output-folder"
+        label="Default Save Folder"
+        value={folderDraft}
+        onChange={setFolderDraft}
+        directory
+      />
+      <Button
+        variant="contained"
+        sx={{ mt: 2 }}
+        onClick={() => {
+          setFolder(folderDraft);
+          setOutputSaved(true);
+        }}
+      >
+        Save Output
+      </Button>
+    </>
+  );
+
+  const EditorSection = () => (
+    <>
+      <Typography variant="subtitle1">Audio Defaults</Typography>
+      <Box id="bpm" sx={{ mt: 1 }}>
+        <TextField
+          type="number"
+          label="BPM"
+          value={bpm}
+          onChange={(e) => setBpm(Number(e.target.value))}
+          fullWidth
+        />
+      </Box>
+      <Box id="key" sx={{ mt: 2 }}>
+        <FormControl fullWidth>
+          <InputLabel id="key-label">Key</InputLabel>
+          <Select
+            labelId="key-label"
+            label="Key"
+            value={key}
+            onChange={(e) => setKey(e.target.value as string)}
+          >
+            {KEY_OPTIONS.map((k) => (
+              <MenuItem key={k} value={k}>
+                {displayKey(k)}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
+      <Box id="hq-stereo">
+        <FormControlLabel
+          control={<Switch checked={hqStereo} onChange={toggleHqStereo} />}
+          label={
+            <span style={{ display: "inline-flex", alignItems: "center" }}>
+              HQ Stereo
+              <HelpIcon text="Enhanced stereo width for clearer separation" />
+            </span>
+          }
+        />
+      </Box>
+      <Box id="hq-reverb">
+        <FormControlLabel
+          control={<Switch checked={hqReverb} onChange={toggleHqReverb} />}
+          label={
+            <span style={{ display: "inline-flex", alignItems: "center" }}>
+              HQ Reverb
+              <HelpIcon text="High-quality reverb for a more natural space" />
+            </span>
+          }
+        />
+      </Box>
+      <Box id="hq-sidechain">
+        <FormControlLabel
+          control={<Switch checked={hqSidechain} onChange={toggleHqSidechain} />}
+          label={
+            <span style={{ display: "inline-flex", alignItems: "center" }}>
+              HQ Sidechain
+              <HelpIcon text="Sidechain ducking for punchier kick" />
+            </span>
+          }
+        />
+      </Box>
+      <Box id="hq-chorus">
+        <FormControlLabel
+          control={<Switch checked={hqChorus} onChange={toggleHqChorus} />}
+          label={
+            <span style={{ display: "inline-flex", alignItems: "center" }}>
+              HQ Chorus
+              <HelpIcon text="Subtle chorus on melodic parts" />
+            </span>
+          }
+        />
+      </Box>
+      <Button variant="contained" sx={{ mt: 2 }} onClick={() => setAudioSaved(true)}>
+        Save Audio Defaults
+      </Button>
+    </>
+  );
+
+  const AppearanceSection = () => (
+    <>
+      <Typography variant="subtitle1">Appearance</Typography>
+      <Box id="theme" sx={{ mt: 2 }}>
+        <FormControl fullWidth>
+          <InputLabel id="theme-label">Theme</InputLabel>
+          <Select
+            labelId="theme-label"
+            label="Theme"
+            value={themeDraft}
+            onChange={(e) => setThemeDraft(e.target.value as Theme)}
+          >
+            {THEME_OPTIONS.map((opt) => (
+              <MenuItem key={opt.value} value={opt.value}>
+                <Box
+                  sx={{
+                    width: 16,
+                    height: 16,
+                    background: THEME_PREVIEWS[opt.value],
+                    border: "1px solid #ccc",
+                    mr: 1,
+                  }}
+                />
+                {opt.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
+      <Button
+        variant="contained"
+        sx={{ mt: 2 }}
+        onClick={() => {
+          setTheme(themeDraft);
+          setAppearanceSaved(true);
+        }}
+      >
+        Save Appearance
+      </Button>
+    </>
+  );
+
+  const IntegrationsSection = () => (
+    <>
+      <Typography variant="subtitle1">Guides</Typography>
+      <Box id="show-tutorial">
+        <FormControlLabel
+          control={<Switch checked={showTutorial} onChange={(e) => setShowTutorial(e.target.checked)} />}
+          label="Show ComfyUI Tutorial"
+        />
+      </Box>
+      <Typography variant="subtitle1" sx={{ mt: 3 }}>
+        Modules
+      </Typography>
+      {(Object.keys(modules) as ModuleKey[]).map((key) => (
+        <Box id={`module-${key}`} key={key}>
+          <FormControlLabel
+            control={<Switch checked={modules[key]} onChange={() => toggleModule(key)} />}
+            label={MODULE_LABELS[key]}
+          />
+        </Box>
+      ))}
+    </>
+  );
 
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
-      <Box sx={{ width: 320, p: 3 }} role="presentation">
-        <Typography variant="h6" sx={{ mb: 2 }}>
-          Settings
-        </Typography>
-
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle1">Paths</Typography>
-          <PathField label="Python Path" value={pythonDraft} onChange={setPythonDraft} />
-          <PathField
-            label="ComfyUI Folder"
-            value={comfyDraft}
-            onChange={setComfyDraft}
-            directory
-          />
-          <PathField
-            label="TTS Model Path"
-            value={ttsModelDraft}
-            onChange={setTtsModelDraft}
-          />
-          <PathField
-            label="TTS Config Path"
-            value={ttsConfigDraft}
-            onChange={setTtsConfigDraft}
-          />
-          <TextField
-            label="TTS Speaker"
-            value={ttsSpeakerDraft}
-            onChange={(e) => setTtsSpeakerDraft(e.target.value)}
-            fullWidth
-            sx={{ mt: 1 }}
-          />
-          <TextField
-            label="TTS Language"
-            value={ttsLanguageDraft}
-            onChange={(e) => setTtsLanguageDraft(e.target.value)}
-            fullWidth
-            sx={{ mt: 1 }}
-          />
-          <Button
-            variant="contained"
-            sx={{ mt: 2 }}
-            onClick={() => {
-              setPythonPath(pythonDraft);
-              setComfyPath(comfyDraft);
-              setTtsModelPath(ttsModelDraft);
-              setTtsConfigPath(ttsConfigDraft);
-              setTtsSpeaker(ttsSpeakerDraft);
-              setTtsLanguage(ttsLanguageDraft);
-              setPathsSaved(true);
-            }}
-          >
-            Save Paths
-          </Button>
+      <Box sx={{ width: 500, height: "100%", display: "flex" }} role="presentation">
+        <Box sx={{ width: 160, borderRight: 1, borderColor: "divider" }}>
+          <List>
+            {(Object.keys(sectionLabels) as Section[]).map((key) => (
+              <ListItemButton key={key} selected={section === key} onClick={() => setSection(key)}>
+                <ListItemText primary={sectionLabels[key]} />
+              </ListItemButton>
+            ))}
+          </List>
         </Box>
-
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle1">Guides</Typography>
-          <FormControlLabel
-            control={<Switch checked={showTutorial} onChange={(e) => setShowTutorial(e.target.checked)} />}
-            label="Show ComfyUI Tutorial"
+        <Box sx={{ flex: 1, p: 3, overflowY: "auto" }}>
+          <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 2 }}>
+            <Typography color="text.primary">Settings</Typography>
+            <Typography color="text.primary">{sectionLabels[section]}</Typography>
+          </Breadcrumbs>
+          <Autocomplete
+            freeSolo
+            options={searchIndex.map((i) => i.label)}
+            inputValue={searchValue}
+            onInputChange={(_e, v) => setSearchValue(v)}
+            onChange={(_e, v) => handleSearchSelect(v)}
+            renderInput={(params) => <TextField {...params} label="Search settings" />}
+            sx={{ mb: 2 }}
+          />
+          {section === "environment" && <EnvironmentSection />}
+          {section === "editor" && <EditorSection />}
+          {section === "appearance" && <AppearanceSection />}
+          {section === "integrations" && <IntegrationsSection />}
+          <Snackbar
+            open={audioSaved}
+            autoHideDuration={3000}
+            onClose={() => setAudioSaved(false)}
+            message="Audio defaults saved"
+          />
+          <Snackbar
+            open={pathsSaved}
+            autoHideDuration={3000}
+            onClose={() => setPathsSaved(false)}
+            message="Paths saved"
+          />
+          <Snackbar
+            open={appearanceSaved}
+            autoHideDuration={3000}
+            onClose={() => setAppearanceSaved(false)}
+            message="Appearance saved"
+          />
+          <Snackbar
+            open={outputSaved}
+            autoHideDuration={3000}
+            onClose={() => setOutputSaved(false)}
+            message="Output path saved"
           />
         </Box>
-
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle1">Modules</Typography>
-          {(Object.keys(modules) as ModuleKey[]).map((key) => (
-            <FormControlLabel
-              key={key}
-              control={<Switch checked={modules[key]} onChange={() => toggleModule(key)} />}
-              label={MODULE_LABELS[key]}
-            />
-          ))}
-        </Box>
-
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle1">Audio Defaults</Typography>
-          <TextField
-            type="number"
-            label="BPM"
-            value={bpm}
-            onChange={(e) => setBpm(Number(e.target.value))}
-            fullWidth
-            sx={{ mt: 1 }}
-          />
-          <FormControl fullWidth sx={{ mt: 2 }}>
-            <InputLabel id="key-label">Key</InputLabel>
-            <Select
-              labelId="key-label"
-              label="Key"
-              value={key}
-              onChange={(e) => setKey(e.target.value as string)}
-            >
-              {KEY_OPTIONS.map((k) => (
-                <MenuItem key={k} value={k}>
-                  {displayKey(k)}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControlLabel
-            control={<Switch checked={hqStereo} onChange={toggleHqStereo} />}
-            label={
-              <span style={{ display: "inline-flex", alignItems: "center" }}>
-                HQ Stereo
-                <HelpIcon text="Enhanced stereo width for clearer separation" />
-              </span>
-            }
-          />
-          <FormControlLabel
-            control={<Switch checked={hqReverb} onChange={toggleHqReverb} />}
-            label={
-              <span style={{ display: "inline-flex", alignItems: "center" }}>
-                HQ Reverb
-                <HelpIcon text="High-quality reverb for a more natural space" />
-              </span>
-            }
-          />
-          <FormControlLabel
-            control={<Switch checked={hqSidechain} onChange={toggleHqSidechain} />}
-            label={
-              <span style={{ display: "inline-flex", alignItems: "center" }}>
-                HQ Sidechain
-                <HelpIcon text="Sidechain ducking for punchier kick" />
-              </span>
-            }
-          />
-          <FormControlLabel
-            control={<Switch checked={hqChorus} onChange={toggleHqChorus} />}
-            label={
-              <span style={{ display: "inline-flex", alignItems: "center" }}>
-                HQ Chorus
-                <HelpIcon text="Subtle chorus on melodic parts" />
-              </span>
-            }
-          />
-          <Button variant="contained" sx={{ mt: 2 }} onClick={() => setAudioSaved(true)}>
-            Save Audio Defaults
-          </Button>
-        </Box>
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle1">Appearance</Typography>
-          <FormControl fullWidth sx={{ mt: 2 }}>
-            <InputLabel id="theme-label">Theme</InputLabel>
-            <Select
-              labelId="theme-label"
-              label="Theme"
-              value={themeDraft}
-              onChange={(e) => setThemeDraft(e.target.value as Theme)}
-            >
-              {THEME_OPTIONS.map((opt) => (
-                <MenuItem key={opt.value} value={opt.value}>
-                  <Box
-                    sx={{
-                      width: 16,
-                      height: 16,
-                      background: THEME_PREVIEWS[opt.value],
-                      border: "1px solid #ccc",
-                      mr: 1,
-                    }}
-                  />
-                  {opt.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <Button
-            variant="contained"
-            sx={{ mt: 2 }}
-            onClick={() => {
-              setTheme(themeDraft);
-              setAppearanceSaved(true);
-            }}
-          >
-            Save Appearance
-          </Button>
-        </Box>
-
-        <Box>
-          <Typography variant="subtitle1">Output</Typography>
-          <PathField
-            label="Default Save Folder"
-            value={folderDraft}
-            onChange={setFolderDraft}
-            directory
-          />
-          <Button
-            variant="contained"
-            sx={{ mt: 2 }}
-            onClick={() => {
-              setFolder(folderDraft);
-              setOutputSaved(true);
-            }}
-          >
-            Save Output
-          </Button>
-        </Box>
-        <Snackbar
-          open={audioSaved}
-          autoHideDuration={3000}
-          onClose={() => setAudioSaved(false)}
-          message="Audio defaults saved"
-        />
-        <Snackbar
-          open={pathsSaved}
-          autoHideDuration={3000}
-          onClose={() => setPathsSaved(false)}
-          message="Paths saved"
-        />
-        <Snackbar
-          open={appearanceSaved}
-          autoHideDuration={3000}
-          onClose={() => setAppearanceSaved(false)}
-          message="Appearance saved"
-        />
-        <Snackbar
-          open={outputSaved}
-          autoHideDuration={3000}
-          onClose={() => setOutputSaved(false)}
-          message="Output path saved"
-        />
       </Box>
     </Drawer>
   );
