@@ -19,10 +19,10 @@ export default function TemplateSelector({
 }: Props) {
   return (
     <div className={styles.panel}>
-      <label className={styles.label}>
+      <div className={styles.label}>
         Song Templates
         <HelpIcon text="Select a preset arrangement and settings" />
-      </label>
+      </div>
       <select
         aria-label="Song Templates"
         value={selectedTemplate}

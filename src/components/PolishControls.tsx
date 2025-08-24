@@ -35,13 +35,16 @@ export default function PolishControls({
   return (
     <div className={clsx(styles.panel, "mt-3")}>
       <details open>
-        <summary className="cursor-pointer text-xs opacity-80">
-          Polish <HelpIcon text="Optional mix polish effects" />
-        </summary>
+          <summary className="cursor-pointer text-xs opacity-80">
+            Polish <HelpIcon text="Optional mix polish effects" />
+          </summary>
         <div className="mt-2">
           <div className={styles.optionGrid}>
             <label className={styles.optionCard}>
-              <span>Stereo widen</span>
+              <span>
+                Stereo widen
+                <HelpIcon text="Expands stereo field (default off)" />
+              </span>
               <input
                 type="checkbox"
                 checked={hqStereo}
@@ -49,7 +52,10 @@ export default function PolishControls({
               />
             </label>
             <label className={styles.optionCard}>
-              <span>Room reverb</span>
+              <span>
+                Room reverb
+                <HelpIcon text="Adds small-room ambience (default off)" />
+              </span>
               <input
                 type="checkbox"
                 checked={hqReverb}
@@ -57,7 +63,10 @@ export default function PolishControls({
               />
             </label>
             <label className={styles.optionCard}>
-              <span>Sidechain (kick)</span>
+              <span>
+                Sidechain (kick)
+                <HelpIcon text="Pump mix with kick drum (default off)" />
+              </span>
               <input
                 type="checkbox"
                 checked={hqSidechain}
@@ -65,7 +74,10 @@ export default function PolishControls({
               />
             </label>
             <label className={styles.optionCard}>
-              <span>Chorus</span>
+              <span>
+                Chorus
+                <HelpIcon text="Adds gentle chorus effect (default off)" />
+              </span>
               <input
                 type="checkbox"
                 checked={hqChorus}
@@ -80,7 +92,7 @@ export default function PolishControls({
             <div className="mt-2">
               <label className={styles.label}>
                 Limiter Drive
-                <HelpIcon text="Amount of saturation added by the limiter" />
+                <HelpIcon text="Limiter saturation amount (1.00 neutral)" />
               </label>
               <input
                 type="range"
@@ -92,14 +104,17 @@ export default function PolishControls({
                 className={styles.slider}
               />
               <div className={styles.small}>{limiterDrive.toFixed(2)}× saturation</div>
-              <div className={clsx(styles.toggle, "mt-2")}>
+              <label className={clsx(styles.toggle, "mt-2")}>
                 <input
                   type="checkbox"
                   checked={dither}
                   onChange={(e) => setDither(e.target.checked)}
                 />
-                <span className={styles.small}>Dither</span>
-              </div>
+                <span className={styles.small}>
+                  Dither
+                  <HelpIcon text="Adds subtle noise for smoother export (default off)" />
+                </span>
+              </label>
             </div>
           </details>
         </div>

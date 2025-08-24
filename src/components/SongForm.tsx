@@ -874,8 +874,13 @@ export default function SongForm() {
         </div>
 
         {/* title + output folder */}
+        <label htmlFor="titleBase" className={styles.label}>
+          Song Title Base
+          <HelpIcon text="Base title for songs, e.g., 'Morning Chill'" />
+        </label>
         <div className={styles.row}>
           <input
+            id="titleBase"
             className={styles.input}
             placeholder="Song title base"
             value={titleBase}
@@ -898,60 +903,92 @@ export default function SongForm() {
         <details className="mt-3">
           <summary className="cursor-pointer text-xs opacity-80">Core</summary>
           <div className={styles.grid3}>
-          <div className={styles.panel}>
-            <label className={styles.label}>
-              BPM: {bpm}
-              <HelpIcon text="Song tempo in beats per minute" />
-            </label>
-            <input
-              type="range"
-              min={60}
-              max={200}
-              value={bpm}
-              onChange={(e) => setBpm(Number(e.target.value))}
-              className={clsx(styles.input, "p-0")}
-            />
-          </div>
-          <div className={styles.panel}>
-            <label className={styles.label}>
-              Key
-              <HelpIcon text="Musical key; choose Auto for random" />
-            </label>
-            <div className={styles.row}>
-              <select value={key} onChange={(e) => setKey(e.target.value)} className={clsx(styles.input, "py-2 px-3") }>
-                {KEYS.map((k) => (
-                  <option key={k} value={k}>{displayKey(k)}</option>
-                ))}
-              </select>
-            </div>
-            <div className={clsx(styles.toggle, "mt-2") }>
-              <input type="checkbox" checked={autoKeyPerSong} onChange={(e) => setAutoKeyPerSong(e.target.checked)} disabled={key === "Auto"} />
-              <span className={styles.small}>Rotate key per song</span>
-            </div>
-            {key === "Auto" && (
-              <div className={styles.small}>Disabled when key is set to Auto</div>
-            )}
-          </div>
-          <div className={styles.panel}>
-            <label className={styles.label}>
-              Seed
-              <HelpIcon text="Randomness seed for reproducibility" />
-            </label>
-            <input
-              type="number"
-              value={seedBase}
-              onChange={(e) => setSeedBase(Number(e.target.value || 0))}
-              className={styles.input}
-            />
-            <div className={clsx(styles.row, "mt-2") }>
-              <label className={clsx(styles.small, "flex-1") }>
-                <input type="radio" name="seedmode" checked={seedMode === "increment"} onChange={() => setSeedMode("increment")} /> Increment (base + i)
+            <div className={styles.panel}>
+              <label htmlFor="bpm" className={styles.label}>
+                BPM: {bpm}
+                <HelpIcon text="Song tempo in beats per minute (e.g., 90)" />
               </label>
-              <label className={clsx(styles.small, "flex-1") }>
-                <input type="radio" name="seedmode" checked={seedMode === "random"} onChange={() => setSeedMode("random")} /> Deterministic random
-              </label>
+              <input
+                id="bpm"
+                type="range"
+                min={60}
+                max={200}
+                value={bpm}
+                onChange={(e) => setBpm(Number(e.target.value))}
+                className={clsx(styles.input, "p-0")}
+              />
             </div>
-          </div>
+            <div className={styles.panel}>
+              <label htmlFor="key" className={styles.label}>
+                Key
+                <HelpIcon text="Musical key (e.g., C minor). Choose Auto for random." />
+              </label>
+              <div className={styles.row}>
+                <select
+                  id="key"
+                  value={key}
+                  onChange={(e) => setKey(e.target.value)}
+                  className={clsx(styles.input, "py-2 px-3")}
+                >
+                  {KEYS.map((k) => (
+                    <option key={k} value={k}>{displayKey(k)}</option>
+                  ))}
+                </select>
+              </div>
+              <label className={clsx(styles.toggle, "mt-2") } htmlFor="autoKeyPerSong">
+                <input
+                  id="autoKeyPerSong"
+                  type="checkbox"
+                  checked={autoKeyPerSong}
+                  onChange={(e) => setAutoKeyPerSong(e.target.checked)}
+                  disabled={key === "Auto"}
+                />
+                <span className={styles.small}>
+                  Rotate key per song
+                  <HelpIcon text="Cycle through different keys for each song" />
+                </span>
+              </label>
+              {key === "Auto" && (
+                <div className={styles.small}>Disabled when key is set to Auto</div>
+              )}
+            </div>
+            <div className={styles.panel}>
+              <label htmlFor="seed" className={styles.label}>
+                Seed
+                <HelpIcon text="Randomness seed for reproducibility (default 12345)" />
+              </label>
+              <input
+                id="seed"
+                type="number"
+                value={seedBase}
+                onChange={(e) => setSeedBase(Number(e.target.value || 0))}
+                className={styles.input}
+              />
+              <fieldset className={clsx(styles.row, "mt-2")}>
+                <legend className={styles.small}>
+                  Seed Mode
+                  <HelpIcon text="How to vary the seed between songs" />
+                </legend>
+                <label className={clsx(styles.small, "flex-1") } htmlFor="seedmode-increment">
+                  <input
+                    id="seedmode-increment"
+                    type="radio"
+                    name="seedmode"
+                    checked={seedMode === "increment"}
+                    onChange={() => setSeedMode("increment")}
+                  /> Increment (base + i)
+                </label>
+                <label className={clsx(styles.small, "flex-1") } htmlFor="seedmode-random">
+                  <input
+                    id="seedmode-random"
+                    type="radio"
+                    name="seedmode"
+                    checked={seedMode === "random"}
+                    onChange={() => setSeedMode("random")}
+                  /> Deterministic random
+                </label>
+              </fieldset>
+            </div>
           </div>
         </details>
 
@@ -959,8 +996,13 @@ export default function SongForm() {
         <details className={clsx(styles.panel, "mt-3")}>
           <summary className="cursor-pointer text-xs opacity-80">Structure</summary>
           <div className="mt-2">
-          <div className={clsx(styles.row, "mb-2")}>
+          <label htmlFor="templateSelect" className={styles.label}>
+            Structure Template
+            <HelpIcon text="Choose a structure template" />
+          </label>
+          <div className={clsx(styles.row, "mb-2")}> 
             <select
+              id="templateSelect"
               value={selectedTemplate}
               onChange={(e) => {
                 const name = e.target.value;
@@ -983,7 +1025,11 @@ export default function SongForm() {
             {selectedTemplate === "" &&
               (creatingTemplate ? (
                 <>
+                  <label htmlFor="newTemplateName" className="sr-only">
+                    Template name
+                  </label>
                   <input
+                    id="newTemplateName"
                     className={styles.input}
                     placeholder="Template name"
                     value={newTemplateName}
@@ -1043,8 +1089,13 @@ export default function SongForm() {
                 </button>
               ))}
           </div>
-          <div className={clsx(styles.row, "mb-2")}>
+          <label htmlFor="sectionPreset" className={styles.label}>
+            Preset Layout
+            <HelpIcon text="Quickly apply a predefined arrangement" />
+          </label>
+          <div className={clsx(styles.row, "mb-2")}> 
             <select
+              id="sectionPreset"
               value={sectionPreset}
               onChange={(e) => {
                 const name = e.target.value;
@@ -1075,8 +1126,12 @@ export default function SongForm() {
                 className="p-2 rounded-lg min-w-[120px]"
                 style={{ backgroundColor: theme.palette.action.hover }}
               >
-                <div className={styles.small}>{sec.name}</div>
+                <label htmlFor={`bars-${i}`} className={styles.small}>
+                  {sec.name} Bars
+                  <HelpIcon text="Number of bars in this section" />
+                </label>
                 <input
+                  id={`bars-${i}`}
                   type="number"
                   value={sec.barsStr ?? String(sec.bars)}
                   onChange={(e) => {
@@ -1109,7 +1164,12 @@ export default function SongForm() {
                     Enter bars ≥1
                   </div>
                 ) : null}
+                <label htmlFor={`chords-${i}`} className={styles.small}>
+                  Chords
+                  <HelpIcon text="Chord progression, e.g., Cmaj7 Fmaj7" />
+                </label>
                 <input
+                  id={`chords-${i}`}
                   type="text"
                   value={sec.chords.join(" ")}
                   placeholder="Chords"
@@ -1193,8 +1253,13 @@ export default function SongForm() {
         />
         {/* album mode toggle */}
         <div className={styles.panel}>
-          <label className={styles.toggle}>
-            <input type="checkbox" checked={albumMode} onChange={(e) => setAlbumMode(e.target.checked)} />
+          <label className={styles.toggle} htmlFor="albumMode">
+            <input
+              id="albumMode"
+              type="checkbox"
+              checked={albumMode}
+              onChange={(e) => setAlbumMode(e.target.checked)}
+            />
             <span className={styles.small}>
               Album mode
               <HelpIcon text="Render multiple tracks as an album" />
@@ -1202,11 +1267,12 @@ export default function SongForm() {
           </label>
           {albumMode && (
             <>
-              <label className={styles.label}>
+              <label htmlFor="trackCount" className={styles.label}>
                 Track Count
-                <HelpIcon text="Number of tracks in album mode" />
+                <HelpIcon text="Number of tracks in album mode (3–12)" />
               </label>
               <input
+                id="trackCount"
                 type="number"
                 min={3}
                 max={12}
@@ -1218,25 +1284,35 @@ export default function SongForm() {
                 }
                 className={styles.input}
               />
-              <label className={styles.label}>Album Name</label>
+              <label htmlFor="albumName" className={styles.label}>
+                Album Name
+                <HelpIcon text="Name for the album" />
+              </label>
               <input
+                id="albumName"
                 className={styles.input}
                 placeholder="Album name"
                 value={albumName}
                 onChange={(e) => setAlbumName(e.target.value)}
               />
               {trackNames.map((name, i) => (
-                <input
-                  key={i}
-                  className={styles.input}
-                  placeholder={`Track ${i + 1} name`}
-                  value={name}
-                  onChange={(e) => {
-                    const arr = [...trackNames];
-                    arr[i] = e.target.value;
-                    setTrackNames(arr);
-                  }}
-                />
+                <div key={i}>
+                  <label htmlFor={`track-${i}`} className={styles.label}>
+                    Track {i + 1} Name
+                    <HelpIcon text="Optional track title" />
+                  </label>
+                  <input
+                    id={`track-${i}`}
+                    className={styles.input}
+                    placeholder={`Track ${i + 1} name`}
+                    value={name}
+                    onChange={(e) => {
+                      const arr = [...trackNames];
+                      arr[i] = e.target.value;
+                      setTrackNames(arr);
+                    }}
+                  />
+                </div>
               ))}
             </>
           )}
