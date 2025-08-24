@@ -1,4 +1,5 @@
-import { Box, Typography, Tooltip } from '@mui/material';
+import { Box, Typography, Tooltip, IconButton } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 import React, { useCallback } from 'react';
 import { useStatusColors } from '../features/calendar/statusColors';
 import type { CalendarEvent } from '../features/calendar/types';
@@ -37,6 +38,15 @@ const CalendarDay = React.memo(
       [day, onDayClick]
     );
 
+    const handleAdd = useCallback(
+      (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+        onPrefill(day);
+        onDayClick(day, e as unknown as React.MouseEvent<HTMLDivElement>);
+      },
+      [day, onDayClick, onPrefill]
+    );
+
     return (
       <Box
         data-testid={`day-${day}`}
@@ -62,11 +72,28 @@ const CalendarDay = React.memo(
           },
         }}
       >
-        {holiday && (
-          <Tooltip title={holiday}>
-            <Box sx={{ position: 'absolute', top: 4, right: 4, fontSize: 12 }}>🎉</Box>
-          </Tooltip>
-        )}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 4,
+            right: 4,
+            display: 'flex',
+            gap: 0.5,
+          }}
+        >
+          <IconButton
+            size="small"
+            aria-label={`Add event for day ${day}`}
+            onClick={handleAdd}
+          >
+            <AddIcon fontSize="small" />
+          </IconButton>
+          {holiday && (
+            <Tooltip title={holiday}>
+              <Box sx={{ fontSize: 12 }}>🎉</Box>
+            </Tooltip>
+          )}
+        </Box>
         <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
           {day}
         </Typography>
