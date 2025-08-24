@@ -8,11 +8,13 @@ import {
   Select,
   MenuItem,
   Grid,
+  Box,
 } from "@mui/material";
 import { zRule } from "./schemas";
 import type { RuleData } from "./types";
 import rulesIndex from "../../../dnd/rules/index.json";
 import RulePdfUpload from "./RulePdfUpload";
+import { useDndTheme, themeStyles } from "./theme";
 
 const ruleFiles = import.meta.glob("../../../dnd/rules/*.md", {
   as: "raw",
@@ -33,6 +35,7 @@ export default function RuleForm() {
   const [tags, setTags] = useState("");
   const [result, setResult] = useState<RuleData | null>(null);
   const [originalRule, setOriginalRule] = useState<RuleData | null>(null);
+  const theme = useDndTheme();
 
   const handleSelect = (e: any) => {
     const id = e.target.value;
@@ -67,7 +70,7 @@ export default function RuleForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <Box component="form" onSubmit={handleSubmit} sx={themeStyles[theme]}>
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Typography variant="h6">Rulebook</Typography>
@@ -136,6 +139,6 @@ export default function RuleForm() {
           </Grid>
         )}
       </Grid>
-    </form>
+    </Box>
   );
 }

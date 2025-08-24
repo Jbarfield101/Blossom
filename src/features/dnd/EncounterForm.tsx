@@ -1,15 +1,9 @@
 import { useState } from "react";
-import {
-  Typography,
-  TextField,
-  Button,
-  MenuItem,
-  Grid,
-} from "@mui/material";
+import { Typography, TextField, Button, Grid, Box } from "@mui/material";
 import FormErrorText from "./FormErrorText";
 import { zEncounter } from "./schemas";
-import { EncounterData, DndTheme } from "./types";
-import { themes, themeStyles } from "./theme";
+import { EncounterData } from "./types";
+import { themeStyles, useDndTheme } from "./theme";
 
 export default function EncounterForm() {
   const [name, setName] = useState("");
@@ -19,9 +13,9 @@ export default function EncounterForm() {
   const [terrain, setTerrain] = useState("");
   const [treasure, setTreasure] = useState("");
   const [scaling, setScaling] = useState("");
-  const [theme, setTheme] = useState<DndTheme>("Parchment");
   const [result, setResult] = useState<EncounterData | null>(null);
   const [errors, setErrors] = useState<{ level?: string }>({});
+  const theme = useDndTheme();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +42,7 @@ export default function EncounterForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <Box component="form" onSubmit={handleSubmit} sx={themeStyles[theme]}>
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Typography variant="h6">Encounter Form</Typography>
@@ -126,22 +120,6 @@ export default function EncounterForm() {
             margin="normal"
           />
         </Grid>
-        <Grid item xs={12} md={6}>
-          <TextField
-            select
-            label="Theme"
-            value={theme}
-            onChange={(e) => setTheme(e.target.value as DndTheme)}
-            fullWidth
-            margin="normal"
-          >
-            {themes.map((t) => (
-              <MenuItem key={t} value={t}>
-                {t}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Grid>
         <Grid item xs={12}>
           <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>
             Submit
@@ -188,6 +166,6 @@ export default function EncounterForm() {
           </Grid>
         )}
       </Grid>
-    </form>
+    </Box>
   );
 }

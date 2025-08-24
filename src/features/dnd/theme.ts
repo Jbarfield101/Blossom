@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { type CSSProperties, createContext, useContext } from "react";
 import { DndTheme } from "./types";
 
 export const themes: DndTheme[] = ["Parchment", "Ink", "Minimal"];
@@ -21,3 +21,7 @@ export const themeStyles: Record<DndTheme, CSSProperties> = {
     fontFamily: "sans-serif",
   },
 };
+
+export const DndThemeContext = createContext<DndTheme>("Parchment");
+
+export const useDndTheme = () => useContext(DndThemeContext);

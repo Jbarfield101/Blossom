@@ -1,15 +1,9 @@
 import { useState } from "react";
-import {
-  Typography,
-  TextField,
-  Button,
-  MenuItem,
-  Grid,
-} from "@mui/material";
+import { Typography, TextField, Button, Grid, Box } from "@mui/material";
 import FormErrorText from "./FormErrorText";
 import { zQuest } from "./schemas";
-import { QuestData, DndTheme } from "./types";
-import { themes, themeStyles } from "./theme";
+import { QuestData } from "./types";
+import { themeStyles, useDndTheme } from "./theme";
 
 export default function QuestForm() {
   const [name, setName] = useState("");
@@ -20,9 +14,9 @@ export default function QuestForm() {
   const [items, setItems] = useState("");
   const [favors, setFavors] = useState("");
   const [complications, setComplications] = useState("");
-  const [theme, setTheme] = useState<DndTheme>("Parchment");
   const [result, setResult] = useState<QuestData | null>(null);
   const [errors, setErrors] = useState<{ tier?: string; gp?: string }>({});
+  const theme = useDndTheme();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +52,7 @@ export default function QuestForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <Box component="form" onSubmit={handleSubmit} sx={themeStyles[theme]}>
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Typography variant="h6">Quest Form</Typography>
@@ -155,22 +149,6 @@ export default function QuestForm() {
             margin="normal"
           />
         </Grid>
-        <Grid item xs={12} md={6}>
-          <TextField
-            select
-            label="Theme"
-            value={theme}
-            onChange={(e) => setTheme(e.target.value as DndTheme)}
-            fullWidth
-            margin="normal"
-          >
-            {themes.map((t) => (
-              <MenuItem key={t} value={t}>
-                {t}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Grid>
         <Grid item xs={12}>
           <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>
             Submit
@@ -209,6 +187,6 @@ export default function QuestForm() {
           </Grid>
         )}
       </Grid>
-    </form>
+    </Box>
   );
 }
