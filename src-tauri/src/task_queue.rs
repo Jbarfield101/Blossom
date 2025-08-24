@@ -145,9 +145,9 @@ impl TaskQueue {
                                     (l.cpu, l.memory)
                                 };
                                 let mut sys = System::new();
-                                sys.refresh_cpu_all();
+                                sys.refresh_cpu_usage();
                                 std::thread::sleep(Duration::from_millis(100));
-                                sys.refresh_cpu_all();
+                                sys.refresh_cpu_usage();
                                 sys.refresh_memory();
                                 let cpu_usage = sys.global_cpu_usage();
                                 let mem_usage = if sys.total_memory() > 0 {
