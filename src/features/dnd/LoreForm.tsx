@@ -1,20 +1,21 @@
 import { useState } from "react";
-import { Typography, TextField, Button, MenuItem, Grid, Box } from "@mui/material";
+import { Typography, TextField, Button, Grid, Box } from "@mui/material";
 import { zLore } from "./schemas";
 import { LoreData } from "./types";
-import { useWorlds } from "../../store/worlds";
 import LorePdfUpload from "./LorePdfUpload";
 import { useDndTheme, themeStyles } from "./theme";
 
-export default function LoreForm() {
+interface Props {
+  world: string;
+}
+
+export default function LoreForm({ world }: Props) {
   const [name, setName] = useState("");
   const [summary, setSummary] = useState("");
   const [location, setLocation] = useState("");
   const [hooks, setHooks] = useState("");
   const [tags, setTags] = useState("");
   const [result, setResult] = useState<LoreData | null>(null);
-  const worlds = useWorlds((s) => s.worlds);
-  const [world, setWorld] = useState("");
   const theme = useDndTheme();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -40,26 +41,8 @@ export default function LoreForm() {
           <Typography variant="h6">Lore Form</Typography>
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
-            select
-            label="World"
-            value={world}
-            onChange={(e) => setWorld(e.target.value)}
-            fullWidth
-            margin="normal"
-          >
-            {worlds.map((w) => (
-              <MenuItem key={w} value={w}>
-                {w}
-              </MenuItem>
-            ))}
-          </TextField>
+          <LorePdfUpload world={world} />
         </Grid>
-        {world && (
-          <Grid item xs={12} md={6}>
-            <LorePdfUpload world={world} />
-          </Grid>
-        )}
         <Grid item xs={12} md={6}>
           <TextField
             label="Name"

@@ -5,7 +5,6 @@ import {
   Button,
   FormControlLabel,
   Checkbox,
-  MenuItem,
   Grid,
   Box,
 } from "@mui/material";
@@ -13,11 +12,14 @@ import FormErrorText from "./FormErrorText";
 import { z } from "zod";
 import { zNpc } from "../../dnd/schemas/npc";
 import { NpcData } from "./types";
-import { useWorlds } from "../../store/worlds";
 import NpcPdfUpload from "./NpcPdfUpload";
 import { useDndTheme, themeStyles } from "./theme";
 
-export default function NpcForm() {
+interface Props {
+  world: string;
+}
+
+export default function NpcForm({ world }: Props) {
   const [name, setName] = useState("");
   const [species, setSpecies] = useState("");
   const [role, setRole] = useState("");
@@ -37,8 +39,6 @@ export default function NpcForm() {
   const [tags, setTags] = useState("");
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [result, setResult] = useState<NpcData | null>(null);
-  const worlds = useWorlds((s) => s.worlds);
-  const [world, setWorld] = useState("");
   const theme = useDndTheme();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -106,26 +106,8 @@ export default function NpcForm() {
           <Typography variant="h6">NPC Form</Typography>
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
-            select
-            label="World"
-            value={world}
-            onChange={(e) => setWorld(e.target.value)}
-            fullWidth
-            margin="normal"
-          >
-            {worlds.map((w) => (
-              <MenuItem key={w} value={w}>
-                {w}
-              </MenuItem>
-            ))}
-          </TextField>
+          <NpcPdfUpload world={world} />
         </Grid>
-        {world && (
-          <Grid item xs={12} md={6}>
-            <NpcPdfUpload world={world} />
-          </Grid>
-        )}
         <Grid item xs={12} md={6}>
           <TextField
             label="Name"
