@@ -92,8 +92,8 @@ enum Message {
 pub struct TaskQueue {
     tx: mpsc::Sender<Message>,
     tasks: Arc<Mutex<HashMap<u64, Task>>>,
-    handles: Arc<Mutex<HashMap<u64, JoinHandle<Result<Value, String>>>>>,
-    cancelled: Arc<Mutex<HashSet<u64>>>,
+    _handles: Arc<Mutex<HashMap<u64, JoinHandle<Result<Value, String>>>>>,
+    _cancelled: Arc<Mutex<HashSet<u64>>>,
     limits: Arc<Mutex<ResourceLimits>>,
 }
 
@@ -107,15 +107,15 @@ impl TaskQueue {
     pub fn new(concurrency: usize, cpu_limit: f32, memory_limit: f32) -> Self {
         let (tx, mut rx) = mpsc::channel(100);
         let tasks = Arc::new(Mutex::new(HashMap::new()));
-        let handles = Arc::new(Mutex::new(HashMap::new()));
-        let cancelled = Arc::new(Mutex::new(HashSet::new()));
+        let _handles = Arc::new(Mutex::new(HashMap::new()));
+        let _cancelled = Arc::new(Mutex::new(HashSet::new()));
         let limits = Arc::new(Mutex::new(ResourceLimits {
             cpu: cpu_limit,
             memory: memory_limit,
         }));
         let tasks_worker = tasks.clone();
-        let handles_worker = handles.clone();
-        let cancelled_worker = cancelled.clone();
+        let _handles_worker = _handles.clone();
+        let _cancelled_worker = _cancelled.clone();
         let limits_worker = limits.clone();
         async_runtime::spawn(async move {
             let semaphore = Arc::new(Semaphore::new(concurrency));
@@ -126,7 +126,7 @@ impl TaskQueue {
                             let mut map = tasks_worker.lock().unwrap();
                             map.insert(task.id, task.clone());
                         }
-                        if cancelled_worker.lock().unwrap().contains(&task.id) {
+                        if _cancelled_worker.lock().unwrap().contains(&task.id) {
                             if let Some(t) = tasks_worker.lock().unwrap().get_mut(&task.id) {
                                 t.status = TaskStatus::Cancelled;
                             }
@@ -134,7 +134,7 @@ impl TaskQueue {
                         }
                         let tasks_clone = tasks_worker.clone();
                         let limits_clone = limits_worker.clone();
-                        let cancelled_clone = cancelled_worker.clone();
+                        let _cancelled_clone = _cancelled_worker.clone();
                         let command = task.command.clone();
                         let permit = semaphore.clone().acquire_owned().await.unwrap();
                         let id = task.id;
@@ -319,12 +319,12 @@ impl TaskQueue {
                                         } else {
                                             output.push_str(&line);
                                         }
-                                        if cancelled_clone.lock().unwrap().contains(&id) {
-                                            let _ = child.kill();
-                                            return Err("cancelled".into());
-                                        }
-                                    }
-                                    let status = child.wait().map_err(|e| e.to_string())?;
+                                if _cancelled_clone.lock().unwrap().contains(&id) {
+                                    let _ = child.kill();
+                                    return Err("cancelled".into());
+                                }
+                            }
+                            let status = child.wait().map_err(|e| e.to_string())?;
                                     if !status.success() {
                                         let mut err = String::new();
                                         if let Some(mut e) = child.stderr.take() {
@@ -363,11 +363,11 @@ impl TaskQueue {
                             drop(permit);
                             res
                         });
-                        handles_worker.lock().unwrap().insert(id, handle);
+                        _handles_worker.lock().unwrap().insert(id, handle);
                     }
                     Message::Cancel(id) => {
-                        cancelled_worker.lock().unwrap().insert(id);
-                        if let Some(handle) = handles_worker.lock().unwrap().remove(&id) {
+                        _cancelled_worker.lock().unwrap().insert(id);
+                        if let Some(handle) = _handles_worker.lock().unwrap().remove(&id) {
                             handle.abort();
                         }
                         if let Some(t) = tasks_worker.lock().unwrap().get_mut(&id) {
@@ -380,8 +380,8 @@ impl TaskQueue {
         Self {
             tx,
             tasks,
-            handles,
-            cancelled,
+            _handles,
+            _cancelled,
             limits,
         }
     }
