@@ -15,6 +15,7 @@ import {
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { useState, useEffect } from "react";
+import { useSettings, type ModuleKey } from "../features/settings/useSettings";
 import { usePaths } from "../features/paths/usePaths";
 import { useOutput } from "../features/output/useOutput";
 import { useAudioDefaults } from "../features/audioDefaults/useAudioDefaults";
@@ -80,6 +81,22 @@ const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: "mono", label: "Mono" },
   { value: "eclipse", label: "Eclipse" },
 ];
+
+const MODULE_LABELS: Record<ModuleKey, string> = {
+  objects: "3D Object",
+  music: "Lo‑Fi Music",
+  calendar: "Calendar",
+  comfy: "ComfyUI",
+  assistant: "AI Assistant",
+  laser: "Laser Lab",
+  fusion: "Fusion",
+  simulation: "Simulation",
+  dnd: "D&D",
+  stocks: "Stocks",
+  shorts: "Shorts",
+  chores: "Chores",
+  construction: "Under Construction",
+};
 
 interface SettingsDrawerProps {
   open: boolean;
@@ -171,6 +188,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   } = useAudioDefaults();
   const { theme, setTheme, mode, setMode } = useTheme();
   const { showTutorial, setShowTutorial } = useComfyTutorial();
+  const { modules, toggleModule } = useSettings();
   const [audioSaved, setAudioSaved] = useState(false);
   const [pathsSaved, setPathsSaved] = useState(false);
   const [appearanceSaved, setAppearanceSaved] = useState(false);
@@ -259,6 +277,17 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
             control={<Switch checked={showTutorial} onChange={(e) => setShowTutorial(e.target.checked)} />}
             label="Show ComfyUI Tutorial"
           />
+        </Box>
+
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle1">Modules</Typography>
+          {(Object.keys(modules) as ModuleKey[]).map((key) => (
+            <FormControlLabel
+              key={key}
+              control={<Switch checked={modules[key]} onChange={() => toggleModule(key)} />}
+              label={MODULE_LABELS[key]}
+            />
+          ))}
         </Box>
 
         <Box sx={{ mb: 3 }}>
