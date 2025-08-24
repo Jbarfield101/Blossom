@@ -1,6 +1,15 @@
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Box, Button, FormControl, InputLabel, MenuItem, Select, Typography } from "@mui/material";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Canvas } from "@react-three/fiber";
+import { Physics, useBox, usePlane } from "@react-three/cannon";
+import {
+  Box,
+  Button,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Typography,
+} from "@mui/material";
+import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 
 function getGeometry(sides: number) {
@@ -22,37 +31,60 @@ function getGeometry(sides: number) {
   }
 }
 
-function Die({ sides, roll }: { sides: number; roll: number }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const velocity = useRef<[number, number, number]>([0, 0, 0]);
-  const geometry = useMemo(() => getGeometry(sides), [sides]);
+function createDiceMaterials() {
+  const createTexture = (n: number) => {
+    const size = 128;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = "black";
+    ctx.font = "bold 96px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(n.toString(), size / 2, size / 2);
+    return new THREE.CanvasTexture(canvas);
+  };
+  return [1, 2, 3, 4, 5, 6].map(
+    (n) => new THREE.MeshStandardMaterial({ map: createTexture(n) })
+  );
+}
 
-  useEffect(() => {
-    velocity.current = [
-      THREE.MathUtils.randFloatSpread(10),
-      THREE.MathUtils.randFloatSpread(10),
-      THREE.MathUtils.randFloatSpread(10),
-    ];
-    meshRef.current?.rotation.set(
-      Math.random() * Math.PI * 2,
-      Math.random() * Math.PI * 2,
-      Math.random() * Math.PI * 2,
-    );
-  }, [roll, sides]);
-
-  useFrame((_, delta) => {
-    if (!meshRef.current) return;
-    meshRef.current.rotation.x += velocity.current[0] * delta;
-    meshRef.current.rotation.y += velocity.current[1] * delta;
-    meshRef.current.rotation.z += velocity.current[2] * delta;
-    velocity.current = velocity.current.map((v) => v * 0.95) as [number, number, number];
-  });
-
+function Plane() {
+  const [ref] = usePlane(() => ({ rotation: [-Math.PI / 2, 0, 0] }));
   return (
-    <mesh ref={meshRef} geometry={geometry}>
-      <meshStandardMaterial color="#e0e0e0" />
+    <mesh ref={ref} receiveShadow>
+      <planeGeometry args={[10, 10]} />
+      <meshStandardMaterial color="#999" />
     </mesh>
   );
+}
+
+function Die({ sides, roll }: { sides: number; roll: number }) {
+  const geometry = useMemo(() => getGeometry(sides), [sides]);
+  const materials = useMemo(() => {
+    if (sides === 6) return createDiceMaterials();
+    return [new THREE.MeshStandardMaterial({ color: "#e0e0e0" })];
+  }, [sides]);
+  const [ref, api] = useBox(() => ({ mass: 1, args: [1, 1, 1] }));
+
+  useEffect(() => {
+    api.position.set(0, 2, 0);
+    api.velocity.set(
+      THREE.MathUtils.randFloatSpread(5),
+      THREE.MathUtils.randFloatSpread(5) + 5,
+      THREE.MathUtils.randFloatSpread(5)
+    );
+    api.angularVelocity.set(
+      THREE.MathUtils.randFloatSpread(10),
+      THREE.MathUtils.randFloatSpread(10),
+      THREE.MathUtils.randFloatSpread(10)
+    );
+  }, [roll, api]);
+
+  return <mesh ref={ref} geometry={geometry} material={materials} />;
 }
 
 export default function DiceRoller() {
@@ -92,7 +124,10 @@ export default function DiceRoller() {
       <Canvas style={{ height: 300 }}>
         <ambientLight />
         <pointLight position={[10, 10, 10]} />
-        <Die sides={sides} roll={roll} />
+        <Physics>
+          <Plane />
+          <Die sides={sides} roll={roll} />
+        </Physics>
       </Canvas>
     </Box>
   );
