@@ -9,9 +9,14 @@ export default function TaskList() {
 
   useEffect(() => {
     let unlisten: (() => void) | null = null;
-    subscribe().then((u) => {
-      unlisten = u;
-    });
+    (async () => {
+      try {
+        unlisten = await subscribe();
+      } catch (err) {
+        console.error("Failed to subscribe", err);
+        unlisten?.();
+      }
+    })();
     return () => {
       unlisten?.();
     };
