@@ -24,6 +24,10 @@ vi.mock('../features/lofi/SongForm', () => ({
     setSeed: vi.fn(),
   }),
 }));
+vi.mock('../store/tasks', () => ({
+  useTasks: (selector: any) =>
+    selector({ tasks: {}, subscribe: vi.fn().mockResolvedValue(() => {}) }),
+}));
 
 function openSection(id: string) {
   const summary = screen.getByTestId(id).querySelector('summary') as HTMLElement;

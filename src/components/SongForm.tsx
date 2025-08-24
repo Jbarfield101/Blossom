@@ -18,6 +18,7 @@ import styles from "./SongForm.module.css";
 import clsx from "clsx";
 import { useTheme } from "@mui/material/styles";
 import { MOODS, INSTR } from "../utils/musicData";
+import { useTasks } from "../store/tasks";
 
 export type Section = { name: string; bars: number; chords: string[]; barsStr?: string };
 
@@ -390,6 +391,41 @@ export default function SongForm() {
     () => jobs.find((j) => !j.error && !j.outPath)?.id,
     [jobs]
   );
+
+  const tasks = useTasks((s) => s.tasks);
+  const tasksSubscribe = useTasks((s) => s.subscribe);
+
+  useEffect(() => {
+    let unlisten: (() => void) | null = null;
+    tasksSubscribe().then((u) => {
+      unlisten = u;
+    });
+    return () => {
+      unlisten?.();
+    };
+  }, [tasksSubscribe]);
+
+  const activeTask = useMemo(
+    () =>
+      Object.values(tasks).find(
+        (t) =>
+          ["queued", "running"].includes(t.status) &&
+          /song|album/i.test(t.label)
+      ),
+    [tasks]
+  );
+
+  useEffect(() => {
+    if (activeTask) {
+      setProgress(activeTask.progress);
+      setGlobalStatus(activeTask.status);
+      setBusy(true);
+    } else if (!runningJobId) {
+      setBusy(false);
+      setGlobalStatus("");
+      setProgress(0);
+    }
+  }, [activeTask, runningJobId]);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
