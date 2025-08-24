@@ -529,7 +529,7 @@ pub async fn enqueue_parse_npc_pdf<R: Runtime>(
 Serde-mapped types (camelCase)
 ============================== */
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)] // allow cloning for nested use in SongSpec
 #[serde(rename_all = "snake_case")]
 pub struct Section {
     pub name: String,
