@@ -1,4 +1,15 @@
 import { Box, Tab, Tabs } from "@mui/material";
+import {
+  Person,
+  MenuBook,
+  TravelExplore,
+  SportsKabaddi,
+  Gavel,
+  AutoStories,
+  Casino,
+  Map,
+  MilitaryTech,
+} from "@mui/icons-material";
 import { SyntheticEvent, useState } from "react";
 import NpcForm from "../features/dnd/NpcForm";
 import LoreForm from "../features/dnd/LoreForm";
@@ -15,16 +26,22 @@ export default function DND() {
   const handleChange = (_e: SyntheticEvent, v: number) => setTab(v);
   return (
     <Box sx={{ p: 2 }}>
-      <Tabs value={tab} onChange={handleChange}>
-        <Tab label="NPC" />
-        <Tab label="Lore" />
-        <Tab label="Quest" />
-        <Tab label="Encounter" />
-        <Tab label="Rulebook" />
-        <Tab label="Spellbook" />
-        <Tab label="Dice" />
-        <Tab label="Tabletop" />
-        <Tab label="War Table" />
+      <Tabs
+        value={tab}
+        onChange={handleChange}
+        variant="scrollable"
+        scrollButtons="auto"
+        sx={{ bgcolor: "#f3e5ab" }}
+      >
+        <Tab icon={<Person />} label="NPC" />
+        <Tab icon={<MenuBook />} label="Lore" />
+        <Tab icon={<TravelExplore />} label="Quest" />
+        <Tab icon={<SportsKabaddi />} label="Encounter" />
+        <Tab icon={<Gavel />} label="Rulebook" />
+        <Tab icon={<AutoStories />} label="Spellbook" />
+        <Tab icon={<Casino />} label="Dice" />
+        <Tab icon={<Map />} label="Tabletop" />
+        <Tab icon={<MilitaryTech />} label="War Table" />
       </Tabs>
       {tab === 0 && <NpcForm />}
       {tab === 1 && <LoreForm />}
