@@ -166,6 +166,7 @@ function PathField({
 export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   const {
     pythonPath,
+    defaultPythonPath,
     setPythonPath,
     comfyPath,
     setComfyPath,
@@ -209,6 +210,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   const [ttsLanguageDraft, setTtsLanguageDraft] = useState(ttsLanguage);
   const [folderDraft, setFolderDraft] = useState(folder);
   const [themeDraft, setThemeDraft] = useState<Theme>(theme);
+  const [editPython, setEditPython] = useState(false);
 
   useEffect(() => setPythonDraft(pythonPath), [pythonPath]);
   useEffect(() => setComfyDraft(comfyPath), [comfyPath]);
@@ -254,6 +256,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
     if (!value) return;
     const item = searchIndex.find((i) => i.label === value);
     if (item) {
+      if (item.elementId === "python-path") setEditPython(true);
       setSection(item.section);
       setTimeout(() => {
         document.getElementById(item.elementId)?.scrollIntoView({ behavior: "smooth" });
@@ -264,7 +267,33 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   const EnvironmentSection = () => (
     <>
       <Typography variant="subtitle1">Paths</Typography>
-      <PathField id="python-path" label="Python Path" value={pythonDraft} onChange={setPythonDraft} />
+      {!editPython ? (
+        <Button
+          variant="outlined"
+          sx={{ mt: 1, mb: 1 }}
+          onClick={() => setEditPython(true)}
+        >
+          Edit Python path
+        </Button>
+      ) : (
+        <Box>
+          <PathField
+            id="python-path"
+            label="Python Path"
+            value={pythonDraft}
+            onChange={setPythonDraft}
+          />
+          {pythonDraft !== defaultPythonPath && (
+            <Button
+              variant="text"
+              sx={{ mt: 1 }}
+              onClick={() => setPythonDraft(defaultPythonPath)}
+            >
+              Use default
+            </Button>
+          )}
+        </Box>
+      )}
       <PathField
         id="comfy-path"
         label="ComfyUI Folder"
@@ -311,6 +340,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
           setTtsSpeaker(ttsSpeakerDraft);
           setTtsLanguage(ttsLanguageDraft);
           setPathsSaved(true);
+          setEditPython(false);
         }}
       >
         Save Paths

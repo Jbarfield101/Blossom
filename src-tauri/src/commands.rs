@@ -251,23 +251,11 @@ fn default_python() -> PathBuf {
     }
 }
 
-/// Resolve the python interpreter path.
-/// Priority: user setting -> env var -> PATH search -> default.
-fn resolve_python_path() -> PathBuf {
-    let mut cfg = load_config();
-
-    if let Some(p) = &cfg.python_path {
-        if !p.trim().is_empty() {
-            return PathBuf::from(p);
-        }
-    }
-
+/// Detect a python interpreter without consulting the user config.
+fn detect_python_path() -> PathBuf {
     if let Ok(env_p) = std::env::var("BLOSSOM_PYTHON_PATH").or_else(|_| std::env::var("PYTHON")) {
         if !env_p.trim().is_empty() {
-            let path = PathBuf::from(env_p);
-            cfg.python_path = Some(path.to_string_lossy().to_string());
-            let _ = save_config(&cfg);
-            return path;
+            return PathBuf::from(env_p);
         }
     }
 
@@ -279,13 +267,33 @@ fn resolve_python_path() -> PathBuf {
 
     for cand in candidates {
         if let Ok(found) = which(cand) {
-            cfg.python_path = Some(found.to_string_lossy().to_string());
-            let _ = save_config(&cfg);
             return found;
         }
     }
 
     default_python()
+}
+
+/// Resolve the python interpreter path.
+/// Priority: user setting -> env var -> PATH search -> default.
+fn resolve_python_path() -> PathBuf {
+    let mut cfg = load_config();
+
+    if let Some(p) = &cfg.python_path {
+        if !p.trim().is_empty() {
+            return PathBuf::from(p);
+        }
+    }
+
+    let path = detect_python_path();
+    cfg.python_path = Some(path.to_string_lossy().to_string());
+    let _ = save_config(&cfg);
+    path
+}
+
+#[tauri::command]
+pub async fn detect_python() -> Result<String, String> {
+    Ok(detect_python_path().to_string_lossy().to_string())
 }
 
 /// Absolute path to python. Falls back to system default if unset.

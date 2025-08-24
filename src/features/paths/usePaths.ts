@@ -4,6 +4,7 @@ import { useEffect } from "react";
 
 interface PathsState {
   pythonPath: string;
+  defaultPythonPath: string;
   comfyPath: string;
   ttsModelPath: string;
   ttsConfigPath: string;
@@ -21,6 +22,7 @@ interface PathsState {
 
 const usePathsStore = create<PathsState>((set, get) => ({
   pythonPath: "",
+  defaultPythonPath: "",
   comfyPath: "",
   ttsModelPath: "",
   ttsConfigPath: "",
@@ -104,8 +106,10 @@ const usePathsStore = create<PathsState>((set, get) => ({
         tts_speaker?: string;
         tts_language?: string;
       }>("load_paths");
+      const detected = await invoke<string>("detect_python");
       set({
         pythonPath: res.python_path || "",
+        defaultPythonPath: detected,
         comfyPath: res.comfy_path || "",
         ttsModelPath: res.tts_model_path || "",
         ttsConfigPath: res.tts_config_path || "",
