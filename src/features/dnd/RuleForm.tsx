@@ -7,6 +7,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Grid,
 } from "@mui/material";
 import { zRule } from "./schemas";
 import type { RuleData } from "./types";
@@ -67,56 +68,74 @@ export default function RuleForm() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <Typography variant="h6">Rulebook</Typography>
-      <RulePdfUpload />
-      <FormControl fullWidth margin="normal">
-        <InputLabel id="rule-select-label">Base Rule</InputLabel>
-        <Select
-          labelId="rule-select-label"
-          value={selectedId}
-          label="Base Rule"
-          onChange={handleSelect}
-        >
-          <MenuItem value="new">Create New Rule</MenuItem>
-          {existingRules.map((r) => (
-            <MenuItem key={r.id} value={r.id}>
-              {r.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-      <TextField
-        label="Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Description"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        fullWidth
-        multiline
-        margin="normal"
-      />
-      <TextField
-        label="Tags (comma separated)"
-        value={tags}
-        onChange={(e) => setTags(e.target.value)}
-        fullWidth
-        margin="normal"
-      />
-      <Button type="submit" variant="contained" sx={{ mt: 2 }}>
-        Submit
-      </Button>
-      {result && (
-        <pre style={{ marginTop: "1rem" }}>
-          {originalRule &&
-            `Original:\n${JSON.stringify(originalRule, null, 2)}\n\n`}
-          {`Custom:\n${JSON.stringify(result, null, 2)}`}
-        </pre>
-      )}
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <Typography variant="h6">Rulebook</Typography>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <RulePdfUpload />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="rule-select-label">Base Rule</InputLabel>
+            <Select
+              labelId="rule-select-label"
+              value={selectedId}
+              label="Base Rule"
+              onChange={handleSelect}
+            >
+              <MenuItem value="new">Create New Rule</MenuItem>
+              {existingRules.map((r) => (
+                <MenuItem key={r.id} value={r.id}>
+                  {r.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            fullWidth
+            multiline
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Tags (comma separated)"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>
+            Submit
+          </Button>
+        </Grid>
+        {result && (
+          <Grid item xs={12}>
+            <pre style={{ marginTop: "1rem" }}>
+              {originalRule &&
+                `Original:\n${JSON.stringify(originalRule, null, 2)}\n\n`}
+              {`Custom:\n${JSON.stringify(result, null, 2)}`}
+            </pre>
+          </Grid>
+        )}
+      </Grid>
     </form>
   );
 }
