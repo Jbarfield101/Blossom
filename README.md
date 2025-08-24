@@ -9,7 +9,8 @@ Install the following tools before working with the project:
 
 - **Rust** – required for the Tauri backend. Install via [rustup](https://rustup.rs/).
 - **Node.js** – version 18 or later for the React/Vite front‑end.
-- **Python** – version 3.10+ for audio scripts.
+- **Python** – version 3.10+ for audio scripts. Python 3.13 or later also
+  requires the [`pyaudioop`](https://pypi.org/project/pyaudioop/) module.
 - **FFmpeg** – used by the Python scripts for reading and writing audio. Ensure
   `ffmpeg` and `ffprobe` are available on your `PATH`. On macOS or Linux install
   via your package manager (for example `brew install ffmpeg` or `sudo apt install ffmpeg`).
@@ -25,6 +26,9 @@ npm install
 # create/activate a Python environment, then
 pip install -r requirements.txt  # or: pip install .
 ```
+
+`pyaudioop` is included in the requirements and will be installed automatically on
+Python 3.13+ to replace the removed `audioop` module.
 
 ## Running the Tauri app
 
