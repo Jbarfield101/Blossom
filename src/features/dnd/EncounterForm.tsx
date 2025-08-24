@@ -6,6 +6,7 @@ import {
   MenuItem,
   Grid,
 } from "@mui/material";
+import FormErrorText from "./FormErrorText";
 import { zEncounter } from "./schemas";
 import { EncounterData, DndTheme } from "./types";
 import { themes, themeStyles } from "./theme";
@@ -72,7 +73,10 @@ export default function EncounterForm() {
               setErrors((prev) => ({ ...prev, level: undefined }));
             }}
             error={!!errors.level}
-            helperText={errors.level}
+            helperText={
+              <FormErrorText id="level-error">{errors.level}</FormErrorText>
+            }
+            aria-describedby={errors.level ? "level-error" : undefined}
             fullWidth
             margin="normal"
           />
