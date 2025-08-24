@@ -27,7 +27,7 @@ type SongSpec = {
   title: string;
   outDir: string;
   bpm: number;
-  key: string | { key: string; mode: string }; // support minor mode
+  key: string;
   structure?: Section[];
   form?: string;
   mood: string[];
@@ -103,8 +103,7 @@ const KEYS_BASE = [
 const EXTRA_KEYS = ["Db", "Eb", "Gb", "Ab", "Bb", "Am", "Em", "Dm"];
 const KEYS = ["Auto", ...KEYS_BASE, ...EXTRA_KEYS];
 const displayKey = (k: string) => k.replace("#", "♯").replace("b", "♭");
-const showKey = (k: SongSpec["key"]) =>
-  typeof k === "string" ? displayKey(k) : displayKey(k.key + (k.mode === "minor" ? "m" : ""));
+const showKey = (k: SongSpec["key"]) => displayKey(k);
 const AMBI = [
   "rain",
   "cafe",
@@ -640,11 +639,8 @@ export default function SongForm() {
     return seedBase + i;
   }
 
-  function formatSpecKey(k: string): string | { key: string; mode: string } {
-    const norm = k.replace("♭", "b").replace("♯", "#");
-    if (norm === "Auto") return "Auto";
-    if (norm.endsWith("m")) return { key: norm.slice(0, -1), mode: "minor" };
-    return norm;
+  function formatSpecKey(k: string): string {
+    return k.replace("♭", "b").replace("♯", "#");
   }
 
   function makeSpecForIndex(i: number): SongSpec {
