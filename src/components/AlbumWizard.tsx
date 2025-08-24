@@ -15,7 +15,7 @@ type SongSpec = {
   title: string;
   outDir: string;
   bpm: number;
-  key: string | { key: string; mode: string };
+  key: string;
   structure: Section[];
   mood: string[];
   instruments: string[];
