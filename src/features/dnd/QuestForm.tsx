@@ -6,6 +6,7 @@ import {
   MenuItem,
   Grid,
 } from "@mui/material";
+import FormErrorText from "./FormErrorText";
 import { zQuest } from "./schemas";
 import { QuestData, DndTheme } from "./types";
 import { themes, themeStyles } from "./theme";
@@ -82,7 +83,10 @@ export default function QuestForm() {
               setErrors((prev) => ({ ...prev, tier: undefined }));
             }}
             error={!!errors.tier}
-            helperText={errors.tier}
+            helperText={
+              <FormErrorText id="tier-error">{errors.tier}</FormErrorText>
+            }
+            aria-describedby={errors.tier ? "tier-error" : undefined}
             fullWidth
             margin="normal"
           />
@@ -116,7 +120,10 @@ export default function QuestForm() {
               setErrors((prev) => ({ ...prev, gp: undefined }));
             }}
             error={!!errors.gp}
-            helperText={errors.gp}
+            helperText={
+              <FormErrorText id="gp-error">{errors.gp}</FormErrorText>
+            }
+            aria-describedby={errors.gp ? "gp-error" : undefined}
             fullWidth
             margin="normal"
           />

@@ -8,6 +8,7 @@ import {
   MenuItem,
   Grid,
 } from "@mui/material";
+import FormErrorText from "./FormErrorText";
 import { z } from "zod";
 import { zNpc } from "../../dnd/schemas/npc";
 import { NpcData } from "./types";
@@ -133,7 +134,10 @@ export default function NpcForm() {
             fullWidth
             margin="normal"
             error={Boolean(errors.name)}
-            helperText={errors.name}
+            helperText={
+              <FormErrorText id="name-error">{errors.name}</FormErrorText>
+            }
+            aria-describedby={errors.name ? "name-error" : undefined}
           />
         </Grid>
         <Grid item xs={12} md={6}>
@@ -147,7 +151,10 @@ export default function NpcForm() {
             fullWidth
             margin="normal"
             error={Boolean(errors.species)}
-            helperText={errors.species}
+            helperText={
+              <FormErrorText id="species-error">{errors.species}</FormErrorText>
+            }
+            aria-describedby={errors.species ? "species-error" : undefined}
           />
         </Grid>
         <Grid item xs={12} md={6}>
@@ -161,7 +168,10 @@ export default function NpcForm() {
             fullWidth
             margin="normal"
             error={Boolean(errors.role)}
-            helperText={errors.role}
+            helperText={
+              <FormErrorText id="role-error">{errors.role}</FormErrorText>
+            }
+            aria-describedby={errors.role ? "role-error" : undefined}
           />
         </Grid>
         <Grid item xs={12} md={6}>
@@ -175,7 +185,12 @@ export default function NpcForm() {
             fullWidth
             margin="normal"
             error={Boolean(errors.alignment)}
-            helperText={errors.alignment}
+            helperText={
+              <FormErrorText id="alignment-error">{errors.alignment}</FormErrorText>
+            }
+            aria-describedby={
+              errors.alignment ? "alignment-error" : undefined
+            }
           />
         </Grid>
         <Grid item xs={12} md={6}>
@@ -218,7 +233,10 @@ export default function NpcForm() {
             fullWidth
             margin="normal"
             error={Boolean(errors.hooks)}
-            helperText={errors.hooks}
+            helperText={
+              <FormErrorText id="hooks-error">{errors.hooks}</FormErrorText>
+            }
+            aria-describedby={errors.hooks ? "hooks-error" : undefined}
           />
         </Grid>
         <Grid item xs={12} md={6}>
@@ -241,7 +259,14 @@ export default function NpcForm() {
             fullWidth
             margin="normal"
             error={Boolean(errors["voice.style"])}
-            helperText={errors["voice.style"]}
+            helperText={
+              <FormErrorText id="voice-style-error">
+                {errors["voice.style"]}
+              </FormErrorText>
+            }
+            aria-describedby={
+              errors["voice.style"] ? "voice-style-error" : undefined
+            }
           />
         </Grid>
         <Grid item xs={12} md={6}>
@@ -255,7 +280,14 @@ export default function NpcForm() {
             fullWidth
             margin="normal"
             error={Boolean(errors["voice.provider"])}
-            helperText={errors["voice.provider"]}
+            helperText={
+              <FormErrorText id="voice-provider-error">
+                {errors["voice.provider"]}
+              </FormErrorText>
+            }
+            aria-describedby={
+              errors["voice.provider"] ? "voice-provider-error" : undefined
+            }
           />
         </Grid>
         <Grid item xs={12} md={6}>
@@ -269,7 +301,14 @@ export default function NpcForm() {
             fullWidth
             margin="normal"
             error={Boolean(errors["voice.preset"])}
-            helperText={errors["voice.preset"]}
+            helperText={
+              <FormErrorText id="voice-preset-error">
+                {errors["voice.preset"]}
+              </FormErrorText>
+            }
+            aria-describedby={
+              errors["voice.preset"] ? "voice-preset-error" : undefined
+            }
           />
         </Grid>
         <Grid item xs={12} md={6}>
@@ -302,7 +341,14 @@ export default function NpcForm() {
             margin="normal"
             multiline
             error={Boolean(errors.statblock)}
-            helperText={errors.statblock}
+            helperText={
+              <FormErrorText id="statblock-error">
+                {errors.statblock}
+              </FormErrorText>
+            }
+            aria-describedby={
+              errors.statblock ? "statblock-error" : undefined
+            }
           />
         </Grid>
         <Grid item xs={12} md={6}>
@@ -317,7 +363,14 @@ export default function NpcForm() {
             margin="normal"
             multiline
             error={Boolean(errors.sections)}
-            helperText={errors.sections}
+            helperText={
+              <FormErrorText id="sections-error">
+                {errors.sections}
+              </FormErrorText>
+            }
+            aria-describedby={
+              errors.sections ? "sections-error" : undefined
+            }
           />
         </Grid>
         <Grid item xs={12} md={6}>
@@ -331,7 +384,10 @@ export default function NpcForm() {
             fullWidth
             margin="normal"
             error={Boolean(errors.tags)}
-            helperText={errors.tags}
+            helperText={
+              <FormErrorText id="tags-error">{errors.tags}</FormErrorText>
+            }
+            aria-describedby={errors.tags ? "tags-error" : undefined}
           />
         </Grid>
         <Grid item xs={12}>
