@@ -2,6 +2,12 @@ import { useLofi } from './SongForm';
 
 export type WeatherCondition = 'sunny' | 'rain' | 'snow';
 
+export const WEATHER_PRESETS: Record<WeatherCondition, { bpm: number; key: string }> = {
+  rain: { bpm: 70, key: 'D' },
+  snow: { bpm: 60, key: 'E' },
+  sunny: { bpm: 90, key: 'C' },
+};
+
 const rainCodes = new Set<number>([
   51, 53, 55, 56, 57, // drizzle
   61, 63, 65, 66, 67, // rain
@@ -29,20 +35,11 @@ export async function fetchWeather(lat: number, lon: number): Promise<WeatherCon
 
 export function applyWeather(condition: WeatherCondition) {
   const lofi = useLofi.getState();
-  switch (condition) {
-    case 'rain':
-      lofi.setBpm(70);
-      lofi.setKey('D');
-      break;
-    case 'snow':
-      lofi.setBpm(60);
-      lofi.setKey('E');
-      break;
-    default:
-      lofi.setBpm(90);
-      lofi.setKey('C');
-      break;
-  }
+  const preset = WEATHER_PRESETS[condition];
+  lofi.setBpm(preset.bpm);
+  lofi.setKey(preset.key);
+  lofi.setWeatherPreset(condition);
+  lofi.setWeatherEnabled(true);
 }
 
 export async function generateWeatherTrack(lat: number, lon: number) {
