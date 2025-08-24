@@ -87,6 +87,34 @@ const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: "eclipse", label: "Eclipse" },
 ];
 
+const THEME_GROUPS: { label: string; options: { value: Theme; label: string }[] }[] = [
+  {
+    label: "Light",
+    options: THEME_OPTIONS.filter((o) => ["pastel"].includes(o.value)),
+  },
+  {
+    label: "Dark",
+    options: THEME_OPTIONS.filter((o) =>
+      [
+        "default",
+        "ocean",
+        "forest",
+        "sunset",
+        "sakura",
+        "studio",
+        "galaxy",
+        "noir",
+        "rainy",
+        "eclipse",
+      ].includes(o.value),
+    ),
+  },
+  {
+    label: "High Contrast",
+    options: THEME_OPTIONS.filter((o) => ["aurora", "retro", "mono"].includes(o.value)),
+  },
+];
+
 const MODULE_LABELS: Record<ModuleKey, string> = {
   objects: "3D Object",
   music: "Lo‑Fi Music",
@@ -450,31 +478,39 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   const AppearanceSection = () => (
     <>
       <Typography variant="subtitle1">Appearance</Typography>
-      <Box id="theme" sx={{ mt: 2 }}>
-        <FormControl fullWidth>
-          <InputLabel id="theme-label">Theme</InputLabel>
-          <Select
-            labelId="theme-label"
-            label="Theme"
-            value={themeDraft}
-            onChange={(e) => setThemeDraft(e.target.value as Theme)}
-          >
-            {THEME_OPTIONS.map((opt) => (
-              <MenuItem key={opt.value} value={opt.value}>
+      <Box id="theme" sx={{ mt: 2 }} onMouseLeave={() => setTheme(themeDraft)}>
+        {THEME_GROUPS.map((group) => (
+          <Box key={group.label} sx={{ mb: 2 }}>
+            <Typography variant="subtitle2">{group.label}</Typography>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mt: 1 }}>
+              {group.options.map((opt) => (
                 <Box
+                  key={opt.value}
+                  onMouseEnter={() => setTheme(opt.value)}
+                  onClick={() => setThemeDraft(opt.value)}
                   sx={{
-                    width: 16,
-                    height: 16,
-                    background: THEME_PREVIEWS[opt.value],
-                    border: "1px solid #ccc",
-                    mr: 1,
+                    cursor: "pointer",
+                    textAlign: "center",
                   }}
-                />
-                {opt.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+                >
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      background: THEME_PREVIEWS[opt.value],
+                      border:
+                        themeDraft === opt.value
+                          ? "2px solid #fff"
+                          : "1px solid #ccc",
+                      mb: 0.5,
+                    }}
+                  />
+                  <Typography variant="caption">{opt.label}</Typography>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        ))}
       </Box>
       <Button
         variant="contained"
