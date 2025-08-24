@@ -5,26 +5,48 @@ import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 import { rollDiceExpression } from "../../dnd/rules";
 
-function getGeometry(sides: number) {
-  switch (sides) {
-    case 4:
-      return new THREE.TetrahedronGeometry(1);
-    case 6:
-      return new THREE.BoxGeometry(1, 1, 1);
-    case 8:
-      return new THREE.OctahedronGeometry(1);
-    case 10:
-      return new THREE.CylinderGeometry(1, 1, 1, 10);
-    case 12:
-      return new THREE.DodecahedronGeometry(1);
-    case 20:
-      return new THREE.IcosahedronGeometry(1);
-    default:
-      return new THREE.BoxGeometry(1, 1, 1);
+function addNumberedFaceGroups(
+  sides: number,
+  geometry: THREE.BufferGeometry
+) {
+  if (geometry.groups.length > 0) return;
+  const index = geometry.index;
+  if (!index) return;
+  const indicesPerSide = index.count / sides;
+  for (let i = 0; i < index.count; i += indicesPerSide) {
+    geometry.addGroup(i, indicesPerSide, i / indicesPerSide);
   }
 }
 
-function createDiceMaterials() {
+function getGeometry(sides: number) {
+  let geometry: THREE.BufferGeometry;
+  switch (sides) {
+    case 4:
+      geometry = new THREE.TetrahedronGeometry(1);
+      break;
+    case 6:
+      geometry = new THREE.BoxGeometry(1, 1, 1);
+      break;
+    case 8:
+      geometry = new THREE.OctahedronGeometry(1);
+      break;
+    case 10:
+      geometry = new THREE.CylinderGeometry(1, 1, 1, 10, 1, true);
+      break;
+    case 12:
+      geometry = new THREE.DodecahedronGeometry(1);
+      break;
+    case 20:
+      geometry = new THREE.IcosahedronGeometry(1);
+      break;
+    default:
+      geometry = new THREE.BoxGeometry(1, 1, 1);
+  }
+  addNumberedFaceGroups(sides, geometry);
+  return geometry;
+}
+
+function createDiceMaterials(sides: number) {
   const createTexture = (n: number) => {
     const size = 128;
     const canvas = document.createElement("canvas");
@@ -40,8 +62,8 @@ function createDiceMaterials() {
     ctx.fillText(n.toString(), size / 2, size / 2);
     return new THREE.CanvasTexture(canvas);
   };
-  return [1, 2, 3, 4, 5, 6].map(
-    (n) => new THREE.MeshStandardMaterial({ map: createTexture(n) })
+  return Array.from({ length: sides }, (_, i) =>
+    new THREE.MeshStandardMaterial({ map: createTexture(i + 1) })
   );
 }
 
@@ -65,10 +87,7 @@ function Die({
   position: [number, number, number];
 }) {
   const geometry = useMemo(() => getGeometry(sides), [sides]);
-  const materials = useMemo(() => {
-    if (sides === 6) return createDiceMaterials();
-    return [new THREE.MeshStandardMaterial({ color: "#e0e0e0" })];
-  }, [sides]);
+  const materials = useMemo(() => createDiceMaterials(sides), [sides]);
   const [ref, api] = useBox(() => ({ mass: 1, args: [1, 1, 1] }));
 
   useEffect(() => {
