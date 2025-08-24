@@ -1,10 +1,10 @@
-import { createTheme, PaletteMode } from '@mui/material/styles';
+import { createTheme } from '@mui/material/styles';
 
 export const colors = {
   primary: '#1976d2',
   secondary: '#9c27b0',
-  background: '#f5f5f5',
-  surface: '#ffffff',
+  background: '#121212',
+  surface: '#1e1e1e',
   status: {
     scheduled: '#1976d2',
     canceled: '#d32f2f',
@@ -15,10 +15,10 @@ export const colors = {
 
 export const spacing = 8;
 
-export const createAppTheme = (mode: PaletteMode) =>
+export const createAppTheme = () =>
   createTheme({
     palette: {
-      mode,
+      mode: 'dark',
       primary: { main: colors.primary },
       secondary: { main: colors.secondary },
       background: { default: colors.background, paper: colors.surface },

@@ -18,7 +18,6 @@ export default function User() {
         <p><strong>ID:</strong> {user.id}</p>
         <p><strong>Name:</strong> {user.name}</p>
         <p><strong>Theme:</strong> {user.theme}</p>
-        <p><strong>Mode:</strong> {user.mode}</p>
         <p><strong>Money:</strong> {user.money}</p>
         <div>
           <h2>Modules</h2>

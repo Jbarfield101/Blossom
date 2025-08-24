@@ -186,7 +186,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
     hqChorus,
     toggleHqChorus,
   } = useAudioDefaults();
-  const { theme, setTheme, mode, setMode } = useTheme();
+  const { theme, setTheme } = useTheme();
   const { showTutorial, setShowTutorial } = useComfyTutorial();
   const { modules, toggleModule } = useSettings();
   const [audioSaved, setAudioSaved] = useState(false);
@@ -202,7 +202,6 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   const [ttsLanguageDraft, setTtsLanguageDraft] = useState(ttsLanguage);
   const [folderDraft, setFolderDraft] = useState(folder);
   const [themeDraft, setThemeDraft] = useState<Theme>(theme);
-  const [modeDraft, setModeDraft] = useState(mode);
 
   useEffect(() => setPythonDraft(pythonPath), [pythonPath]);
   useEffect(() => setComfyDraft(comfyPath), [comfyPath]);
@@ -212,7 +211,6 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   useEffect(() => setTtsLanguageDraft(ttsLanguage), [ttsLanguage]);
   useEffect(() => setFolderDraft(folder), [folder]);
   useEffect(() => setThemeDraft(theme), [theme]);
-  useEffect(() => setModeDraft(mode), [mode]);
 
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
@@ -381,22 +379,11 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
               ))}
             </Select>
           </FormControl>
-          <FormControlLabel
-            sx={{ mt: 1 }}
-            control={
-              <Switch
-                checked={modeDraft === "dark"}
-                onChange={(e) => setModeDraft(e.target.checked ? "dark" : "light")}
-              />
-            }
-            label="Dark Mode"
-          />
           <Button
             variant="contained"
             sx={{ mt: 2 }}
             onClick={() => {
               setTheme(themeDraft);
-              setMode(modeDraft);
               setAppearanceSaved(true);
             }}
           >

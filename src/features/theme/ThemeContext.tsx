@@ -4,11 +4,7 @@ import {
   useEffect,
   useMemo,
 } from "react";
-import {
-  ThemeProvider as MuiThemeProvider,
-  CssBaseline,
-  PaletteMode,
-} from "@mui/material";
+import { ThemeProvider as MuiThemeProvider, CssBaseline } from "@mui/material";
 import { createAppTheme } from "../../theme";
 import { useUsers } from "../users/useUsers";
 
@@ -31,8 +27,6 @@ export type Theme =
 interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
-  mode: PaletteMode;
-  setMode: (mode: PaletteMode) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -42,12 +36,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const id = state.currentUserId;
     return id ? state.users[id].theme : "default";
   });
-  const mode = useUsers((state) => {
-    const id = state.currentUserId;
-    return id ? state.users[id].mode : "dark";
-  });
   const setTheme = useUsers((state) => state.setTheme);
-  const setMode = useUsers((state) => state.setMode);
 
   useEffect(() => {
     const classes = [
@@ -71,13 +60,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [theme]);
 
   useEffect(() => {
-    document.documentElement.style.colorScheme = mode;
-  }, [mode]);
+    document.documentElement.style.colorScheme = 'dark';
+  }, []);
 
-  const muiTheme = useMemo(() => createAppTheme(mode), [mode]);
+  const muiTheme = useMemo(() => createAppTheme(), []);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, mode, setMode }}>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
       <MuiThemeProvider theme={muiTheme}>
         <CssBaseline />
         {children}
