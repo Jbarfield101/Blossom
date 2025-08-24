@@ -70,17 +70,19 @@ const CalendarDay = React.memo(
         <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
           {day}
         </Typography>
-        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
           {events.slice(0, 3).map((ev) => (
             <Box
               key={ev.id}
               sx={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                bgcolor: statusColors[ev.status],
+                borderLeft: `3px solid ${statusColors[ev.status]}`,
+                pl: 0.5,
               }}
-            />
+            >
+              <Typography sx={{ fontSize: 11 }}>
+                {ev.title.length > 10 ? `${ev.title.slice(0, 10)}…` : ev.title}
+              </Typography>
+            </Box>
           ))}
           {events.length > 3 && (
             <Tooltip title={events.slice(3).map((ev) => ev.title).join(', ')}>
