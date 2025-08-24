@@ -80,6 +80,7 @@ fn main() {
             // Paths:
             commands::load_paths,
             commands::save_paths,
+            commands::detect_python,
             // Stocks:
             commands::stocks_fetch,
             commands::stock_forecast,
