@@ -61,24 +61,43 @@ export const useTasks = create<TasksState>((set, get) => ({
   tasks: {},
   pollers: {},
   enqueueTask: async (label, command) => {
-    const id = await invoke<number>('enqueue_task', { label, command });
-    set((state) => ({
-      tasks: {
-        ...state.tasks,
-        [id]: { id, label, status: 'queued', progress: 0 },
-      },
-    }));
-    get().startPolling(id);
-    return id;
+    try {
+      const id = await invoke<number>('enqueue_task', { label, command });
+      set((state) => ({
+        tasks: {
+          ...state.tasks,
+          [id]: { id, label, status: 'queued', progress: 0 },
+        },
+      }));
+      get().startPolling(id);
+      return id;
+    } catch (error) {
+      throw error;
+    }
   },
   fetchStatus: async (id) => {
-    const raw = await invoke<RawTask | null>('task_status', { id });
-    if (raw) {
-      const task = normalize(raw);
-      set((state) => ({ tasks: { ...state.tasks, [id]: task } }));
-      if (['completed', 'cancelled', 'failed'].includes(task.status)) {
-        get().stopPolling(id);
+    try {
+      const raw = await invoke<RawTask | null>('task_status', { id });
+      if (raw) {
+        const task = normalize(raw);
+        set((state) => ({ tasks: { ...state.tasks, [id]: task } }));
+        if (['completed', 'cancelled', 'failed'].includes(task.status)) {
+          get().stopPolling(id);
+        }
       }
+    } catch (error: any) {
+      get().stopPolling(id);
+      set((state) => ({
+        tasks: {
+          ...state.tasks,
+          [id]: {
+            ...(state.tasks[id] ?? { id, label: '', progress: 0 }),
+            status: 'failed',
+            error: String(error?.message ?? error),
+          },
+        },
+      }));
+      throw error;
     }
   },
   startPolling: (id, interval = 1000) => {
@@ -97,30 +116,49 @@ export const useTasks = create<TasksState>((set, get) => ({
     });
   },
   cancelTask: async (id) => {
-    const ok = await invoke<boolean>('cancel_task', { id });
-    if (ok) {
+    try {
+      const ok = await invoke<boolean>('cancel_task', { id });
+      if (ok) {
+        get().stopPolling(id);
+        set((state) => ({
+          tasks: {
+            ...state.tasks,
+            [id]: {
+              ...(state.tasks[id] ?? { id, label: '', progress: 0 }),
+              status: 'cancelled',
+            },
+          },
+        }));
+      }
+      return ok;
+    } catch (error: any) {
       get().stopPolling(id);
       set((state) => ({
         tasks: {
           ...state.tasks,
           [id]: {
             ...(state.tasks[id] ?? { id, label: '', progress: 0 }),
-            status: 'cancelled',
+            status: 'failed',
+            error: String(error?.message ?? error),
           },
         },
       }));
+      throw error;
     }
-    return ok;
   },
   subscribe: async () => {
-    const unlisten = await listen<RawTask>('task_updated', (e) => {
-      const task = normalize(e.payload);
-      set((state) => ({ tasks: { ...state.tasks, [task.id]: task } }));
-      if (['completed', 'cancelled', 'failed'].includes(task.status)) {
-        get().stopPolling(task.id);
-      }
-    });
-    return unlisten;
+    try {
+      const unlisten = await listen<RawTask>('task_updated', (e) => {
+        const task = normalize(e.payload);
+        set((state) => ({ tasks: { ...state.tasks, [task.id]: task } }));
+        if (['completed', 'cancelled', 'failed'].includes(task.status)) {
+          get().stopPolling(task.id);
+        }
+      });
+      return unlisten;
+    } catch (error) {
+      throw error;
+    }
   },
 }));
 
