@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Typography, TextField, Button } from "@mui/material";
+import { Typography, TextField, Button, Grid } from "@mui/material";
 import SpellPdfUpload from "./SpellPdfUpload";
 import { zSpell } from "./schemas";
 import type { SpellData } from "./types";
@@ -36,76 +36,106 @@ export default function SpellForm() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <Typography variant="h6">Spellbook</Typography>
-      <SpellPdfUpload />
-      <TextField
-        label="Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Level"
-        value={level}
-        onChange={(e) => setLevel(e.target.value)}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="School"
-        value={school}
-        onChange={(e) => setSchool(e.target.value)}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Casting Time"
-        value={castingTime}
-        onChange={(e) => setCastingTime(e.target.value)}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Range"
-        value={range}
-        onChange={(e) => setRange(e.target.value)}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Components (comma separated)"
-        value={components}
-        onChange={(e) => setComponents(e.target.value)}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Duration"
-        value={duration}
-        onChange={(e) => setDuration(e.target.value)}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Description"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        fullWidth
-        multiline
-        margin="normal"
-      />
-      <TextField
-        label="Tags (comma separated)"
-        value={tags}
-        onChange={(e) => setTags(e.target.value)}
-        fullWidth
-        margin="normal"
-      />
-      <Button type="submit" variant="contained" sx={{ mt: 2 }}>
-        Submit
-      </Button>
-      {result && <pre style={{ marginTop: "1rem" }}>{JSON.stringify(result, null, 2)}</pre>}
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <Typography variant="h6">Spellbook</Typography>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <SpellPdfUpload />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Level"
+            value={level}
+            onChange={(e) => setLevel(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="School"
+            value={school}
+            onChange={(e) => setSchool(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Casting Time"
+            value={castingTime}
+            onChange={(e) => setCastingTime(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Range"
+            value={range}
+            onChange={(e) => setRange(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Components (comma separated)"
+            value={components}
+            onChange={(e) => setComponents(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Duration"
+            value={duration}
+            onChange={(e) => setDuration(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            fullWidth
+            multiline
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Tags (comma separated)"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>
+            Submit
+          </Button>
+        </Grid>
+        {result && (
+          <Grid item xs={12}>
+            <pre style={{ marginTop: "1rem" }}>{JSON.stringify(result, null, 2)}</pre>
+          </Grid>
+        )}
+      </Grid>
     </form>
   );
 }

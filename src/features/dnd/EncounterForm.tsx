@@ -4,6 +4,7 @@ import {
   TextField,
   Button,
   MenuItem,
+  Grid,
 } from "@mui/material";
 import { zEncounter } from "./schemas";
 import { EncounterData, DndTheme } from "./types";
@@ -47,116 +48,142 @@ export default function EncounterForm() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <Typography variant="h6">Encounter Form</Typography>
-      <TextField
-        label="Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Level"
-        type="number"
-        value={level ?? ""}
-        onChange={(e) => {
-          const val = e.target.value;
-          setLevel(val === "" ? undefined : Number(val));
-          setErrors((prev) => ({ ...prev, level: undefined }));
-        }}
-        error={!!errors.level}
-        helperText={errors.level}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Creatures (comma separated)"
-        value={creatures}
-        onChange={(e) => setCreatures(e.target.value)}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Tactics"
-        value={tactics}
-        onChange={(e) => setTactics(e.target.value)}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Terrain"
-        value={terrain}
-        onChange={(e) => setTerrain(e.target.value)}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Treasure"
-        value={treasure}
-        onChange={(e) => setTreasure(e.target.value)}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Scaling"
-        value={scaling}
-        onChange={(e) => setScaling(e.target.value)}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        select
-        label="Theme"
-        value={theme}
-        onChange={(e) => setTheme(e.target.value as DndTheme)}
-        fullWidth
-        margin="normal"
-      >
-        {themes.map((t) => (
-          <MenuItem key={t} value={t}>
-            {t}
-          </MenuItem>
-        ))}
-      </TextField>
-      <Button type="submit" variant="contained" sx={{ mt: 2 }}>
-        Submit
-      </Button>
-      <div style={{ ...themeStyles[theme], marginTop: "1rem" }}>
-        <h3>{name || "Encounter Preview"}</h3>
-        {level && (
-          <p>
-            <strong>Level:</strong> {level}
-          </p>
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <Typography variant="h6">Encounter Form</Typography>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Level"
+            type="number"
+            value={level ?? ""}
+            onChange={(e) => {
+              const val = e.target.value;
+              setLevel(val === "" ? undefined : Number(val));
+              setErrors((prev) => ({ ...prev, level: undefined }));
+            }}
+            error={!!errors.level}
+            helperText={errors.level}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Creatures (comma separated)"
+            value={creatures}
+            onChange={(e) => setCreatures(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Tactics"
+            value={tactics}
+            onChange={(e) => setTactics(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Terrain"
+            value={terrain}
+            onChange={(e) => setTerrain(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Treasure"
+            value={treasure}
+            onChange={(e) => setTreasure(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Scaling"
+            value={scaling}
+            onChange={(e) => setScaling(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            select
+            label="Theme"
+            value={theme}
+            onChange={(e) => setTheme(e.target.value as DndTheme)}
+            fullWidth
+            margin="normal"
+          >
+            {themes.map((t) => (
+              <MenuItem key={t} value={t}>
+                {t}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid item xs={12}>
+          <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>
+            Submit
+          </Button>
+        </Grid>
+        <Grid item xs={12}>
+          <div style={{ ...themeStyles[theme], marginTop: "1rem" }}>
+            <h3>{name || "Encounter Preview"}</h3>
+            {level && (
+              <p>
+                <strong>Level:</strong> {level}
+              </p>
+            )}
+            {creatures && (
+              <p>
+                <strong>Creatures:</strong> {creatures}
+              </p>
+            )}
+            {tactics && (
+              <p>
+                <strong>Tactics:</strong> {tactics}
+              </p>
+            )}
+            {terrain && (
+              <p>
+                <strong>Terrain:</strong> {terrain}
+              </p>
+            )}
+            {treasure && (
+              <p>
+                <strong>Treasure:</strong> {treasure}
+              </p>
+            )}
+            {scaling && (
+              <p>
+                <strong>Scaling:</strong> {scaling}
+              </p>
+            )}
+          </div>
+        </Grid>
+        {result && (
+          <Grid item xs={12}>
+            <pre style={{ marginTop: "1rem" }}>{JSON.stringify(result, null, 2)}</pre>
+          </Grid>
         )}
-        {creatures && (
-          <p>
-            <strong>Creatures:</strong> {creatures}
-          </p>
-        )}
-        {tactics && (
-          <p>
-            <strong>Tactics:</strong> {tactics}
-          </p>
-        )}
-        {terrain && (
-          <p>
-            <strong>Terrain:</strong> {terrain}
-          </p>
-        )}
-        {treasure && (
-          <p>
-            <strong>Treasure:</strong> {treasure}
-          </p>
-        )}
-        {scaling && (
-          <p>
-            <strong>Scaling:</strong> {scaling}
-          </p>
-        )}
-      </div>
-      {result && (
-        <pre style={{ marginTop: "1rem" }}>{JSON.stringify(result, null, 2)}</pre>
-      )}
+      </Grid>
     </form>
   );
 }

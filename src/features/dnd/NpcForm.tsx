@@ -6,6 +6,7 @@ import {
   FormControlLabel,
   Checkbox,
   MenuItem,
+  Grid,
 } from "@mui/material";
 import { z } from "zod";
 import { zNpc } from "../../dnd/schemas/npc";
@@ -94,207 +95,256 @@ export default function NpcForm() {
       }
     }
   };
-
   return (
     <form onSubmit={handleSubmit}>
-      <Typography variant="h6">NPC Form</Typography>
-      <TextField
-        select
-        label="World"
-        value={world}
-        onChange={(e) => setWorld(e.target.value)}
-        fullWidth
-        margin="normal"
-      >
-        {worlds.map((w) => (
-          <MenuItem key={w} value={w}>
-            {w}
-          </MenuItem>
-        ))}
-      </TextField>
-      {world && <NpcPdfUpload world={world} />}
-      <TextField
-        label="Name"
-        value={name}
-        onChange={(e) => {
-          setName(e.target.value);
-          setErrors((prev) => ({ ...prev, name: null }));
-        }}
-        fullWidth
-        margin="normal"
-        error={Boolean(errors.name)}
-        helperText={errors.name}
-      />
-      <TextField
-        label="Species"
-        value={species}
-        onChange={(e) => {
-          setSpecies(e.target.value);
-          setErrors((prev) => ({ ...prev, species: null }));
-        }}
-        fullWidth
-        margin="normal"
-        error={Boolean(errors.species)}
-        helperText={errors.species}
-      />
-      <TextField
-        label="Role"
-        value={role}
-        onChange={(e) => {
-          setRole(e.target.value);
-          setErrors((prev) => ({ ...prev, role: null }));
-        }}
-        fullWidth
-        margin="normal"
-        error={Boolean(errors.role)}
-        helperText={errors.role}
-      />
-      <TextField
-        label="Alignment"
-        value={alignment}
-        onChange={(e) => {
-          setAlignment(e.target.value);
-          setErrors((prev) => ({ ...prev, alignment: null }));
-        }}
-        fullWidth
-        margin="normal"
-        error={Boolean(errors.alignment)}
-        helperText={errors.alignment}
-      />
-      <FormControlLabel
-        control={
-          <Checkbox
-            checked={playerCharacter}
-            onChange={(e) => setPlayerCharacter(e.target.checked)}
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <Typography variant="h6">NPC Form</Typography>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            select
+            label="World"
+            value={world}
+            onChange={(e) => setWorld(e.target.value)}
+            fullWidth
+            margin="normal"
+          >
+            {worlds.map((w) => (
+              <MenuItem key={w} value={w}>
+                {w}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        {world && (
+          <Grid item xs={12} md={6}>
+            <NpcPdfUpload world={world} />
+          </Grid>
+        )}
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Name"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              setErrors((prev) => ({ ...prev, name: null }));
+            }}
+            fullWidth
+            margin="normal"
+            error={Boolean(errors.name)}
+            helperText={errors.name}
           />
-        }
-        label="Player Character"
-      />
-      <TextField
-        label="Backstory"
-        value={backstory}
-        onChange={(e) => setBackstory(e.target.value)}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Location"
-        value={location}
-        onChange={(e) => setLocation(e.target.value)}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Hooks (comma separated)"
-        value={hooks}
-        onChange={(e) => {
-          setHooks(e.target.value);
-          setErrors((prev) => ({ ...prev, hooks: null }));
-        }}
-        fullWidth
-        margin="normal"
-        error={Boolean(errors.hooks)}
-        helperText={errors.hooks}
-      />
-      <TextField
-        label="Quirks (comma separated)"
-        value={quirks}
-        onChange={(e) => setQuirks(e.target.value)}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Voice Style"
-        value={voiceStyle}
-        onChange={(e) => {
-          setVoiceStyle(e.target.value);
-          setErrors((prev) => ({ ...prev, ["voice.style"]: null }));
-        }}
-        fullWidth
-        margin="normal"
-        error={Boolean(errors["voice.style"])}
-        helperText={errors["voice.style"]}
-      />
-      <TextField
-        label="Voice Provider"
-        value={voiceProvider}
-        onChange={(e) => {
-          setVoiceProvider(e.target.value);
-          setErrors((prev) => ({ ...prev, ["voice.provider"]: null }));
-        }}
-        fullWidth
-        margin="normal"
-        error={Boolean(errors["voice.provider"])}
-        helperText={errors["voice.provider"]}
-      />
-      <TextField
-        label="Voice Preset"
-        value={voicePreset}
-        onChange={(e) => {
-          setVoicePreset(e.target.value);
-          setErrors((prev) => ({ ...prev, ["voice.preset"]: null }));
-        }}
-        fullWidth
-        margin="normal"
-        error={Boolean(errors["voice.preset"])}
-        helperText={errors["voice.preset"]}
-      />
-      <TextField
-        label="Portrait URL"
-        value={portrait}
-        onChange={(e) => setPortrait(e.target.value)}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Icon URL"
-        value={icon}
-        onChange={(e) => setIcon(e.target.value)}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Statblock JSON"
-        value={statblock}
-        onChange={(e) => {
-          setStatblock(e.target.value);
-          setErrors((prev) => ({ ...prev, statblock: null }));
-        }}
-        fullWidth
-        margin="normal"
-        multiline
-        error={Boolean(errors.statblock)}
-        helperText={errors.statblock}
-      />
-      <TextField
-        label="Custom Sections JSON"
-        value={sections}
-        onChange={(e) => {
-          setSections(e.target.value);
-          setErrors((prev) => ({ ...prev, sections: null }));
-        }}
-        fullWidth
-        margin="normal"
-        multiline
-        error={Boolean(errors.sections)}
-        helperText={errors.sections}
-      />
-      <TextField
-        label="Tags (comma separated)"
-        value={tags}
-        onChange={(e) => {
-          setTags(e.target.value);
-          setErrors((prev) => ({ ...prev, tags: null }));
-        }}
-        fullWidth
-        margin="normal"
-        error={Boolean(errors.tags)}
-        helperText={errors.tags}
-      />
-      <Button type="submit" variant="contained" sx={{ mt: 2 }}>
-        Submit
-      </Button>
-      {result && <pre style={{ marginTop: "1rem" }}>{JSON.stringify(result, null, 2)}</pre>}
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Species"
+            value={species}
+            onChange={(e) => {
+              setSpecies(e.target.value);
+              setErrors((prev) => ({ ...prev, species: null }));
+            }}
+            fullWidth
+            margin="normal"
+            error={Boolean(errors.species)}
+            helperText={errors.species}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Role"
+            value={role}
+            onChange={(e) => {
+              setRole(e.target.value);
+              setErrors((prev) => ({ ...prev, role: null }));
+            }}
+            fullWidth
+            margin="normal"
+            error={Boolean(errors.role)}
+            helperText={errors.role}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Alignment"
+            value={alignment}
+            onChange={(e) => {
+              setAlignment(e.target.value);
+              setErrors((prev) => ({ ...prev, alignment: null }));
+            }}
+            fullWidth
+            margin="normal"
+            error={Boolean(errors.alignment)}
+            helperText={errors.alignment}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={playerCharacter}
+                onChange={(e) => setPlayerCharacter(e.target.checked)}
+              />
+            }
+            label="Player Character"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Backstory"
+            value={backstory}
+            onChange={(e) => setBackstory(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Location"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Hooks (comma separated)"
+            value={hooks}
+            onChange={(e) => {
+              setHooks(e.target.value);
+              setErrors((prev) => ({ ...prev, hooks: null }));
+            }}
+            fullWidth
+            margin="normal"
+            error={Boolean(errors.hooks)}
+            helperText={errors.hooks}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Quirks (comma separated)"
+            value={quirks}
+            onChange={(e) => setQuirks(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Voice Style"
+            value={voiceStyle}
+            onChange={(e) => {
+              setVoiceStyle(e.target.value);
+              setErrors((prev) => ({ ...prev, ["voice.style"]: null }));
+            }}
+            fullWidth
+            margin="normal"
+            error={Boolean(errors["voice.style"])}
+            helperText={errors["voice.style"]}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Voice Provider"
+            value={voiceProvider}
+            onChange={(e) => {
+              setVoiceProvider(e.target.value);
+              setErrors((prev) => ({ ...prev, ["voice.provider"]: null }));
+            }}
+            fullWidth
+            margin="normal"
+            error={Boolean(errors["voice.provider"])}
+            helperText={errors["voice.provider"]}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Voice Preset"
+            value={voicePreset}
+            onChange={(e) => {
+              setVoicePreset(e.target.value);
+              setErrors((prev) => ({ ...prev, ["voice.preset"]: null }));
+            }}
+            fullWidth
+            margin="normal"
+            error={Boolean(errors["voice.preset"])}
+            helperText={errors["voice.preset"]}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Portrait URL"
+            value={portrait}
+            onChange={(e) => setPortrait(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Icon URL"
+            value={icon}
+            onChange={(e) => setIcon(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Statblock JSON"
+            value={statblock}
+            onChange={(e) => {
+              setStatblock(e.target.value);
+              setErrors((prev) => ({ ...prev, statblock: null }));
+            }}
+            fullWidth
+            margin="normal"
+            multiline
+            error={Boolean(errors.statblock)}
+            helperText={errors.statblock}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Custom Sections JSON"
+            value={sections}
+            onChange={(e) => {
+              setSections(e.target.value);
+              setErrors((prev) => ({ ...prev, sections: null }));
+            }}
+            fullWidth
+            margin="normal"
+            multiline
+            error={Boolean(errors.sections)}
+            helperText={errors.sections}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Tags (comma separated)"
+            value={tags}
+            onChange={(e) => {
+              setTags(e.target.value);
+              setErrors((prev) => ({ ...prev, tags: null }));
+            }}
+            fullWidth
+            margin="normal"
+            error={Boolean(errors.tags)}
+            helperText={errors.tags}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>
+            Submit
+          </Button>
+        </Grid>
+        {result && (
+          <Grid item xs={12}>
+            <pre style={{ marginTop: "1rem" }}>{JSON.stringify(result, null, 2)}</pre>
+          </Grid>
+        )}
+      </Grid>
     </form>
   );
 }
