@@ -1,16 +1,9 @@
 import { Canvas } from "@react-three/fiber";
 import { Physics, useBox, usePlane } from "@react-three/cannon";
-import {
-  Box,
-  Button,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  Typography,
-} from "@mui/material";
+import { Box, Button, TextField, Typography } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
+import { rollDiceExpression } from "../../dnd/rules";
 
 function getGeometry(sides: number) {
   switch (sides) {
@@ -62,7 +55,15 @@ function Plane() {
   );
 }
 
-function Die({ sides, roll }: { sides: number; roll: number }) {
+function Die({
+  sides,
+  roll,
+  position,
+}: {
+  sides: number;
+  roll: number;
+  position: [number, number, number];
+}) {
   const geometry = useMemo(() => getGeometry(sides), [sides]);
   const materials = useMemo(() => {
     if (sides === 6) return createDiceMaterials();
@@ -71,7 +72,7 @@ function Die({ sides, roll }: { sides: number; roll: number }) {
   const [ref, api] = useBox(() => ({ mass: 1, args: [1, 1, 1] }));
 
   useEffect(() => {
-    api.position.set(0, 2, 0);
+    api.position.set(position[0], position[1], position[2]);
     api.velocity.set(
       THREE.MathUtils.randFloatSpread(5),
       THREE.MathUtils.randFloatSpread(5) + 5,
@@ -88,45 +89,49 @@ function Die({ sides, roll }: { sides: number; roll: number }) {
 }
 
 export default function DiceRoller() {
-  const [sides, setSides] = useState(6);
+  const [expression, setExpression] = useState("1d6");
   const [result, setResult] = useState<number | null>(null);
+  const [rolls, setRolls] = useState<number[]>([]);
+  const [dice, setDice] = useState<number[]>([6]);
   const [roll, setRoll] = useState(0);
 
   const handleRoll = () => {
+    const { total, rolls } = rollDiceExpression(expression);
     setRoll((r) => r + 1);
-    setResult(Math.floor(Math.random() * sides) + 1);
+    setResult(total);
+    setRolls(rolls.map((r) => r.value));
+    setDice(rolls.map((r) => r.sides));
   };
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <FormControl sx={{ maxWidth: 200 }}>
-        <InputLabel id="dice-select-label">Dice</InputLabel>
-        <Select
-          labelId="dice-select-label"
-          value={sides}
-          label="Dice"
-          onChange={(e) => setSides(Number(e.target.value))}
-        >
-          <MenuItem value={4}>D4</MenuItem>
-          <MenuItem value={6}>D6</MenuItem>
-          <MenuItem value={8}>D8</MenuItem>
-          <MenuItem value={10}>D10</MenuItem>
-          <MenuItem value={12}>D12</MenuItem>
-          <MenuItem value={20}>D20</MenuItem>
-        </Select>
-      </FormControl>
+      <TextField
+        label="Dice"
+        value={expression}
+        onChange={(e) => setExpression(e.target.value)}
+        sx={{ maxWidth: 200 }}
+      />
       <Button variant="contained" onClick={handleRoll} sx={{ maxWidth: 200 }}>
         Roll
       </Button>
       {result !== null && (
-        <Typography variant="h6">Result: {result}</Typography>
+        <Typography variant="h6">
+          Result: {result} {rolls.length > 0 && `( ${rolls.join(", ")} )`}
+        </Typography>
       )}
       <Canvas style={{ height: 300 }}>
         <ambientLight />
         <pointLight position={[10, 10, 10]} />
         <Physics>
           <Plane />
-          <Die sides={sides} roll={roll} />
+          {dice.map((s, i) => (
+            <Die
+              key={i}
+              sides={s}
+              roll={roll}
+              position={[-2 + i * 2, 2, 0]}
+            />
+          ))}
         </Physics>
       </Canvas>
     </Box>
