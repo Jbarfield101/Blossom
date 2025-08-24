@@ -16,7 +16,7 @@ use chrono::{Local, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use serde_yaml;
-use sysinfo::{CpuExt, System, SystemExt};
+use sysinfo::System;
 use tauri::{AppHandle, Emitter, Manager, Runtime, State, Window};
 use which::which;
 
@@ -529,7 +529,7 @@ pub async fn enqueue_parse_npc_pdf<R: Runtime>(
 Serde-mapped types (camelCase)
 ============================== */
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct Section {
     pub name: String,
@@ -761,9 +761,7 @@ pub async fn generate_album<R: Runtime>(
     app: AppHandle<R>,
     meta: AlbumRequest,
 ) -> Result<AlbumMeta, String> {
-    let album_name = meta
-        .album_name
-        .unwrap_or_else(|| "album".to_string());
+    let album_name = meta.album_name.unwrap_or_else(|| "album".to_string());
     let base_out = meta.out_dir.unwrap_or_else(|| ".".to_string());
     let album_dir = PathBuf::from(&base_out).join(&album_name);
     fs::create_dir_all(&album_dir).map_err(|e| e.to_string())?;
@@ -1004,7 +1002,9 @@ pub async fn save_spell<R: Runtime>(
         .unwrap_or("")
         .to_string();
     front.as_object_mut().map(|o| o.remove("description"));
-    front.as_object_mut().map(|o| o.insert("type".into(), Value::String("spell".into())));
+    front
+        .as_object_mut()
+        .map(|o| o.insert("type".into(), Value::String("spell".into())));
     let yaml = serde_yaml::to_string(&front).map_err(|e| e.to_string())?;
     let md = format!("---\n{yaml}---\n{body}\n");
     fs::write(&path, md).map_err(|e| e.to_string())?;
@@ -1824,11 +1824,11 @@ pub struct SystemInfo {
 #[tauri::command]
 pub async fn system_info() -> Result<SystemInfo, String> {
     let mut sys = System::new();
-    sys.refresh_cpu();
+    sys.refresh_cpu_usage();
     std::thread::sleep(Duration::from_millis(100));
-    sys.refresh_cpu();
+    sys.refresh_cpu_usage();
     sys.refresh_memory();
-    let cpu_usage = sys.global_cpu_info().cpu_usage();
+    let cpu_usage = sys.global_cpu_usage();
     let mem_usage = if sys.total_memory() > 0 {
         (sys.used_memory() as f32 / sys.total_memory() as f32) * 100.0
     } else {
