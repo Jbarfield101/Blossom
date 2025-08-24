@@ -145,11 +145,11 @@ impl TaskQueue {
                                     (l.cpu, l.memory)
                                 };
                                 let mut sys = System::new();
-                                sys.refresh_cpu();
+                                sys.refresh_cpu_all();
                                 std::thread::sleep(Duration::from_millis(100));
-                                sys.refresh_cpu();
+                                sys.refresh_cpu_all();
                                 sys.refresh_memory();
-                                let cpu_usage = sys.global_cpu_info().cpu_usage();
+                                let cpu_usage = sys.global_cpu_usage();
                                 let mem_usage = if sys.total_memory() > 0 {
                                     (sys.used_memory() as f32 / sys.total_memory() as f32) * 100.0
                                 } else {
