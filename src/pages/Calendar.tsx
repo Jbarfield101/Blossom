@@ -4,6 +4,7 @@ import {
   Button,
   ButtonGroup,
   Checkbox,
+  Collapse,
   FormControlLabel,
   Grid,
   IconButton,
@@ -70,6 +71,9 @@ export default function Calendar() {
   >("scheduled");
   const [hasCountdown, setHasCountdown] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [duration, setDuration] = useState(60);
+  const [showMore, setShowMore] = useState(false);
+  const [overlapWarning, setOverlapWarning] = useState<string | null>(null);
 
   const events = useCalendar((s) => s.events);
   const addEvent = useCalendar((s) => s.addEvent);
@@ -116,21 +120,46 @@ export default function Calendar() {
     setStatus("scheduled");
     setHasCountdown(false);
     setEditingId(null);
+    setDuration(60);
+    setShowMore(false);
+    setOverlapWarning(null);
   };
 
   useEffect(() => {
     if (!date || !end) {
       setTimeError(false);
+      setOverlapWarning(null);
       return;
     }
     const startTime = new Date(date).getTime();
     const endTime = new Date(end).getTime();
     if (isNaN(startTime) || isNaN(endTime)) {
       setTimeError(true);
+      setOverlapWarning(null);
       return;
     }
     setTimeError(endTime <= startTime);
   }, [date, end]);
+
+  useEffect(() => {
+    if (!date || !end || timeError) {
+      setOverlapWarning(null);
+      return;
+    }
+    const startTime = new Date(date).getTime();
+    const endTime = new Date(end).getTime();
+    if (isNaN(startTime) || isNaN(endTime)) {
+      setOverlapWarning(null);
+      return;
+    }
+    const overlap = events.some((e) => {
+      if (editingId && e.id === editingId) return false;
+      const s = new Date(e.date).getTime();
+      const en = new Date(e.end).getTime();
+      return startTime < en && endTime > s;
+    });
+    setOverlapWarning(overlap ? "Event overlaps with another event" : null);
+  }, [date, end, events, editingId, timeError]);
 
   const dayEvents = (day: number) => {
     const dayStr = `${year}-${pad(month + 1)}-${pad(day)}`;
@@ -143,6 +172,7 @@ export default function Calendar() {
     const endTime = `${dayStr}T10:00`;
     setDate(start);
     setEnd(endTime);
+    setDuration(60);
     setSelectedDay(day);
     setFocusedDay(day);
   };
@@ -155,6 +185,14 @@ export default function Calendar() {
     setStatus(ev.status ?? "scheduled");
     setHasCountdown(ev.hasCountdown ?? false);
     setEditingId(ev.id);
+    setDuration(
+      Math.round(
+        (new Date(ev.end).getTime() - new Date(ev.date).getTime()) / 60000,
+      ),
+    );
+    setShowMore(
+      !!(ev.tags?.length || ev.status !== "scheduled" || ev.hasCountdown),
+    );
     const d = new Date(ev.date);
     const day = d.getDate();
     setSelectedDay(day);
@@ -439,7 +477,16 @@ export default function Calendar() {
                       label="Start Time"
                       fullWidth
                       value={date}
-                      onChange={(e) => setDate(e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setDate(value);
+                        const startMs = Date.parse(value);
+                        if (!Number.isNaN(startMs)) {
+                          setEnd(toLocalNaive(new Date(startMs + duration * 60000)));
+                        } else {
+                          setEnd("");
+                        }
+                      }}
                       inputProps={{ "data-testid": "date-input" }}
                       InputLabelProps={{ shrink: true }}
                     />
@@ -451,7 +498,15 @@ export default function Calendar() {
                       label="End Time"
                       fullWidth
                       value={end}
-                      onChange={(e) => setEnd(e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setEnd(value);
+                        const startMs = Date.parse(date);
+                        const endMs = Date.parse(value);
+                        if (!Number.isNaN(startMs) && !Number.isNaN(endMs)) {
+                          setDuration(Math.round((endMs - startMs) / 60000));
+                        }
+                      }}
                       inputProps={{ "data-testid": "end-input" }}
                       InputLabelProps={{ shrink: true }}
                     />
@@ -464,43 +519,65 @@ export default function Calendar() {
                         End time must be after start time
                       </Typography>
                     )}
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      id="tags"
-                      label="Tags"
-                      fullWidth
-                      placeholder="tag1, tag2"
-                      value={tags}
-                      onChange={(e) => setTags(e.target.value)}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      id="status"
-                      label="Status"
-                      select
-                      fullWidth
-                      value={status}
-                      onChange={(e) => setStatus(e.target.value as any)}
-                    >
-                      <MenuItem value="scheduled">Scheduled</MenuItem>
-                      <MenuItem value="canceled">Canceled</MenuItem>
-                      <MenuItem value="missed">Missed</MenuItem>
-                      <MenuItem value="completed">Completed</MenuItem>
-                    </TextField>
+                    {!timeError && overlapWarning && (
+                      <Typography
+                        sx={{ color: "warning.main" }}
+                        variant="body2"
+                        data-testid="overlap-warning"
+                      >
+                        {overlapWarning}
+                      </Typography>
+                    )}
                   </Grid>
                   <Grid item xs={12}>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          id="countdown"
-                          checked={hasCountdown}
-                          onChange={(e) => setHasCountdown(e.target.checked)}
-                        />
-                      }
-                      label="Countdown"
-                    />
+                    <Button
+                      size="small"
+                      onClick={() => setShowMore((v) => !v)}
+                      data-testid="toggle-advanced"
+                    >
+                      {showMore ? "Less options" : "More options"}
+                    </Button>
+                    <Collapse in={showMore} sx={{ mt: 2 }} unmountOnExit>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            id="tags"
+                            label="Tags"
+                            fullWidth
+                            placeholder="tag1, tag2"
+                            value={tags}
+                            onChange={(e) => setTags(e.target.value)}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            id="status"
+                            label="Status"
+                            select
+                            fullWidth
+                            value={status}
+                            onChange={(e) => setStatus(e.target.value as any)}
+                          >
+                            <MenuItem value="scheduled">Scheduled</MenuItem>
+                            <MenuItem value="canceled">Canceled</MenuItem>
+                            <MenuItem value="missed">Missed</MenuItem>
+                            <MenuItem value="completed">Completed</MenuItem>
+                          </TextField>
+                        </Grid>
+                        <Grid item xs={12}>
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                id="countdown"
+                                checked={hasCountdown}
+                                onChange={(e) => setHasCountdown(e.target.checked)}
+                              />
+                            }
+                            label="Countdown"
+                          />
+                        </Grid>
+                      </Grid>
+                    </Collapse>
                   </Grid>
                 </Grid>
                 <Box display="flex" justifyContent="flex-end" mt={3}>
