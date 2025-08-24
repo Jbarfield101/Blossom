@@ -92,7 +92,7 @@ enum Message {
 pub struct TaskQueue {
     tx: mpsc::Sender<Message>,
     tasks: Arc<Mutex<HashMap<u64, Task>>>,
-    handles: Arc<Mutex<HashMap<u64, JoinHandle<()>>>>,
+    handles: Arc<Mutex<HashMap<u64, JoinHandle<Result<Value, String>>>>>,
     cancelled: Arc<Mutex<HashSet<u64>>>,
     limits: Arc<Mutex<ResourceLimits>>,
 }
@@ -222,7 +222,12 @@ impl TaskQueue {
                                             .map_err(|e| e.to_string())
                                     }
                                 }
-                                TaskCommand::ParseNpcPdf { py, script, path, world: _ } => {
+                                TaskCommand::ParseNpcPdf {
+                                    py,
+                                    script,
+                                    path,
+                                    world: _,
+                                } => {
                                     let output = PCommand::new(&py)
                                         .arg(&script)
                                         .arg("npcs")
@@ -279,7 +284,12 @@ impl TaskQueue {
                                             .map_err(|e| e.to_string())
                                     }
                                 }
-                                TaskCommand::ParseLorePdf { py, script, path, world: _ } => {
+                                TaskCommand::ParseLorePdf {
+                                    py,
+                                    script,
+                                    path,
+                                    world: _,
+                                } => {
                                     let mut cmd = PCommand::new(&py);
                                     cmd.arg(&script)
                                         .arg("lore")
@@ -289,12 +299,15 @@ impl TaskQueue {
                                     let mut child = cmd
                                         .spawn()
                                         .map_err(|e| format!("Failed to start python: {e}"))?;
-                                    let stdout = child.stdout.take().ok_or("no stdout".to_string())?;
+                                    let stdout =
+                                        child.stdout.take().ok_or("no stdout".to_string())?;
                                     let mut reader = BufReader::new(stdout);
                                     let mut output = String::new();
                                     loop {
                                         let mut line = String::new();
-                                        let n = reader.read_line(&mut line).map_err(|e| e.to_string())?;
+                                        let n = reader
+                                            .read_line(&mut line)
+                                            .map_err(|e| e.to_string())?;
                                         if n == 0 {
                                             break;
                                         }
@@ -323,7 +336,8 @@ impl TaskQueue {
                                             status, err
                                         ))
                                     } else {
-                                        serde_json::from_str::<Value>(&output).map_err(|e| e.to_string())
+                                        serde_json::from_str::<Value>(&output)
+                                            .map_err(|e| e.to_string())
                                     }
                                 }
                                 TaskCommand::GenerateShort { spec } => {
@@ -334,19 +348,20 @@ impl TaskQueue {
                             {
                                 let mut map = tasks_clone.lock().unwrap();
                                 if let Some(t) = map.get_mut(&id) {
-                                    match res {
+                                    match &res {
                                         Ok(v) => {
                                             t.status = TaskStatus::Completed;
                                             t.progress = 1.0;
-                                            t.result = Some(v);
+                                            t.result = Some(v.clone());
                                         }
                                         Err(e) => {
-                                            t.status = TaskStatus::Failed(e);
+                                            t.status = TaskStatus::Failed(e.clone());
                                         }
                                     }
                                 }
                             }
                             drop(permit);
+                            res
                         });
                         handles_worker.lock().unwrap().insert(id, handle);
                     }
