@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Theme } from '../theme/ThemeContext';
-import type { PaletteMode } from '@mui/material';
 
 type ModuleKey =
   | 'objects'
@@ -40,7 +39,6 @@ const defaultModules: ModulesState = {
     id: string;
     name: string;
     theme: Theme;
-    mode: PaletteMode;
     money: number;
     modules: ModulesState;
     cpuLimit: number;
@@ -53,7 +51,6 @@ const defaultModules: ModulesState = {
     addUser: (name: string) => void;
     switchUser: (id: string) => void;
     setTheme: (theme: Theme) => void;
-    setMode: (mode: PaletteMode) => void;
     toggleModule: (key: ModuleKey) => void;
     setCpuLimit: (limit: number) => void;
     setMemLimit: (limit: number) => void;
@@ -73,7 +70,6 @@ export const useUsers = create<UsersState>()(
                 id,
                 name,
                 theme: 'default',
-                mode: 'dark',
                 money: 5000,
                 modules: { ...defaultModules },
                 cpuLimit: 90,
@@ -91,16 +87,6 @@ export const useUsers = create<UsersState>()(
           users: {
             ...state.users,
             [id]: { ...state.users[id], theme },
-          },
-        }));
-      },
-      setMode: (mode) => {
-        const id = get().currentUserId;
-        if (!id) return;
-        set((state) => ({
-          users: {
-            ...state.users,
-            [id]: { ...state.users[id], mode },
           },
         }));
       },

@@ -18,7 +18,6 @@ describe('GeneralChat', () => {
           id: 'test',
           name: 'Test User',
           theme: 'default',
-          mode: 'dark',
           money: 5000,
           modules: { ...defaultModules },
         },
