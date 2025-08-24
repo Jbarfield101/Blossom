@@ -43,151 +43,90 @@ exports[`SongForm > renders default form 1`] = `
             </svg>
           </button>
         </div>
-        <select
-          aria-label="Song Templates"
-          class="_input_62bdff py-2 px-3"
+        <div
+          class="MuiAutocomplete-root MuiAutocomplete-hasClearIcon MuiAutocomplete-hasPopupIcon css-1tlcqt-MuiAutocomplete-root"
         >
-          <option
-            value=""
+          <div
+            class="MuiFormControl-root MuiFormControl-fullWidth MuiTextField-root css-cmpglg-MuiFormControl-root-MuiTextField-root"
           >
-            Custom Structure
-          </option>
-          <option
-            value="Classic Lofi"
-          >
-            Classic Lofi
-          </option>
-          <option
-            value="Study Session"
-          >
-            Study Session
-          </option>
-          <option
-            value="Jazz Cafe"
-          >
-            Jazz Cafe
-          </option>
-          <option
-            value="Midnight Drive"
-          >
-            Midnight Drive
-          </option>
-          <option
-            value="Rain & Coffee"
-          >
-            Rain & Coffee
-          </option>
-          <option
-            value="Bossa Nova"
-          >
-            Bossa Nova
-          </option>
-          <option
-            value="Quick Beat"
-          >
-            Quick Beat
-          </option>
-          <option
-            value="New Fantasy"
-          >
-            New Fantasy
-          </option>
-          <option
-            value="Sleep"
-          >
-            Sleep
-          </option>
-          <option
-            value="Sunset Sketches"
-          >
-            Sunset Sketches
-          </option>
-          <option
-            value="Neon Rain"
-          >
-            Neon Rain
-          </option>
-          <option
-            value="Loft Morning"
-          >
-            Loft Morning
-          </option>
-          <option
-            value="Late Night Coding"
-          >
-            Late Night Coding
-          </option>
-          <option
-            value="Forest Spirits"
-          >
-            Forest Spirits
-          </option>
-          <option
-            value="Linear Drift"
-          >
-            Linear Drift
-          </option>
-          <option
-            value="Odd Odyssey"
-          >
-            Odd Odyssey
-          </option>
-          <option
-            value="Arcane Clash"
-          >
-            Arcane Clash
-          </option>
-          <option
-            value="King's Last Stand"
-          >
-            King's Last Stand
-          </option>
-          <option
-            value="Dragon's Fury"
-          >
-            Dragon's Fury
-          </option>
-          <option
-            value="Siege of Stormkeep"
-          >
-            Siege of Stormkeep
-          </option>
-          <option
-            value="Final Hour at the Citadel"
-          >
-            Final Hour at the Citadel
-          </option>
-          <option
-            value="Ocean Breeze"
-          >
-            Ocean Breeze
-          </option>
-          <option
-            value="City Lights"
-          >
-            City Lights
-          </option>
-          <option
-            value="Starlit Voyage"
-          >
-            Starlit Voyage
-          </option>
-          <option
-            value="Sunset VHS"
-          >
-            Sunset VHS
-          </option>
-          <option
-            value="Neon Palms"
-          >
-            Neon Palms
-          </option>
-          <option
-            value="Night Swim"
-          >
-            Night Swim
-          </option>
-        </select>
+            <div
+              class="MuiInputBase-root MuiOutlinedInput-root MuiInputBase-colorPrimary MuiInputBase-fullWidth MuiInputBase-formControl MuiInputBase-adornedEnd MuiAutocomplete-inputRoot css-1n04w30-MuiInputBase-root-MuiOutlinedInput-root"
+            >
+              <input
+                aria-autocomplete="list"
+                aria-expanded="false"
+                aria-invalid="false"
+                aria-label="Song Templates"
+                autocapitalize="none"
+                autocomplete="off"
+                class="MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputAdornedEnd _input_62bdff py-2 px-3 css-1dune0f-MuiInputBase-input-MuiOutlinedInput-input"
+                id="«r2»"
+                placeholder="Select template"
+                role="combobox"
+                spellcheck="false"
+                type="text"
+                value="Custom Structure"
+              />
+              <div
+                class="MuiAutocomplete-endAdornment css-1uhhrmm-MuiAutocomplete-endAdornment"
+              >
+                <button
+                  aria-label="Clear"
+                  class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeMedium MuiAutocomplete-clearIndicator css-1x7n7v0-MuiButtonBase-root-MuiIconButton-root-MuiAutocomplete-clearIndicator"
+                  tabindex="-1"
+                  title="Clear"
+                  type="button"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-120dh41-MuiSvgIcon-root"
+                    data-testid="CloseIcon"
+                    focusable="false"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  aria-label="Open"
+                  class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeMedium MuiAutocomplete-popupIndicator css-2y136s-MuiButtonBase-root-MuiIconButton-root-MuiAutocomplete-popupIndicator"
+                  tabindex="-1"
+                  title="Open"
+                  type="button"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-1umw9bq-MuiSvgIcon-root"
+                    data-testid="ArrowDropDownIcon"
+                    focusable="false"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M7 10l5 5 5-5z"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <fieldset
+                aria-hidden="true"
+                class="MuiOutlinedInput-notchedOutline css-18p5xg2-MuiNotchedOutlined-root-MuiOutlinedInput-notchedOutline"
+              >
+                <legend
+                  class="css-1nf2c5d-MuiNotchedOutlined-root"
+                >
+                  <span
+                    aria-hidden="true"
+                    class="notranslate"
+                  >
+                    ​
+                  </span>
+                </legend>
+              </fieldset>
+            </div>
+          </div>
+        </div>
       </div>
       <div
         class="_row_62bdff"
