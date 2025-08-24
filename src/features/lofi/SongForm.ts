@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import * as Tone from 'tone';
-import type { LofiState } from './types';
+import type { LofiState, WeatherPreset } from './types';
 import {
   renderSpokenWord,
   fileToBuffer,
@@ -340,6 +340,8 @@ type Actions = {
   setBpm: (bpm: number) => void;
   setSeed: (seed: number) => void;
   setKey: (key: string) => void;
+  setWeatherPreset: (preset: WeatherPreset | null) => void;
+  setWeatherEnabled: (enabled: boolean) => void;
 };
 
 export const useLofi = create<LofiState & Actions>((set, get) => ({
@@ -347,6 +349,8 @@ export const useLofi = create<LofiState & Actions>((set, get) => ({
   bpm: 80,
   seed: 0,
   key: 'C',
+  weatherPreset: null,
+  weatherEnabled: true,
 
   play: async () => {
     init();
@@ -378,5 +382,13 @@ export const useLofi = create<LofiState & Actions>((set, get) => ({
   setKey: (key) => {
     makePattern(get().seed, key);
     set({ key });
+  },
+
+  setWeatherPreset: (weatherPreset) => {
+    set({ weatherPreset });
+  },
+
+  setWeatherEnabled: (weatherEnabled) => {
+    set({ weatherEnabled });
   },
 }));

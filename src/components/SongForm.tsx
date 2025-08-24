@@ -6,6 +6,7 @@ import { open as openPath } from "@tauri-apps/plugin-opener";
 import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useLofi } from "../features/lofi/SongForm";
+import { WEATHER_PRESETS } from "../features/lofi/weather";
 import Waveform from "./Waveform";
 import TemplateSelector from "./TemplateSelector";
 import VibeControls from "./VibeControls";
@@ -346,6 +347,9 @@ export default function SongForm() {
     setBpm: setPreviewBpm,
     setKey: setPreviewKey,
     setSeed: setPreviewSeed,
+    weatherPreset,
+    weatherEnabled,
+    setWeatherEnabled,
   } = useLofi();
 
   // one audio element
@@ -855,6 +859,22 @@ export default function SongForm() {
     <div className={styles.page}>
       <div className={styles.card}>
         <div className={styles.h1}>Blossom — Song Builder (Batch + Vibes)</div>
+
+        {weatherPreset && (
+          <div className={styles.row}>
+            <div className={styles.small}>
+              Weather preset: {weatherPreset} (BPM {WEATHER_PRESETS[weatherPreset].bpm}, Key {displayKey(WEATHER_PRESETS[weatherPreset].key)})
+            </div>
+            <label className={styles.toggle}>
+              <input
+                type="checkbox"
+                checked={weatherEnabled}
+                onChange={(e) => setWeatherEnabled(e.target.checked)}
+              />
+              Use weather
+            </label>
+          </div>
+        )}
 
         {/* template selector */}
         <TemplateSelector
