@@ -1892,14 +1892,16 @@ pub async fn generate_ambience<R: Runtime>(app: AppHandle<R>) -> Result<(), Stri
     if !py.exists() {
         return Err(format!("Python not found at {}", py.display()));
     }
-    let py_dir = script_path(&app)
+    let script = script_path(&app);
+    let py_dir = script
         .parent()
         .and_then(|p| p.parent())
+        .map(|p| p.to_path_buf())
         .ok_or_else(|| "Script path not found".to_string())?;
     let output = PCommand::new(&py)
         .arg("-m")
         .arg("ambience_generator")
-        .current_dir(py_dir)
+        .current_dir(&py_dir)
         .output()
         .map_err(|e| format!("Failed to start python: {e}"))?;
 
