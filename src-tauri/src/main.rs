@@ -7,6 +7,7 @@ mod task_queue;
 
 use task_queue::TaskQueue;
 use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
+use tauri::Manager;
 
 fn main() {
     env_logger::init();
@@ -15,7 +16,7 @@ fn main() {
         .manage(queue)
         .setup(|app| {
             let handle = app.handle();
-            app.state::<TaskQueue>().set_app_handle(handle);
+            app.state::<TaskQueue>().set_app_handle(handle.clone());
             Ok(())
         })
         .plugin(tauri_plugin_dialog::init())
