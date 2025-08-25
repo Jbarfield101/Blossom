@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Typography, TextField, Button, Grid, Box } from "@mui/material";
+import { Typography, Button, Grid, Box } from "@mui/material";
+import StyledTextField from "./StyledTextField";
 import FormErrorText from "./FormErrorText";
 import { zEncounter } from "./schemas";
 import { EncounterData } from "./types";
@@ -46,7 +47,7 @@ export default function EncounterForm() {
           <Typography variant="h6">Encounter Form</Typography>
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -55,7 +56,7 @@ export default function EncounterForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Level"
             type="number"
             value={level ?? ""}
@@ -74,7 +75,7 @@ export default function EncounterForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Creatures (comma separated)"
             value={creatures}
             onChange={(e) => setCreatures(e.target.value)}
@@ -83,7 +84,7 @@ export default function EncounterForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Tactics"
             value={tactics}
             onChange={(e) => setTactics(e.target.value)}
@@ -92,7 +93,7 @@ export default function EncounterForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Terrain"
             value={terrain}
             onChange={(e) => setTerrain(e.target.value)}
@@ -101,7 +102,7 @@ export default function EncounterForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Treasure"
             value={treasure}
             onChange={(e) => setTreasure(e.target.value)}
@@ -110,7 +111,7 @@ export default function EncounterForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Scaling"
             value={scaling}
             onChange={(e) => setScaling(e.target.value)}

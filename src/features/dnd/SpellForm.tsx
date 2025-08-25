@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Typography, TextField, Button, Grid, Box } from "@mui/material";
+import { Typography, Button, Grid, Box } from "@mui/material";
+import StyledTextField from "./StyledTextField";
 import SpellPdfUpload from "./SpellPdfUpload";
 import { zSpell } from "./schemas";
 import type { SpellData } from "./types";
@@ -44,7 +45,7 @@ export default function SpellForm() {
           <SpellPdfUpload />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -53,7 +54,7 @@ export default function SpellForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Level"
             value={level}
             onChange={(e) => setLevel(e.target.value)}
@@ -62,7 +63,7 @@ export default function SpellForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="School"
             value={school}
             onChange={(e) => setSchool(e.target.value)}
@@ -71,7 +72,7 @@ export default function SpellForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Casting Time"
             value={castingTime}
             onChange={(e) => setCastingTime(e.target.value)}
@@ -80,7 +81,7 @@ export default function SpellForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Range"
             value={range}
             onChange={(e) => setRange(e.target.value)}
@@ -89,7 +90,7 @@ export default function SpellForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Components (comma separated)"
             value={components}
             onChange={(e) => setComponents(e.target.value)}
@@ -98,7 +99,7 @@ export default function SpellForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Duration"
             value={duration}
             onChange={(e) => setDuration(e.target.value)}
@@ -107,7 +108,7 @@ export default function SpellForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -117,7 +118,7 @@ export default function SpellForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Tags (comma separated)"
             value={tags}
             onChange={(e) => setTags(e.target.value)}

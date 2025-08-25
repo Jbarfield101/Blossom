@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Typography, TextField, Button, Grid, Box } from "@mui/material";
+import { Typography, Button, Grid, Box } from "@mui/material";
+import StyledTextField from "./StyledTextField";
 import FormErrorText from "./FormErrorText";
 import { zQuest } from "./schemas";
 import { QuestData } from "./types";
@@ -56,7 +57,7 @@ export default function QuestForm() {
           <Typography variant="h6">Quest Form</Typography>
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -65,7 +66,7 @@ export default function QuestForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Tier"
             type="number"
             value={tier ?? ""}
@@ -84,7 +85,7 @@ export default function QuestForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Summary"
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
@@ -93,7 +94,7 @@ export default function QuestForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Beats (comma separated)"
             value={beats}
             onChange={(e) => setBeats(e.target.value)}
@@ -102,7 +103,7 @@ export default function QuestForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Reward GP"
             type="number"
             value={gp ?? ""}
@@ -121,7 +122,7 @@ export default function QuestForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Reward Items"
             value={items}
             onChange={(e) => setItems(e.target.value)}
@@ -130,7 +131,7 @@ export default function QuestForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Reward Favors"
             value={favors}
             onChange={(e) => setFavors(e.target.value)}
@@ -139,7 +140,7 @@ export default function QuestForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Complications (comma separated)"
             value={complications}
             onChange={(e) => setComplications(e.target.value)}
