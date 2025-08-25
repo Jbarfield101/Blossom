@@ -39,8 +39,13 @@ export default function RulePdfUpload() {
   useEffect(() => {
     if (!taskId) return;
     const task = tasks[taskId];
-    if (task && task.status === "completed" && Array.isArray(task.result)) {
-      const raw = task.result as RuleRecord[];
+    if (
+      task &&
+      task.status === "completed" &&
+      task.result &&
+      Array.isArray((task.result as any).rules)
+    ) {
+      const raw = (task.result as any).rules as RuleRecord[];
       const parsed: RuleData[] = raw.map((r) => ({
         id: `rule_${r.name.toLowerCase().replace(/[^a-z0-9]+/g, "_")}`,
         name: r.name,

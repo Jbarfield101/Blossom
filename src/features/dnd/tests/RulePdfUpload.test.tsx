@@ -1,17 +1,32 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
+import React from "react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  cleanup,
+  act,
+} from "@testing-library/react";
 import { open } from "@tauri-apps/plugin-dialog";
 const enqueueTask = vi.fn().mockResolvedValue(1);
+const state: { enqueueTask: any; tasks: Record<number, any> } = {
+  enqueueTask,
+  tasks: {},
+};
 vi.mock("../../../store/tasks", () => ({
-  useTasks: (selector: any) => selector({ enqueueTask, tasks: {} }),
+  useTasks: (selector: any) => selector(state),
 }));
 vi.mock("@tauri-apps/plugin-dialog", () => ({ open: vi.fn() }));
+vi.mock("@tauri-apps/api/core", () => ({ __esModule: true, invoke: vi.fn() }));
+import { invoke } from "@tauri-apps/api/core";
 import RulePdfUpload from "../RulePdfUpload";
 
 describe("RulePdfUpload", () => {
   afterEach(() => {
     cleanup();
     vi.resetAllMocks();
+    state.tasks = {};
   });
 
   it("queues rule parsing task", async () => {
@@ -22,6 +37,33 @@ describe("RulePdfUpload", () => {
 
     await waitFor(() => expect(open).toHaveBeenCalled());
     await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
+  });
+
+  it("saves parsed rules when task completes", async () => {
+    vi.spyOn(React, "useState").mockImplementationOnce(() => [1, vi.fn()]);
+    vi.spyOn(React, "useEffect").mockImplementation((fn) => fn());
+    state.tasks[1] = {
+      status: "completed",
+      result: {
+        rules: [
+          { name: "Ability Checks", description: "desc" },
+          { name: "Homebrew", description: "custom" },
+        ],
+      },
+    };
+    (invoke as any).mockImplementation((cmd: string) => {
+      if (cmd === "list_rules") return Promise.resolve([]);
+      return Promise.resolve();
+    });
+
+    render(<RulePdfUpload />);
+
+    await waitFor(() =>
+      expect(
+        invoke.mock.calls.filter(([cmd]: any[]) => cmd === "save_rule")
+          .length,
+      ).toBe(2),
+    );
   });
 });
 
