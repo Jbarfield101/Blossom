@@ -3,7 +3,7 @@ use std::io::{BufRead, BufReader};
 use std::process::{Command as PCommand, Stdio};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -102,6 +102,7 @@ pub struct Task {
     pub status: TaskStatus,
     pub progress: f32,
     pub result: Option<Value>,
+    pub started_at: Option<u64>,
 }
 
 enum Message {
@@ -184,6 +185,14 @@ impl TaskQueue {
                                 let mut map = tasks_clone.lock().await;
                                 if let Some(t) = map.get_mut(&id) {
                                     t.status = TaskStatus::Running;
+                                    if t.started_at.is_none() {
+                                        t.started_at = Some(
+                                            SystemTime::now()
+                                                .duration_since(UNIX_EPOCH)
+                                                .unwrap()
+                                                .as_millis() as u64,
+                                        );
+                                    }
                                 }
                             }
                             let res: Result<Value, TaskError> = match command {
@@ -483,6 +492,7 @@ impl TaskQueue {
             status: TaskStatus::Queued,
             progress: 0.0,
             result: None,
+            started_at: None,
         };
         let _ = self.tx.send(Message::Enqueue(task)).await;
         id

@@ -15,6 +15,7 @@ export interface Task {
   status: TaskStatus;
   progress: number;
   result?: unknown;
+  started_at?: number;
   error?: string;
   errorCode?: string;
 }
@@ -25,6 +26,7 @@ interface RawTask {
   status: string | { Failed: { code: string; message: string } };
   progress: number;
   result?: unknown;
+  started_at?: number;
 }
 
 function normalize(raw: RawTask): Task {
@@ -35,6 +37,7 @@ function normalize(raw: RawTask): Task {
       status: raw.status.toLowerCase() as TaskStatus,
       progress: raw.progress,
       result: raw.result,
+      started_at: raw.started_at,
     };
   }
   return {
@@ -43,6 +46,7 @@ function normalize(raw: RawTask): Task {
     status: 'failed',
     progress: raw.progress,
     result: raw.result,
+    started_at: raw.started_at,
     error: raw.status.Failed.message,
     errorCode: raw.status.Failed.code,
   };
@@ -68,7 +72,13 @@ export const useTasks = create<TasksState>((set, get) => ({
       set((state) => ({
         tasks: {
           ...state.tasks,
-          [id]: { id, label, status: 'queued', progress: 0 },
+          [id]: {
+            id,
+            label,
+            status: 'queued',
+            progress: 0,
+            started_at: Date.now(),
+          },
         },
       }));
       get().startPolling(id);
@@ -82,7 +92,19 @@ export const useTasks = create<TasksState>((set, get) => ({
       const raw = await invoke<RawTask | null>('task_status', { id });
       if (raw) {
         const task = normalize(raw);
-        set((state) => ({ tasks: { ...state.tasks, [id]: task } }));
+        set((state) => {
+          const existing = state.tasks[id];
+          let started_at = task.started_at ?? existing?.started_at;
+          if (!started_at && task.status === 'running') {
+            started_at = Date.now();
+          }
+          return {
+            tasks: {
+              ...state.tasks,
+              [id]: { ...task, started_at },
+            },
+          };
+        });
         if (['completed', 'cancelled', 'failed'].includes(task.status)) {
           get().stopPolling(id);
         }
@@ -93,7 +115,7 @@ export const useTasks = create<TasksState>((set, get) => ({
         tasks: {
           ...state.tasks,
           [id]: {
-            ...(state.tasks[id] ?? { id, label: '', progress: 0 }),
+            ...(state.tasks[id] ?? { id, label: '', progress: 0, started_at: Date.now() }),
             status: 'failed',
             error: String(error?.message ?? error),
           },
@@ -126,7 +148,12 @@ export const useTasks = create<TasksState>((set, get) => ({
           tasks: {
             ...state.tasks,
             [id]: {
-              ...(state.tasks[id] ?? { id, label: '', progress: 0 }),
+              ...(state.tasks[id] ?? {
+                id,
+                label: '',
+                progress: 0,
+                started_at: Date.now(),
+              }),
               status: 'cancelled',
             },
           },
@@ -139,7 +166,12 @@ export const useTasks = create<TasksState>((set, get) => ({
         tasks: {
           ...state.tasks,
           [id]: {
-            ...(state.tasks[id] ?? { id, label: '', progress: 0 }),
+            ...(state.tasks[id] ?? {
+              id,
+              label: '',
+              progress: 0,
+              started_at: Date.now(),
+            }),
             status: 'failed',
             error: String(error?.message ?? error),
           },
@@ -152,7 +184,19 @@ export const useTasks = create<TasksState>((set, get) => ({
     try {
       const unlisten = await listen<RawTask>('task_updated', (e) => {
         const task = normalize(e.payload);
-        set((state) => ({ tasks: { ...state.tasks, [task.id]: task } }));
+        set((state) => {
+          const existing = state.tasks[task.id];
+          let started_at = task.started_at ?? existing?.started_at;
+          if (!started_at && task.status === 'running') {
+            started_at = Date.now();
+          }
+          return {
+            tasks: {
+              ...state.tasks,
+              [task.id]: { ...task, started_at },
+            },
+          };
+        });
         if (['completed', 'cancelled', 'failed'].includes(task.status)) {
           get().stopPolling(task.id);
         }

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Box, Button, LinearProgress, Typography } from "@mui/material";
 import { useTasks } from "../../store/tasks";
 import { useSystemInfo } from "../../features/system/useSystemInfo";
@@ -6,6 +6,13 @@ import { useSystemInfo } from "../../features/system/useSystemInfo";
 export default function TaskList() {
   const { tasks, cancelTask, subscribe } = useTasks();
   const info = useSystemInfo();
+
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const handle = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(handle);
+  }, []);
 
   useEffect(() => {
     let unlisten: (() => void) | null = null;
@@ -46,26 +53,33 @@ export default function TaskList() {
       {entries.length === 0 ? (
         <Typography variant="body2">No active tasks</Typography>
       ) : (
-        entries.map((task) => (
-          <Box key={task.id} sx={{ mb: 1 }}>
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
-              {task.label}
-            </Typography>
-            <LinearProgress
-              variant="determinate"
-              value={Math.max(0, Math.min(100, task.progress * 100))}
-              sx={{ my: 0.5 }}
-            />
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography variant="caption">{task.status}</Typography>
-              {task.status === "queued" || task.status === "running" ? (
-                <Button size="small" onClick={() => cancelTask(task.id)}>
-                  Cancel
-                </Button>
-              ) : null}
+        entries.map((task) => {
+          const elapsed = task.started_at ? now - task.started_at : 0;
+          const formatted = new Date(elapsed).toISOString().substring(11, 19);
+          return (
+            <Box key={task.id} sx={{ mb: 1 }}>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {task.label}
+              </Typography>
+              <LinearProgress
+                variant="determinate"
+                value={Math.max(0, Math.min(100, task.progress * 100))}
+                sx={{ my: 0.5 }}
+              />
+              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                <Typography variant="caption">
+                  {task.status}
+                  {task.started_at ? ` · ${formatted}` : ""}
+                </Typography>
+                {task.status === "queued" || task.status === "running" ? (
+                  <Button size="small" onClick={() => cancelTask(task.id)}>
+                    Cancel
+                  </Button>
+                ) : null}
+              </Box>
             </Box>
-          </Box>
-        ))
+          );
+        })
       )}
     </Box>
   );

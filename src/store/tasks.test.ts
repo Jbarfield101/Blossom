@@ -21,7 +21,7 @@ describe('useTasks error handling', () => {
     vi.useFakeTimers();
     (invoke as any).mockRejectedValue(new Error('boom'));
     useTasks.setState({
-      tasks: { 1: { id: 1, label: 't', status: 'running', progress: 0 } },
+      tasks: { 1: { id: 1, label: 't', status: 'running', progress: 0, started_at: 0 } },
     } as any);
     useTasks.getState().startPolling(1, 1000);
     await expect(useTasks.getState().fetchStatus(1)).rejects.toThrow('boom');
@@ -34,7 +34,7 @@ describe('useTasks error handling', () => {
     vi.useFakeTimers();
     (invoke as any).mockRejectedValue(new Error('nope'));
     useTasks.setState({
-      tasks: { 1: { id: 1, label: 't', status: 'running', progress: 0 } },
+      tasks: { 1: { id: 1, label: 't', status: 'running', progress: 0, started_at: 0 } },
     } as any);
     useTasks.getState().startPolling(1, 1000);
     await expect(useTasks.getState().cancelTask(1)).rejects.toThrow('nope');
