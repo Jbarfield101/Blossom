@@ -452,12 +452,6 @@ impl TaskQueue {
                                             code: PdfErrorCode::Unknown,
                                             message: "no app handle".into(),
                                         })?;
-                                    let window = app
-                                        .get_webview_window("main")
-                                        .ok_or_else(|| TaskError {
-                                            code: PdfErrorCode::Unknown,
-                                            message: "no main window".into(),
-                                        })?;
                                     let specs = meta.specs.ok_or_else(|| TaskError {
                                         code: PdfErrorCode::Unknown,
                                         message: "missing specs".into(),
@@ -476,7 +470,7 @@ impl TaskQueue {
                                         if let Some(dir) = &meta.out_dir {
                                             spec.out_dir = dir.clone();
                                         }
-                                        let path = run_lofi_song(window.clone(), app.clone(), spec)
+                                        let path = run_lofi_song(app.clone(), spec)
                                             .await
                                             .map_err(|e| TaskError {
                                                 code: PdfErrorCode::ExecutionFailed,
