@@ -562,7 +562,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
       <Typography variant="subtitle1" sx={{ mt: 3 }}>
         Modules
       </Typography>
-      {(Object.keys(modules) as ModuleKey[]).map((key) => (
+      {(Object.keys(MODULE_LABELS) as ModuleKey[]).map((key) => (
         <Box id={`module-${key}`} key={key}>
           <FormControlLabel
             control={<Switch checked={modules[key]} onChange={() => toggleModule(key)} />}
