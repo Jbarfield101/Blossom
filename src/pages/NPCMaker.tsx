@@ -5,6 +5,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import Center from './_Center';
 import { useNPCs, NPC } from '../store/npcs';
+import { useWorlds } from '../store/worlds';
 
 const systemPrompt =
   'You are a creative assistant that generates random D&D NPCs. Respond only with JSON having keys name, race, class, personality, background, appearance.';
@@ -27,6 +28,7 @@ export default function NPCMaker() {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   const addNPC = useNPCs((s) => s.addNPC);
+  const world = useWorlds((s) => s.currentWorld);
 
   useEffect(() => {
     async function start() {
@@ -121,9 +123,13 @@ export default function NPCMaker() {
         return;
       }
     }
+    if (!world) {
+      setError('Please select a world before saving.');
+      return;
+    }
     try {
-      await invoke('save_npc', { npc });
-      addNPC(npc);
+      const saved = await invoke<NPC>('save_npc', { world, npc });
+      addNPC(saved);
       setNpc({
         name: '',
         race: '',

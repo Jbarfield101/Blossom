@@ -1138,7 +1138,7 @@ pub async fn save_lore<R: Runtime>(
         .as_str()
         .ok_or_else(|| "missing id".to_string())?;
     let dir = lore_storage_dir(&app, &world)?;
-    let path = dir.join(format!("{}.json", id));
+    let path = dir.join(format!("{}.json", &id));
     if path.exists() && !overwrite.unwrap_or(false) {
         return Err("exists".into());
     }
@@ -1200,25 +1200,68 @@ fn validate_npc(npc: &Value) -> Result<Value, String> {
     serde_json::from_str(&stdout).map_err(|e| e.to_string())
 }
 
+fn create_placeholder_image(path: &Path, width: u32, height: u32) -> Result<(), String> {
+    use std::fs::File;
+    use std::io::BufWriter;
+    let buffer = vec![0u8; (width * height * 4) as usize];
+    let file = File::create(path).map_err(|e| e.to_string())?;
+    let w = BufWriter::new(file);
+    let mut encoder = png::Encoder::new(w, width, height);
+    encoder.set_color(png::ColorType::Rgba);
+    encoder.set_depth(png::BitDepth::Eight);
+    encoder.set_pixel_dims(Some(png::PixelDimensions {
+        xppu: 11811,
+        yppu: 11811,
+        unit: png::Unit::Meter,
+    }));
+    let mut writer = encoder.write_header().map_err(|e| e.to_string())?;
+    writer
+        .write_image_data(&buffer)
+        .map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 pub async fn save_npc<R: Runtime>(
     app: AppHandle<R>,
     world: String,
     npc: Value,
     overwrite: Option<bool>,
-) -> Result<(), String> {
-    let validated = validate_npc(&npc)?;
+) -> Result<Value, String> {
+    let mut validated = validate_npc(&npc)?;
     let id = validated["id"]
         .as_str()
-        .ok_or_else(|| "missing id".to_string())?;
+        .ok_or_else(|| "missing id".to_string())?
+        .to_string();
     let dir = npc_storage_dir(&app, &world)?;
     let path = dir.join(format!("{}.json", id));
     if path.exists() && !overwrite.unwrap_or(false) {
         return Err("exists".into());
     }
+    let portraits = dir.join("portraits");
+    fs::create_dir_all(&portraits).map_err(|e| e.to_string())?;
+    let icons = dir.join("icons");
+    fs::create_dir_all(&icons).map_err(|e| e.to_string())?;
+    if validated
+        .get("portrait")
+        .and_then(|v| v.as_str())
+        .map_or(true, |s| s.is_empty() || s == "placeholder.png")
+    {
+        let p = portraits.join(format!("{}.png", &id));
+        create_placeholder_image(&p, 900, 1200)?;
+        validated["portrait"] = Value::String(p.to_string_lossy().into());
+    }
+    if validated
+        .get("icon")
+        .and_then(|v| v.as_str())
+        .map_or(true, |s| s.is_empty() || s == "placeholder-icon.png")
+    {
+        let i = icons.join(format!("{}.png", &id));
+        create_placeholder_image(&i, 300, 300)?;
+        validated["icon"] = Value::String(i.to_string_lossy().into());
+    }
     let json = serde_json::to_string_pretty(&validated).map_err(|e| e.to_string())?;
     fs::write(path, json).map_err(|e| e.to_string())?;
-    Ok(())
+    Ok(validated)
 }
 
 #[tauri::command]
@@ -1892,7 +1935,8 @@ pub async fn generate_ambience<R: Runtime>(app: AppHandle<R>) -> Result<(), Stri
     if !py.exists() {
         return Err(format!("Python not found at {}", py.display()));
     }
-    let py_dir = script_path(&app)
+    let script = script_path(&app);
+    let py_dir = script
         .parent()
         .and_then(|p| p.parent())
         .ok_or_else(|| "Script path not found".to_string())?;
@@ -1903,7 +1947,7 @@ pub async fn generate_ambience<R: Runtime>(app: AppHandle<R>) -> Result<(), Stri
         .output()
         .map_err(|e| format!("Failed to start python: {e}"))?;
 
-    if let Some(window) = app.get_window("main") {
+    if let Some(window) = app.get_webview_window("main") {
         for line in String::from_utf8_lossy(&output.stdout).lines() {
             let _ = window.emit("ambience_log", format!("[out] {}", line));
         }
