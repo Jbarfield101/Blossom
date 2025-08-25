@@ -51,7 +51,7 @@ export default function NpcPdfUpload({ world }: Props) {
           if (dup) {
             overwrite = window.confirm(`NPC ${npc.name} exists. Overwrite?`);
           }
-          if (overwrite) {
+            if (overwrite) {
             await invoke("save_npc", { world, npc, overwrite });
             await invoke("append_npc_log", {
               world,
@@ -67,11 +67,21 @@ export default function NpcPdfUpload({ world }: Props) {
         setShowLog(true);
       })();
     } else if (task && task.status === "failed") {
+      (async () => {
+        await invoke("append_npc_log", {
+          world,
+          id: "",
+          name: "",
+          errorCode: task.errorCode ?? null,
+          message: task.error ?? null,
+        });
+      })();
       setStatus("failed");
       setError(task.error ?? null);
       setErrorCode(task.errorCode ?? null);
       setSnackbarOpen(true);
       setTaskId(null);
+      setShowLog(true);
     }
   }, [taskId, tasks, world, loadNPCs]);
 
