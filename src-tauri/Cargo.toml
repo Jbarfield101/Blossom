@@ -44,3 +44,6 @@ sysinfo = "0.37"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "io-util", "process"] }
 png = "0.17"
 
+[dev-dependencies]
+tauri = { version = "2", features = ["protocol-asset", "test"] }
+

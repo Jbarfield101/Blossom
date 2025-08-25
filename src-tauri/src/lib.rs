@@ -4,7 +4,9 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+pub mod commands;
 mod stocks;
+mod task_queue;
 pub use stocks::stocks_fetch;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
