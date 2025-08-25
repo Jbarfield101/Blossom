@@ -20,7 +20,7 @@ interface PathsState {
   load: () => Promise<void>;
 }
 
-const usePathsStore = create<PathsState>((set, get) => ({
+export const usePathsStore = create<PathsState>((set, get) => ({
   pythonPath: "",
   defaultPythonPath: "",
   comfyPath: "",
@@ -38,7 +38,9 @@ const usePathsStore = create<PathsState>((set, get) => ({
       tts_config_path: get().ttsConfigPath,
       tts_speaker: get().ttsSpeaker,
       tts_language: get().ttsLanguage,
-    }).catch(() => {});
+    }).catch((err) => {
+      console.error("Failed to save paths:", err);
+    });
   },
   setComfyPath: (comfyPath: string) => {
     set({ comfyPath });
@@ -49,7 +51,9 @@ const usePathsStore = create<PathsState>((set, get) => ({
       tts_config_path: get().ttsConfigPath,
       tts_speaker: get().ttsSpeaker,
       tts_language: get().ttsLanguage,
-    }).catch(() => {});
+    }).catch((err) => {
+      console.error("Failed to save paths:", err);
+    });
   },
   setTtsModelPath: (ttsModelPath: string) => {
     set({ ttsModelPath });
@@ -60,7 +64,9 @@ const usePathsStore = create<PathsState>((set, get) => ({
       tts_config_path: get().ttsConfigPath,
       tts_speaker: get().ttsSpeaker,
       tts_language: get().ttsLanguage,
-    }).catch(() => {});
+    }).catch((err) => {
+      console.error("Failed to save paths:", err);
+    });
   },
   setTtsConfigPath: (ttsConfigPath: string) => {
     set({ ttsConfigPath });
@@ -71,7 +77,9 @@ const usePathsStore = create<PathsState>((set, get) => ({
       tts_config_path: ttsConfigPath,
       tts_speaker: get().ttsSpeaker,
       tts_language: get().ttsLanguage,
-    }).catch(() => {});
+    }).catch((err) => {
+      console.error("Failed to save paths:", err);
+    });
   },
   setTtsSpeaker: (ttsSpeaker: string) => {
     set({ ttsSpeaker });
@@ -82,7 +90,9 @@ const usePathsStore = create<PathsState>((set, get) => ({
       tts_config_path: get().ttsConfigPath,
       tts_speaker: ttsSpeaker,
       tts_language: get().ttsLanguage,
-    }).catch(() => {});
+    }).catch((err) => {
+      console.error("Failed to save paths:", err);
+    });
   },
   setTtsLanguage: (ttsLanguage: string) => {
     set({ ttsLanguage });
@@ -93,7 +103,9 @@ const usePathsStore = create<PathsState>((set, get) => ({
       tts_config_path: get().ttsConfigPath,
       tts_speaker: get().ttsSpeaker,
       tts_language: ttsLanguage,
-    }).catch(() => {});
+    }).catch((err) => {
+      console.error("Failed to save paths:", err);
+    });
   },
   load: async () => {
     if (get().loaded) return;
