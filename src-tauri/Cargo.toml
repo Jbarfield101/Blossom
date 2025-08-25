@@ -41,6 +41,6 @@ nyse-holiday-cal = "0.2.3"
 sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio-rustls"] }
 futures = "0.3"
 sysinfo = "0.37"
-tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "io-util", "process"] }
 png = "0.17"
 

@@ -4,7 +4,7 @@ use std::{
     fs::{self, OpenOptions},
     io::{BufRead, BufReader, Read, Write},
     path::{Path, PathBuf},
-    process::{Child, Command as PCommand, Stdio},
+    process::{Command as PCommand, Stdio},
     sync::{Mutex, OnceLock},
     time::Duration,
 };
@@ -19,14 +19,53 @@ use serde_json::{json, Value};
 use serde_yaml;
 use sysinfo::System;
 use tauri::{AppHandle, Emitter, Manager, Runtime, State, Window};
+use tokio::{
+    io::{AsyncBufReadExt, BufReader as TokioBufReader},
+    process::Child,
+    task::JoinHandle,
+};
 use which::which;
+
+#[derive(Debug)]
+struct LoggedChild {
+    child: Child,
+    tasks: Vec<JoinHandle<()>>,
+}
+
+impl LoggedChild {
+    async fn wait(mut self) -> Result<std::process::ExitStatus, std::io::Error> {
+        let status = self.child.wait().await?;
+        for t in self.tasks {
+            let _ = t.await;
+        }
+        Ok(status)
+    }
+
+    async fn kill(&mut self) -> Result<(), std::io::Error> {
+        self.child.kill().await?;
+        for t in self.tasks.drain(..) {
+            t.abort();
+        }
+        Ok(())
+    }
+}
+
+trait LogEmitter: Clone + Send + 'static {
+    fn emit_event(&self, event: &str, payload: String);
+}
+
+impl<R: Runtime> LogEmitter for Window<R> {
+    fn emit_event(&self, event: &str, payload: String) {
+        let _ = Emitter::emit(self, event, payload);
+    }
+}
 
 /* ==============================
 ComfyUI launcher (no extra crate)
 ============================== */
 
-static COMFY_CHILD: OnceLock<Mutex<Option<Child>>> = OnceLock::new();
-static OLLAMA_CHILD: OnceLock<Mutex<Option<Child>>> = OnceLock::new();
+static COMFY_CHILD: OnceLock<Mutex<Option<LoggedChild>>> = OnceLock::new();
+static OLLAMA_CHILD: OnceLock<Mutex<Option<LoggedChild>>> = OnceLock::new();
 
 // Reuse our python path from below
 fn comfy_python() -> PathBuf {
@@ -47,57 +86,46 @@ fn comfy_python() -> PathBuf {
 /// # let window: Window<()> = unimplemented!();
 /// let mut cmd = Command::new("echo");
 /// cmd.arg("hello world");
-/// let _child = spawn_with_logging(&mut cmd, window, "echo_log").unwrap();
+/// let _child = spawn_with_logging(cmd, window, "echo_log").unwrap();
 /// ```
-fn spawn_with_logging<R: Runtime>(
-    cmd: &mut PCommand,
-    window: Window<R>,
+fn spawn_with_logging<E: LogEmitter>(
+    mut cmd: PCommand,
+    emitter: E,
     event_name: &str,
-) -> Result<Child, String> {
+) -> Result<LoggedChild, String> {
     cmd.stdout(Stdio::piped()).stderr(Stdio::piped());
 
-    let mut child = cmd.spawn().map_err(|e| e.to_string())?;
+    let mut child = tokio::process::Command::from(cmd)
+        .spawn()
+        .map_err(|e| e.to_string())?;
 
-    let stdout = child.stdout.take().map(BufReader::new);
-    let stderr = child.stderr.take().map(BufReader::new);
+    let mut tasks = Vec::new();
 
-    if let Some(mut out) = stdout {
-        let w = window.clone();
+    if let Some(out) = child.stdout.take() {
         let evt = event_name.to_string();
-        std::thread::spawn(move || {
-            let mut line = String::new();
-            loop {
-                line.clear();
-                let Ok(n) = out.read_line(&mut line) else {
-                    break;
-                };
-                if n == 0 {
-                    break;
-                }
-                let _ = w.emit(&evt, format!("[out] {}", line.trim_end()));
+        let emit = emitter.clone();
+        let handle = tokio::spawn(async move {
+            let mut lines = TokioBufReader::new(out).lines();
+            while let Ok(Some(line)) = lines.next_line().await {
+                emit.emit_event(&evt, format!("[out] {}", line));
             }
         });
+        tasks.push(handle);
     }
 
-    if let Some(mut err) = stderr {
-        let w = window.clone();
+    if let Some(err) = child.stderr.take() {
         let evt = event_name.to_string();
-        std::thread::spawn(move || {
-            let mut line = String::new();
-            loop {
-                line.clear();
-                let Ok(n) = err.read_line(&mut line) else {
-                    break;
-                };
-                if n == 0 {
-                    break;
-                }
-                let _ = w.emit(&evt, format!("[err] {}", line.trim_end()));
+        let emit = emitter.clone();
+        let handle = tokio::spawn(async move {
+            let mut lines = TokioBufReader::new(err).lines();
+            while let Ok(Some(line)) = lines.next_line().await {
+                emit.emit_event(&evt, format!("[err] {}", line));
             }
         });
+        tasks.push(handle);
     }
 
-    Ok(child)
+    Ok(LoggedChild { child, tasks })
 }
 
 #[tauri::command]
@@ -141,7 +169,7 @@ pub async fn comfy_start<R: Runtime>(window: Window<R>, dir: String) -> Result<(
         .arg("8188")
         .arg("--listen"); // remove if you only want localhost
 
-    let child = spawn_with_logging(&mut cmd, window, "comfy_log")
+    let child = spawn_with_logging(cmd, window, "comfy_log")
         .map_err(|e| format!("Failed to start ComfyUI: {e}"))?;
 
     {
@@ -154,9 +182,12 @@ pub async fn comfy_start<R: Runtime>(window: Window<R>, dir: String) -> Result<(
 
 #[tauri::command]
 pub async fn comfy_stop() -> Result<(), String> {
-    let mut lock = COMFY_CHILD.get_or_init(|| Mutex::new(None)).lock().unwrap();
-    if let Some(mut child) = lock.take() {
-        let _ = child.kill();
+    let child_opt = {
+        let mut lock = COMFY_CHILD.get_or_init(|| Mutex::new(None)).lock().unwrap();
+        lock.take()
+    };
+    if let Some(mut child) = child_opt {
+        let _ = child.kill().await;
     }
     Ok(())
 }
@@ -666,6 +697,36 @@ mod tests {
     #[test]
     fn parse_plain_string() {
         assert_eq!(extract_intent("sys"), "sys");
+    }
+
+    #[tokio::test]
+    async fn spawn_with_logging_cleans_up_tasks() {
+        #[derive(Clone)]
+        struct Dummy;
+        impl LogEmitter for Dummy {
+            fn emit_event(&self, _event: &str, _payload: String) {}
+        }
+
+        fn thread_count() -> usize {
+            let status = std::fs::read_to_string("/proc/self/status").unwrap_or_default();
+            status
+                .lines()
+                .find(|l| l.starts_with("Threads:"))
+                .and_then(|l| l.split_whitespace().nth(1))
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0)
+        }
+
+        let before = thread_count();
+        for _ in 0..5 {
+            let mut cmd = PCommand::new("echo");
+            cmd.arg("hi");
+            let child = spawn_with_logging(cmd, Dummy, "test").unwrap();
+            let _ = child.wait().await.unwrap();
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+        let after = thread_count();
+        assert_eq!(before, after);
     }
 }
 
@@ -1215,9 +1276,7 @@ fn create_placeholder_image(path: &Path, width: u32, height: u32) -> Result<(), 
         unit: png::Unit::Meter,
     }));
     let mut writer = encoder.write_header().map_err(|e| e.to_string())?;
-    writer
-        .write_image_data(&buffer)
-        .map_err(|e| e.to_string())
+    writer.write_image_data(&buffer).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -1385,7 +1444,7 @@ pub async fn start_ollama<R: Runtime>(app: AppHandle<R>, window: Window<R>) -> R
         .env("OLLAMA_MODELS", &dir)
         .stdout(Stdio::null())
         .stderr(Stdio::null());
-    let child = cmd
+    let child = tokio::process::Command::from(cmd)
         .spawn()
         .map_err(|e| format!("failed to start ollama: {e}"))?;
     {
@@ -1393,7 +1452,10 @@ pub async fn start_ollama<R: Runtime>(app: AppHandle<R>, window: Window<R>) -> R
             .get_or_init(|| Mutex::new(None))
             .lock()
             .unwrap();
-        *lock = Some(child);
+        *lock = Some(LoggedChild {
+            child,
+            tasks: vec![],
+        });
     }
 
     // wait for server
@@ -1440,9 +1502,9 @@ pub async fn start_ollama<R: Runtime>(app: AppHandle<R>, window: Window<R>) -> R
         pull.arg("pull")
             .arg("gpt-oss:20b")
             .env("OLLAMA_MODELS", &dir);
-        let mut child = spawn_with_logging(&mut pull, window, "ollama_log")
+        let child = spawn_with_logging(pull, window, "ollama_log")
             .map_err(|e| format!("ollama pull failed: {e}"))?;
-        let status = child.wait().map_err(|e| e.to_string())?;
+        let status = child.wait().await.map_err(|e| e.to_string())?;
         if !status.success() {
             return Err("ollama pull failed".into());
         }
@@ -1453,12 +1515,15 @@ pub async fn start_ollama<R: Runtime>(app: AppHandle<R>, window: Window<R>) -> R
 
 #[tauri::command]
 pub async fn stop_ollama() -> Result<(), String> {
-    let mut lock = OLLAMA_CHILD
-        .get_or_init(|| Mutex::new(None))
-        .lock()
-        .unwrap();
-    if let Some(mut child) = lock.take() {
-        let _ = child.kill();
+    let child_opt = {
+        let mut lock = OLLAMA_CHILD
+            .get_or_init(|| Mutex::new(None))
+            .lock()
+            .unwrap();
+        lock.take()
+    };
+    if let Some(mut child) = child_opt {
+        let _ = child.kill().await;
     }
     Ok(())
 }
