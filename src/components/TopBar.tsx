@@ -4,7 +4,7 @@ import { fixedIconButtonSx } from "./sx";
 import { FaHome, FaWrench, FaUser, FaTasks } from "react-icons/fa";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SettingsDrawer from "./SettingsDrawer";
 import TaskDrawer from "./TaskDrawer";
 import { useTasks } from "../store/tasks";
@@ -17,6 +17,21 @@ export default function TopBar() {
   const taskCount = useTasks((s) =>
     Object.values(s.tasks).filter((t) => t.status === "queued" || t.status === "running").length
   );
+  const subscribe = useTasks((s) => s.subscribe);
+
+  useEffect(() => {
+    let unlisten: (() => void) | null = null;
+    (async () => {
+      try {
+        unlisten = await subscribe();
+      } catch (err) {
+        console.error("Failed to subscribe", err);
+      }
+    })();
+    return () => {
+      unlisten?.();
+    };
+  }, [subscribe]);
   const activeSx = (p: string): SxProps =>
     pathname === p
       ? { color: "#000", backgroundColor: "#fff", borderRadius: 4 }

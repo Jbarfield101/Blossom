@@ -26,8 +26,7 @@ vi.mock('../features/lofi/SongForm', () => ({
   }),
 }));
 vi.mock('../store/tasks', () => ({
-  useTasks: (selector: any) =>
-    selector({ tasks: {}, subscribe: vi.fn().mockResolvedValue(() => {}) }),
+  useTasks: (selector: any) => selector({ tasks: {}, fetchStatus: vi.fn() }),
 }));
 
 function openSection(id: string) {

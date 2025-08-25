@@ -390,7 +390,6 @@ export default function SongForm() {
   );
 
   const tasks = useTasks((s) => s.tasks);
-  const tasksSubscribe = useTasks((s) => s.subscribe);
   const fetchStatus = useTasks((s) => s.fetchStatus);
 
   useEffect(() => {
@@ -401,15 +400,6 @@ export default function SongForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    let unlisten: (() => void) | null = null;
-    tasksSubscribe().then((u) => {
-      unlisten = u;
-    });
-    return () => {
-      unlisten?.();
-    };
-  }, [tasksSubscribe]);
 
   const activeTask = useMemo(
     () =>
