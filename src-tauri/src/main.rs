@@ -47,6 +47,7 @@ fn main() {
             commands::generate_album,
             commands::cancel_album,
             commands::dj_mix,
+            commands::generate_ambience,
             // ComfyUI:
             commands::comfy_status,
             commands::comfy_start,

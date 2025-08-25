@@ -1886,6 +1886,42 @@ pub async fn dj_mix<R: Runtime>(
     Ok(())
 }
 
+#[tauri::command]
+pub async fn generate_ambience<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
+    let py = conda_python();
+    if !py.exists() {
+        return Err(format!("Python not found at {}", py.display()));
+    }
+    let py_dir = script_path(&app)
+        .parent()
+        .and_then(|p| p.parent())
+        .ok_or_else(|| "Script path not found".to_string())?;
+    let output = PCommand::new(&py)
+        .arg("-m")
+        .arg("ambience_generator")
+        .current_dir(py_dir)
+        .output()
+        .map_err(|e| format!("Failed to start python: {e}"))?;
+
+    if let Some(window) = app.get_window("main") {
+        for line in String::from_utf8_lossy(&output.stdout).lines() {
+            let _ = window.emit("ambience_log", format!("[out] {}", line));
+        }
+        for line in String::from_utf8_lossy(&output.stderr).lines() {
+            let _ = window.emit("ambience_log", format!("[err] {}", line));
+        }
+    }
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!(
+            "ambience_generator exited with status {}:\n{}",
+            output.status, stderr
+        ));
+    }
+    Ok(())
+}
+
 #[derive(Serialize)]
 pub struct SystemInfo {
     pub cpu_usage: f32,
