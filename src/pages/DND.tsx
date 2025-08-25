@@ -1,4 +1,5 @@
 import { Box, Tab, Tabs, TextField, MenuItem } from "@mui/material";
+import { ThemeProvider } from "@mui/material/styles";
 import {
   Person,
   MenuBook,
@@ -12,7 +13,7 @@ import {
   LibraryBooks,
 } from "@mui/icons-material";
 import { SyntheticEvent, useState, ChangeEvent } from "react";
-// Removed custom D&D theming in favor of default MUI styling
+import { createDndTheme } from "../theme";
 import NpcForm from "../features/dnd/NpcForm";
 import LoreForm from "../features/dnd/LoreForm";
 import NPCList from "./NPCList";
@@ -65,7 +66,8 @@ export default function DND() {
     { icon: <MilitaryTech />, label: "War Table", component: <WarTable /> },
   ];
   return (
-    <Box sx={{ p: 2 }}>
+    <ThemeProvider theme={createDndTheme()}>
+      <Box sx={{ p: 2 }}>
       <Box sx={{ my: 2, maxWidth: 200, mx: "auto" }}>
         <TextField
           select
@@ -102,6 +104,7 @@ export default function DND() {
           {tabs[tab]?.component}
         </>
       )}
-    </Box>
+      </Box>
+    </ThemeProvider>
   );
 }
