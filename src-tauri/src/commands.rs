@@ -802,10 +802,12 @@ pub async fn lofi_generate_gpu<R: Runtime>(
 /// Run full-song generation based on a structured spec (typed, camelCase-friendly).
 #[tauri::command]
 pub async fn run_lofi_song<R: Runtime>(
-    window: Window<R>,
     app: AppHandle<R>,
     spec: SongSpec,
 ) -> Result<String, String> {
+    let window = app
+        .get_webview_window("main")
+        .ok_or_else(|| "no main window".to_string())?;
     let py = conda_python();
     if !py.exists() {
         return Err(format!("Python not found at {}", py.display()));
@@ -885,7 +887,6 @@ pub async fn run_lofi_song<R: Runtime>(
 
 #[tauri::command]
 pub async fn generate_album<R: Runtime>(
-    window: Window<R>,
     app: AppHandle<R>,
     meta: AlbumRequest,
 ) -> Result<AlbumMeta, String> {
@@ -907,7 +908,7 @@ pub async fn generate_album<R: Runtime>(
         spec.title = name.clone();
         spec.out_dir = album_dir.to_string_lossy().to_string();
         spec.album = Some(album_name.clone());
-        let path = run_lofi_song(window.clone(), app.clone(), spec).await?;
+        let path = run_lofi_song(app.clone(), spec).await?;
         tracks.push(TrackMeta { name, path });
     }
 
