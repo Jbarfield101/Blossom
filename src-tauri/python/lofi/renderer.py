@@ -37,7 +37,7 @@ import numpy as np
 from pydub import AudioSegment
 from pydub.exceptions import CouldntDecodeError
 
-from .dsp import (
+from lofi.dsp import (
     SR,
     _butter_lowpass,
     _butter_highpass,
@@ -50,7 +50,7 @@ from .dsp import (
     _apply_duck_envelope,
     _schroeder_room,
 )
-from .io_utils import ensure_wav_bitdepth
+from lofi.io_utils import ensure_wav_bitdepth
 
 
 class _JsonFormatter(logging.Formatter):
