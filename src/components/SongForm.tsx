@@ -244,6 +244,12 @@ export default function SongForm() {
     localStorage.setItem("lastInstruments", JSON.stringify(instruments));
   }, [instruments]);
 
+  useEffect(() => {
+    if (!instruments.includes(leadInstrument)) {
+      setLeadInstrument(inferLeadInstrument(instruments));
+    }
+  }, [instruments]);
+
   // Album mode
   const storedAlbumMeta = useMemo(() => {
     try {
