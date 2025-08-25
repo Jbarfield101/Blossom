@@ -1,12 +1,16 @@
 import { useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useUsers, defaultModules, type ModuleKey } from "../users/useUsers";
+import { shallow } from "zustand/shallow";
 
 export function useSettings() {
-  const modules = useUsers((state) => {
-    const id = state.currentUserId;
-    return { ...defaultModules, ...(id ? state.users[id].modules : {}) };
-  });
+  const modules = useUsers(
+    (state) => {
+      const id = state.currentUserId;
+      return { ...defaultModules, ...(id ? state.users[id].modules : {}) };
+    },
+    shallow
+  );
   const toggleModule = useUsers((state) => state.toggleModule);
   const cpuLimit = useUsers((state) => {
     const id = state.currentUserId;
