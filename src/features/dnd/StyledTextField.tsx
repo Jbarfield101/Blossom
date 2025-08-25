@@ -9,7 +9,8 @@ export default function StyledTextField(props: TextFieldProps) {
       InputProps={{
         ...InputProps,
         sx: {
-          "::placeholder": { color: "gray" },
+          "&::placeholder": { color: "secondary.light" },
+          fontFamily: "typography.fontFamily",
           ...(InputProps && InputProps.sx),
         },
       }}
@@ -18,6 +19,15 @@ export default function StyledTextField(props: TextFieldProps) {
         color: "text.primary",
         borderRadius: 1,
         boxShadow: 1,
+        "& .MuiOutlinedInput-notchedOutline": {
+          borderColor: "primary.main",
+        },
+        "&:hover .MuiOutlinedInput-notchedOutline": {
+          borderColor: "primary.light",
+        },
+        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+          borderColor: "secondary.main",
+        },
         ...sx,
       }}
       {...rest}

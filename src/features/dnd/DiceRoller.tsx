@@ -289,7 +289,14 @@ export default function DiceRoller() {
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 2,
+        fontFamily: "typography.fontFamily",
+      }}
+    >
       <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
         <TextField
           label="Count"
@@ -319,11 +326,19 @@ export default function DiceRoller() {
         onChange={(e) => setExpression(e.target.value)}
         sx={{ maxWidth: 200 }}
       />
-      <Button variant="contained" onClick={handleRoll} sx={{ maxWidth: 200 }}>
+      <Button
+        variant="contained"
+        onClick={handleRoll}
+        sx={{
+          maxWidth: 200,
+          bgcolor: "primary.main",
+          "&:hover": { bgcolor: "primary.dark" },
+        }}
+      >
         Roll
       </Button>
       {result !== null && (
-        <Typography variant="h6">
+        <Typography variant="h6" sx={{ color: "secondary.main" }}>
           Result: {result} {rolls.length > 0 && `( ${rolls.join(", ")} )`}
         </Typography>
       )}
