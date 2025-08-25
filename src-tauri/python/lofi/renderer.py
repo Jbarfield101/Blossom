@@ -1571,13 +1571,14 @@ def render_from_spec(spec: Dict[str, Any]) -> Tuple[AudioSegment, int]:
     logger.info({"stage": "post", "message": "cleaning audio"})
     post_rng = np.random.default_rng((seed ^ 0x5A5A5A5A) & 0xFFFFFFFF)
     wow_cfg = spec.get("wow_flutter")
-    song = enhanced_post_process_chain(
-        song,
-        rng=post_rng,
-        drive=limiter_drive,
-        dither_amount=dither_amt,
-        wow_flutter=wow_cfg,
-    )
+    if spec.get("lofi_filter", True):
+        song = enhanced_post_process_chain(
+            song,
+            rng=post_rng,
+            drive=limiter_drive,
+            dither_amount=dither_amt,
+            wow_flutter=wow_cfg,
+        )
     return song, bpm
 
 # ---------- Main ----------
