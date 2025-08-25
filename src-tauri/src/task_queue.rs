@@ -453,7 +453,7 @@ impl TaskQueue {
                                             message: "no app handle".into(),
                                         })?;
                                     let window = app
-                                        .get_webview_window("main")
+                                        .get_window("main")
                                         .ok_or_else(|| TaskError {
                                             code: PdfErrorCode::Unknown,
                                             message: "no main window".into(),
