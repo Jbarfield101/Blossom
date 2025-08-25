@@ -1903,7 +1903,7 @@ pub async fn generate_ambience<R: Runtime>(app: AppHandle<R>) -> Result<(), Stri
         .output()
         .map_err(|e| format!("Failed to start python: {e}"))?;
 
-    if let Some(window) = app.get_window("main") {
+    if let Some(window) = app.get_webview_window("main") {
         for line in String::from_utf8_lossy(&output.stdout).lines() {
             let _ = window.emit("ambience_log", format!("[out] {}", line));
         }
