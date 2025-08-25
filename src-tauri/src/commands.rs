@@ -399,6 +399,11 @@ fn pdf_tools_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
         if dev.exists() {
             return dev;
         }
+
+        let dev = cwd.join("python").join("pdf_tools.py");
+        if dev.exists() {
+            return dev;
+        }
     }
     app.path()
         .resource_dir()
@@ -410,6 +415,11 @@ fn pdf_tools_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
 pub fn pdf_tools_path_default() -> PathBuf {
     if let Ok(cwd) = std::env::current_dir() {
         let dev = cwd.join("src-tauri").join("python").join("pdf_tools.py");
+        if dev.exists() {
+            return dev;
+        }
+
+        let dev = cwd.join("python").join("pdf_tools.py");
         if dev.exists() {
             return dev;
         }
