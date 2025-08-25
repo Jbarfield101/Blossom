@@ -93,7 +93,7 @@ fn comfy_python() -> PathBuf {
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// use std::process::Command;
 /// use tauri::Window;
 /// # let window: Window<()> = unimplemented!();
@@ -2033,9 +2033,9 @@ pub async fn generate_ambience<R: Runtime>(app: AppHandle<R>) -> Result<(), Stri
         .and_then(|p| p.parent())
         .map(|p| p.to_path_buf())
         .ok_or_else(|| "Script path not found".to_string())?;
+    let ambience = py_dir.join("ambience_generator.py");
     let output = PCommand::new(&py)
-        .arg("-m")
-        .arg("ambience_generator")
+        .arg(&ambience)
         .current_dir(&py_dir)
         .output()
         .map_err(|e| format!("Failed to start python: {e}"))?;

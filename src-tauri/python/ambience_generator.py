@@ -78,5 +78,10 @@ GENERATORS = {
 
 def generate_all() -> None:
     """Generate all ambience clips."""
-    for gen in GENERATORS.values():
-        gen()
+    for name, gen in GENERATORS.items():
+        path = gen()
+        print(f"generated {path}")
+
+
+if __name__ == "__main__":
+    generate_all()
