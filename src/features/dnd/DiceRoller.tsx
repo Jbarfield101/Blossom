@@ -36,60 +36,63 @@ function addNumberedFaceGroups(
   }
 }
 
+// Geometry derived from the "threejs-dice" project:
+// https://github.com/byWulf/threejs-dice/blob/master/lib/dice.js#L574-L599
+// The model uses a unit radius with an equatorial offset of ~0.105 and
+// poles at +/-1 along the Y‑axis.  Face ordering follows the same index
+// sequence so that conventional D10 numbering (pairs summing to 11) is
+// preserved.
 function createPentagonalTrapezohedron() {
-  const n = 5;
-  const radius = 1;
-  const equatorHeight = 0.2;
-  const poleHeight = 0.8;
-
   const ring: THREE.Vector3[] = [];
-  for (let i = 0; i < 2 * n; i++) {
-    const angle = (Math.PI / n) * i;
-    const y = i % 2 === 0 ? equatorHeight : -equatorHeight;
+  const ringAngles = 10;
+  const equatorHeight = 0.105;
+
+  for (let i = 0; i < ringAngles; i++) {
+    const angle = (Math.PI * 2 * i) / ringAngles;
+    const y = i % 2 ? equatorHeight : -equatorHeight;
     ring.push(new THREE.Vector3(Math.cos(angle), y, Math.sin(angle)));
   }
-  const top = new THREE.Vector3(0, poleHeight, 0);
-  const bottom = new THREE.Vector3(0, -poleHeight, 0);
+
+  const bottom = new THREE.Vector3(0, -1, 0);
+  const top = new THREE.Vector3(0, 1, 0);
+  const vertices = [...ring, bottom, top];
+
+  // Triangular faces indexed in the same order as the source reference.
+  const faceDefs = [
+    [5, 7, 11],
+    [4, 2, 10],
+    [1, 3, 11],
+    [0, 8, 10],
+    [7, 9, 11],
+    [8, 6, 10],
+    [9, 1, 11],
+    [2, 0, 10],
+    [3, 5, 11],
+    [6, 4, 10],
+  ];
 
   const positions: number[] = [];
   const uvs: number[] = [];
   const indices: number[] = [];
-  const vertices = [...ring, top, bottom];
-  const faces: number[][] = [];
-
   let idx = 0;
-  for (let i = 0; i < 2 * n; i++) {
-    const next = (i + 1) % (2 * n);
-    const A = i % 2 === 0 ? top : bottom;
-    const B = ring[i];
-    const C = i % 2 === 0 ? bottom : top;
-    const D = ring[next];
-
+  for (const [a, b, c] of faceDefs) {
+    const va = vertices[a];
+    const vb = vertices[b];
+    const vc = vertices[c];
     positions.push(
-      A.x,
-      A.y,
-      A.z,
-      B.x,
-      B.y,
-      B.z,
-      C.x,
-      C.y,
-      C.z,
-      D.x,
-      D.y,
-      D.z
+      va.x,
+      va.y,
+      va.z,
+      vb.x,
+      vb.y,
+      vb.z,
+      vc.x,
+      vc.y,
+      vc.z
     );
-
-    uvs.push(0.5, 1, 1, 0, 0, 0, 0, 1);
-    indices.push(idx, idx + 1, idx + 2, idx, idx + 2, idx + 3);
-    const topIndex = vertices.length - 2;
-    const bottomIndex = vertices.length - 1;
-    faces.push(
-      i % 2 === 0
-        ? [topIndex, i, bottomIndex, next]
-        : [bottomIndex, i, topIndex, next]
-    );
-    idx += 4;
+    uvs.push(0.5, 1, 1, 0, 0, 0);
+    indices.push(idx, idx + 1, idx + 2);
+    idx += 3;
   }
 
   const geometry = new THREE.BufferGeometry();
@@ -101,7 +104,7 @@ function createPentagonalTrapezohedron() {
   geometry.setIndex(indices);
   geometry.computeVertexNormals();
   addNumberedFaceGroups(10, geometry);
-  return { geometry, vertices, faces };
+  return { geometry, vertices };
 }
 
 function getGeometry(sides: number) {
