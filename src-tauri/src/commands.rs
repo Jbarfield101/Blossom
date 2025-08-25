@@ -624,6 +624,7 @@ mod tests {
         let spec = SongSpec {
             out_dir: "out".into(),
             title: "t".into(),
+            album: None,
             bpm: 80,
             key: "C".into(),
             form: None,
