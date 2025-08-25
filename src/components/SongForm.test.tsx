@@ -77,9 +77,16 @@ describe('SongForm', () => {
   });
 
   it('renders default form', () => {
-    const { asFragment } = render(<SongForm />);
-    expect(screen.getByText('Song Builder')).toBeInTheDocument();
-    expect(asFragment()).toMatchSnapshot();
+    const rand = vi
+      .spyOn(Math, 'random')
+      .mockReturnValue(0.000012345);
+    try {
+      const { asFragment } = render(<SongForm />);
+      expect(screen.getByText('Song Builder')).toBeInTheDocument();
+      expect(asFragment()).toMatchSnapshot();
+    } finally {
+      rand.mockRestore();
+    }
   });
 
   it('adds a job and shows progress', async () => {

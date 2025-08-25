@@ -308,7 +308,9 @@ export default function SongForm() {
   // VARIATION / BATCH
   const [numSongs, setNumSongs] = useState(1);
   const [titleSuffixMode, setTitleSuffixMode] = useState<"number" | "timestamp">("number");
-  const [seedBase, setSeedBase] = useState(12345);
+  const [seedBase, setSeedBase] = useState(() =>
+    Math.floor(Math.random() * 1_000_000_000)
+  );
   const [seedMode, setSeedMode] = useState<"increment" | "random">("random");
   const [autoKeyPerSong, setAutoKeyPerSong] = useState(false);
   const [bpmJitterPct, setBpmJitterPct] = useState(5);
