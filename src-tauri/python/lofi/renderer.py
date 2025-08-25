@@ -1013,9 +1013,16 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
     add9 = (rng.random() < add9_prob)
     inv_cycle = int(rng.integers(0, 3))
 
+    lead = motif.get("lead_instrument")
+    if lead:
+        lead = _normalize_instruments([lead])[0]
+
     instrs = _normalize_instruments(motif.get("instruments"))
+    if not instrs and lead:
+        instrs.append(lead)
+
     mood = motif.get("mood") or []
-    if "fantasy" in mood:
+    if instrs and "fantasy" in mood:
         fantasy_instrs = _normalize_instruments(["harp", "lute", "pan flute"])
         for inst in fantasy_instrs:
             if inst not in instrs:
@@ -1047,7 +1054,10 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
         "oboe",
         "french horn",
     }
-    add_rhodes_default = not any(src in instrs for src in melodic_sources)
+    if instrs:
+        add_rhodes_default = not any(src in instrs for src in melodic_sources)
+    else:
+        add_rhodes_default = False
 
     chord_roots_hz: List[float] = []
 
@@ -1102,7 +1112,9 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
 
     # --- bass patterns (per-chord roots)
     bass_pat = rng.choice(BASS_PATTERNS)
-    use_bass = any(i in instrs for i in ["upright bass", "bass", "rhodes"]) or not instrs
+    use_bass = any(i in instrs for i in ["upright bass", "bass", "rhodes"])
+    if not instrs:
+        use_bass = False
 
     if use_bass:
         for chord_idx, root_hz in enumerate(chord_roots_hz):
@@ -1158,7 +1170,6 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
             section_name=section_name,
             motif_store=motif,
         )
-        lead = motif.get("lead_instrument")
         melody = _apply_melody_timbre(melody, [lead] if lead else instrs)
     else:
         melody = np.zeros(n, dtype=np.float32)
