@@ -34,14 +34,23 @@ async function main() {
     const spec = {
       id,
       name: `${theme} NPC ${i + 1}`,
-      tags: [theme]
+      species: "Unknown",
+      role: "Commoner",
+      alignment: "Neutral",
+      playerCharacter: false,
+      hooks: ["A mysterious opportunity"],
+      statblock: {},
+      tags: [theme],
     };
     const parsed = zNpc.safeParse(spec);
     if (!parsed.success) {
       console.error("Validation failed", parsed.error);
       continue;
     }
-    await fs.writeFile(path.join(specsDir, `${id}.json`), JSON.stringify(spec, null, 2));
+    await fs.writeFile(
+      path.join(specsDir, `${id}.json`),
+      JSON.stringify(spec, null, 2)
+    );
   }
 
   await reindex();
