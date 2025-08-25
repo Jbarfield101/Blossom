@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Typography, TextField, Button, Grid, Box } from "@mui/material";
+import { Typography, Button, Grid, Box } from "@mui/material";
+import StyledTextField from "./StyledTextField";
 import { zLore } from "./schemas";
 import { LoreData } from "./types";
 import LorePdfUpload from "./LorePdfUpload";
@@ -42,7 +43,7 @@ export default function LoreForm({ world }: Props) {
           <LorePdfUpload world={world} />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -51,7 +52,7 @@ export default function LoreForm({ world }: Props) {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Summary"
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
@@ -60,7 +61,7 @@ export default function LoreForm({ world }: Props) {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Location"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
@@ -69,7 +70,7 @@ export default function LoreForm({ world }: Props) {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Hooks (comma separated)"
             value={hooks}
             onChange={(e) => setHooks(e.target.value)}
@@ -78,7 +79,7 @@ export default function LoreForm({ world }: Props) {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Tags (comma separated)"
             value={tags}
             onChange={(e) => setTags(e.target.value)}

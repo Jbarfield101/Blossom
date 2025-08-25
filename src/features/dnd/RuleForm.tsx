@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   Typography,
-  TextField,
   Button,
   FormControl,
   InputLabel,
@@ -10,6 +9,7 @@ import {
   Grid,
   Box,
 } from "@mui/material";
+import StyledTextField from "./StyledTextField";
 import { zRule } from "./schemas";
 import type { RuleData } from "./types";
 import rulesIndex from "../../../dnd/rules/index.json";
@@ -95,7 +95,7 @@ export default function RuleForm() {
           </FormControl>
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -104,7 +104,7 @@ export default function RuleForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -114,7 +114,7 @@ export default function RuleForm() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField
+          <StyledTextField
             label="Tags (comma separated)"
             value={tags}
             onChange={(e) => setTags(e.target.value)}

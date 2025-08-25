@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   Typography,
-  TextField,
   Button,
   Checkbox,
   Grid,
@@ -17,6 +16,7 @@ import { z } from "zod";
 import { zNpc } from "../../dnd/schemas/npc";
 import { NpcData } from "./types";
 import NpcPdfUpload from "./NpcPdfUpload";
+import StyledTextField from "./StyledTextField";
 
 interface Props {
   world: string;
@@ -42,24 +42,6 @@ export default function NpcForm({ world }: Props) {
   const [tags, setTags] = useState("");
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [result, setResult] = useState<NpcData | null>(null);
-
-  const textFieldProps = {
-    variant: "outlined" as const,
-    InputLabelProps: { shrink: true },
-    InputProps: {
-      sx: {
-        "::placeholder": {
-          color: "gray",
-        },
-      },
-    },
-    sx: {
-      backgroundColor: "background.paper",
-      color: "text.primary",
-      borderRadius: 1,
-      boxShadow: 1,
-    },
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,8 +127,7 @@ export default function NpcForm({ world }: Props) {
               </Typography>
             </Grid>
             <Grid item xs={8}>
-              <TextField
-                {...textFieldProps}
+              <StyledTextField
                 id="name"
                 value={name}
                 onChange={(e) => {
@@ -168,8 +149,7 @@ export default function NpcForm({ world }: Props) {
               </Typography>
             </Grid>
             <Grid item xs={8}>
-              <TextField
-                {...textFieldProps}
+              <StyledTextField
                 id="species"
                 value={species}
                 onChange={(e) => {
@@ -193,8 +173,7 @@ export default function NpcForm({ world }: Props) {
               </Typography>
             </Grid>
             <Grid item xs={8}>
-              <TextField
-                {...textFieldProps}
+              <StyledTextField
                 id="role"
                 value={role}
                 onChange={(e) => {
@@ -216,8 +195,7 @@ export default function NpcForm({ world }: Props) {
               </Typography>
             </Grid>
             <Grid item xs={8}>
-              <TextField
-                {...textFieldProps}
+              <StyledTextField
                 id="alignment"
                 value={alignment}
                 onChange={(e) => {
@@ -265,8 +243,7 @@ export default function NpcForm({ world }: Props) {
               </Typography>
             </Grid>
             <Grid item xs={8}>
-              <TextField
-                {...textFieldProps}
+              <StyledTextField
                 id="backstory"
                 value={backstory}
                 onChange={(e) => setBackstory(e.target.value)}
@@ -280,8 +257,7 @@ export default function NpcForm({ world }: Props) {
               </Typography>
             </Grid>
             <Grid item xs={8}>
-              <TextField
-                {...textFieldProps}
+              <StyledTextField
                 id="location"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
@@ -295,8 +271,7 @@ export default function NpcForm({ world }: Props) {
               </Typography>
             </Grid>
             <Grid item xs={8}>
-              <TextField
-                {...textFieldProps}
+              <StyledTextField
                 id="hooks"
                 value={hooks}
                 onChange={(e) => {
@@ -318,8 +293,7 @@ export default function NpcForm({ world }: Props) {
               </Typography>
             </Grid>
             <Grid item xs={8}>
-              <TextField
-                {...textFieldProps}
+              <StyledTextField
                 id="quirks"
                 value={quirks}
                 onChange={(e) => setQuirks(e.target.value)}
@@ -333,8 +307,7 @@ export default function NpcForm({ world }: Props) {
               </Typography>
             </Grid>
             <Grid item xs={8}>
-              <TextField
-                {...textFieldProps}
+              <StyledTextField
                 id="tags"
                 value={tags}
                 onChange={(e) => {
@@ -366,8 +339,7 @@ export default function NpcForm({ world }: Props) {
               </Typography>
             </Grid>
             <Grid item xs={8}>
-              <TextField
-                {...textFieldProps}
+              <StyledTextField
                 id="portrait"
                 value={portrait}
                 onChange={(e) => setPortrait(e.target.value)}
@@ -381,8 +353,7 @@ export default function NpcForm({ world }: Props) {
               </Typography>
             </Grid>
             <Grid item xs={8}>
-              <TextField
-                {...textFieldProps}
+              <StyledTextField
                 id="icon"
                 value={icon}
                 onChange={(e) => setIcon(e.target.value)}
@@ -411,8 +382,7 @@ export default function NpcForm({ world }: Props) {
                   </Typography>
                 </Grid>
                 <Grid item xs={8}>
-                  <TextField
-                    {...textFieldProps}
+                  <StyledTextField
                     id="voice-style"
                     value={voiceStyle}
                     onChange={(e) => {
@@ -438,8 +408,7 @@ export default function NpcForm({ world }: Props) {
                   </Typography>
                 </Grid>
                 <Grid item xs={8}>
-                  <TextField
-                    {...textFieldProps}
+                  <StyledTextField
                     id="voice-provider"
                     value={voiceProvider}
                     onChange={(e) => {
@@ -470,8 +439,7 @@ export default function NpcForm({ world }: Props) {
                   </Typography>
                 </Grid>
                 <Grid item xs={8}>
-                  <TextField
-                    {...textFieldProps}
+                  <StyledTextField
                     id="voice-preset"
                     value={voicePreset}
                     onChange={(e) => {
@@ -506,8 +474,7 @@ export default function NpcForm({ world }: Props) {
                   </Typography>
                 </Grid>
                 <Grid item xs={8}>
-                  <TextField
-                    {...textFieldProps}
+                  <StyledTextField
                     id="statblock"
                     value={statblock}
                     onChange={(e) => {
@@ -534,8 +501,7 @@ export default function NpcForm({ world }: Props) {
                   </Typography>
                 </Grid>
                 <Grid item xs={8}>
-                  <TextField
-                    {...textFieldProps}
+                  <StyledTextField
                     id="sections"
                     value={sections}
                     onChange={(e) => {
