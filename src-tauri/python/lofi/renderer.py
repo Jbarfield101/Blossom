@@ -817,6 +817,8 @@ def _apply_melody_timbre(x, instrs):
         return _butter_bandpass(x, 400, 6000)
     if "trumpet" in instrs:
         return _butter_bandpass(x, 500, 7000)
+    if "french horn" in instrs:
+        return _butter_bandpass(x, 200, 3000)
     if "harp" in instrs or "lute" in instrs:
         return _butter_highpass(_butter_lowpass(x, 7000), 400)
     if "pan flute" in instrs:
@@ -1002,6 +1004,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
         "synth plucks",
         "wurlitzer",
         "oboe",
+        "french horn",
     }
     add_rhodes_default = not any(src in instrs for src in melodic_sources)
 
