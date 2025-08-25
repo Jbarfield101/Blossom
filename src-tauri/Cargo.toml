@@ -20,7 +20,7 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 log = "0.4"
 env_logger = "0.11"
-tauri = { version = "2", features = ["protocol-asset"] }
+tauri = { version = "2", features = ["protocol-asset", "test", "unstable"] }
 tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
@@ -42,4 +42,7 @@ sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio-rustls"] }
 futures = "0.3"
 sysinfo = "0.37"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync"] }
+
+[dev-dependencies]
+tempfile = "3"
 

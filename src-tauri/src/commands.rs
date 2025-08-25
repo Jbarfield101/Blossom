@@ -41,7 +41,7 @@ fn comfy_python() -> PathBuf {
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// use std::process::Command;
 /// use tauri::Window;
 /// # let window: Window<()> = unimplemented!();
@@ -102,8 +102,22 @@ fn spawn_with_logging<R: Runtime>(
 
 #[tauri::command]
 pub async fn comfy_status() -> Result<bool, String> {
-    let lock = COMFY_CHILD.get_or_init(|| Mutex::new(None)).lock().unwrap();
-    Ok(lock.as_ref().is_some())
+    let mut lock = COMFY_CHILD.get_or_init(|| Mutex::new(None)).lock().unwrap();
+    if let Some(mut child) = lock.take() {
+        match child.try_wait() {
+            Ok(Some(_)) => Ok(false),
+            Ok(None) => {
+                *lock = Some(child);
+                Ok(true)
+            }
+            Err(e) => {
+                *lock = Some(child);
+                Err(e.to_string())
+            }
+        }
+    } else {
+        Ok(false)
+    }
 }
 
 #[tauri::command]
@@ -1892,7 +1906,8 @@ pub async fn generate_ambience<R: Runtime>(app: AppHandle<R>) -> Result<(), Stri
     if !py.exists() {
         return Err(format!("Python not found at {}", py.display()));
     }
-    let py_dir = script_path(&app)
+    let py_dir_buf = script_path(&app);
+    let py_dir = py_dir_buf
         .parent()
         .and_then(|p| p.parent())
         .ok_or_else(|| "Script path not found".to_string())?;
