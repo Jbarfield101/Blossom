@@ -10,7 +10,7 @@ use serde_json::Value;
 use chrono::{DateTime, Utc};
 use sysinfo::System;
 use tauri::async_runtime::{self, JoinHandle};
-use tauri::{AppHandle, Manager, Wry};
+use tauri::{AppHandle, Emitter, Manager, Wry};
 use tokio::sync::{mpsc, Mutex, Semaphore};
 use tokio::time::sleep;
 
@@ -202,7 +202,7 @@ impl TaskQueue {
                             };
                             if let Some(task) = snapshot {
                                 if let Some(app) = app_handle.lock().unwrap().clone() {
-                                    let _ = app.emit_all("task_updated", task);
+                                    let _ = app.emit("task_updated", task);
                                 }
                             }
                             let res: Result<Value, TaskError> = match command {
@@ -453,7 +453,7 @@ impl TaskQueue {
                                             message: "no app handle".into(),
                                         })?;
                                     let window = app
-                                        .get_webview_window("main")
+                                        .get_window("main")
                                         .ok_or_else(|| TaskError {
                                             code: PdfErrorCode::Unknown,
                                             message: "no main window".into(),
@@ -492,7 +492,7 @@ impl TaskQueue {
                                             }
                                         }
                                         if let Some(task) = snapshot {
-                                            let _ = app.emit_all("task_updated", task);
+                                            let _ = app.emit("task_updated", task);
                                         }
                                         if _cancelled_clone.lock().await.contains(&id) {
                                             return Err(TaskError {
@@ -531,7 +531,7 @@ impl TaskQueue {
                             };
                             if let Some(task) = snapshot {
                                 if let Some(app) = app_handle.lock().unwrap().clone() {
-                                    let _ = app.emit_all("task_updated", task);
+                                    let _ = app.emit("task_updated", task);
                                 }
                             }
                             drop(permit);
