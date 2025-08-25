@@ -11,6 +11,7 @@ import pdfplumber
 import pytesseract
 import requests
 import subprocess
+import warnings
 
 
 def _base_dir() -> Path:
@@ -232,6 +233,20 @@ def extract_npcs(path: str):
                 data[k.strip().lower()] = v.strip()
         if not data:
             continue
+        hooks = [h.strip() for h in (data.get("hooks") or "").split(",") if h.strip()]
+        if not hooks:
+            hooks = ["hook"]
+            warnings.warn(
+                "NPC missing hooks; using placeholder 'hook'",
+                UserWarning,
+            )
+        tags = [t.strip() for t in (data.get("tags") or "").split(",") if t.strip()]
+        if not tags:
+            tags = ["npc"]
+            warnings.warn(
+                "NPC missing tags; using placeholder 'npc'",
+                UserWarning,
+            )
         npc = {
             "id": str(uuid.uuid4()),
             "name": data.get("name", "Unknown"),
@@ -242,10 +257,10 @@ def extract_npcs(path: str):
             == "true",
             "backstory": data.get("backstory"),
             "location": data.get("location"),
-            "hooks": [h.strip() for h in data.get("hooks", "hook").split(",") if h.strip()],
+            "hooks": hooks,
             "quirks": [q.strip() for q in data.get("quirks", "").split(",") if q.strip()] or None,
             "statblock": {},
-            "tags": [t.strip() for t in data.get("tags", "npc").split(",") if t.strip()],
+            "tags": tags,
         }
 
         voice_raw = data.get("voice")
