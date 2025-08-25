@@ -3,7 +3,7 @@ export interface DndBase {
   name: string;
 }
 
-export type DndTheme = "Parchment" | "Ink" | "Minimal";
+export type DndTheme = "Parchment" | "Cyberpunk";
 
 import type { Npc } from "../../dnd/schemas/npc";
 

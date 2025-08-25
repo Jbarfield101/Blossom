@@ -6,7 +6,7 @@ export const zDndBase = z.object({
   name: z.string().min(1),
 });
 
-export const zDndTheme = z.enum(["Parchment", "Ink", "Minimal"]);
+export const zDndTheme = z.enum(["Parchment", "Cyberpunk"]);
 
 /**
  * Minimal schema for non-player characters (NPCs).

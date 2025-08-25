@@ -12,7 +12,13 @@ import {
   LibraryBooks,
 } from "@mui/icons-material";
 import { SyntheticEvent, useState, ChangeEvent } from "react";
-import { DndThemeContext, themes } from "../features/dnd/theme";
+import {
+  DndThemeContext,
+  themes,
+  themeStyles,
+  tabColors,
+  ACCENT_COLOR,
+} from "../features/dnd/theme";
 import type { DndTheme } from "../features/dnd/types";
 import NpcForm from "../features/dnd/NpcForm";
 import LoreForm from "../features/dnd/LoreForm";
@@ -46,9 +52,17 @@ export default function DND() {
       setCurrentWorld(value);
     }
   };
+  const activeTabSx = {
+    "&.Mui-selected": {
+      color: ACCENT_COLOR,
+    },
+    "&.Mui-selected svg": {
+      color: ACCENT_COLOR,
+    },
+  } as const;
   return (
     <DndThemeContext.Provider value={selectedTheme}>
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ p: 2 }} style={themeStyles[selectedTheme]}>
         <Box sx={{ my: 2, maxWidth: 200, mx: "auto" }}>
           <TextField
             select
@@ -56,6 +70,14 @@ export default function DND() {
             value={world}
             onChange={handleWorldChange}
             fullWidth
+            sx={{
+              "& .MuiOutlinedInput-root.Mui-focused fieldset": {
+                borderColor: ACCENT_COLOR,
+              },
+              "& .MuiInputLabel-root.Mui-focused": {
+                color: ACCENT_COLOR,
+              },
+            }}
           >
             {worlds.map((w) => (
               <MenuItem key={w} value={w}>
@@ -72,18 +94,23 @@ export default function DND() {
               onChange={handleChange}
               variant="scrollable"
               scrollButtons="auto"
-              sx={{ bgcolor: "#f3e5ab" }}
+              sx={{
+                bgcolor: tabColors[selectedTheme],
+                "& .MuiTabs-indicator": {
+                  backgroundColor: ACCENT_COLOR,
+                },
+              }}
             >
-              <Tab icon={<Person />} label="NPC" />
-              <Tab icon={<LibraryBooks />} label="NPC Library" />
-              <Tab icon={<MenuBook />} label="Lore" />
-              <Tab icon={<TravelExplore />} label="Quest" />
-              <Tab icon={<SportsKabaddi />} label="Encounter" />
-              <Tab icon={<Gavel />} label="Rulebook" />
-              <Tab icon={<AutoStories />} label="Spellbook" />
-              <Tab icon={<Casino />} label="Dice" />
-              <Tab icon={<Map />} label="Tabletop" />
-              <Tab icon={<MilitaryTech />} label="War Table" />
+              <Tab icon={<Person />} label="NPC" sx={activeTabSx} />
+              <Tab icon={<LibraryBooks />} label="NPC Library" sx={activeTabSx} />
+              <Tab icon={<MenuBook />} label="Lore" sx={activeTabSx} />
+              <Tab icon={<TravelExplore />} label="Quest" sx={activeTabSx} />
+              <Tab icon={<SportsKabaddi />} label="Encounter" sx={activeTabSx} />
+              <Tab icon={<Gavel />} label="Rulebook" sx={activeTabSx} />
+              <Tab icon={<AutoStories />} label="Spellbook" sx={activeTabSx} />
+              <Tab icon={<Casino />} label="Dice" sx={activeTabSx} />
+              <Tab icon={<Map />} label="Tabletop" sx={activeTabSx} />
+              <Tab icon={<MilitaryTech />} label="War Table" sx={activeTabSx} />
             </Tabs>
             <Box sx={{ my: 2, maxWidth: 200 }}>
               <TextField
@@ -94,6 +121,14 @@ export default function DND() {
                   setSelectedTheme(e.target.value as DndTheme)
                 }
                 fullWidth
+                sx={{
+                  "& .MuiOutlinedInput-root.Mui-focused fieldset": {
+                    borderColor: ACCENT_COLOR,
+                  },
+                  "& .MuiInputLabel-root.Mui-focused": {
+                    color: ACCENT_COLOR,
+                  },
+                }}
               >
                 {themes.map((t) => (
                   <MenuItem key={t} value={t}>
