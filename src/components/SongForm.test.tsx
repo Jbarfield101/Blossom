@@ -136,25 +136,33 @@ describe('SongForm', () => {
   it('generates a title with ollama', async () => {
     (invoke as any).mockImplementation((cmd: string) => {
       if (cmd === 'start_ollama') return Promise.resolve();
-      if (cmd === 'general_chat') return Promise.resolve('Morning Chill');
+      if (cmd === 'general_chat')
+        return Promise.resolve(
+          'Morning Chill\nEvening Jazz\nMidnight Coffee\nSunset Vibes\nRainy Day'
+        );
       return Promise.resolve('');
     });
 
-    render(<SongForm />);
+    const rand = vi.spyOn(Math, 'random').mockReturnValue(0);
+    try {
+      render(<SongForm />);
 
-    fireEvent.click(screen.getByText(/generate title/i));
+      fireEvent.click(screen.getByText(/generate title/i));
 
-    await waitFor(() => {
-      const calls = (invoke as any).mock.calls.map(([c]: any) => c);
-      expect(calls).toContain('start_ollama');
-      expect(calls).toContain('general_chat');
-    });
+      await waitFor(() => {
+        const calls = (invoke as any).mock.calls.map(([c]: any) => c);
+        expect(calls).toContain('start_ollama');
+        expect(calls).toContain('general_chat');
+      });
 
-    await waitFor(() =>
-      expect(
-        (screen.getByPlaceholderText(/song title base/i) as HTMLInputElement).value
-      ).toBe('Morning Chill')
-    );
+      await waitFor(() =>
+        expect(
+          (screen.getByPlaceholderText(/song title base/i) as HTMLInputElement).value
+        ).toBe('Morning Chill')
+      );
+    } finally {
+      rand.mockRestore();
+    }
   });
 
   it('remembers last used template', () => {

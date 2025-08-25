@@ -589,16 +589,29 @@ export default function SongForm() {
             {
               role: "system",
               content:
-                "You are a creative assistant that suggests short, catchy lofi song titles. Respond with only the title.",
+                "You are a creative assistant that suggests short, catchy lofi song titles. Respond with a list of titles, one per line.",
             },
-            { role: "user", content: "Give me a lofi song title." },
+            {
+              role: "user",
+              content: "Give me five different lofi song titles.",
+            },
           ],
+          // If the backend supports it, a higher temperature encourages variety
+          temperature: 1.2,
         });
-        const line = reply
-          .split("\n")[0]
-          .replace(/^['\"]|['\"]$/g, "")
-          .trim();
-        if (line) setTitleBase(line);
+        const lines = reply
+          .split("\n")
+          .map((l) =>
+            l
+              .replace(/^[\s*\-\d\.]+/, "")
+              .replace(/^['\"]|['\"]$/g, "")
+              .trim()
+          )
+          .filter(Boolean);
+        if (lines.length) {
+          const choice = lines[Math.floor(Math.random() * lines.length)];
+          setTitleBase(choice);
+        }
       }
     } catch (e: any) {
       setErr(e?.message || String(e));
