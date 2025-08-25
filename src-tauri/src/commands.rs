@@ -958,6 +958,11 @@ pub async fn blender_run_script(code: String) -> Result<(), String> {
 }
 
 fn blender_path() -> PathBuf {
+    if let Ok(p) = env::var("BLENDER_PATH") {
+        if !p.trim().is_empty() {
+            return PathBuf::from(p);
+        }
+    }
     PathBuf::from("blender")
 }
 

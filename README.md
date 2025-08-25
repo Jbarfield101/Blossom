@@ -98,6 +98,9 @@ npm test
 - **Paths:** Set the ComfyUI directory in the Settings page and edit
   `conda_python()` in `src-tauri/src/commands.rs` so the app can find your Python
   interpreter.
+- **Blender path:** If Blender is not on your system `PATH`, set the
+  `BLENDER_PATH` environment variable to the Blender executable so `/objects/blender`
+  can run scripts.
 - **HQ feature flags:** `lofi/renderer.py` supports `hq_stereo`, `hq_reverb`,
   `hq_sidechain`, and `hq_chorus` flags inside the `motif` object to enable or disable
   high‑quality processing.
