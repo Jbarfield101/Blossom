@@ -140,7 +140,8 @@ impl TaskQueue {
             cpu: cpu_limit,
             memory: memory_limit,
         }));
-        let app: Arc<StdMutex<Option<AppHandle<Wry>>>> = Arc::new(StdMutex::new(None));
+        let app: Arc<StdMutex<Option<AppHandle<Wry>>>> =
+            Arc::new(StdMutex::new(None::<AppHandle<Wry>>));
         let tasks_worker = tasks.clone();
         let _handles_worker = _handles.clone();
         let _cancelled_worker = _cancelled.clone();
