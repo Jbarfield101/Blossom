@@ -175,9 +175,16 @@ impl TaskQueue {
                                     duration,
                                     seed,
                                 } => {
+                                    let python_dir = std::path::Path::new(&script)
+                                        .parent()
+                                        .and_then(|p| p.parent())
+                                        .map(|p| p.to_path_buf())
+                                        .ok_or_else(|| "invalid script path".to_string())?;
                                     let output = PCommand::new(&py)
+                                        .current_dir(python_dir)
                                         .arg("-u")
-                                        .arg(&script)
+                                        .arg("-m")
+                                        .arg("lofi.renderer")
                                         .arg("--prompt")
                                         .arg(&prompt)
                                         .arg("--duration")
@@ -319,12 +326,12 @@ impl TaskQueue {
                                         } else {
                                             output.push_str(&line);
                                         }
-                                if _cancelled_clone.lock().unwrap().contains(&id) {
-                                    let _ = child.kill();
-                                    return Err("cancelled".into());
-                                }
-                            }
-                            let status = child.wait().map_err(|e| e.to_string())?;
+                                        if _cancelled_clone.lock().unwrap().contains(&id) {
+                                            let _ = child.kill();
+                                            return Err("cancelled".into());
+                                        }
+                                    }
+                                    let status = child.wait().map_err(|e| e.to_string())?;
                                     if !status.success() {
                                         let mut err = String::new();
                                         if let Some(mut e) = child.stderr.take() {
