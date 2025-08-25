@@ -10,8 +10,13 @@ setup(
         'pyloudnorm>=0.1.0',
         'numpy>=1.21.0',
         'pydub>=0.25.0',
-        'gTTS>=2.5.1',
         'audioop-lts; python_version >= "3.13"',
     ],
+    extras_require={
+        'TTS': [
+            'TTS>=0.15; python_version < "3.12"',
+            'torch>=2.0',
+        ],
+    },
     python_requires='>=3.10,<3.12',
 )
