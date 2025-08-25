@@ -4,23 +4,28 @@ import { Button, Stack, TextField, Typography, Alert, CircularProgress, Snackbar
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import Center from './_Center';
-import { useNPCs, NPC } from '../store/npcs';
+import { useNPCs } from '../store/npcs';
+import type { Npc } from '../dnd/schemas/npc';
 import { useWorlds } from '../store/worlds';
 
 const systemPrompt =
-  'You are a creative assistant that generates random D&D NPCs. Respond only with JSON having keys name, race, class, personality, background, appearance.';
+  'You are a creative assistant that generates random D&D NPCs. Respond only with JSON having keys name, species, role, backstory.';
 
 export default function NPCMaker() {
-  const [npc, setNpc] = useState<Omit<NPC, 'id'>>({
+  const [npc, setNpc] = useState<Omit<Npc, 'id'>>({
     name: '',
-    race: '',
-    class: '',
-    personality: '',
-    background: '',
-    appearance: '',
+    species: '',
+    role: '',
+    alignment: '',
+    backstory: '',
+    location: '',
+    hooks: ['Hook'],
+    quirks: [],
     portrait: 'placeholder.png',
     icon: 'placeholder-icon.png',
     playerCharacter: false,
+    statblock: {},
+    tags: ['npc'],
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
@@ -53,21 +58,19 @@ export default function NPCMaker() {
         ],
       });
 
-      let data: Partial<NPC> | null = null;
+      let data: Partial<Npc> | null = null;
 
       try {
         data = JSON.parse(reply);
       } catch {
-        const keys: (keyof Omit<NPC, 'id'>)[] = [
+        const keys: (keyof Omit<Npc, 'id'>)[] = [
           'name',
-          'race',
-          'class',
-          'personality',
-          'background',
-          'appearance',
+          'species',
+          'role',
+          'backstory',
         ];
 
-        const fallback: Partial<NPC> = {};
+        const fallback: Partial<Npc> = {};
         for (const key of keys) {
           const keyIndex = reply.indexOf(`"${key}"`);
           if (keyIndex === -1) continue;
@@ -100,19 +103,17 @@ export default function NPCMaker() {
     }
   }
 
-  function handleChange(field: keyof Omit<NPC, 'id'>, value: string | boolean) {
+  function handleChange(field: keyof Omit<Npc, 'id'>, value: string | boolean) {
     setNpc((prev) => ({ ...prev, [field]: value }));
   }
 
   async function save() {
     setError('');
-    const required: (keyof Omit<NPC, 'id'>)[] = [
+    const required: (keyof Omit<Npc, 'id'>)[] = [
       'name',
-      'race',
-      'class',
-      'personality',
-      'background',
-      'appearance',
+      'species',
+      'role',
+      'backstory',
       'portrait',
       'icon',
     ];
@@ -128,18 +129,22 @@ export default function NPCMaker() {
       return;
     }
     try {
-      const saved = await invoke<NPC>('save_npc', { world, npc });
+      const saved = await invoke<Npc>('save_npc', { world, npc });
       addNPC(saved);
       setNpc({
         name: '',
-        race: '',
-        class: '',
-        personality: '',
-        background: '',
-        appearance: '',
+        species: '',
+        role: '',
+        alignment: '',
+        backstory: '',
+        location: '',
+        hooks: ['Hook'],
+        quirks: [],
         portrait: 'placeholder.png',
         icon: 'placeholder-icon.png',
         playerCharacter: false,
+        statblock: {},
+        tags: ['npc'],
       });
       setSnackbarOpen(true);
     } catch (e) {
@@ -171,36 +176,28 @@ export default function NPCMaker() {
           fullWidth
         />
         <TextField
-          label="Race"
-          value={npc.race}
-          onChange={(e) => handleChange('race', e.target.value)}
+          label="Species"
+          value={npc.species}
+          onChange={(e) => handleChange('species', e.target.value)}
           fullWidth
         />
         <TextField
-          label="Class"
-          value={npc.class}
-          onChange={(e) => handleChange('class', e.target.value)}
+          label="Role"
+          value={npc.role}
+          onChange={(e) => handleChange('role', e.target.value)}
           fullWidth
         />
         <TextField
-          label="Personality"
+          label="Alignment"
+          value={npc.alignment}
+          onChange={(e) => handleChange('alignment', e.target.value)}
+          fullWidth
+        />
+        <TextField
+          label="Backstory"
           multiline
-          value={npc.personality}
-          onChange={(e) => handleChange('personality', e.target.value)}
-          fullWidth
-        />
-        <TextField
-          label="Background"
-          multiline
-          value={npc.background}
-          onChange={(e) => handleChange('background', e.target.value)}
-          fullWidth
-        />
-        <TextField
-          label="Appearance"
-          multiline
-          value={npc.appearance}
-          onChange={(e) => handleChange('appearance', e.target.value)}
+          value={npc.backstory}
+          onChange={(e) => handleChange('backstory', e.target.value)}
           fullWidth
         />
         <FormControlLabel

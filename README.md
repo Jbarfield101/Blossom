@@ -26,7 +26,9 @@ Install JavaScript and Python dependencies:
 ```bash
 npm install
 # create/activate a Python environment, then
-pip install -r requirements.txt  # or: pip install .
+pip install -r requirements.txt  # base dependencies
+# optional: enable text-to-speech features
+# pip install .[TTS]
 ```
 
 `audioop-lts` is included in the requirements and will be installed automatically on
@@ -94,7 +96,9 @@ Blossom can announce track titles or host voice‑overs using the
    Coqui TTS requires Python 3.9–3.11.
 
    ```bash
-   pip install TTS
+   pip install blossom-audio[TTS]
+   # or, from a clone:
+   pip install .[TTS]
    ```
 
 2. **Download a model** – use `tts --list_models` to view available voices and

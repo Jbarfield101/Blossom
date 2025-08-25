@@ -35,7 +35,7 @@ export default function NPCDetail() {
       <Stack spacing={2} sx={{ width: '100%', maxWidth: 800 }}>
         <Typography variant="h4">{npc.name}</Typography>
         <Typography variant="subtitle1">
-          {npc.race} {npc.class}
+          {npc.species} {npc.role}
         </Typography>
         {npc.portrait && (
           <img
@@ -44,19 +44,14 @@ export default function NPCDetail() {
             style={{ maxWidth: '100%', borderRadius: 4 }}
           />
         )}
-        {npc.role && (
+        {npc.alignment && (
           <Typography>
-            <strong>Role:</strong> {npc.role}
+            <strong>Alignment:</strong> {npc.alignment}
           </Typography>
         )}
-        {npc.cr !== undefined && (
+        {npc.location && (
           <Typography>
-            <strong>CR:</strong> {npc.cr}
-          </Typography>
-        )}
-        {npc.locale && (
-          <Typography>
-            <strong>Locale:</strong> {npc.locale}
+            <strong>Location:</strong> {npc.location}
           </Typography>
         )}
         {npc.tags && npc.tags.length > 0 && (
@@ -66,19 +61,9 @@ export default function NPCDetail() {
             ))}
           </Stack>
         )}
-        {npc.personality && (
+        {npc.backstory && (
           <Typography>
-            <strong>Personality:</strong> {npc.personality}
-          </Typography>
-        )}
-        {npc.background && (
-          <Typography>
-            <strong>Background:</strong> {npc.background}
-          </Typography>
-        )}
-        {npc.appearance && (
-          <Typography>
-            <strong>Appearance:</strong> {npc.appearance}
+            <strong>Backstory:</strong> {npc.backstory}
           </Typography>
         )}
         {npc.inventory && npc.inventory.length > 0 && (
@@ -123,43 +108,15 @@ export default function NPCDetail() {
             </List>
           </div>
         )}
-        {npc.secrets && npc.secrets.length > 0 && (
+        {npc.statblock && (
           <div>
             <Typography>
-              <strong>Secrets:</strong>
+              <strong>Statblock:</strong>
             </Typography>
             <List>
-              {npc.secrets.map((secret, idx) => (
-                <ListItem key={idx}>
-                  <ListItemText primary={secret} />
-                </ListItem>
-              ))}
-            </List>
-          </div>
-        )}
-        {npc.stats && (
-          <div>
-            <Typography>
-              <strong>Stats:</strong>
-            </Typography>
-            <List>
-              {Object.entries(npc.stats).map(([key, value]) => (
+              {Object.entries(npc.statblock).map(([key, value]) => (
                 <ListItem key={key}>
-                  <ListItemText primary={`${key}: ${value}`} />
-                </ListItem>
-              ))}
-            </List>
-          </div>
-        )}
-        {npc.skills && (
-          <div>
-            <Typography>
-              <strong>Skills:</strong>
-            </Typography>
-            <List>
-              {Object.entries(npc.skills).map(([key, value]) => (
-                <ListItem key={key}>
-                  <ListItemText primary={`${key}: ${value}`} />
+                  <ListItemText primary={`${key}: ${String(value)}`} />
                 </ListItem>
               ))}
             </List>

@@ -20,8 +20,7 @@ export default function NPCList() {
 
   const [tagFilter, setTagFilter] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
-  const [crFilter, setCrFilter] = useState('');
-  const [localeFilter, setLocaleFilter] = useState('');
+  const [locationFilter, setLocationFilter] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
@@ -32,11 +31,10 @@ export default function NPCList() {
     return npcs.filter((n) => {
       if (tagFilter && !(n.tags || []).includes(tagFilter)) return false;
       if (roleFilter && n.role !== roleFilter) return false;
-      if (crFilter && String(n.cr) !== crFilter) return false;
-      if (localeFilter && n.locale !== localeFilter) return false;
+      if (locationFilter && n.location !== locationFilter) return false;
       return true;
     });
-  }, [npcs, tagFilter, roleFilter, crFilter, localeFilter]);
+  }, [npcs, tagFilter, roleFilter, locationFilter]);
 
   return (
     <Center>
@@ -65,14 +63,9 @@ export default function NPCList() {
             onChange={(e) => setRoleFilter(e.target.value)}
           />
           <TextField
-            label="CR"
-            value={crFilter}
-            onChange={(e) => setCrFilter(e.target.value)}
-          />
-          <TextField
-            label="Locale"
-            value={localeFilter}
-            onChange={(e) => setLocaleFilter(e.target.value)}
+            label="Location"
+            value={locationFilter}
+            onChange={(e) => setLocationFilter(e.target.value)}
           />
         </Stack>
         {filtered.length === 0 ? (
