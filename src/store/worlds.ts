@@ -3,14 +3,17 @@ import { persist } from 'zustand/middleware';
 
 interface WorldState {
   worlds: string[];
+  currentWorld: string;
   addWorld: (world: string) => void;
   removeWorld: (world: string) => void;
+  setCurrentWorld: (world: string) => void;
 }
 
 export const useWorlds = create<WorldState>()(
   persist(
     (set) => ({
       worlds: [],
+      currentWorld: '',
       addWorld: (world) =>
         set((state) => {
           const name = world.trim();
@@ -25,6 +28,7 @@ export const useWorlds = create<WorldState>()(
         set((state) => ({
           worlds: state.worlds.filter((w) => w !== world),
         })),
+      setCurrentWorld: (world) => set({ currentWorld: world }),
     }),
     { name: 'world-store' }
   )

@@ -6,7 +6,7 @@ import { useWorlds } from "../store/worlds";
 describe("WorldBuilder", () => {
   afterEach(() => {
     cleanup();
-    useWorlds.setState({ worlds: [] });
+    useWorlds.setState({ worlds: [], currentWorld: '' });
     useWorlds.persist.clearStorage();
     localStorage.clear();
   });
