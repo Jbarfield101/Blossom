@@ -720,6 +720,11 @@ pub async fn run_lofi_song<R: Runtime>(
     if !script.exists() {
         return Err(format!("Script not found at {}", script.display()));
     }
+    let python_dir = script
+        .parent()
+        .and_then(|p| p.parent())
+        .map(|p| p.to_path_buf())
+        .ok_or_else(|| "invalid script path".to_string())?;
 
     // Ensure the output directory exists
     let out_dir = PathBuf::from(&spec.out_dir);
@@ -735,8 +740,10 @@ pub async fn run_lofi_song<R: Runtime>(
 
     // Launch Python
     let mut cmd = PCommand::new(&py);
-    cmd.arg("-u")
-        .arg(&script)
+    cmd.current_dir(python_dir)
+        .arg("-u")
+        .arg("-m")
+        .arg("lofi.renderer")
         .arg("--song-json")
         .arg(json_str)
         .arg("--out")
@@ -1447,7 +1454,6 @@ fn extract_intent(content: &str) -> String {
         _ => "chat".to_string(),
     }
 }
-
 
 #[tauri::command]
 pub async fn stocks_fetch<R: Runtime>(
