@@ -530,9 +530,22 @@ export default function NpcForm({ world }: Props) {
         </Grid>
 
         <Grid item xs={12}>
-          <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>
-            Submit
-          </Button>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
+            <Button
+              type="submit"
+              variant="contained"
+              size="large"
+              sx={{
+                mt: 2,
+                px: 4,
+                py: 1.5,
+                fontWeight: "bold",
+                "&:hover,&:focus": { boxShadow: "0 0 8px #0f0" },
+              }}
+            >
+              Submit
+            </Button>
+          </Box>
         </Grid>
         {result && (
           <Grid item xs={12}>

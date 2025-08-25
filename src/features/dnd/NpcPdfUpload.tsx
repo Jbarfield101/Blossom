@@ -79,6 +79,13 @@ export default function NpcPdfUpload({ world }: Props) {
         onClick={handleUpload}
         disabled={!world || status === "uploading"}
         variant="contained"
+        size="large"
+        sx={{
+          px: 4,
+          py: 1.5,
+          fontWeight: "bold",
+          "&:hover,&:focus": { boxShadow: "0 0 8px #0f0" },
+        }}
       >
         Upload NPC PDF
       </Button>
