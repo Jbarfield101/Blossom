@@ -10,7 +10,7 @@ use serde_json::Value;
 use chrono::{DateTime, Utc};
 use sysinfo::System;
 use tauri::async_runtime::{self, JoinHandle};
-use tauri::{AppHandle, Emitter, Manager, Wry};
+use tauri::{AppHandle, Emitter, Wry};
 use tokio::sync::{mpsc, Mutex, Semaphore};
 use tokio::time::sleep;
 
@@ -453,7 +453,7 @@ impl TaskQueue {
                                             message: "no app handle".into(),
                                         })?;
                                     let window = app
-                                        .get_window("main")
+                                        .get_webview_window("main")
                                         .ok_or_else(|| TaskError {
                                             code: PdfErrorCode::Unknown,
                                             message: "no main window".into(),
