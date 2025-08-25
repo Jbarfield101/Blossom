@@ -309,6 +309,17 @@ describe('SongForm', () => {
     expect(call[1].spec.instruments).toEqual(['harp', 'lute', 'pan flute']);
   });
 
+  it('updates lead instrument when adding a lead-capable instrument', () => {
+    render(<SongForm />);
+    openSection('vibe-section');
+
+    expect(screen.getByRole('radio', { name: 'synth' })).toBeChecked();
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'flute' }));
+
+    expect(screen.getByRole('radio', { name: 'flute' })).toBeChecked();
+  });
+
   it('passes lead instrument in spec', async () => {
     (openDialog as any).mockResolvedValue('/tmp/out');
     (invoke as any).mockResolvedValue('');
