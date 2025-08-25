@@ -1166,19 +1166,9 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
     # --- ambience rotation
     amb_list = motif.get("ambience") or []
     if not amb_list:
-        amb_list = random.choice(
-            [
-                ["rain"],
-                ["cafe"],
-                ["rain", "cafe"],
-                ["vinyl"],
-                ["street"],
-                ["forest"],
-                ["train"],
-                ["fireplace"],
-                ["ocean"],
-            ]
-        )
+        # Leave amb_list empty when no ambience is specified so that
+        # no ambience is mixed into the render.
+        amb_list = []
 
     amb_level = float(np.clip(motif.get("ambience_level", 0.5), 0.0, 1.0))
 
