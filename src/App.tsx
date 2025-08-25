@@ -11,6 +11,7 @@ import GeneralChat from "./pages/GeneralChat";
 import WorldBuilder from "./pages/WorldBuilder";
 import NPCMaker from "./pages/NPCMaker";
 import NPCList from "./pages/NPCList";
+import NPCDetail from "./pages/NPCDetail";
 import Laser from "./pages/Laser";
 import Lofi from "./pages/Lofi";
 import NotFound from "./pages/NotFound";
@@ -42,6 +43,7 @@ export default function App() {
         <Route path="/dnd/world-builder" element={<WorldBuilder />} />
         <Route path="/dnd/npcs-maker" element={<NPCMaker />} />
         <Route path="/dnd/npcs-library" element={<NPCList />} />
+        <Route path="/dnd/npcs/:id" element={<NPCDetail />} />
         <Route path="/laser" element={<Laser />} />
         <Route path="/fusion" element={<Fusion />} />
         <Route path="/construction" element={<Construction />} />

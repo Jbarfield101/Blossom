@@ -1,25 +1,18 @@
 import { useEffect, useState, useMemo } from 'react';
 import {
-  Grid,
-  Card,
-  CardContent,
-  CardActions,
-  CardMedia,
   Typography,
-  IconButton,
   Stack,
   TextField,
   Button,
+  List,
+  ListItemButton,
+  ListItemText,
 } from '@mui/material';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import VolumeUpIcon from '@mui/icons-material/VolumeUp';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import ShareIcon from '@mui/icons-material/Share';
 import AddIcon from '@mui/icons-material/Add';
 import Center from './_Center';
 import GenerateNPCModal from '../components/GenerateNPCModal';
-import { useNPCs, NPC } from '../store/npcs';
-import { invoke } from '@tauri-apps/api/core';
+import { useNPCs } from '../store/npcs';
+import { Link } from 'react-router-dom';
 
 export default function NPCList() {
   const npcs = useNPCs((s) => s.npcs);
@@ -44,22 +37,6 @@ export default function NPCList() {
       return true;
     });
   }, [npcs, tagFilter, roleFilter, crFilter, localeFilter]);
-
-  function copyJson(npc: NPC) {
-    navigator.clipboard.writeText(JSON.stringify(npc, null, 2));
-  }
-
-  function copyDiscord(npc: NPC) {
-    navigator.clipboard.writeText(JSON.stringify(npc));
-  }
-
-  function openPdf(npc: NPC) {
-    invoke('generate_npc_pdf', { npc });
-  }
-
-  function playVoice(npc: NPC) {
-    invoke('play_voice', { text: npc.name });
-  }
 
   return (
     <Center>
@@ -101,42 +78,18 @@ export default function NPCList() {
         {filtered.length === 0 ? (
           <Typography>No NPCs found.</Typography>
         ) : (
-          <Grid container spacing={2}>
+          <List>
             {filtered.map((npc) => (
-              <Grid item xs={12} sm={6} md={4} key={npc.id}>
-                <Card>
-                  {npc.portrait && (
-                    <CardMedia
-                      component="img"
-                      height="140"
-                      image={npc.portrait}
-                      alt={npc.name}
-                    />
-                  )}
-                  <CardContent>
-                    <Typography variant="h6">{npc.name}</Typography>
-                    <Typography variant="body2">
-                      {npc.race} {npc.class}
-                    </Typography>
-                  </CardContent>
-                  <CardActions>
-                    <IconButton onClick={() => openPdf(npc)}>
-                      <PictureAsPdfIcon />
-                    </IconButton>
-                    <IconButton onClick={() => playVoice(npc)}>
-                      <VolumeUpIcon />
-                    </IconButton>
-                    <IconButton onClick={() => copyJson(npc)}>
-                      <ContentCopyIcon />
-                    </IconButton>
-                    <IconButton onClick={() => copyDiscord(npc)}>
-                      <ShareIcon />
-                    </IconButton>
-                  </CardActions>
-                </Card>
-              </Grid>
+              <ListItemButton key={npc.id}>
+                <Link
+                  to={`/dnd/npcs/${npc.id}`}
+                  style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}
+                >
+                  <ListItemText primary={npc.name} />
+                </Link>
+              </ListItemButton>
             ))}
-          </Grid>
+          </List>
         )}
       </Stack>
       <GenerateNPCModal open={modalOpen} onClose={() => setModalOpen(false)} />
