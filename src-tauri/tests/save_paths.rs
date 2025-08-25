@@ -11,10 +11,6 @@ async fn save_paths_writes_config() {
     save_paths(
         Some("python".into()),
         Some("comfy".into()),
-        Some("model".into()),
-        None,
-        Some("speaker".into()),
-        None,
     )
     .await
     .unwrap();
@@ -23,6 +19,4 @@ async fn save_paths_writes_config() {
     let data: Value = serde_json::from_str(&fs::read_to_string(cfg_path).unwrap()).unwrap();
     assert_eq!(data["python_path"], "python");
     assert_eq!(data["comfy_path"], "comfy");
-    assert_eq!(data["tts_model_path"], "model");
-    assert_eq!(data["tts_speaker"], "speaker");
 }
