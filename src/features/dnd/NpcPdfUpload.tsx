@@ -16,8 +16,12 @@ export default function NpcPdfUpload({ world }: Props) {
   const tasks = useTasks((s) => s.tasks);
   const loadNPCs = useNPCs((s) => s.loadNPCs);
   const [taskId, setTaskId] = useState<number | null>(null);
-  const [status, setStatus] = useState<"idle" | "uploading" | "completed">("idle");
+  const [status, setStatus] = useState<"idle" | "uploading" | "completed" | "failed">(
+    "idle"
+  );
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [showLog, setShowLog] = useState(false);
 
   async function handleUpload() {
@@ -62,6 +66,12 @@ export default function NpcPdfUpload({ world }: Props) {
         setTaskId(null);
         setShowLog(true);
       })();
+    } else if (task && task.status === "failed") {
+      setStatus("failed");
+      setError(task.error ?? null);
+      setErrorCode(task.errorCode ?? null);
+      setSnackbarOpen(true);
+      setTaskId(null);
     }
   }, [taskId, tasks, world, loadNPCs]);
 
@@ -69,7 +79,7 @@ export default function NpcPdfUpload({ world }: Props) {
 
   function handleSnackbarClose() {
     setSnackbarOpen(false);
-    if (status === "completed") setStatus("idle");
+    if (status === "completed" || status === "failed") setStatus("idle");
   }
 
   return (
@@ -111,11 +121,17 @@ export default function NpcPdfUpload({ world }: Props) {
       >
         <Alert
           onClose={handleSnackbarClose}
-          severity={status === "completed" ? "success" : "info"}
+          severity={
+            status === "completed" ? "success" : status === "failed" ? "error" : "info"
+          }
           sx={{ width: "100%" }}
         >
           {status === "completed"
             ? "NPCs imported successfully!"
+            : status === "failed"
+            ? `Failed to import NPC PDF (${errorCode ?? "unknown"}): ${
+                error ?? ""
+              }`
             : "Uploading NPC PDF..."}
         </Alert>
       </Snackbar>

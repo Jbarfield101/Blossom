@@ -16,12 +16,13 @@ export interface Task {
   progress: number;
   result?: unknown;
   error?: string;
+  errorCode?: string;
 }
 
 interface RawTask {
   id: number;
   label: string;
-  status: string | { Failed: string };
+  status: string | { Failed: { code: string; message: string } };
   progress: number;
   result?: unknown;
 }
@@ -42,7 +43,8 @@ function normalize(raw: RawTask): Task {
     status: 'failed',
     progress: raw.progress,
     result: raw.result,
-    error: raw.status.Failed,
+    error: raw.status.Failed.message,
+    errorCode: raw.status.Failed.code,
   };
 }
 

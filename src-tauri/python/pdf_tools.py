@@ -40,6 +40,7 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 DND_DIR = ROOT_DIR / "dnd"
 NPC_SPEC_DIR = ROOT_DIR / "npc" / "specs"
 QUEST_DIR = DND_DIR / "quests"
+TSX_BIN = ROOT_DIR / "node_modules" / ".bin" / ("tsx.cmd" if os.name == "nt" else "tsx")
 
 
 def ensure_dirs() -> None:
@@ -453,15 +454,17 @@ def _llm_extract(text: str) -> str:
 def _validate_entry(kind: str, payload: dict) -> bool:
     """Validate payload using zod schemas via a node script."""
     script = ROOT_DIR / "scripts" / "validate-dnd.ts"
+    if not TSX_BIN.exists():
+        return False
     try:
-        res = subprocess.run(
-            ["npx", "tsx", str(script), kind, json.dumps(payload)],
+        subprocess.run(
+            [str(TSX_BIN), str(script), kind, json.dumps(payload)],
             capture_output=True,
             text=True,
             check=True,
         )
-        return res.returncode == 0
-    except Exception:
+        return True
+    except (subprocess.SubprocessError, OSError):
         return False
 
 
@@ -483,9 +486,11 @@ def _save_entry(kind: str, payload: dict) -> None:
 
 def _run_reindex() -> None:
     script = ROOT_DIR / "scripts" / "reindex.ts"
+    if not TSX_BIN.exists():
+        return
     try:
-        subprocess.run(["npx", "tsx", str(script)], check=False)
-    except Exception:
+        subprocess.run([str(TSX_BIN), str(script)], check=False)
+    except OSError:
         pass
 
 

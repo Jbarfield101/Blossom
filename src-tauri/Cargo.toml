@@ -46,4 +46,5 @@ png = "0.17"
 
 [dev-dependencies]
 tauri = { version = "2", features = ["protocol-asset", "test"] }
+tempfile = "3"
 
