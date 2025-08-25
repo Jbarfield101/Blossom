@@ -28,6 +28,21 @@ ComfyUI launcher (no extra crate)
 static COMFY_CHILD: OnceLock<Mutex<Option<Child>>> = OnceLock::new();
 static OLLAMA_CHILD: OnceLock<Mutex<Option<Child>>> = OnceLock::new();
 
+#[cfg(test)]
+pub fn __set_comfy_child(child: Child) {
+    let mut lock = COMFY_CHILD.get_or_init(|| Mutex::new(None)).lock().unwrap();
+    *lock = Some(child);
+}
+
+#[cfg(test)]
+pub fn __has_comfy_child() -> bool {
+    COMFY_CHILD
+        .get_or_init(|| Mutex::new(None))
+        .lock()
+        .unwrap()
+        .is_some()
+}
+
 // Reuse our python path from below
 fn comfy_python() -> PathBuf {
     conda_python()
@@ -102,8 +117,22 @@ fn spawn_with_logging<R: Runtime>(
 
 #[tauri::command]
 pub async fn comfy_status() -> Result<bool, String> {
-    let lock = COMFY_CHILD.get_or_init(|| Mutex::new(None)).lock().unwrap();
-    Ok(lock.as_ref().is_some())
+    let mut lock = COMFY_CHILD.get_or_init(|| Mutex::new(None)).lock().unwrap();
+    if let Some(child) = lock.as_mut() {
+        match child.try_wait() {
+            Ok(Some(_)) => {
+                *lock = None;
+                Ok(false)
+            }
+            Ok(None) => Ok(true),
+            Err(e) => {
+                *lock = None;
+                Err(e.to_string())
+            }
+        }
+    } else {
+        Ok(false)
+    }
 }
 
 #[tauri::command]
