@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useReducer, useState } from "react";
 import {
   Typography,
   Button,
@@ -12,34 +12,72 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import FormErrorText from "./FormErrorText";
-import { z } from "zod";
 import { zNpc } from "../../dnd/schemas/npc";
 import { NpcData } from "./types";
 import NpcPdfUpload from "./NpcPdfUpload";
 import StyledTextField from "./StyledTextField";
+
+interface FormState {
+  name: string;
+  species: string;
+  role: string;
+  alignment: string;
+  playerCharacter: boolean;
+  backstory: string;
+  location: string;
+  hooks: string;
+  quirks: string;
+  tags: string;
+  portrait: string;
+  icon: string;
+  statblock: string;
+  sections: string;
+  voice: {
+    style: string;
+    provider: string;
+    preset: string;
+  };
+}
+
+const initialState: FormState = {
+  name: "",
+  species: "",
+  role: "",
+  alignment: "",
+  playerCharacter: false,
+  backstory: "",
+  location: "",
+  hooks: "",
+  quirks: "",
+  tags: "",
+  portrait: "",
+  icon: "",
+  statblock: "{}",
+  sections: "{}",
+  voice: { style: "", provider: "", preset: "" },
+};
+
+type Action =
+  | { type: "SET_FIELD"; field: keyof Omit<FormState, "voice">; value: string | boolean }
+  | { type: "SET_VOICE"; field: keyof FormState["voice"]; value: string };
+
+function reducer(state: FormState, action: Action): FormState {
+  switch (action.type) {
+    case "SET_FIELD":
+      return { ...state, [action.field]: action.value } as FormState;
+    case "SET_VOICE":
+      return { ...state, voice: { ...state.voice, [action.field]: action.value } };
+    default:
+      return state;
+  }
+}
 
 interface Props {
   world: string;
 }
 
 export default function NpcForm({ world }: Props) {
-  const [name, setName] = useState("");
-  const [species, setSpecies] = useState("");
-  const [role, setRole] = useState("");
-  const [alignment, setAlignment] = useState("");
-  const [playerCharacter, setPlayerCharacter] = useState(false);
-  const [backstory, setBackstory] = useState("");
-  const [location, setLocation] = useState("");
-  const [hooks, setHooks] = useState("");
-  const [quirks, setQuirks] = useState("");
-  const [voiceStyle, setVoiceStyle] = useState("");
-  const [voiceProvider, setVoiceProvider] = useState("");
-  const [voicePreset, setVoicePreset] = useState("");
-  const [portrait, setPortrait] = useState("");
-  const [icon, setIcon] = useState("");
-  const [statblock, setStatblock] = useState("{}");
-  const [sections, setSections] = useState("{}");
-  const [tags, setTags] = useState("");
+  const [state, dispatch] = useReducer(reducer, initialState);
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [result, setResult] = useState<NpcData | null>(null);
 
@@ -48,7 +86,7 @@ export default function NpcForm({ world }: Props) {
     setErrors({});
     let parsedStatblock: Record<string, unknown> = {};
     try {
-      parsedStatblock = JSON.parse(statblock || "{}");
+      parsedStatblock = JSON.parse(state.statblock || "{}");
     } catch {
       setErrors({ statblock: "Invalid JSON" });
       setResult(null);
@@ -57,7 +95,7 @@ export default function NpcForm({ world }: Props) {
 
     let parsedSections: Record<string, unknown> = {};
     try {
-      parsedSections = JSON.parse(sections || "{}");
+      parsedSections = JSON.parse(state.sections || "{}");
     } catch {
       setErrors({ sections: "Invalid JSON" });
       setResult(null);
@@ -66,39 +104,39 @@ export default function NpcForm({ world }: Props) {
 
     const data: NpcData = {
       id: crypto.randomUUID(),
-      name,
-      species,
-      role,
-      alignment,
-      playerCharacter,
-      backstory: backstory || undefined,
-      location: location || undefined,
-      hooks: hooks.split(",").map((h) => h.trim()).filter(Boolean),
-      quirks: quirks ? quirks.split(",").map((q) => q.trim()).filter(Boolean) : undefined,
+      name: state.name,
+      species: state.species,
+      role: state.role,
+      alignment: state.alignment,
+      playerCharacter: state.playerCharacter,
+      backstory: state.backstory || undefined,
+      location: state.location || undefined,
+      hooks: state.hooks.split(",").map((h) => h.trim()).filter(Boolean),
+      quirks: state.quirks
+        ? state.quirks.split(",").map((q) => q.trim()).filter(Boolean)
+        : undefined,
       voice: {
-        style: voiceStyle,
-        provider: voiceProvider,
-        preset: voicePreset,
+        style: state.voice.style,
+        provider: state.voice.provider,
+        preset: state.voice.preset,
       },
-      portrait: portrait || "placeholder.png",
-      icon: icon || "placeholder-icon.png",
+      portrait: state.portrait || "placeholder.png",
+      icon: state.icon || "placeholder-icon.png",
       sections: Object.keys(parsedSections).length ? parsedSections : undefined,
       statblock: parsedStatblock,
-      tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+      tags: state.tags.split(",").map((t) => t.trim()).filter(Boolean),
     };
 
-    try {
-      const parsed = zNpc.parse(data);
-      setResult(parsed);
-    } catch (err) {
+    const parsed = zNpc.safeParse(data);
+    if (parsed.success) {
+      setResult(parsed.data);
+    } else {
       setResult(null);
-      if (err instanceof z.ZodError) {
-        const fieldErrors: Record<string, string | null> = {};
-        err.issues.forEach((issue) => {
-          fieldErrors[issue.path.join(".")] = issue.message;
-        });
-        setErrors(fieldErrors);
-      }
+      const fieldErrors: Record<string, string | null> = {};
+      parsed.error.issues.forEach((issue) => {
+        fieldErrors[issue.path.join(".")] = issue.message;
+      });
+      setErrors(fieldErrors);
     }
   };
   return (
@@ -129,9 +167,9 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={8}>
               <StyledTextField
                 id="name"
-                value={name}
+                value={state.name}
                 onChange={(e) => {
-                  setName(e.target.value);
+                  dispatch({ type: "SET_FIELD", field: "name", value: e.target.value });
                   setErrors((prev) => ({ ...prev, name: null }));
                 }}
                 fullWidth
@@ -151,9 +189,9 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={8}>
               <StyledTextField
                 id="species"
-                value={species}
+                value={state.species}
                 onChange={(e) => {
-                  setSpecies(e.target.value);
+                  dispatch({ type: "SET_FIELD", field: "species", value: e.target.value });
                   setErrors((prev) => ({ ...prev, species: null }));
                 }}
                 fullWidth
@@ -175,9 +213,9 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={8}>
               <StyledTextField
                 id="role"
-                value={role}
+                value={state.role}
                 onChange={(e) => {
-                  setRole(e.target.value);
+                  dispatch({ type: "SET_FIELD", field: "role", value: e.target.value });
                   setErrors((prev) => ({ ...prev, role: null }));
                 }}
                 fullWidth
@@ -197,9 +235,9 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={8}>
               <StyledTextField
                 id="alignment"
-                value={alignment}
+                value={state.alignment}
                 onChange={(e) => {
-                  setAlignment(e.target.value);
+                  dispatch({ type: "SET_FIELD", field: "alignment", value: e.target.value });
                   setErrors((prev) => ({ ...prev, alignment: null }));
                 }}
                 fullWidth
@@ -223,8 +261,14 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={8}>
               <Checkbox
                 id="player-character"
-                checked={playerCharacter}
-                onChange={(e) => setPlayerCharacter(e.target.checked)}
+                checked={state.playerCharacter}
+                onChange={(e) =>
+                  dispatch({
+                    type: "SET_FIELD",
+                    field: "playerCharacter",
+                    value: e.target.checked,
+                  })
+                }
               />
             </Grid>
           </Grid>
@@ -245,8 +289,10 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={8}>
               <StyledTextField
                 id="backstory"
-                value={backstory}
-                onChange={(e) => setBackstory(e.target.value)}
+                value={state.backstory}
+                onChange={(e) =>
+                  dispatch({ type: "SET_FIELD", field: "backstory", value: e.target.value })
+                }
                 fullWidth
                 margin="normal"
               />
@@ -259,8 +305,10 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={8}>
               <StyledTextField
                 id="location"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
+                value={state.location}
+                onChange={(e) =>
+                  dispatch({ type: "SET_FIELD", field: "location", value: e.target.value })
+                }
                 fullWidth
                 margin="normal"
               />
@@ -273,9 +321,9 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={8}>
               <StyledTextField
                 id="hooks"
-                value={hooks}
+                value={state.hooks}
                 onChange={(e) => {
-                  setHooks(e.target.value);
+                  dispatch({ type: "SET_FIELD", field: "hooks", value: e.target.value });
                   setErrors((prev) => ({ ...prev, hooks: null }));
                 }}
                 fullWidth
@@ -295,8 +343,10 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={8}>
               <StyledTextField
                 id="quirks"
-                value={quirks}
-                onChange={(e) => setQuirks(e.target.value)}
+                value={state.quirks}
+                onChange={(e) =>
+                  dispatch({ type: "SET_FIELD", field: "quirks", value: e.target.value })
+                }
                 fullWidth
                 margin="normal"
               />
@@ -309,9 +359,9 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={8}>
               <StyledTextField
                 id="tags"
-                value={tags}
+                value={state.tags}
                 onChange={(e) => {
-                  setTags(e.target.value);
+                  dispatch({ type: "SET_FIELD", field: "tags", value: e.target.value });
                   setErrors((prev) => ({ ...prev, tags: null }));
                 }}
                 fullWidth
@@ -341,8 +391,10 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={8}>
               <StyledTextField
                 id="portrait"
-                value={portrait}
-                onChange={(e) => setPortrait(e.target.value)}
+                value={state.portrait}
+                onChange={(e) =>
+                  dispatch({ type: "SET_FIELD", field: "portrait", value: e.target.value })
+                }
                 fullWidth
                 margin="normal"
               />
@@ -355,8 +407,10 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={8}>
               <StyledTextField
                 id="icon"
-                value={icon}
-                onChange={(e) => setIcon(e.target.value)}
+                value={state.icon}
+                onChange={(e) =>
+                  dispatch({ type: "SET_FIELD", field: "icon", value: e.target.value })
+                }
                 fullWidth
                 margin="normal"
               />
@@ -384,9 +438,9 @@ export default function NpcForm({ world }: Props) {
                 <Grid item xs={8}>
                   <StyledTextField
                     id="voice-style"
-                    value={voiceStyle}
+                    value={state.voice.style}
                     onChange={(e) => {
-                      setVoiceStyle(e.target.value);
+                      dispatch({ type: "SET_VOICE", field: "style", value: e.target.value });
                       setErrors((prev) => ({ ...prev, ["voice.style"]: null }));
                     }}
                     fullWidth
@@ -410,9 +464,9 @@ export default function NpcForm({ world }: Props) {
                 <Grid item xs={8}>
                   <StyledTextField
                     id="voice-provider"
-                    value={voiceProvider}
+                    value={state.voice.provider}
                     onChange={(e) => {
-                      setVoiceProvider(e.target.value);
+                      dispatch({ type: "SET_VOICE", field: "provider", value: e.target.value });
                       setErrors((prev) => ({
                         ...prev,
                         ["voice.provider"]: null,
@@ -441,9 +495,9 @@ export default function NpcForm({ world }: Props) {
                 <Grid item xs={8}>
                   <StyledTextField
                     id="voice-preset"
-                    value={voicePreset}
+                    value={state.voice.preset}
                     onChange={(e) => {
-                      setVoicePreset(e.target.value);
+                      dispatch({ type: "SET_VOICE", field: "preset", value: e.target.value });
                       setErrors((prev) => ({ ...prev, ["voice.preset"]: null }));
                     }}
                     fullWidth
@@ -476,9 +530,9 @@ export default function NpcForm({ world }: Props) {
                 <Grid item xs={8}>
                   <StyledTextField
                     id="statblock"
-                    value={statblock}
+                    value={state.statblock}
                     onChange={(e) => {
-                      setStatblock(e.target.value);
+                      dispatch({ type: "SET_FIELD", field: "statblock", value: e.target.value });
                       setErrors((prev) => ({ ...prev, statblock: null }));
                     }}
                     fullWidth
@@ -503,9 +557,9 @@ export default function NpcForm({ world }: Props) {
                 <Grid item xs={8}>
                   <StyledTextField
                     id="sections"
-                    value={sections}
+                    value={state.sections}
                     onChange={(e) => {
-                      setSections(e.target.value);
+                      dispatch({ type: "SET_FIELD", field: "sections", value: e.target.value });
                       setErrors((prev) => ({ ...prev, sections: null }));
                     }}
                     fullWidth
