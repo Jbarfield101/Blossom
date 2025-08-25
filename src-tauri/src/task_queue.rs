@@ -2,17 +2,18 @@ use std::collections::{HashMap, HashSet};
 use std::io::{BufRead, BufReader};
 use std::process::{Command as PCommand, Stdio};
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex as StdMutex};
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sysinfo::System;
 use tauri::async_runtime::{self, JoinHandle};
+use tauri::{AppHandle, Manager, Wry};
 use tokio::sync::{mpsc, Mutex, Semaphore};
 use tokio::time::sleep;
 
-use crate::commands::ShortSpec;
+use crate::commands::{run_lofi_song, AlbumRequest, ShortSpec, SongSpec};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TaskCommand {
@@ -59,6 +60,9 @@ pub enum TaskCommand {
         script: String,
         path: String,
         world: String,
+    },
+    GenerateAlbum {
+        meta: AlbumRequest,
     },
     GenerateShort {
         spec: ShortSpec,
@@ -115,6 +119,7 @@ pub struct TaskQueue {
     _handles: Arc<Mutex<HashMap<u64, JoinHandle<Result<Value, TaskError>>>>>,
     _cancelled: Arc<Mutex<HashSet<u64>>>,
     limits: Arc<Mutex<ResourceLimits>>,
+    app: Arc<StdMutex<Option<AppHandle<Wry>>>>,
 }
 
 #[derive(Clone)]
@@ -133,10 +138,12 @@ impl TaskQueue {
             cpu: cpu_limit,
             memory: memory_limit,
         }));
+        let app = Arc::new(StdMutex::new(None));
         let tasks_worker = tasks.clone();
         let _handles_worker = _handles.clone();
         let _cancelled_worker = _cancelled.clone();
         let limits_worker = limits.clone();
+        let app_worker = app.clone();
         async_runtime::spawn(async move {
             let semaphore = Arc::new(Semaphore::new(concurrency));
             while let Some(msg) = rx.recv().await {
@@ -156,6 +163,7 @@ impl TaskQueue {
                         let limits_clone = limits_worker.clone();
                         let _cancelled_clone = _cancelled_worker.clone();
                         let command = task.command.clone();
+                        let app_handle = app_worker.clone();
                         let permit = semaphore.clone().acquire_owned().await.unwrap();
                         let id = task.id;
                         let handle = async_runtime::spawn(async move {
@@ -424,12 +432,72 @@ impl TaskQueue {
                                         })
                                     }
                                 }
+                                TaskCommand::GenerateAlbum { meta } => {
+                                    let app = app_handle
+                                        .lock()
+                                        .unwrap()
+                                        .clone()
+                                        .ok_or_else(|| TaskError {
+                                            code: PdfErrorCode::Unknown,
+                                            message: "no app handle".into(),
+                                        })?;
+                                    let window = app
+                                        .get_webview_window("main")
+                                        .ok_or_else(|| TaskError {
+                                            code: PdfErrorCode::Unknown,
+                                            message: "no main window".into(),
+                                        })?;
+                                    let specs = meta.specs.ok_or_else(|| TaskError {
+                                        code: PdfErrorCode::Unknown,
+                                        message: "missing specs".into(),
+                                    })?;
+                                    let track_total = specs.len() as f32;
+                                    let mut tracks = Vec::new();
+                                    for (i, mut spec) in specs.into_iter().enumerate() {
+                                        if let Some(names) = &meta.track_names {
+                                            if let Some(n) = names.get(i) {
+                                                spec.title = n.clone();
+                                            }
+                                        }
+                                        if let Some(album) = &meta.album_name {
+                                            spec.album = Some(album.clone());
+                                        }
+                                        if let Some(dir) = &meta.out_dir {
+                                            spec.out_dir = dir.clone();
+                                        }
+                                        let path = run_lofi_song(window.clone(), app.clone(), spec)
+                                            .await
+                                            .map_err(|e| TaskError {
+                                                code: PdfErrorCode::ExecutionFailed,
+                                                message: e,
+                                            })?;
+                                        tracks.push(path);
+                                        let mut snapshot = None;
+                                        {
+                                            let mut map = tasks_clone.lock().await;
+                                            if let Some(t) = map.get_mut(&id) {
+                                                t.progress = (i as f32 + 1.0) / track_total;
+                                                snapshot = Some(t.clone());
+                                            }
+                                        }
+                                        if let Some(task) = snapshot {
+                                            let _ = app.emit_all("task_updated", task);
+                                        }
+                                        if _cancelled_clone.lock().await.contains(&id) {
+                                            return Err(TaskError {
+                                                code: PdfErrorCode::Unknown,
+                                                message: "cancelled".into(),
+                                            });
+                                        }
+                                    }
+                                    Ok(serde_json::json!({ "tracks": tracks }))
+                                }
                                 TaskCommand::GenerateShort { spec } => {
                                     println!("Generating short: {:?}", spec);
                                     Ok(Value::String("ok".into()))
                                 }
                             };
-                            {
+                            let snapshot = {
                                 let mut map = tasks_clone.lock().await;
                                 if let Some(t) = map.get_mut(&id) {
                                     match &res {
@@ -445,6 +513,14 @@ impl TaskQueue {
                                             };
                                         }
                                     }
+                                    Some(t.clone())
+                                } else {
+                                    None
+                                }
+                            };
+                            if let Some(task) = snapshot {
+                                if let Some(app) = app_handle.lock().unwrap().clone() {
+                                    let _ = app.emit_all("task_updated", task);
                                 }
                             }
                             drop(permit);
@@ -470,6 +546,7 @@ impl TaskQueue {
             _handles,
             _cancelled,
             limits,
+            app,
         }
     }
 
@@ -504,5 +581,10 @@ impl TaskQueue {
         let mut l = self.limits.lock().await;
         l.cpu = cpu;
         l.memory = memory;
+    }
+
+    pub fn set_app_handle(&self, handle: AppHandle<Wry>) {
+        let mut h = self.app.lock().unwrap();
+        *h = Some(handle);
     }
 }

@@ -13,6 +13,11 @@ fn main() {
     let queue = TaskQueue::new(1, 90.0, 90.0);
     tauri::Builder::default()
         .manage(queue)
+        .setup(|app| {
+            let handle = app.handle();
+            app.state::<TaskQueue>().set_app_handle(handle);
+            Ok(())
+        })
         .plugin(tauri_plugin_dialog::init())
         .plugin(
             SqlBuilder::default()

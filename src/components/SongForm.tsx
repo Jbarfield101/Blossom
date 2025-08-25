@@ -397,6 +397,7 @@ export default function SongForm() {
 
   const tasks = useTasks((s) => s.tasks);
   const fetchStatus = useTasks((s) => s.fetchStatus);
+  const enqueueTask = useTasks((s) => s.enqueueTask);
 
   useEffect(() => {
     const running = Object.values(tasks).find((t) =>
@@ -745,17 +746,19 @@ export default function SongForm() {
       const specs = Array.from({ length: trackCount }, (_, i) =>
         makeSpecForIndex(i)
       );
-      const res: { album_dir: string } = await invoke("generate_album", {
-        meta: {
-          track_count: trackCount,
-          title_base: titleBase,
-          album_name: albumName,
-          track_names: trackNames,
-          out_dir: outDir,
-          specs,
+      await enqueueTask("Music Generation", {
+        GenerateAlbum: {
+          meta: {
+            track_count: trackCount,
+            title_base: titleBase,
+            album_name: albumName,
+            track_names: trackNames,
+            out_dir: outDir,
+            specs,
+          },
         },
       });
-      setOutDir(res.album_dir);
+      setOutDir(outDir);
     } catch (e: any) {
       const message = e?.message || String(e);
       setErr(message);

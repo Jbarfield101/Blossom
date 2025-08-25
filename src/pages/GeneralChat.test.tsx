@@ -4,13 +4,19 @@ import GeneralChat, { SYSTEM_PROMPT } from './GeneralChat';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { useUsers, defaultModules } from '../features/users/useUsers';
+import { useTasks } from '../store/tasks';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 vi.mock('@tauri-apps/api/event', () => ({ listen: vi.fn() }));
+const enqueueTask = vi.fn(() => Promise.resolve(1));
+vi.mock('../store/tasks', () => ({
+  useTasks: (selector: any) => selector({ enqueueTask, tasks: {}, fetchStatus: vi.fn() }),
+}));
 
 describe('GeneralChat', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    enqueueTask.mockResolvedValue(1);
     localStorage.clear();
     useUsers.setState({
       users: {
@@ -156,10 +162,9 @@ describe('GeneralChat', () => {
   });
 
   it('handles music intent', async () => {
-    (invoke as any).mockImplementation((cmd: string, args: any) => {
+    (invoke as any).mockImplementation((cmd: string) => {
       if (cmd === 'start_ollama') return Promise.resolve();
       if (cmd === 'detect_intent') return Promise.resolve('music');
-      if (cmd === 'generate_album') return Promise.resolve();
       return Promise.resolve();
     });
     (listen as any).mockImplementation(() => Promise.resolve(() => {}));
@@ -173,11 +178,14 @@ describe('GeneralChat', () => {
     fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
 
     await waitFor(() => {
-      const genCall = (invoke as any).mock.calls.find(
-        ([cmd]: [string]) => cmd === 'generate_album'
-      );
-      expect(genCall[1]).toEqual({
-        meta: { track_count: 2, title_base: 'My Song', template: 'Classic Lofi' },
+      expect(enqueueTask).toHaveBeenCalledWith('Music Generation', {
+        GenerateAlbum: {
+          meta: {
+            track_count: 2,
+            title_base: 'My Song',
+            template: 'Classic Lofi',
+          },
+        },
       });
     });
     expect(
@@ -213,10 +221,9 @@ describe('GeneralChat', () => {
   });
 
   it('classifies natural music request', async () => {
-    (invoke as any).mockImplementation((cmd: string, args: any) => {
+    (invoke as any).mockImplementation((cmd: string) => {
       if (cmd === 'start_ollama') return Promise.resolve();
       if (cmd === 'detect_intent') return Promise.resolve('music');
-      if (cmd === 'generate_album') return Promise.resolve();
       return Promise.resolve();
     });
     (listen as any).mockImplementation(() => Promise.resolve(() => {}));
@@ -236,10 +243,7 @@ describe('GeneralChat', () => {
       expect(detect[1]).toEqual({
         query: 'generate a chill song with three tracks',
       });
-      const genCalls = (invoke as any).mock.calls.filter(
-        ([cmd]: [string]) => cmd === 'generate_album'
-      );
-      expect(genCalls).toHaveLength(0);
+      expect(enqueueTask).not.toHaveBeenCalled();
     });
     expect(
       await screen.findByText(/Please specify template and track count/)
@@ -247,10 +251,9 @@ describe('GeneralChat', () => {
   });
 
   it('handles music prompt generator flow', async () => {
-    (invoke as any).mockImplementation((cmd: string, args: any) => {
+    (invoke as any).mockImplementation((cmd: string) => {
       if (cmd === 'start_ollama') return Promise.resolve();
       if (cmd === 'detect_intent') return Promise.resolve('music');
-      if (cmd === 'generate_album') return Promise.resolve();
       return Promise.resolve();
     });
     (listen as any).mockImplementation(() => Promise.resolve(() => {}));
@@ -272,11 +275,14 @@ describe('GeneralChat', () => {
         query: 'calm flute template="Classic Lofi" tracks=2',
       })
     );
-    const genCall = (invoke as any).mock.calls.find(
-      ([cmd]: [string]) => cmd === 'generate_album'
-    );
-    expect(genCall[1]).toEqual({
-      meta: { track_count: 2, title_base: 'calm flute', template: 'Classic Lofi' },
+    expect(enqueueTask).toHaveBeenCalledWith('Music Generation', {
+      GenerateAlbum: {
+        meta: {
+          track_count: 2,
+          title_base: 'calm flute',
+          template: 'Classic Lofi',
+        },
+      },
     });
   });
 });

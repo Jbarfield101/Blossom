@@ -3,12 +3,18 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import HomeChat from './HomeChat';
 import { invoke } from '@tauri-apps/api/core';
 import { SystemInfo } from '../features/system/useSystemInfo';
+import { useTasks } from '../store/tasks';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
+const enqueueTask = vi.fn(() => Promise.resolve(1));
+vi.mock('../store/tasks', () => ({
+  useTasks: (selector: any) => selector({ enqueueTask, tasks: {} }),
+}));
 
 describe('HomeChat', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    enqueueTask.mockResolvedValue(1);
   });
 
   afterEach(() => {
@@ -38,6 +44,7 @@ describe('HomeChat', () => {
     fireEvent.click(screen.getByRole('button', { name: /send/i }));
     await waitFor(() => {
       expect(invoke).not.toHaveBeenCalled();
+      expect(enqueueTask).not.toHaveBeenCalled();
     });
     expect(
       await screen.findByText(/Please specify template and track count/i)
@@ -54,11 +61,13 @@ describe('HomeChat', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /send/i }));
     await waitFor(() => {
-      expect(invoke).toHaveBeenCalledWith('generate_album', {
-        meta: {
-          track_count: 2,
-          title_base: 'My Song',
-          template: 'Classic Lofi',
+      expect(enqueueTask).toHaveBeenCalledWith('Music Generation', {
+        GenerateAlbum: {
+          meta: {
+            track_count: 2,
+            title_base: 'My Song',
+            template: 'Classic Lofi',
+          },
         },
       });
     });

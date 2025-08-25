@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { useTasks } from "../store/tasks";
 import { listen } from "@tauri-apps/api/event";
 import {
   Box,
@@ -44,6 +45,7 @@ export default function GeneralChat() {
   const [status, setStatus] = useState<"init" | "starting" | "ready" | "error">("init");
   const [error, setError] = useState<string>("");
   const [logs, setLogs] = useState<string[]>([]);
+  const enqueueTask = useTasks((s) => s.enqueueTask);
 
   const userName = useUsers((state) =>
     state.currentUserId ? state.users[state.currentUserId]?.name : undefined
@@ -188,8 +190,8 @@ export default function GeneralChat() {
             `Templates: ${templates}\n` +
             `Example: /music My Song template="Classic Lofi" tracks=3`;
         } else {
-          await invoke("generate_album", {
-            meta: { track_count: trackCount, title_base: title, template },
+          await enqueueTask("Music Generation", {
+            GenerateAlbum: { meta: { track_count: trackCount, title_base: title, template } },
           });
           const plural = trackCount === 1 ? "track" : "tracks";
           reply = `Started music generation for "${title}" using "${template}" with ${trackCount} ${plural}.`;
