@@ -244,12 +244,37 @@ def extract_npcs(path: str):
             "location": data.get("location"),
             "hooks": [h.strip() for h in data.get("hooks", "hook").split(",") if h.strip()],
             "quirks": [q.strip() for q in data.get("quirks", "").split(",") if q.strip()] or None,
-            "voice": {"style": "", "provider": "", "preset": ""},
-            "portrait": data.get("portrait", ""),
-            "icon": data.get("icon", ""),
             "statblock": {},
             "tags": [t.strip() for t in data.get("tags", "npc").split(",") if t.strip()],
         }
+
+        voice_raw = data.get("voice")
+        if voice_raw:
+            parts = [p.strip() for p in voice_raw.split(",")]
+            npc["voice"] = {
+                "style": parts[0] if len(parts) > 0 and parts[0] else "neutral",
+                "provider": parts[1] if len(parts) > 1 and parts[1] else "unknown",
+                "preset": parts[2] if len(parts) > 2 and parts[2] else "default",
+            }
+        else:
+            vs = data.get("voice_style")
+            vp = data.get("voice_provider")
+            vz = data.get("voice_preset")
+            if vs or vp or vz:
+                npc["voice"] = {
+                    "style": vs or "neutral",
+                    "provider": vp or "unknown",
+                    "preset": vz or "default",
+                }
+
+        portrait = data.get("portrait")
+        if portrait:
+            npc["portrait"] = portrait
+
+        icon = data.get("icon")
+        if icon:
+            npc["icon"] = icon
+
         sections = {
             k: v
             for k, v in data.items()
@@ -266,6 +291,10 @@ def extract_npcs(path: str):
                 "quirks",
                 "portrait",
                 "icon",
+                "voice",
+                "voice_style",
+                "voice_provider",
+                "voice_preset",
                 "tags",
             }
         }
