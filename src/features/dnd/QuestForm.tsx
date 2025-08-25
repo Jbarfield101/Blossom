@@ -3,7 +3,7 @@ import { Typography, TextField, Button, Grid, Box } from "@mui/material";
 import FormErrorText from "./FormErrorText";
 import { zQuest } from "./schemas";
 import { QuestData } from "./types";
-import { themeStyles, useDndTheme } from "./theme";
+// Removed custom D&D theming
 
 export default function QuestForm() {
   const [name, setName] = useState("");
@@ -16,7 +16,6 @@ export default function QuestForm() {
   const [complications, setComplications] = useState("");
   const [result, setResult] = useState<QuestData | null>(null);
   const [errors, setErrors] = useState<{ tier?: string; gp?: string }>({});
-  const theme = useDndTheme();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +34,6 @@ export default function QuestForm() {
         .split(",")
         .map((c) => c.trim())
         .filter(Boolean),
-      theme,
     };
     const parsed = zQuest.safeParse(data);
     if (!parsed.success) {
@@ -52,7 +50,7 @@ export default function QuestForm() {
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={themeStyles[theme]}>
+    <Box component="form" onSubmit={handleSubmit}>
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Typography variant="h6">Quest Form</Typography>
@@ -155,7 +153,7 @@ export default function QuestForm() {
           </Button>
         </Grid>
         <Grid item xs={12}>
-          <div style={{ ...themeStyles[theme], marginTop: "1rem" }}>
+          <div style={{ marginTop: "1rem" }}>
             <h3>{name || "Quest Preview"}</h3>
             {summary && (
               <p>

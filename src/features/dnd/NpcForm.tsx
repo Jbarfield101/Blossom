@@ -17,7 +17,6 @@ import { z } from "zod";
 import { zNpc } from "../../dnd/schemas/npc";
 import { NpcData } from "./types";
 import NpcPdfUpload from "./NpcPdfUpload";
-import { useDndTheme, themeStyles } from "./theme";
 
 interface Props {
   world: string;
@@ -43,7 +42,6 @@ export default function NpcForm({ world }: Props) {
   const [tags, setTags] = useState("");
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [result, setResult] = useState<NpcData | null>(null);
-  const theme = useDndTheme();
 
   const textFieldProps = {
     variant: "outlined" as const,
@@ -122,7 +120,7 @@ export default function NpcForm({ world }: Props) {
     }
   };
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={themeStyles[theme]}>
+    <Box component="form" onSubmit={handleSubmit}>
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Typography variant="h6">NPC Form</Typography>

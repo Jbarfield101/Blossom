@@ -4,6 +4,7 @@ pydub>=0.25.0
 scipy>=1.9.0
 pdfplumber>=0.10.3
 pytesseract>=0.3.10
+fpdf2>=2.7
 Pillow>=9.0.0
 feedparser>=6.0.0
 requests>=2.32.0

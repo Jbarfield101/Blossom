@@ -3,7 +3,7 @@ import { Typography, TextField, Button, Grid, Box } from "@mui/material";
 import FormErrorText from "./FormErrorText";
 import { zEncounter } from "./schemas";
 import { EncounterData } from "./types";
-import { themeStyles, useDndTheme } from "./theme";
+// Removed custom D&D theming
 
 export default function EncounterForm() {
   const [name, setName] = useState("");
@@ -15,7 +15,6 @@ export default function EncounterForm() {
   const [scaling, setScaling] = useState("");
   const [result, setResult] = useState<EncounterData | null>(null);
   const [errors, setErrors] = useState<{ level?: string }>({});
-  const theme = useDndTheme();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +27,6 @@ export default function EncounterForm() {
       terrain,
       treasure,
       scaling,
-      theme,
     };
     const parsed = zEncounter.safeParse(data);
     if (!parsed.success) {
@@ -42,7 +40,7 @@ export default function EncounterForm() {
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={themeStyles[theme]}>
+    <Box component="form" onSubmit={handleSubmit}>
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Typography variant="h6">Encounter Form</Typography>
@@ -126,7 +124,7 @@ export default function EncounterForm() {
           </Button>
         </Grid>
         <Grid item xs={12}>
-          <div style={{ ...themeStyles[theme], marginTop: "1rem" }}>
+          <div style={{ marginTop: "1rem" }}>
             <h3>{name || "Encounter Preview"}</h3>
             {level && (
               <p>
