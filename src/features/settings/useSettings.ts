@@ -5,7 +5,7 @@ import { useUsers, defaultModules, type ModuleKey } from "../users/useUsers";
 export function useSettings() {
   const modules = useUsers((state) => {
     const id = state.currentUserId;
-    return id ? state.users[id].modules : defaultModules;
+    return { ...defaultModules, ...(id ? state.users[id].modules : {}) };
   });
   const toggleModule = useUsers((state) => state.toggleModule);
   const cpuLimit = useUsers((state) => {
