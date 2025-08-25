@@ -351,10 +351,40 @@ def _analog_noise_floor(n: int, level=0.0003, rng=None) -> np.ndarray:
 def _load_ambience_sample(name: str, n: int, rng=None) -> Optional[np.ndarray]:
     """Load and loop an ambience sample from samples/ambience."""
     amb_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "samples", "ambience")
-    if not os.path.isdir(amb_dir):
-        return None
-    files = [f for f in os.listdir(amb_dir) if name.lower() in f.lower()]
+    files = []
+    if os.path.isdir(amb_dir):
+        files = [f for f in os.listdir(amb_dir) if name.lower() in f.lower()]
     if not files:
+        try:
+            import importlib.util
+
+            gen_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "ambience_generator.py")
+            spec = importlib.util.spec_from_file_location("ambience_generator", gen_path)
+            ag = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(ag)
+            generators = getattr(ag, "GENERATORS", {})
+            gen = generators.get(name)
+            if gen is not None:
+                gen()
+            else:
+                ag.generate_all()
+            if os.path.isdir(amb_dir):
+                files = [f for f in os.listdir(amb_dir) if name.lower() in f.lower()]
+        except Exception as exc:
+            logger.warning(
+                {
+                    "stage": "warn",
+                    "message": f"failed to generate ambience '{name}'",
+                    "error": str(exc),
+                }
+            )
+    if not files:
+        logger.warning(
+            {
+                "stage": "warn",
+                "message": f"no ambience sample for '{name}'",
+            }
+        )
         return None
     choice = rng.choice(files) if rng is not None else random.choice(files)
     path = os.path.join(amb_dir, choice)
