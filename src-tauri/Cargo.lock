@@ -428,6 +428,7 @@ dependencies = [
  "log",
  "nyse-holiday-cal",
  "once_cell",
+ "png",
  "reqwest 0.11.27",
  "robotstxt",
  "rss",
