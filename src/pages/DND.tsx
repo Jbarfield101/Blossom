@@ -10,7 +10,7 @@ import {
   Map,
   MilitaryTech,
 } from "@mui/icons-material";
-import { SyntheticEvent, useState } from "react";
+import { SyntheticEvent, useState, ChangeEvent } from "react";
 import { DndThemeContext, themes } from "../features/dnd/theme";
 import type { DndTheme } from "../features/dnd/types";
 import NpcForm from "../features/dnd/NpcForm";
@@ -29,16 +29,29 @@ export default function DND() {
   const [selectedTheme, setSelectedTheme] = useState<DndTheme>("Parchment");
   const [world, setWorld] = useState("");
   const worlds = useWorlds((s) => s.worlds);
+  const addWorld = useWorlds((s) => s.addWorld);
   const handleChange = (_e: SyntheticEvent, v: number) => setTab(v);
+  const handleWorldChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === "__new__") {
+      const name = window.prompt("Enter world name")?.trim();
+      if (name) {
+        addWorld(name);
+        setWorld(name);
+      }
+    } else {
+      setWorld(value);
+    }
+  };
   return (
     <DndThemeContext.Provider value={selectedTheme}>
       <Box sx={{ p: 2 }}>
-        <Box sx={{ my: 2, maxWidth: 200 }}>
+        <Box sx={{ my: 2, maxWidth: 200, mx: "auto" }}>
           <TextField
             select
             label="World"
             value={world}
-            onChange={(e) => setWorld(e.target.value)}
+            onChange={handleWorldChange}
             fullWidth
           >
             {worlds.map((w) => (
@@ -46,6 +59,7 @@ export default function DND() {
                 {w}
               </MenuItem>
             ))}
+            <MenuItem value="__new__">Create New World</MenuItem>
           </TextField>
         </Box>
         {world && (
