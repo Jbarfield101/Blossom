@@ -34,7 +34,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const theme = useUsers((state) => {
     const id = state.currentUserId;
-    return id ? state.users[id].theme : "default";
+    return id ? state.users[id].theme : state.globalTheme;
   });
   const setTheme = useUsers((state) => state.setTheme);
 
