@@ -3,7 +3,6 @@ import { Typography, TextField, Button, Grid, Box } from "@mui/material";
 import SpellPdfUpload from "./SpellPdfUpload";
 import { zSpell } from "./schemas";
 import type { SpellData } from "./types";
-import { useDndTheme, themeStyles } from "./theme";
 
 export default function SpellForm() {
   const [name, setName] = useState("");
@@ -16,7 +15,6 @@ export default function SpellForm() {
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [result, setResult] = useState<SpellData | null>(null);
-  const theme = useDndTheme();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +35,7 @@ export default function SpellForm() {
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={themeStyles[theme]}>
+    <Box component="form" onSubmit={handleSubmit}>
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Typography variant="h6">Spellbook</Typography>

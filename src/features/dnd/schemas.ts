@@ -6,8 +6,6 @@ export const zDndBase = z.object({
   name: z.string().min(1),
 });
 
-export const zDndTheme = z.enum(["Parchment", "Cyberpunk"]);
-
 /**
  * Minimal schema for non-player characters (NPCs).
  * Designed to keep downstream consumers consistent and predictable.
@@ -36,7 +34,6 @@ export const zQuest = zDndBase.extend({
     favors: z.string().optional(),
   }),
   complications: z.array(z.string()).nonempty(),
-  theme: zDndTheme,
 });
 
 export const zEncounter = zDndBase.extend({
@@ -46,7 +43,6 @@ export const zEncounter = zDndBase.extend({
   terrain: z.string().min(1),
   treasure: z.string().min(1),
   scaling: z.string().min(1),
-  theme: zDndTheme,
 });
 
 export const zRule = zDndBase.extend({
