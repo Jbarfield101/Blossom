@@ -607,7 +607,12 @@ export default function Calendar() {
           <Box
             data-testid="quick-add-overlay"
             onClick={closeQuickAdd}
-            sx={{ position: "fixed", inset: 0, zIndex: 10 }}
+            sx={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 10,
+              bgcolor: "rgba(0,0,0,0.5)",
+            }}
           />
           <Paper
             sx={{ position: "fixed", zIndex: 20, p: 2, width: 224 }}
