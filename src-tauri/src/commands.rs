@@ -646,7 +646,7 @@ pub struct SongSpec {
     pub limiter_drive: Option<f32>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct AlbumRequest {
     pub track_count: u32,
