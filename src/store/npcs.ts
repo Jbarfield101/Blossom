@@ -1,43 +1,16 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { invoke } from '@tauri-apps/api/core';
-import type { Ability } from '../dnd/characters';
+import type { Npc } from '../dnd/schemas/npc';
 
-export interface NPC {
-  id: string;
-  name: string;
-  race: string;
-  class: string;
-  abilities?: Record<Ability, number>;
-  level?: number;
-  hp?: number;
-  inventory?: string[];
-  role?: string;
-  cr?: number;
-  locale?: string;
-  tags?: string[];
-  personality: string;
-  background: string;
-  appearance: string;
-  portrait: string;
-  icon: string;
-  playerCharacter: boolean;
-  hooks?: string[];
-  quirks?: string[];
-  secrets?: string[];
-  stats?: Record<string, string | number>;
-  skills?: Record<string, string | number>;
-  sections?: Record<string, unknown>;
-}
-
-interface NPCState {
-  npcs: NPC[];
-  addNPC: (npc: Omit<NPC, 'id'>) => void;
+interface NpcState {
+  npcs: Npc[];
+  addNPC: (npc: Omit<Npc, 'id'>) => void;
   removeNPC: (id: string) => void;
   loadNPCs: () => Promise<void>;
 }
 
-export const useNPCs = create<NPCState>()(
+export const useNPCs = create<NpcState>()(
   persist(
     (set) => ({
       npcs: [],
@@ -48,10 +21,12 @@ export const useNPCs = create<NPCState>()(
       removeNPC: (id) =>
         set((state) => ({ npcs: state.npcs.filter((npc) => npc.id !== id) })),
       loadNPCs: async () => {
-        const npcs = await invoke<NPC[]>('list_npcs');
+        const npcs = await invoke<Npc[]>('list_npcs');
         set({ npcs });
       },
     }),
     { name: 'npc-store' }
   )
 );
+
+export type { Npc };
