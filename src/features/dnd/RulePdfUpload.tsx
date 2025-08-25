@@ -27,7 +27,9 @@ export default function RulePdfUpload() {
   const [taskId, setTaskId] = useState<number | null>(null);
 
   async function handleUpload() {
-    const selected = await open({ filters: [{ name: "PDF", extensions: ["pdf"] }] });
+    const selected = await open({
+      filters: [{ name: "PDF", extensions: ["pdf"] }],
+    });
     if (typeof selected === "string") {
       const id = await enqueueTask("Import Rule PDF", {
         ParseRulePdf: { path: selected },
@@ -60,15 +62,17 @@ export default function RulePdfUpload() {
           );
           let overwrite = true;
           if (dup) {
-            overwrite = window.confirm(
-              `Rule ${rule.name} exists. Overwrite?`,
-            );
+            overwrite = window.confirm(`Rule ${rule.name} exists. Overwrite?`);
           }
           if (overwrite) {
             await invoke("save_rule", { rule, overwrite });
           }
         }
       })();
+    } else if (task && task.status === "failed") {
+      const message = (task.error as any)?.message ?? String(task.error ?? "");
+      window.alert(`Failed to import Rule PDF: ${message}`);
+      setTaskId(null);
     }
   }, [taskId, tasks]);
 
@@ -80,4 +84,3 @@ export default function RulePdfUpload() {
     </div>
   );
 }
-
