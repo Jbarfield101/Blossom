@@ -9,6 +9,6 @@ setup(
         'numpy>=1.21.0',
         'pydub>=0.25.0',
         'gTTS>=2.5.1',
-        'pyaudioop; python_version >= "3.13"',
+        'audioop-lts; python_version >= "3.13"',
     ],
 )
