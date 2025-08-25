@@ -649,6 +649,23 @@ mod tests {
         assert!(v.get("out_dir").is_some());
         assert!(v.get("ambienceLevel").is_none());
     }
+
+    #[test]
+    fn parse_json_high_confidence() {
+        let content = "{\"intent\":\"music\",\"confidence\":0.9}";
+        assert_eq!(extract_intent(content), "music");
+    }
+
+    #[test]
+    fn parse_json_low_confidence_defaults_to_chat() {
+        let content = "{\"intent\":\"sys\",\"confidence\":0.4}";
+        assert_eq!(extract_intent(content), "chat");
+    }
+
+    #[test]
+    fn parse_plain_string() {
+        assert_eq!(extract_intent("sys"), "sys");
+    }
 }
 
 /* ==============================
@@ -1431,27 +1448,6 @@ fn extract_intent(content: &str) -> String {
     }
 }
 
-#[cfg(test)]
-mod intent_tests {
-    use super::*;
-
-    #[test]
-    fn parse_json_high_confidence() {
-        let content = "{\"intent\":\"music\",\"confidence\":0.9}";
-        assert_eq!(extract_intent(content), "music");
-    }
-
-    #[test]
-    fn parse_json_low_confidence_defaults_to_chat() {
-        let content = "{\"intent\":\"sys\",\"confidence\":0.4}";
-        assert_eq!(extract_intent(content), "chat");
-    }
-
-    #[test]
-    fn parse_plain_string() {
-        assert_eq!(extract_intent("sys"), "sys");
-    }
-}
 
 #[tauri::command]
 pub async fn stocks_fetch<R: Runtime>(
