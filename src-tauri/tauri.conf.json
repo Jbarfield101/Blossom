@@ -35,7 +35,8 @@
       "icons/icon.ico"
     ],
     "resources": [
-      "python/lofi"
+      "python/lofi",
+      "python/ambience_generator.py"
     ]
 
   }
