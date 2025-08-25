@@ -15,8 +15,13 @@ import {
   ToggleButtonGroup,
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
+import { nanoid } from "nanoid";
 import * as THREE from "three";
 import { rollDiceExpression } from "../../dnd/rules";
+
+function createDiceSpecs(count: number, sides: number) {
+  return Array.from({ length: count }, () => ({ sides, id: nanoid() }));
+}
 
 function addNumberedFaceGroups(
   sides: number,
@@ -285,14 +290,16 @@ export default function DiceRoller() {
   const [roll, setRoll] = useState(0);
   const [diceCount, setDiceCount] = useState(1);
   const [selectedSides, setSelectedSides] = useState<number | null>(6);
-  const [dice, setDice] = useState<number[]>([selectedSides ?? 6]);
+  const [dice, setDice] = useState(() =>
+    createDiceSpecs(1, selectedSides ?? 6)
+  );
 
   const handleRoll = () => {
     const { total, rolls } = rollDiceExpression(expression);
     setRoll((r) => r + 1);
     setResult(total);
     setRolls(rolls.map((r) => r.value));
-    setDice(rolls.map((r) => r.sides));
+    setDice(rolls.map((r) => ({ sides: r.sides, id: nanoid() })));
   };
 
   const handleSidesChange = (
@@ -302,17 +309,17 @@ export default function DiceRoller() {
     if (newSides !== null) {
       setSelectedSides(newSides);
       setExpression(`${diceCount}d${newSides}`);
-      setDice(Array(diceCount).fill(newSides));
+      setDice(createDiceSpecs(diceCount, newSides));
     }
   };
 
   const handleCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    const count = Number.isNaN(value) ? 1 : value;
+    const value = e.target.value;
+    const count = value === "" ? 0 : parseInt(value, 10);
     setDiceCount(count);
     const sides = selectedSides ?? 6;
     setExpression(`${count}d${sides}`);
-    setDice(Array(count).fill(sides));
+    setDice(createDiceSpecs(Math.max(count, 1), sides));
   };
 
   return (
@@ -374,9 +381,9 @@ export default function DiceRoller() {
         <pointLight position={[10, 10, 10]} />
         <Physics>
           <Plane />
-          {dice.map((s, i) => (
+          {dice.map(({ sides: s, id }, i) => (
             <Die
-              key={`${s}-${i}`}
+              key={`${id}-${s}`}
               sides={s}
               roll={roll}
               position={[-2 + i * 2, 2, 0]}
