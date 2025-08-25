@@ -32,6 +32,7 @@ import hashlib
 import re
 import logging
 from typing import List, Dict, Tuple, Any, Optional
+from pathlib import Path
 
 import numpy as np
 from pydub import AudioSegment
@@ -90,9 +91,23 @@ def _load_instruments(path: str) -> Dict[str, Any]:
     return {"alias": alias, "canonical": canon}
 
 
-INSTRUMENTS_DATA = _load_instruments(
-    os.environ.get(INSTRUMENTS_ENV, DEFAULT_INSTRUMENTS_PATH)
-)
+def _resolve_instruments_path() -> str:
+    env_path = os.environ.get(INSTRUMENTS_ENV)
+    if env_path and os.path.exists(env_path):
+        return env_path
+    if os.path.exists(DEFAULT_INSTRUMENTS_PATH):
+        return DEFAULT_INSTRUMENTS_PATH
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        candidate = parent / "src-tauri" / "python" / "data" / "instruments.json"
+        if candidate.exists():
+            return str(candidate)
+    raise FileNotFoundError(
+        f"Could not locate instruments.json. Set {INSTRUMENTS_ENV} to its path."
+    )
+
+
+INSTRUMENTS_DATA = _load_instruments(_resolve_instruments_path())
 
 
 # ---------- Small helpers ----------
