@@ -78,6 +78,7 @@ describe('SongForm', () => {
 
   it('renders default form', () => {
     const { asFragment } = render(<SongForm />);
+    expect(screen.getByText('Song Builder')).toBeInTheDocument();
     expect(asFragment()).toMatchSnapshot();
   });
 

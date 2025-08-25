@@ -11,7 +11,7 @@ exports[`SongForm > renders default form 1`] = `
       <div
         class="_h1_62bdff"
       >
-        Blossom — Song Builder (Batch + Vibes)
+        Song Builder
       </div>
       <div
         class="_panel_62bdff"

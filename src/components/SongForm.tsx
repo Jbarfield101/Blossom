@@ -853,7 +853,7 @@ export default function SongForm() {
   return (
     <div className={styles.page}>
       <div className={styles.card}>
-        <div className={styles.h1}>Blossom — Song Builder (Batch + Vibes)</div>
+        <div className={styles.h1}>Song Builder</div>
 
         {weatherPreset && (
           <div className={styles.row}>
