@@ -17,13 +17,16 @@ describe("DND world selector", () => {
     vi.restoreAllMocks();
   });
 
-    it.skip("allows creating and saving a new world", async () => {
-      vi.spyOn(window, "prompt").mockReturnValue("Eberron");
-      render(<DND />);
-      const select = screen.getByRole("combobox", { name: "World" });
-      await userEvent.selectOptions(select, "__new__");
-      expect(screen.getByDisplayValue("Eberron")).toBeInTheDocument();
-      expect(useWorlds.getState().worlds).toContain("Eberron");
-      expect(useWorlds.getState().currentWorld).toBe("Eberron");
-    });
+  it("allows creating and saving a new world", async () => {
+    render(<DND />);
+    const select = screen.getByRole("combobox", { name: "World" });
+    await userEvent.click(select);
+    await userEvent.click(screen.getByRole("option", { name: "Create New World" }));
+    const input = await screen.findByLabelText("World Name");
+    await userEvent.type(input, "Eberron");
+    await userEvent.click(screen.getByRole("button", { name: "Create" }));
+    expect(screen.getByDisplayValue("Eberron")).toBeInTheDocument();
+    expect(useWorlds.getState().worlds).toContain("Eberron");
+    expect(useWorlds.getState().currentWorld).toBe("Eberron");
+  });
 });

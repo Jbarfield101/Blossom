@@ -24,6 +24,7 @@ import DiceRoller from "../features/dnd/DiceRoller";
 import TabletopMap from "../features/dnd/TabletopMap";
 import WarTable from "../features/dnd/WarTable";
 import { useWorlds } from "../store/worlds";
+import NewWorldDialog from "../components/NewWorldDialog";
 
 export default function DND() {
   const [tab, setTab] = useState(0);
@@ -31,18 +32,19 @@ export default function DND() {
   const world = useWorlds((s) => s.currentWorld);
   const addWorld = useWorlds((s) => s.addWorld);
   const setCurrentWorld = useWorlds((s) => s.setCurrentWorld);
+  const [newWorldOpen, setNewWorldOpen] = useState(false);
   const handleChange = (_e: SyntheticEvent, v: number) => setTab(v);
   const handleWorldChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (value === "__new__") {
-      const name = window.prompt("Enter world name")?.trim();
-      if (name) {
-        addWorld(name);
-        setCurrentWorld(name);
-      }
+      setNewWorldOpen(true);
     } else {
       setCurrentWorld(value);
     }
+  };
+  const handleCreateWorld = (name: string) => {
+    addWorld(name);
+    setCurrentWorld(name);
   };
   return (
     <Box sx={{ p: 2 }}>
@@ -62,6 +64,11 @@ export default function DND() {
           <MenuItem value="__new__">Create New World</MenuItem>
         </TextField>
       </Box>
+      <NewWorldDialog
+        open={newWorldOpen}
+        onClose={() => setNewWorldOpen(false)}
+        onSubmit={handleCreateWorld}
+      />
       {world && (
         <>
           <Tabs
