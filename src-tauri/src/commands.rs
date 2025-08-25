@@ -1431,7 +1431,7 @@ fn extract_intent(content: &str) -> String {
 }
 
 #[cfg(test)]
-mod tests {
+mod intent_tests {
     use super::*;
 
     #[test]
