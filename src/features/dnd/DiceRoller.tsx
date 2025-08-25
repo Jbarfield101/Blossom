@@ -1,5 +1,11 @@
 import { Canvas } from "@react-three/fiber";
-import { Physics, useBox, usePlane, useConvexPolyhedron } from "@react-three/cannon";
+import {
+  Physics,
+  useBox,
+  usePlane,
+  useConvexPolyhedron,
+  useCylinder,
+} from "@react-three/cannon/dist";
 import {
   Box,
   Button,
@@ -120,6 +126,67 @@ function getGeometry(sides: number) {
   return { geometry } as { geometry: THREE.BufferGeometry; vertices?: THREE.Vector3[]; faces?: number[][] };
 }
 
+function getConvexPolyhedronProps(geometry: THREE.BufferGeometry) {
+  const position = geometry.attributes.position as THREE.BufferAttribute;
+  const indexAttr = geometry.index;
+  const vertices: number[][] = [];
+  const faces: number[][] = [];
+  const vertexMap = new Map<string, number>();
+
+  const getVertexIndex = (i: number) => {
+    const x = position.getX(i);
+    const y = position.getY(i);
+    const z = position.getZ(i);
+    const key = `${x},${y},${z}`;
+    if (!vertexMap.has(key)) {
+      vertexMap.set(key, vertices.length);
+      vertices.push([x, y, z]);
+    }
+    return vertexMap.get(key)!;
+  };
+
+  const indices = indexAttr
+    ? Array.from(indexAttr.array as ArrayLike<number>)
+    : Array.from({ length: position.count }, (_, i) => i);
+
+  for (let i = 0; i < indices.length; i += 3) {
+    const a = getVertexIndex(indices[i]);
+    const b = getVertexIndex(indices[i + 1]);
+    const c = getVertexIndex(indices[i + 2]);
+    faces.push([a, b, c]);
+  }
+  return { vertices, faces };
+}
+
+function getPhysicsBodyProps(
+  sides: number,
+  geometry: THREE.BufferGeometry,
+  vertices?: THREE.Vector3[],
+  faces?: number[][]
+) {
+  if (sides === 6) {
+    geometry.computeBoundingBox();
+    const size = new THREE.Vector3();
+    geometry.boundingBox!.getSize(size);
+    return { hook: useBox, args: { args: [size.x, size.y, size.z] as [number, number, number] } };
+  }
+
+  if (sides === 10) {
+    geometry.computeBoundingBox();
+    const size = new THREE.Vector3();
+    geometry.boundingBox!.getSize(size);
+    const radius = Math.max(size.x, size.z) / 2;
+    const height = size.y;
+    return {
+      hook: useCylinder,
+      args: { args: [radius, radius, height, 5] as [number, number, number, number] },
+    };
+  }
+
+  const props = vertices && faces ? { vertices, faces } : getConvexPolyhedronProps(geometry);
+  return { hook: useConvexPolyhedron, args: props };
+}
+
 function createDiceMaterials(sides: number) {
   const createTexture = (n: number) => {
     const size = 128;
@@ -162,12 +229,11 @@ function Die({
 }) {
   const { geometry, vertices, faces } = useMemo(() => getGeometry(sides), [sides]);
   const materials = useMemo(() => createDiceMaterials(geometry.groups.length), [geometry]);
-  const physicsHook = sides === 10 ? useConvexPolyhedron : useBox;
-  const [ref, api] = physicsHook(() =>
-    sides === 10
-      ? { mass: 1, vertices: vertices!, faces: faces! }
-      : { mass: 1, args: [1, 1, 1] }
+  const { hook, args } = useMemo(
+    () => getPhysicsBodyProps(sides, geometry, vertices, faces),
+    [sides, geometry, vertices, faces]
   );
+  const [ref, api] = hook(() => ({ mass: 1, ...args }));
 
   useEffect(() => {
     api.position.set(position[0], position[1], position[2]);
