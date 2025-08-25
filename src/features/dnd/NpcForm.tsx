@@ -3,7 +3,6 @@ import {
   Typography,
   TextField,
   Button,
-  FormControlLabel,
   Checkbox,
   Grid,
   Box,
@@ -111,19 +110,27 @@ export default function NpcForm({ world }: Props) {
           <Typography variant="h6">NPC Form</Typography>
         </Grid>
 
-        {/* Basic Information */}
+        {/* Identity */}
         <Grid item xs={12}>
           <Typography variant="subtitle1" sx={{ mt: 2 }}>
-            Basic Information
+            Identity
           </Typography>
           <Divider sx={{ mb: 2 }} />
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={4}>
+              <Typography component="label">Upload NPC PDF</Typography>
+            </Grid>
+            <Grid item xs={8}>
               <NpcPdfUpload world={world} />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={4}>
+              <Typography component="label" htmlFor="name">
+                Name
+              </Typography>
+            </Grid>
+            <Grid item xs={8}>
               <TextField
-                label="Name"
+                id="name"
                 value={name}
                 onChange={(e) => {
                   setName(e.target.value);
@@ -138,9 +145,14 @@ export default function NpcForm({ world }: Props) {
                 aria-describedby={errors.name ? "name-error" : undefined}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={4}>
+              <Typography component="label" htmlFor="species">
+                Species
+              </Typography>
+            </Grid>
+            <Grid item xs={8}>
               <TextField
-                label="Species"
+                id="species"
                 value={species}
                 onChange={(e) => {
                   setSpecies(e.target.value);
@@ -154,14 +166,17 @@ export default function NpcForm({ world }: Props) {
                     {errors.species}
                   </FormErrorText>
                 }
-                aria-describedby={
-                  errors.species ? "species-error" : undefined
-                }
+                aria-describedby={errors.species ? "species-error" : undefined}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={4}>
+              <Typography component="label" htmlFor="role">
+                Role
+              </Typography>
+            </Grid>
+            <Grid item xs={8}>
               <TextField
-                label="Role"
+                id="role"
                 value={role}
                 onChange={(e) => {
                   setRole(e.target.value);
@@ -176,9 +191,14 @@ export default function NpcForm({ world }: Props) {
                 aria-describedby={errors.role ? "role-error" : undefined}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={4}>
+              <Typography component="label" htmlFor="alignment">
+                Alignment
+              </Typography>
+            </Grid>
+            <Grid item xs={8}>
               <TextField
-                label="Alignment"
+                id="alignment"
                 value={alignment}
                 onChange={(e) => {
                   setAlignment(e.target.value);
@@ -197,38 +217,64 @@ export default function NpcForm({ world }: Props) {
                 }
               />
             </Grid>
-            <Grid item xs={12} md={6}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={playerCharacter}
-                    onChange={(e) => setPlayerCharacter(e.target.checked)}
-                  />
-                }
-                label="Player Character"
+            <Grid item xs={4}>
+              <Typography component="label" htmlFor="player-character">
+                Player Character
+              </Typography>
+            </Grid>
+            <Grid item xs={8}>
+              <Checkbox
+                id="player-character"
+                checked={playerCharacter}
+                onChange={(e) => setPlayerCharacter(e.target.checked)}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+          </Grid>
+        </Grid>
+
+        {/* Details */}
+        <Grid item xs={12}>
+          <Typography variant="subtitle1" sx={{ mt: 2 }}>
+            Details
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={4}>
+              <Typography component="label" htmlFor="backstory">
+                Backstory
+              </Typography>
+            </Grid>
+            <Grid item xs={8}>
               <TextField
-                label="Backstory"
+                id="backstory"
                 value={backstory}
                 onChange={(e) => setBackstory(e.target.value)}
                 fullWidth
                 margin="normal"
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={4}>
+              <Typography component="label" htmlFor="location">
+                Location
+              </Typography>
+            </Grid>
+            <Grid item xs={8}>
               <TextField
-                label="Location"
+                id="location"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 fullWidth
                 margin="normal"
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={4}>
+              <Typography component="label" htmlFor="hooks">
+                Hooks (comma separated)
+              </Typography>
+            </Grid>
+            <Grid item xs={8}>
               <TextField
-                label="Hooks (comma separated)"
+                id="hooks"
                 value={hooks}
                 onChange={(e) => {
                   setHooks(e.target.value);
@@ -238,27 +284,33 @@ export default function NpcForm({ world }: Props) {
                 margin="normal"
                 error={Boolean(errors.hooks)}
                 helperText={
-                  <FormErrorText id="hooks-error">
-                    {errors.hooks}
-                  </FormErrorText>
+                  <FormErrorText id="hooks-error">{errors.hooks}</FormErrorText>
                 }
-                aria-describedby={
-                  errors.hooks ? "hooks-error" : undefined
-                }
+                aria-describedby={errors.hooks ? "hooks-error" : undefined}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={4}>
+              <Typography component="label" htmlFor="quirks">
+                Quirks (comma separated)
+              </Typography>
+            </Grid>
+            <Grid item xs={8}>
               <TextField
-                label="Quirks (comma separated)"
+                id="quirks"
                 value={quirks}
                 onChange={(e) => setQuirks(e.target.value)}
                 fullWidth
                 margin="normal"
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={4}>
+              <Typography component="label" htmlFor="tags">
+                Tags (comma separated)
+              </Typography>
+            </Grid>
+            <Grid item xs={8}>
               <TextField
-                label="Tags (comma separated)"
+                id="tags"
                 value={tags}
                 onChange={(e) => {
                   setTags(e.target.value);
@@ -268,9 +320,7 @@ export default function NpcForm({ world }: Props) {
                 margin="normal"
                 error={Boolean(errors.tags)}
                 helperText={
-                  <FormErrorText id="tags-error">
-                    {errors.tags}
-                  </FormErrorText>
+                  <FormErrorText id="tags-error">{errors.tags}</FormErrorText>
                 }
                 aria-describedby={errors.tags ? "tags-error" : undefined}
               />
@@ -284,19 +334,29 @@ export default function NpcForm({ world }: Props) {
             Media
           </Typography>
           <Divider sx={{ mb: 2 }} />
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={4}>
+              <Typography component="label" htmlFor="portrait">
+                Portrait URL
+              </Typography>
+            </Grid>
+            <Grid item xs={8}>
               <TextField
-                label="Portrait URL"
+                id="portrait"
                 value={portrait}
                 onChange={(e) => setPortrait(e.target.value)}
                 fullWidth
                 margin="normal"
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={4}>
+              <Typography component="label" htmlFor="icon">
+                Icon URL
+              </Typography>
+            </Grid>
+            <Grid item xs={8}>
               <TextField
-                label="Icon URL"
+                id="icon"
                 value={icon}
                 onChange={(e) => setIcon(e.target.value)}
                 fullWidth
@@ -306,17 +366,26 @@ export default function NpcForm({ world }: Props) {
           </Grid>
         </Grid>
 
-        {/* Voice Settings */}
+        {/* Settings */}
         <Grid item xs={12}>
+          <Typography variant="subtitle1" sx={{ mt: 2 }}>
+            Settings
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
           <Accordion defaultExpanded={false}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography>Voice Settings</Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
+              <Grid container spacing={2} alignItems="center">
+                <Grid item xs={4}>
+                  <Typography component="label" htmlFor="voice-style">
+                    Voice Style
+                  </Typography>
+                </Grid>
+                <Grid item xs={8}>
                   <TextField
-                    label="Voice Style"
+                    id="voice-style"
                     value={voiceStyle}
                     onChange={(e) => {
                       setVoiceStyle(e.target.value);
@@ -335,9 +404,14 @@ export default function NpcForm({ world }: Props) {
                     }
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid item xs={4}>
+                  <Typography component="label" htmlFor="voice-provider">
+                    Voice Provider
+                  </Typography>
+                </Grid>
+                <Grid item xs={8}>
                   <TextField
-                    label="Voice Provider"
+                    id="voice-provider"
                     value={voiceProvider}
                     onChange={(e) => {
                       setVoiceProvider(e.target.value);
@@ -361,9 +435,14 @@ export default function NpcForm({ world }: Props) {
                     }
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid item xs={4}>
+                  <Typography component="label" htmlFor="voice-preset">
+                    Voice Preset
+                  </Typography>
+                </Grid>
+                <Grid item xs={8}>
                   <TextField
-                    label="Voice Preset"
+                    id="voice-preset"
                     value={voicePreset}
                     onChange={(e) => {
                       setVoicePreset(e.target.value);
@@ -385,19 +464,20 @@ export default function NpcForm({ world }: Props) {
               </Grid>
             </AccordionDetails>
           </Accordion>
-        </Grid>
-
-        {/* Advanced JSON */}
-        <Grid item xs={12}>
-          <Accordion defaultExpanded={false}>
+          <Accordion defaultExpanded={false} sx={{ mt: 2 }}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography>Advanced JSON</Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
+              <Grid container spacing={2} alignItems="center">
+                <Grid item xs={4}>
+                  <Typography component="label" htmlFor="statblock">
+                    Statblock JSON
+                  </Typography>
+                </Grid>
+                <Grid item xs={8}>
                   <TextField
-                    label="Statblock JSON"
+                    id="statblock"
                     value={statblock}
                     onChange={(e) => {
                       setStatblock(e.target.value);
@@ -417,9 +497,14 @@ export default function NpcForm({ world }: Props) {
                     }
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid item xs={4}>
+                  <Typography component="label" htmlFor="sections">
+                    Custom Sections JSON
+                  </Typography>
+                </Grid>
+                <Grid item xs={8}>
                   <TextField
-                    label="Custom Sections JSON"
+                    id="sections"
                     value={sections}
                     onChange={(e) => {
                       setSections(e.target.value);
