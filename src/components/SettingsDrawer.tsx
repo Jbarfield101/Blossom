@@ -200,14 +200,6 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
     setPythonPath,
     comfyPath,
     setComfyPath,
-    ttsModelPath,
-    setTtsModelPath,
-    ttsConfigPath,
-    setTtsConfigPath,
-    ttsSpeaker,
-    setTtsSpeaker,
-    ttsLanguage,
-    setTtsLanguage,
   } = usePaths();
   const { folder, setFolder } = useOutput();
   const {
@@ -238,20 +230,12 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
 
   const [pythonDraft, setPythonDraft] = useState(pythonPath);
   const [comfyDraft, setComfyDraft] = useState(comfyPath);
-  const [ttsModelDraft, setTtsModelDraft] = useState(ttsModelPath);
-  const [ttsConfigDraft, setTtsConfigDraft] = useState(ttsConfigPath);
-  const [ttsSpeakerDraft, setTtsSpeakerDraft] = useState(ttsSpeaker);
-  const [ttsLanguageDraft, setTtsLanguageDraft] = useState(ttsLanguage);
   const [folderDraft, setFolderDraft] = useState(folder);
   const [themeDraft, setThemeDraft] = useState<Theme>(theme);
   const [editPython, setEditPython] = useState(false);
 
   useEffect(() => setPythonDraft(pythonPath), [pythonPath]);
   useEffect(() => setComfyDraft(comfyPath), [comfyPath]);
-  useEffect(() => setTtsModelDraft(ttsModelPath), [ttsModelPath]);
-  useEffect(() => setTtsConfigDraft(ttsConfigPath), [ttsConfigPath]);
-  useEffect(() => setTtsSpeakerDraft(ttsSpeaker), [ttsSpeaker]);
-  useEffect(() => setTtsLanguageDraft(ttsLanguage), [ttsLanguage]);
   useEffect(() => setFolderDraft(folder), [folder]);
   useEffect(() => setThemeDraft(theme), [theme]);
   type Section = "environment" | "editor" | "appearance" | "integrations";
@@ -267,10 +251,6 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   const baseIndex = [
     { label: "Python Path", section: "environment" as Section, elementId: "python-path" },
     { label: "ComfyUI Folder", section: "environment" as Section, elementId: "comfy-path" },
-    { label: "TTS Model Path", section: "environment" as Section, elementId: "tts-model-path" },
-    { label: "TTS Config Path", section: "environment" as Section, elementId: "tts-config-path" },
-    { label: "TTS Speaker", section: "environment" as Section, elementId: "tts-speaker" },
-    { label: "TTS Language", section: "environment" as Section, elementId: "tts-language" },
     { label: "Default Save Folder", section: "environment" as Section, elementId: "output-folder" },
     { label: "BPM", section: "editor" as Section, elementId: "bpm" },
     { label: "Key", section: "editor" as Section, elementId: "key" },
@@ -341,44 +321,12 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
         onChange={setComfyDraft}
         directory
       />
-      <PathField
-        id="tts-model-path"
-        label="TTS Model Path"
-        value={ttsModelDraft}
-        onChange={setTtsModelDraft}
-      />
-      <PathField
-        id="tts-config-path"
-        label="TTS Config Path"
-        value={ttsConfigDraft}
-        onChange={setTtsConfigDraft}
-      />
-      <Box id="tts-speaker" sx={{ mt: 1 }}>
-        <TextField
-          label="TTS Speaker"
-          value={ttsSpeakerDraft}
-          onChange={(e) => setTtsSpeakerDraft(e.target.value)}
-          fullWidth
-        />
-      </Box>
-      <Box id="tts-language" sx={{ mt: 1 }}>
-        <TextField
-          label="TTS Language"
-          value={ttsLanguageDraft}
-          onChange={(e) => setTtsLanguageDraft(e.target.value)}
-          fullWidth
-        />
-      </Box>
       <Button
         variant="contained"
         sx={{ mt: 2 }}
         onClick={() => {
           setPythonPath(pythonDraft);
           setComfyPath(comfyDraft);
-          setTtsModelPath(ttsModelDraft);
-          setTtsConfigPath(ttsConfigDraft);
-          setTtsSpeaker(ttsSpeakerDraft);
-          setTtsLanguage(ttsLanguageDraft);
           setPathsSaved(true);
           setEditPython(false);
         }}

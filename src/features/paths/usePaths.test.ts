@@ -12,10 +12,6 @@ describe('usePaths save_paths error handling', () => {
   const setters: [string, string][] = [
     ['setPythonPath', 'py'],
     ['setComfyPath', 'comfy'],
-    ['setTtsModelPath', 'model'],
-    ['setTtsConfigPath', 'config'],
-    ['setTtsSpeaker', 'speaker'],
-    ['setTtsLanguage', 'lang'],
   ];
 
   it.each(setters)('%s surfaces errors', async (setter, value) => {
