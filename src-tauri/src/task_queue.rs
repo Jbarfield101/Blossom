@@ -14,7 +14,7 @@ use tauri::{AppHandle, Manager, Wry};
 use tokio::sync::{mpsc, Mutex, Semaphore};
 use tokio::time::sleep;
 
-use crate::commands::{run_lofi_song, AlbumRequest, ShortSpec, SongSpec};
+use crate::commands::{run_lofi_song, AlbumRequest, ShortSpec};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TaskCommand {
@@ -140,7 +140,7 @@ impl TaskQueue {
             cpu: cpu_limit,
             memory: memory_limit,
         }));
-        let app = Arc::new(StdMutex::new(None));
+        let app: Arc<StdMutex<Option<AppHandle<Wry>>>> = Arc::new(StdMutex::new(None));
         let tasks_worker = tasks.clone();
         let _handles_worker = _handles.clone();
         let _cancelled_worker = _cancelled.clone();
