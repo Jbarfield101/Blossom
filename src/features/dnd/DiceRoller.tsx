@@ -222,10 +222,28 @@ function Die({
   sides,
   roll,
   position,
+  sleep = {
+    allow: true,
+    speedLimit: 0.1,
+    timeLimit: 1,
+  },
+  damping = {
+    linear: 0.25,
+    angular: 0.25,
+  },
 }: {
   sides: number;
   roll: number;
   position: [number, number, number];
+  sleep?: {
+    allow?: boolean;
+    speedLimit?: number;
+    timeLimit?: number;
+  };
+  damping?: {
+    linear?: number;
+    angular?: number;
+  };
 }) {
   const { geometry, vertices, faces } = useMemo(() => getGeometry(sides), [sides]);
   const materials = useMemo(() => createDiceMaterials(geometry.groups.length), [geometry]);
@@ -233,7 +251,15 @@ function Die({
     () => getPhysicsBodyProps(sides, geometry, vertices, faces),
     [sides, geometry, vertices, faces]
   );
-  const [ref, api] = hook(() => ({ mass: 1, ...args }));
+  const [ref, api] = hook(() => ({
+    mass: 1,
+    ...args,
+    allowSleep: sleep.allow,
+    sleepSpeedLimit: sleep.speedLimit,
+    sleepTimeLimit: sleep.timeLimit,
+    linearDamping: damping.linear,
+    angularDamping: damping.angular,
+  }));
 
   useEffect(() => {
     api.position.set(position[0], position[1], position[2]);
