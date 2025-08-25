@@ -9,10 +9,11 @@ import {
   TextField,
 } from '@mui/material';
 import { invoke } from '@tauri-apps/api/core';
-import { useNPCs, NPC } from '../store/npcs';
+import { useNPCs } from '../store/npcs';
+import type { Npc } from '../dnd/schemas/npc';
 
 const systemPrompt =
-  'You are a creative assistant that generates random D&D NPCs. Respond only with JSON having keys name, race, class, personality, background, appearance.';
+  'You are a creative assistant that generates random D&D NPCs. Respond only with JSON having keys name, species, role, backstory.';
 
 interface Props {
   open: boolean;
@@ -35,13 +36,19 @@ export default function GenerateNPCModal({ open, onClose }: Props) {
           ],
         });
         try {
-          const parsed = JSON.parse(reply) as Partial<NPC>;
-          const data: Omit<NPC, 'id'> = {
+          const parsed = JSON.parse(reply) as Partial<Npc>;
+          const data: Omit<Npc, 'id'> = {
+            species: '',
+            role: '',
+            alignment: 'Unaligned',
+            playerCharacter: false,
+            hooks: [],
+            statblock: {},
+            tags: [],
             portrait: 'placeholder.png',
             icon: 'placeholder-icon.png',
-            playerCharacter: false,
             ...parsed,
-          } as Omit<NPC, 'id'>;
+          };
           addNPC(data);
         } catch {
           // ignore parse errors for now
