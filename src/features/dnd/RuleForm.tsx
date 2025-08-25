@@ -16,7 +16,8 @@ import rulesIndex from "../../../dnd/rules/index.json";
 import RulePdfUpload from "./RulePdfUpload";
 
 const ruleFiles = import.meta.glob("../../../dnd/rules/*.md", {
-  as: "raw",
+  query: "?raw",
+  import: "default",
   eager: true,
 });
 

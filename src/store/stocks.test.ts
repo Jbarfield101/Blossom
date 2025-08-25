@@ -37,7 +37,8 @@ describe('useStocks store', () => {
       market: { phase: 'CLOSED' },
       stale: false,
     });
-    await useStocks.getState().fetchQuote('AAPL');
+    const price = await useStocks.getState().fetchQuote('AAPL');
+    expect(Number.isNaN(price)).toBe(true);
     expect(useStocks.getState().quotes['AAPL'].error).toBe('fail');
   });
 

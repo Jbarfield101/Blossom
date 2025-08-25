@@ -37,7 +37,7 @@ function pad(n: number) {
 const HOLIDAYS = [
   { month: 0, day: 1, title: "New Year's Day" },
   { month: 6, day: 4, title: "Independence Day" },
-  { month: 10, day: 31, title: "Halloween" },
+  { month: 9, day: 31, title: "Halloween" },
   { month: 11, day: 25, title: "Christmas Day" },
 ];
 

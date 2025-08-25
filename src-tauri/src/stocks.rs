@@ -11,6 +11,9 @@ use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::{Row, SqlitePool};
 use tauri::async_runtime::Mutex;
 use tauri::{AppHandle, Runtime};
+use tokio::time::sleep;
+
+use reqwest::{header::RETRY_AFTER, StatusCode};
 
 use chrono::{Datelike, TimeZone, Utc};
 use chrono_tz::America::New_York;
@@ -118,7 +121,34 @@ impl StockProvider for YahooProvider {
             ticker
         );
         let start = Instant::now();
-        let resp = reqwest::get(&url).await.map_err(|e| e.to_string())?;
+        let mut attempt = 0;
+        let max_retries = 3;
+        let mut delay = Duration::from_secs(1);
+        let resp = loop {
+            let resp = reqwest::get(&url).await.map_err(|e| e.to_string())?;
+            if resp.status() == StatusCode::TOO_MANY_REQUESTS {
+                attempt += 1;
+                if attempt >= max_retries {
+                    return Err("Yahoo Finance rate limit exceeded—please try again later.".into());
+                }
+                let wait = resp
+                    .headers()
+                    .get(RETRY_AFTER)
+                    .and_then(|h| h.to_str().ok())
+                    .and_then(|s| s.parse::<u64>().ok())
+                    .map(Duration::from_secs)
+                    .unwrap_or(delay);
+                log::warn!(
+                    "rate limited fetching quote for {}: retrying in {:?}",
+                    ticker,
+                    wait
+                );
+                sleep(wait).await;
+                delay *= 2;
+                continue;
+            }
+            break resp;
+        };
         if !resp.status().is_success() {
             return Err(format!(
                 "failed to fetch quote for {}: HTTP {}",
