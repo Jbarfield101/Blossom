@@ -69,7 +69,10 @@ static OLLAMA_CHILD: OnceLock<Mutex<Option<LoggedChild>>> = OnceLock::new();
 
 pub fn __set_comfy_child(child: Child) {
     let mut lock = COMFY_CHILD.get_or_init(|| Mutex::new(None)).lock().unwrap();
-    *lock = Some(LoggedChild { child, tasks: vec![] });
+    *lock = Some(LoggedChild {
+        child,
+        tasks: vec![],
+    });
 }
 
 pub fn __has_comfy_child() -> bool {
@@ -2034,6 +2037,12 @@ pub async fn generate_ambience<R: Runtime>(app: AppHandle<R>) -> Result<(), Stri
         .map(|p| p.to_path_buf())
         .ok_or_else(|| "Script path not found".to_string())?;
     let ambience = py_dir.join("ambience_generator.py");
+    if !ambience.exists() {
+        return Err(format!(
+            "ambience_generator.py not found at {}",
+            ambience.display()
+        ));
+    }
     let output = PCommand::new(&py)
         .arg(&ambience)
         .current_dir(&py_dir)
