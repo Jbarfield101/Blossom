@@ -858,7 +858,8 @@ def _apply_melody_timbre(x, instrs):
     if "trumpet" in instrs:
         return _butter_bandpass(x, 500, 7000)
     if "french horn" in instrs:
-        return _butter_bandpass(x, 200, 3000)
+        # Allow a wider upper band so high notes don't get filtered out
+        return _butter_bandpass(x, 200, 5000)
     if "harp" in instrs or "lute" in instrs:
         return _butter_highpass(_butter_lowpass(x, 7000), 400)
     if "pan flute" in instrs:

@@ -27,6 +27,7 @@ import { useOutput } from "../features/output/useOutput";
 import { useAudioDefaults } from "../features/audioDefaults/useAudioDefaults";
 import { useTheme, type Theme } from "../features/theme/ThemeContext";
 import { useComfyTutorial } from "../features/comfyTutorial/useComfyTutorial";
+import { useUsers } from "../features/users/useUsers";
 import HelpIcon from "./HelpIcon";
 
 const KEY_OPTIONS = [
@@ -224,6 +225,8 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
     toggleHqChorus,
   } = useAudioDefaults();
   const { theme, setTheme } = useTheme();
+  const currentUserId = useUsers((state) => state.currentUserId);
+  const hasUser = currentUserId !== null;
   const { showTutorial, setShowTutorial } = useComfyTutorial();
   const { modules, toggleModule } = useSettings();
   const [audioSaved, setAudioSaved] = useState(false);
@@ -275,8 +278,14 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
     { label: "HQ Reverb", section: "editor" as Section, elementId: "hq-reverb" },
     { label: "HQ Sidechain", section: "editor" as Section, elementId: "hq-sidechain" },
     { label: "HQ Chorus", section: "editor" as Section, elementId: "hq-chorus" },
-    { label: "Theme", section: "appearance" as Section, elementId: "theme" },
-    { label: "Show ComfyUI Tutorial", section: "integrations" as Section, elementId: "show-tutorial" },
+    ...(hasUser
+      ? [{ label: "Theme", section: "appearance" as Section, elementId: "theme" }]
+      : []),
+    {
+      label: "Show ComfyUI Tutorial",
+      section: "integrations" as Section,
+      elementId: "show-tutorial",
+    },
   ];
   const moduleIndex = (Object.entries(MODULE_LABELS) as [ModuleKey, string][]) .map(
     ([key, label]) => ({ label, section: "integrations" as Section, elementId: `module-${key}` })
@@ -503,50 +512,58 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   const AppearanceSection = () => (
     <>
       <Typography variant="subtitle1">Appearance</Typography>
-      <Box id="theme" sx={{ mt: 2 }} onMouseLeave={() => setTheme(themeDraft)}>
-        {THEME_GROUPS.map((group) => (
-          <Box key={group.label} sx={{ mb: 2 }}>
-            <Typography variant="subtitle2">{group.label}</Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mt: 1 }}>
-              {group.options.map((opt) => (
-                <Box
-                  key={opt.value}
-                  onMouseEnter={() => setTheme(opt.value)}
-                  onClick={() => setThemeDraft(opt.value)}
-                  sx={{
-                    cursor: "pointer",
-                    textAlign: "center",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      background: THEME_PREVIEWS[opt.value],
-                      border:
-                        themeDraft === opt.value
-                          ? "2px solid #fff"
-                          : "1px solid #ccc",
-                      mb: 0.5,
-                    }}
-                  />
-                  <Typography variant="caption">{opt.label}</Typography>
+      {hasUser ? (
+        <>
+          <Box id="theme" sx={{ mt: 2 }} onMouseLeave={() => setTheme(themeDraft)}>
+            {THEME_GROUPS.map((group) => (
+              <Box key={group.label} sx={{ mb: 2 }}>
+                <Typography variant="subtitle2">{group.label}</Typography>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mt: 1 }}>
+                  {group.options.map((opt) => (
+                    <Box
+                      key={opt.value}
+                      onMouseEnter={() => setTheme(opt.value)}
+                      onClick={() => setThemeDraft(opt.value)}
+                      sx={{
+                        cursor: "pointer",
+                        textAlign: "center",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          background: THEME_PREVIEWS[opt.value],
+                          border:
+                            themeDraft === opt.value
+                              ? "2px solid #fff"
+                              : "1px solid #ccc",
+                          mb: 0.5,
+                        }}
+                      />
+                      <Typography variant="caption">{opt.label}</Typography>
+                    </Box>
+                  ))}
                 </Box>
-              ))}
-            </Box>
+              </Box>
+            ))}
           </Box>
-        ))}
-      </Box>
-      <Button
-        variant="contained"
-        sx={{ mt: 2 }}
-        onClick={() => {
-          setTheme(themeDraft);
-          setAppearanceSaved(true);
-        }}
-      >
-        Save Appearance
-      </Button>
+          <Button
+            variant="contained"
+            sx={{ mt: 2 }}
+            onClick={() => {
+              setTheme(themeDraft);
+              setAppearanceSaved(true);
+            }}
+          >
+            Save Appearance
+          </Button>
+        </>
+      ) : (
+        <Typography variant="body2" sx={{ mt: 2 }}>
+          Create a user to customize the theme.
+        </Typography>
+      )}
     </>
   );
 

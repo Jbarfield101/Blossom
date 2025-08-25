@@ -1,6 +1,13 @@
 import { Canvas } from "@react-three/fiber";
-import { Physics, useBox, usePlane } from "@react-three/cannon";
-import { Box, Button, TextField, Typography } from "@mui/material";
+import { Physics, useBox, usePlane, useConvexPolyhedron } from "@react-three/cannon";
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  ToggleButton,
+  ToggleButtonGroup,
+} from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 import { rollDiceExpression } from "../../dnd/rules";
@@ -18,6 +25,74 @@ function addNumberedFaceGroups(
   }
 }
 
+function createPentagonalTrapezohedron() {
+  const n = 5;
+  const radius = 1;
+  const equatorHeight = 0.2;
+  const poleHeight = 0.8;
+
+  const ring: THREE.Vector3[] = [];
+  for (let i = 0; i < 2 * n; i++) {
+    const angle = (Math.PI / n) * i;
+    const y = i % 2 === 0 ? equatorHeight : -equatorHeight;
+    ring.push(new THREE.Vector3(Math.cos(angle), y, Math.sin(angle)));
+  }
+  const top = new THREE.Vector3(0, poleHeight, 0);
+  const bottom = new THREE.Vector3(0, -poleHeight, 0);
+
+  const positions: number[] = [];
+  const uvs: number[] = [];
+  const indices: number[] = [];
+  const vertices = [...ring, top, bottom];
+  const faces: number[][] = [];
+
+  let idx = 0;
+  for (let i = 0; i < 2 * n; i++) {
+    const next = (i + 1) % (2 * n);
+    const A = i % 2 === 0 ? top : bottom;
+    const B = ring[i];
+    const C = i % 2 === 0 ? bottom : top;
+    const D = ring[next];
+
+    positions.push(
+      A.x,
+      A.y,
+      A.z,
+      B.x,
+      B.y,
+      B.z,
+      C.x,
+      C.y,
+      C.z,
+      D.x,
+      D.y,
+      D.z
+    );
+
+    uvs.push(0.5, 1, 1, 0, 0, 0, 0, 1);
+    indices.push(idx, idx + 1, idx + 2, idx, idx + 2, idx + 3);
+    const topIndex = vertices.length - 2;
+    const bottomIndex = vertices.length - 1;
+    faces.push(
+      i % 2 === 0
+        ? [topIndex, i, bottomIndex, next]
+        : [bottomIndex, i, topIndex, next]
+    );
+    idx += 4;
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(positions, 3)
+  );
+  geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  addNumberedFaceGroups(10, geometry);
+  return { geometry, vertices, faces };
+}
+
 function getGeometry(sides: number) {
   let geometry: THREE.BufferGeometry;
   switch (sides) {
@@ -31,8 +106,7 @@ function getGeometry(sides: number) {
       geometry = new THREE.OctahedronGeometry(1);
       break;
     case 10:
-      geometry = new THREE.CylinderGeometry(1, 1, 1, 10, 1, true);
-      break;
+      return createPentagonalTrapezohedron();
     case 12:
       geometry = new THREE.DodecahedronGeometry(1);
       break;
@@ -43,7 +117,7 @@ function getGeometry(sides: number) {
       geometry = new THREE.BoxGeometry(1, 1, 1);
   }
   addNumberedFaceGroups(sides, geometry);
-  return geometry;
+  return { geometry } as { geometry: THREE.BufferGeometry; vertices?: THREE.Vector3[]; faces?: number[][] };
 }
 
 function createDiceMaterials(sides: number) {
@@ -86,9 +160,14 @@ function Die({
   roll: number;
   position: [number, number, number];
 }) {
-  const geometry = useMemo(() => getGeometry(sides), [sides]);
-  const materials = useMemo(() => createDiceMaterials(sides), [sides]);
-  const [ref, api] = useBox(() => ({ mass: 1, args: [1, 1, 1] }));
+  const { geometry, vertices, faces } = useMemo(() => getGeometry(sides), [sides]);
+  const materials = useMemo(() => createDiceMaterials(geometry.groups.length), [geometry]);
+  const physicsHook = sides === 10 ? useConvexPolyhedron : useBox;
+  const [ref, api] = physicsHook(() =>
+    sides === 10
+      ? { mass: 1, vertices: vertices!, faces: faces! }
+      : { mass: 1, args: [1, 1, 1] }
+  );
 
   useEffect(() => {
     api.position.set(position[0], position[1], position[2]);
@@ -113,6 +192,8 @@ export default function DiceRoller() {
   const [rolls, setRolls] = useState<number[]>([]);
   const [dice, setDice] = useState<number[]>([6]);
   const [roll, setRoll] = useState(0);
+  const [diceCount, setDiceCount] = useState(1);
+  const [selectedSides, setSelectedSides] = useState<number | null>(6);
 
   const handleRoll = () => {
     const { total, rolls } = rollDiceExpression(expression);
@@ -122,8 +203,50 @@ export default function DiceRoller() {
     setDice(rolls.map((r) => r.sides));
   };
 
+  const handleSidesChange = (
+    _event: React.MouseEvent<HTMLElement>,
+    newSides: number | null
+  ) => {
+    if (newSides !== null) {
+      setSelectedSides(newSides);
+      setExpression(`${diceCount}d${newSides}`);
+    }
+  };
+
+  const handleCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10);
+    const count = Number.isNaN(value) ? 1 : value;
+    setDiceCount(count);
+    if (selectedSides !== null) {
+      setExpression(`${count}d${selectedSides}`);
+    }
+  };
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+        <TextField
+          label="Count"
+          type="number"
+          value={diceCount}
+          onChange={handleCountChange}
+          inputProps={{ min: 1 }}
+          sx={{ width: 80 }}
+        />
+        <ToggleButtonGroup
+          value={selectedSides}
+          exclusive
+          onChange={handleSidesChange}
+          aria-label="dice type"
+          size="small"
+        >
+          {[4, 6, 8, 10, 12, 20].map((s) => (
+            <ToggleButton key={s} value={s} aria-label={`d${s}`}>
+              d{s}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+      </Box>
       <TextField
         label="Dice"
         value={expression}
@@ -145,7 +268,7 @@ export default function DiceRoller() {
           <Plane />
           {dice.map((s, i) => (
             <Die
-              key={i}
+              key={`${s}-${i}`}
               sides={s}
               roll={roll}
               position={[-2 + i * 2, 2, 0]}

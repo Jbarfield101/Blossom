@@ -3,21 +3,21 @@
 exports[`SongForm > renders default form 1`] = `
 <DocumentFragment>
   <div
-    class="_page_62bdff"
+    class="_page_913096"
   >
     <div
-      class="_card_62bdff"
+      class="_card_913096"
     >
       <div
-        class="_h1_62bdff"
+        class="_h1_913096"
       >
         Song Builder
       </div>
       <div
-        class="_panel_62bdff"
+        class="_panel_913096"
       >
         <div
-          class="_label_62bdff"
+          class="_label_913096"
         >
           Song Templates
           <button
@@ -59,7 +59,7 @@ exports[`SongForm > renders default form 1`] = `
                 aria-label="Song Templates"
                 autocapitalize="none"
                 autocomplete="off"
-                class="MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputAdornedEnd _input_62bdff py-2 px-3 css-1dune0f-MuiInputBase-input-MuiOutlinedInput-input"
+                class="MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputAdornedEnd _input_913096 py-2 px-3 css-1dune0f-MuiInputBase-input-MuiOutlinedInput-input"
                 id="«r2»"
                 placeholder="Select template"
                 role="combobox"
@@ -129,21 +129,21 @@ exports[`SongForm > renders default form 1`] = `
         </div>
       </div>
       <div
-        class="_row_62bdff"
+        class="_row_913096"
       >
         <button
-          class="_btn_62bdff"
+          class="_btn_913096"
         >
           Use last settings
         </button>
         <button
-          class="_btn_62bdff"
+          class="_btn_913096"
         >
           Restore defaults
         </button>
       </div>
       <label
-        class="_label_62bdff"
+        class="_label_913096"
         for="titleBase"
       >
         Song Title Base
@@ -171,27 +171,27 @@ exports[`SongForm > renders default form 1`] = `
         </button>
       </label>
       <div
-        class="_row_62bdff"
+        class="_row_913096"
       >
         <input
-          class="_input_62bdff"
+          class="_input_913096"
           id="titleBase"
           placeholder="Song title base"
           value=""
         />
         <button
-          class="_btn_62bdff"
+          class="_btn_913096"
         >
           Generate Title
         </button>
         <button
-          class="_btn_62bdff"
+          class="_btn_913096"
         >
           Choose folder
         </button>
       </div>
       <div
-        class="_small_62bdff"
+        class="_small_913096"
       >
         No output folder selected
       </div>
@@ -204,13 +204,13 @@ exports[`SongForm > renders default form 1`] = `
           Core
         </summary>
         <div
-          class="_grid3_62bdff"
+          class="_grid3_913096"
         >
           <div
-            class="_panel_62bdff"
+            class="_panel_913096"
           >
             <label
-              class="_label_62bdff"
+              class="_label_913096"
               for="bpm"
             >
               BPM: 80
@@ -238,7 +238,7 @@ exports[`SongForm > renders default form 1`] = `
               </button>
             </label>
             <input
-              class="_input_62bdff p-0"
+              class="_input_913096 p-0"
               id="bpm"
               max="200"
               min="60"
@@ -247,10 +247,10 @@ exports[`SongForm > renders default form 1`] = `
             />
           </div>
           <div
-            class="_panel_62bdff"
+            class="_panel_913096"
           >
             <label
-              class="_label_62bdff"
+              class="_label_913096"
               for="key"
             >
               Key
@@ -278,10 +278,10 @@ exports[`SongForm > renders default form 1`] = `
               </button>
             </label>
             <div
-              class="_row_62bdff"
+              class="_row_913096"
             >
               <select
-                class="_input_62bdff py-2 px-3"
+                class="_input_913096 py-2 px-3"
                 id="key"
               >
                 <option
@@ -392,7 +392,7 @@ exports[`SongForm > renders default form 1`] = `
               </select>
             </div>
             <label
-              class="_toggle_62bdff mt-2"
+              class="_toggle_913096 mt-2"
               for="autoKeyPerSong"
             >
               <input
@@ -401,7 +401,7 @@ exports[`SongForm > renders default form 1`] = `
                 type="checkbox"
               />
               <span
-                class="_small_62bdff"
+                class="_small_913096"
               >
                 Rotate key per song
                 <button
@@ -429,16 +429,16 @@ exports[`SongForm > renders default form 1`] = `
               </span>
             </label>
             <div
-              class="_small_62bdff"
+              class="_small_913096"
             >
               Disabled when key is set to Auto
             </div>
           </div>
           <div
-            class="_panel_62bdff"
+            class="_panel_913096"
           >
             <label
-              class="_label_62bdff"
+              class="_label_913096"
               for="seed"
             >
               Seed
@@ -466,16 +466,16 @@ exports[`SongForm > renders default form 1`] = `
               </button>
             </label>
             <input
-              class="_input_62bdff"
+              class="_input_913096"
               id="seed"
               type="number"
               value="12345"
             />
             <fieldset
-              class="_row_62bdff mt-2"
+              class="_row_913096 mt-2"
             >
               <legend
-                class="_small_62bdff"
+                class="_small_913096"
               >
                 Seed Mode
                 <button
@@ -502,7 +502,7 @@ exports[`SongForm > renders default form 1`] = `
                 </button>
               </legend>
               <label
-                class="_small_62bdff flex-1"
+                class="_small_913096 flex-1"
                 for="seedmode-increment"
               >
                 <input
@@ -513,7 +513,7 @@ exports[`SongForm > renders default form 1`] = `
                  Increment (base + i)
               </label>
               <label
-                class="_small_62bdff flex-1"
+                class="_small_913096 flex-1"
                 for="seedmode-random"
               >
                 <input
@@ -529,7 +529,7 @@ exports[`SongForm > renders default form 1`] = `
         </div>
       </details>
       <details
-        class="_panel_62bdff mt-3"
+        class="_panel_913096 mt-3"
       >
         <summary
           class="cursor-pointer text-xs opacity-80"
@@ -540,7 +540,7 @@ exports[`SongForm > renders default form 1`] = `
           class="mt-2"
         >
           <label
-            class="_label_62bdff"
+            class="_label_913096"
             for="templateSelect"
           >
             Structure Template
@@ -568,10 +568,10 @@ exports[`SongForm > renders default form 1`] = `
             </button>
           </label>
           <div
-            class="_row_62bdff mb-2"
+            class="_row_913096 mb-2"
           >
             <select
-              class="_input_62bdff py-2 px-3"
+              class="_input_913096 py-2 px-3"
               id="templateSelect"
             >
               <option
@@ -716,13 +716,13 @@ exports[`SongForm > renders default form 1`] = `
               </option>
             </select>
             <button
-              class="_btn_62bdff"
+              class="_btn_913096"
             >
               New Template
             </button>
           </div>
           <label
-            class="_label_62bdff"
+            class="_label_913096"
             for="sectionPreset"
           >
             Preset Layout
@@ -750,10 +750,10 @@ exports[`SongForm > renders default form 1`] = `
             </button>
           </label>
           <div
-            class="_row_62bdff mb-2"
+            class="_row_913096 mb-2"
           >
             <select
-              class="_input_62bdff py-2 px-3"
+              class="_input_913096 py-2 px-3"
               id="sectionPreset"
             >
               <option
@@ -789,7 +789,7 @@ exports[`SongForm > renders default form 1`] = `
             </select>
           </div>
           <label
-            class="_label_62bdff"
+            class="_label_913096"
           >
             Structure (bars)
             <button
@@ -823,7 +823,7 @@ exports[`SongForm > renders default form 1`] = `
               style="background-color: rgba(0, 0, 0, 0.04);"
             >
               <label
-                class="_small_62bdff"
+                class="_small_913096"
                 for="bars-0"
               >
                 Intro Bars
@@ -851,13 +851,13 @@ exports[`SongForm > renders default form 1`] = `
                 </button>
               </label>
               <input
-                class="_input_62bdff"
+                class="_input_913096"
                 id="bars-0"
                 type="number"
                 value="4"
               />
               <label
-                class="_small_62bdff"
+                class="_small_913096"
                 for="chords-0"
               >
                 Chords
@@ -885,7 +885,7 @@ exports[`SongForm > renders default form 1`] = `
                 </button>
               </label>
               <input
-                class="_input_62bdff mt-1"
+                class="_input_913096 mt-1"
                 id="chords-0"
                 placeholder="Chords"
                 type="text"
@@ -897,7 +897,7 @@ exports[`SongForm > renders default form 1`] = `
               style="background-color: rgba(0, 0, 0, 0.04);"
             >
               <label
-                class="_small_62bdff"
+                class="_small_913096"
                 for="bars-1"
               >
                 A Bars
@@ -925,13 +925,13 @@ exports[`SongForm > renders default form 1`] = `
                 </button>
               </label>
               <input
-                class="_input_62bdff"
+                class="_input_913096"
                 id="bars-1"
                 type="number"
                 value="8"
               />
               <label
-                class="_small_62bdff"
+                class="_small_913096"
                 for="chords-1"
               >
                 Chords
@@ -959,7 +959,7 @@ exports[`SongForm > renders default form 1`] = `
                 </button>
               </label>
               <input
-                class="_input_62bdff mt-1"
+                class="_input_913096 mt-1"
                 id="chords-1"
                 placeholder="Chords"
                 type="text"
@@ -971,7 +971,7 @@ exports[`SongForm > renders default form 1`] = `
               style="background-color: rgba(0, 0, 0, 0.04);"
             >
               <label
-                class="_small_62bdff"
+                class="_small_913096"
                 for="bars-2"
               >
                 B Bars
@@ -999,13 +999,13 @@ exports[`SongForm > renders default form 1`] = `
                 </button>
               </label>
               <input
-                class="_input_62bdff"
+                class="_input_913096"
                 id="bars-2"
                 type="number"
                 value="8"
               />
               <label
-                class="_small_62bdff"
+                class="_small_913096"
                 for="chords-2"
               >
                 Chords
@@ -1033,7 +1033,7 @@ exports[`SongForm > renders default form 1`] = `
                 </button>
               </label>
               <input
-                class="_input_62bdff mt-1"
+                class="_input_913096 mt-1"
                 id="chords-2"
                 placeholder="Chords"
                 type="text"
@@ -1045,7 +1045,7 @@ exports[`SongForm > renders default form 1`] = `
               style="background-color: rgba(0, 0, 0, 0.04);"
             >
               <label
-                class="_small_62bdff"
+                class="_small_913096"
                 for="bars-3"
               >
                 A Bars
@@ -1073,13 +1073,13 @@ exports[`SongForm > renders default form 1`] = `
                 </button>
               </label>
               <input
-                class="_input_62bdff"
+                class="_input_913096"
                 id="bars-3"
                 type="number"
                 value="8"
               />
               <label
-                class="_small_62bdff"
+                class="_small_913096"
                 for="chords-3"
               >
                 Chords
@@ -1107,7 +1107,7 @@ exports[`SongForm > renders default form 1`] = `
                 </button>
               </label>
               <input
-                class="_input_62bdff mt-1"
+                class="_input_913096 mt-1"
                 id="chords-3"
                 placeholder="Chords"
                 type="text"
@@ -1119,7 +1119,7 @@ exports[`SongForm > renders default form 1`] = `
               style="background-color: rgba(0, 0, 0, 0.04);"
             >
               <label
-                class="_small_62bdff"
+                class="_small_913096"
                 for="bars-4"
               >
                 B Bars
@@ -1147,13 +1147,13 @@ exports[`SongForm > renders default form 1`] = `
                 </button>
               </label>
               <input
-                class="_input_62bdff"
+                class="_input_913096"
                 id="bars-4"
                 type="number"
                 value="8"
               />
               <label
-                class="_small_62bdff"
+                class="_small_913096"
                 for="chords-4"
               >
                 Chords
@@ -1181,7 +1181,7 @@ exports[`SongForm > renders default form 1`] = `
                 </button>
               </label>
               <input
-                class="_input_62bdff mt-1"
+                class="_input_913096 mt-1"
                 id="chords-4"
                 placeholder="Chords"
                 type="text"
@@ -1193,7 +1193,7 @@ exports[`SongForm > renders default form 1`] = `
               style="background-color: rgba(0, 0, 0, 0.04);"
             >
               <label
-                class="_small_62bdff"
+                class="_small_913096"
                 for="bars-5"
               >
                 Outro Bars
@@ -1221,13 +1221,13 @@ exports[`SongForm > renders default form 1`] = `
                 </button>
               </label>
               <input
-                class="_input_62bdff"
+                class="_input_913096"
                 id="bars-5"
                 type="number"
                 value="4"
               />
               <label
-                class="_small_62bdff"
+                class="_small_913096"
                 for="chords-5"
               >
                 Chords
@@ -1255,7 +1255,7 @@ exports[`SongForm > renders default form 1`] = `
                 </button>
               </label>
               <input
-                class="_input_62bdff mt-1"
+                class="_input_913096 mt-1"
                 id="chords-5"
                 placeholder="Chords"
                 type="text"
@@ -1264,7 +1264,7 @@ exports[`SongForm > renders default form 1`] = `
             </div>
           </div>
           <div
-            class="_small_62bdff"
+            class="_small_913096"
           >
             Total Bars: 40 — Est. Time: 2:00
           </div>
@@ -1283,13 +1283,13 @@ exports[`SongForm > renders default form 1`] = `
           class="mt-2"
         >
           <div
-            class="_grid3_62bdff"
+            class="_grid3_913096"
           >
             <div
-              class="_panel_62bdff"
+              class="_panel_913096"
             >
               <label
-                class="_label_62bdff"
+                class="_label_913096"
               >
                 Mood
                 <button
@@ -1316,10 +1316,10 @@ exports[`SongForm > renders default form 1`] = `
                 </button>
               </label>
               <div
-                class="_optionGrid_62bdff"
+                class="_optionGrid_913096"
               >
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     calm
@@ -1330,7 +1330,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     melancholy
@@ -1340,7 +1340,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     cozy
@@ -1351,7 +1351,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     nostalgic
@@ -1362,7 +1362,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     fantasy
@@ -1372,7 +1372,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     dreamy
@@ -1384,10 +1384,10 @@ exports[`SongForm > renders default form 1`] = `
               </div>
             </div>
             <div
-              class="_panel_62bdff"
+              class="_panel_913096"
             >
               <label
-                class="_label_62bdff"
+                class="_label_913096"
               >
                 Instruments
                 <button
@@ -1414,10 +1414,10 @@ exports[`SongForm > renders default form 1`] = `
                 </button>
               </label>
               <div
-                class="_optionGrid_62bdff"
+                class="_optionGrid_913096"
               >
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     rhodes
@@ -1428,7 +1428,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     nylon guitar
@@ -1439,7 +1439,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     upright bass
@@ -1450,7 +1450,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     pads
@@ -1460,7 +1460,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     electric piano
@@ -1470,7 +1470,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     piano
@@ -1480,7 +1480,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     clean electric guitar
@@ -1490,7 +1490,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     airy pads
@@ -1500,7 +1500,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     vinyl sounds
@@ -1510,7 +1510,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     acoustic guitar
@@ -1520,7 +1520,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     violin
@@ -1530,7 +1530,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     cello
@@ -1540,7 +1540,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     flute
@@ -1550,7 +1550,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     saxophone
@@ -1560,7 +1560,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     trumpet
@@ -1570,7 +1570,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     french horn
@@ -1580,7 +1580,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     synth lead
@@ -1590,7 +1590,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     string squeaks
@@ -1600,7 +1600,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     key clicks
@@ -1610,7 +1610,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     breath noise
@@ -1620,7 +1620,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     harp
@@ -1630,7 +1630,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     lute
@@ -1640,7 +1640,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     pan flute
@@ -1650,7 +1650,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     brush kit
@@ -1660,7 +1660,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     shaker
@@ -1670,7 +1670,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     tambourine
@@ -1680,7 +1680,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     808 sub-kick
@@ -1690,7 +1690,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     wurlitzer
@@ -1700,7 +1700,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     celesta
@@ -1710,7 +1710,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     music box
@@ -1720,7 +1720,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     glockenspiel
@@ -1730,7 +1730,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     vibraphone
@@ -1740,7 +1740,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     marimba
@@ -1750,7 +1750,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     muted electric guitar
@@ -1760,7 +1760,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     muted trumpet
@@ -1770,7 +1770,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     clarinet
@@ -1780,7 +1780,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     oboe
@@ -1790,7 +1790,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     field recordings
@@ -1800,7 +1800,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     synth plucks
@@ -1810,7 +1810,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     timpani
@@ -1820,7 +1820,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     pipe organ
@@ -1830,7 +1830,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     choir
@@ -1841,16 +1841,16 @@ exports[`SongForm > renders default form 1`] = `
                 </label>
               </div>
               <div
-                class="_small_62bdff"
+                class="_small_913096"
               >
                 Drums are synthesized automatically.
               </div>
             </div>
             <div
-              class="_panel_62bdff"
+              class="_panel_913096"
             >
               <label
-                class="_label_62bdff"
+                class="_label_913096"
               >
                 Lead Instrument
                 <button
@@ -1877,10 +1877,10 @@ exports[`SongForm > renders default form 1`] = `
                 </button>
               </label>
               <div
-                class="_optionGrid_62bdff"
+                class="_optionGrid_913096"
               >
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     flute
@@ -1892,7 +1892,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     sax
@@ -1904,7 +1904,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     synth
@@ -1917,7 +1917,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     violin
@@ -1929,7 +1929,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     clarinet
@@ -1941,7 +1941,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     oboe
@@ -1953,7 +1953,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     muted trumpet
@@ -1965,7 +1965,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     french horn
@@ -1977,7 +1977,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     glockenspiel
@@ -1991,10 +1991,10 @@ exports[`SongForm > renders default form 1`] = `
               </div>
             </div>
             <div
-              class="_panel_62bdff"
+              class="_panel_913096"
             >
               <label
-                class="_label_62bdff"
+                class="_label_913096"
               >
                 Ambience
                 <button
@@ -2021,10 +2021,10 @@ exports[`SongForm > renders default form 1`] = `
                 </button>
               </label>
               <div
-                class="_optionGrid_62bdff"
+                class="_optionGrid_913096"
               >
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     rain
@@ -2035,7 +2035,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     cafe
@@ -2045,7 +2045,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     street
@@ -2055,7 +2055,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     birds
@@ -2065,7 +2065,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     cicadas
@@ -2075,7 +2075,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     train
@@ -2085,7 +2085,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     vinyl
@@ -2095,7 +2095,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     forest
@@ -2105,7 +2105,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     fireplace
@@ -2115,7 +2115,7 @@ exports[`SongForm > renders default form 1`] = `
                   />
                 </label>
                 <label
-                  class="_optionCard_62bdff"
+                  class="_optionCard_913096"
                 >
                   <span>
                     ocean
@@ -2126,7 +2126,7 @@ exports[`SongForm > renders default form 1`] = `
                 </label>
               </div>
               <input
-                class="_slider_62bdff"
+                class="_slider_913096"
                 max="1"
                 min="0"
                 step="0.01"
@@ -2134,7 +2134,7 @@ exports[`SongForm > renders default form 1`] = `
                 value="0.5"
               />
               <div
-                class="_small_62bdff"
+                class="_small_913096"
               >
                 50% intensity
               </div>
@@ -2155,13 +2155,13 @@ exports[`SongForm > renders default form 1`] = `
           class="mt-2"
         >
           <div
-            class="_grid3_62bdff"
+            class="_grid3_913096"
           >
             <div
-              class="_panel_62bdff"
+              class="_panel_913096"
             >
               <label
-                class="_label_62bdff"
+                class="_label_913096"
               >
                 Drum Pattern
                 <button
@@ -2188,7 +2188,7 @@ exports[`SongForm > renders default form 1`] = `
                 </button>
               </label>
               <select
-                class="_input_62bdff py-2 px-3"
+                class="_input_913096 py-2 px-3"
               >
                 <option
                   value="random"
@@ -2237,16 +2237,16 @@ exports[`SongForm > renders default form 1`] = `
                 </option>
               </select>
               <div
-                class="_small_62bdff"
+                class="_small_913096"
               >
                 Choose a groove or leave random.
               </div>
             </div>
             <div
-              class="_panel_62bdff"
+              class="_panel_913096"
             >
               <label
-                class="_label_62bdff"
+                class="_label_913096"
               >
                 Variety (0-100%)
                 <button
@@ -2273,23 +2273,23 @@ exports[`SongForm > renders default form 1`] = `
                 </button>
               </label>
               <input
-                class="_slider_62bdff"
+                class="_slider_913096"
                 max="100"
                 min="0"
                 type="range"
                 value="45"
               />
               <div
-                class="_small_62bdff"
+                class="_small_913096"
               >
                 45% fills & swing
               </div>
             </div>
             <div
-              class="_panel_62bdff"
+              class="_panel_913096"
             >
               <label
-                class="_label_62bdff"
+                class="_label_913096"
               >
                 Chord Span
                 <button
@@ -2316,7 +2316,7 @@ exports[`SongForm > renders default form 1`] = `
                 </button>
               </label>
               <select
-                class="_input_62bdff py-2 px-3"
+                class="_input_913096 py-2 px-3"
               >
                 <option
                   value="2"
@@ -2339,7 +2339,7 @@ exports[`SongForm > renders default form 1`] = `
         </div>
       </details>
       <div
-        class="_panel_62bdff mt-3"
+        class="_panel_913096 mt-3"
       >
         <details
           open=""
@@ -2375,10 +2375,10 @@ exports[`SongForm > renders default form 1`] = `
             class="mt-2"
           >
             <div
-              class="_optionGrid_62bdff"
+              class="_optionGrid_913096"
             >
               <label
-                class="_optionCard_62bdff"
+                class="_optionCard_913096"
               >
                 <span>
                   Stereo widen
@@ -2411,7 +2411,7 @@ exports[`SongForm > renders default form 1`] = `
                 />
               </label>
               <label
-                class="_optionCard_62bdff"
+                class="_optionCard_913096"
               >
                 <span>
                   Room reverb
@@ -2444,7 +2444,7 @@ exports[`SongForm > renders default form 1`] = `
                 />
               </label>
               <label
-                class="_optionCard_62bdff"
+                class="_optionCard_913096"
               >
                 <span>
                   Sidechain (kick)
@@ -2477,7 +2477,7 @@ exports[`SongForm > renders default form 1`] = `
                 />
               </label>
               <label
-                class="_optionCard_62bdff"
+                class="_optionCard_913096"
               >
                 <span>
                   Chorus
@@ -2510,7 +2510,7 @@ exports[`SongForm > renders default form 1`] = `
                 />
               </label>
               <label
-                class="_optionCard_62bdff"
+                class="_optionCard_913096"
               >
                 <span>
                   Lofi Filter
@@ -2555,7 +2555,7 @@ exports[`SongForm > renders default form 1`] = `
                 class="mt-2"
               >
                 <label
-                  class="_label_62bdff"
+                  class="_label_913096"
                 >
                   Limiter Drive
                   <button
@@ -2582,7 +2582,7 @@ exports[`SongForm > renders default form 1`] = `
                   </button>
                 </label>
                 <input
-                  class="_slider_62bdff"
+                  class="_slider_913096"
                   max="2"
                   min="0.5"
                   step="0.01"
@@ -2590,19 +2590,19 @@ exports[`SongForm > renders default form 1`] = `
                   value="1.02"
                 />
                 <div
-                  class="_small_62bdff"
+                  class="_small_913096"
                 >
                   1.02× saturation
                 </div>
                 <label
-                  class="_toggle_62bdff mt-2"
+                  class="_toggle_913096 mt-2"
                 >
                   <input
                     checked=""
                     type="checkbox"
                   />
                   <span
-                    class="_small_62bdff"
+                    class="_small_913096"
                   >
                     Dither
                     <button
@@ -2635,10 +2635,10 @@ exports[`SongForm > renders default form 1`] = `
         </details>
       </div>
       <div
-        class="_panel_62bdff"
+        class="_panel_913096"
       >
         <label
-          class="_toggle_62bdff"
+          class="_toggle_913096"
           for="albumMode"
         >
           <input
@@ -2646,7 +2646,7 @@ exports[`SongForm > renders default form 1`] = `
             type="checkbox"
           />
           <span
-            class="_small_62bdff"
+            class="_small_913096"
           >
             Album mode
             <button
@@ -2675,13 +2675,13 @@ exports[`SongForm > renders default form 1`] = `
         </label>
       </div>
       <div
-        class="_grid2_62bdff"
+        class="_grid2_913096"
       >
         <div
-          class="_panel_62bdff"
+          class="_panel_913096"
         >
           <label
-            class="_label_62bdff"
+            class="_label_913096"
           >
             How many songs?
             <button
@@ -2708,17 +2708,17 @@ exports[`SongForm > renders default form 1`] = `
             </button>
           </label>
           <input
-            class="_input_62bdff"
+            class="_input_913096"
             min="1"
             type="number"
             value="1"
           />
           <div
-            class="_small_62bdff mt-2"
+            class="_small_913096 mt-2"
           >
             Titles will be suffixed with 
             <select
-              class="_input_62bdff py-1 px-2 inline-block w-[160px] ml-1"
+              class="_input_913096 py-1 px-2 inline-block w-[160px] ml-1"
             >
               <option
                 value="number"
@@ -2734,10 +2734,10 @@ exports[`SongForm > renders default form 1`] = `
           </div>
         </div>
         <div
-          class="_panel_62bdff"
+          class="_panel_913096"
         >
           <label
-            class="_label_62bdff"
+            class="_label_913096"
           >
             BPM Jitter (0-30%, per song)
             <button
@@ -2764,26 +2764,26 @@ exports[`SongForm > renders default form 1`] = `
             </button>
           </label>
           <input
-            class="_slider_62bdff"
+            class="_slider_913096"
             max="30"
             min="0"
             type="range"
             value="5"
           />
           <div
-            class="_small_62bdff"
+            class="_small_913096"
           >
             ±5% around the base BPM
           </div>
           <div
-            class="_toggle_62bdff mt-2"
+            class="_toggle_913096 mt-2"
           >
             <input
               checked=""
               type="checkbox"
             />
             <span
-              class="_small_62bdff"
+              class="_small_913096"
             >
               Auto‑play last successful render
             </span>
@@ -2791,19 +2791,19 @@ exports[`SongForm > renders default form 1`] = `
         </div>
       </div>
       <div
-        class="_actions_62bdff"
+        class="_actions_913096"
       >
         <button
-          class="_btn_62bdff"
+          class="_btn_913096"
           disabled=""
         >
           Render Songs
         </button>
         <div
-          class="_row_62bdff"
+          class="_row_913096"
         >
           <button
-            class="_playBtn_62bdff"
+            class="_playBtn_913096"
           >
             Preview snippet
           </button>
@@ -2831,7 +2831,7 @@ exports[`SongForm > renders default form 1`] = `
           </button>
         </div>
         <button
-          class="_playBtn_62bdff"
+          class="_playBtn_913096"
         >
           Play last track
         </button>

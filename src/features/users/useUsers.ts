@@ -45,14 +45,15 @@ const defaultModules: ModulesState = {
     memLimit: number;
   }
 
-  interface UsersState {
-    users: Record<string, User>;
-    currentUserId: string | null;
-    addUser: (name: string) => void;
-    switchUser: (id: string) => void;
-    setTheme: (theme: Theme) => void;
-    toggleModule: (key: ModuleKey) => void;
-    setCpuLimit: (limit: number) => void;
+interface UsersState {
+  users: Record<string, User>;
+  currentUserId: string | null;
+  globalTheme: Theme;
+  addUser: (name: string) => void;
+  switchUser: (id: string) => void;
+  setTheme: (theme: Theme) => void;
+  toggleModule: (key: ModuleKey) => void;
+  setCpuLimit: (limit: number) => void;
     setMemLimit: (limit: number) => void;
   }
 
@@ -61,28 +62,32 @@ export const useUsers = create<UsersState>()(
     (set, get) => ({
       users: {},
       currentUserId: null,
+      globalTheme: 'default',
       addUser: (name) => {
         const id = Date.now().toString();
-          set((state) => ({
-            users: {
-              ...state.users,
-              [id]: {
-                id,
-                name,
-                theme: 'default',
-                money: 5000,
-                modules: { ...defaultModules },
-                cpuLimit: 90,
-                memLimit: 90,
-              },
+        set((state) => ({
+          users: {
+            ...state.users,
+            [id]: {
+              id,
+              name,
+              theme: state.globalTheme,
+              money: 5000,
+              modules: { ...defaultModules },
+              cpuLimit: 90,
+              memLimit: 90,
             },
-            currentUserId: id,
-          }));
-        },
+          },
+          currentUserId: id,
+        }));
+      },
       switchUser: (id) => set(() => ({ currentUserId: id })),
       setTheme: (theme) => {
         const id = get().currentUserId;
-        if (!id) return;
+        if (!id) {
+          set({ globalTheme: theme });
+          return;
+        }
         set((state) => ({
           users: {
             ...state.users,
