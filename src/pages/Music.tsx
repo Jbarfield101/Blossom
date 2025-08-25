@@ -1,6 +1,9 @@
 // src/pages/Music.tsx
 import SongForm from "../components/SongForm";
 import VersionBadge from "../components/VersionBadge";
+import SystemInfoWidget from "../components/SystemInfoWidget";
+import { Box } from "@mui/material";
+import { systemInfoWidgetSx } from "./homeStyles";
 
 export default function Music() {
   return (
@@ -30,6 +33,11 @@ export default function Music() {
       <div style={{ maxWidth: 980, margin: "0 auto", padding: "24px 16px" }}>
         <SongForm />
       </div>
+
+      {/* System info widget */}
+      <Box sx={systemInfoWidgetSx}>
+        <SystemInfoWidget />
+      </Box>
     </div>
   );
 }
