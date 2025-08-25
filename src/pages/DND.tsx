@@ -9,12 +9,14 @@ import {
   Casino,
   Map,
   MilitaryTech,
+  LibraryBooks,
 } from "@mui/icons-material";
 import { SyntheticEvent, useState, ChangeEvent } from "react";
 import { DndThemeContext, themes } from "../features/dnd/theme";
 import type { DndTheme } from "../features/dnd/types";
 import NpcForm from "../features/dnd/NpcForm";
 import LoreForm from "../features/dnd/LoreForm";
+import NPCList from "./NPCList";
 import QuestForm from "../features/dnd/QuestForm";
 import EncounterForm from "../features/dnd/EncounterForm";
 import RuleForm from "../features/dnd/RuleForm";
@@ -73,6 +75,7 @@ export default function DND() {
               sx={{ bgcolor: "#f3e5ab" }}
             >
               <Tab icon={<Person />} label="NPC" />
+              <Tab icon={<LibraryBooks />} label="NPC Library" />
               <Tab icon={<MenuBook />} label="Lore" />
               <Tab icon={<TravelExplore />} label="Quest" />
               <Tab icon={<SportsKabaddi />} label="Encounter" />
@@ -100,14 +103,15 @@ export default function DND() {
               </TextField>
             </Box>
             {tab === 0 && <NpcForm world={world} />}
-            {tab === 1 && <LoreForm world={world} />}
-            {tab === 2 && <QuestForm />}
-            {tab === 3 && <EncounterForm />}
-            {tab === 4 && <RuleForm />}
-            {tab === 5 && <SpellForm />}
-            {tab === 6 && <DiceRoller />}
-            {tab === 7 && <TabletopMap />}
-            {tab === 8 && <WarTable />}
+            {tab === 1 && <NPCList />}
+            {tab === 2 && <LoreForm world={world} />}
+            {tab === 3 && <QuestForm />}
+            {tab === 4 && <EncounterForm />}
+            {tab === 5 && <RuleForm />}
+            {tab === 6 && <SpellForm />}
+            {tab === 7 && <DiceRoller />}
+            {tab === 8 && <TabletopMap />}
+            {tab === 9 && <WarTable />}
           </>
         )}
       </Box>
