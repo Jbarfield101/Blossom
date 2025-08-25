@@ -1165,7 +1165,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
     # --- ambience rotation
     amb_list = motif.get("ambience") or []
     if not amb_list:
-        amb_list = rng.choice(
+        amb_list = random.choice(
             [
                 ["rain"],
                 ["cafe"],
