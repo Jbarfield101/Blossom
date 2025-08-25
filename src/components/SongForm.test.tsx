@@ -25,8 +25,10 @@ vi.mock('../features/lofi/SongForm', () => ({
     setSeed: vi.fn(),
   }),
 }));
+const enqueueTask = vi.fn(() => Promise.resolve(1));
 vi.mock('../store/tasks', () => ({
-  useTasks: (selector: any) => selector({ tasks: {}, fetchStatus: vi.fn() }),
+  useTasks: (selector: any) =>
+    selector({ tasks: {}, fetchStatus: vi.fn(), enqueueTask }),
 }));
 
 function openSection(id: string) {
@@ -58,6 +60,7 @@ describe('SongForm', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.resetAllMocks();
+    enqueueTask.mockResolvedValue(1);
     useSongJobs.setState({ jobs: [] });
     Object.defineProperty(global.HTMLMediaElement.prototype, 'play', {
       configurable: true,
@@ -389,13 +392,12 @@ describe('SongForm', () => {
     fireEvent.click(screen.getByText(/create album/i));
 
     await waitFor(() => {
-      const call = (invoke as any).mock.calls.find(
-        ([c]: any) => c === 'generate_album'
-      );
-      expect(call[1].meta.album_name).toBe('My Album');
-      expect(call[1].meta.track_names).toEqual(['T1', 'T2', 'T3']);
-      expect(call[1].meta.specs).toHaveLength(3);
-      expect(call[1].meta.specs[0]).toMatchObject({
+      expect(enqueueTask).toHaveBeenCalled();
+      const args = enqueueTask.mock.calls[0][1];
+      expect(args.GenerateAlbum.meta.album_name).toBe('My Album');
+      expect(args.GenerateAlbum.meta.track_names).toEqual(['T1', 'T2', 'T3']);
+      expect(args.GenerateAlbum.meta.specs).toHaveLength(3);
+      expect(args.GenerateAlbum.meta.specs[0]).toMatchObject({
         title: 'Test Song 1',
         album: 'My Album',
       });
