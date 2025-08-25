@@ -67,13 +67,11 @@ ComfyUI launcher (no extra crate)
 static COMFY_CHILD: OnceLock<Mutex<Option<LoggedChild>>> = OnceLock::new();
 static OLLAMA_CHILD: OnceLock<Mutex<Option<LoggedChild>>> = OnceLock::new();
 
-#[cfg(test)]
 pub fn __set_comfy_child(child: Child) {
     let mut lock = COMFY_CHILD.get_or_init(|| Mutex::new(None)).lock().unwrap();
-    *lock = Some(child);
+    *lock = Some(LoggedChild { child, tasks: vec![] });
 }
 
-#[cfg(test)]
 pub fn __has_comfy_child() -> bool {
     COMFY_CHILD
         .get_or_init(|| Mutex::new(None))
@@ -147,7 +145,7 @@ fn spawn_with_logging<E: LogEmitter>(
 pub async fn comfy_status() -> Result<bool, String> {
     let mut lock = COMFY_CHILD.get_or_init(|| Mutex::new(None)).lock().unwrap();
     if let Some(child) = lock.as_mut() {
-        match child.try_wait() {
+        match child.child.try_wait() {
             Ok(Some(_)) => {
                 *lock = None;
                 Ok(false)
@@ -2117,7 +2115,7 @@ pub async fn enqueue_task(
 
 #[tauri::command]
 pub async fn task_status(queue: State<'_, TaskQueue>, id: u64) -> Result<Option<Task>, String> {
-    Ok(queue.get(id))
+    Ok(queue.get(id).await)
 }
 
 #[tauri::command]
@@ -2127,7 +2125,7 @@ pub async fn cancel_task(queue: State<'_, TaskQueue>, id: u64) -> Result<bool, S
 
 #[tauri::command]
 pub async fn list_tasks(queue: State<'_, TaskQueue>) -> Result<Vec<Task>, String> {
-    Ok(queue.list())
+    Ok(queue.list().await)
 }
 
 #[tauri::command]
@@ -2136,6 +2134,6 @@ pub async fn set_task_limits(
     cpu: f32,
     memory: f32,
 ) -> Result<(), String> {
-    queue.set_limits(cpu, memory);
+    queue.set_limits(cpu, memory).await;
     Ok(())
 }

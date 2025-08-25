@@ -2,14 +2,14 @@ use std::collections::{HashMap, HashSet};
 use std::io::{BufRead, BufReader};
 use std::process::{Command as PCommand, Stdio};
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sysinfo::System;
 use tauri::async_runtime::{self, JoinHandle};
-use tokio::sync::{mpsc, Semaphore};
+use tokio::sync::{mpsc, Mutex, Semaphore};
 use tokio::time::sleep;
 
 use crate::commands::ShortSpec;
@@ -123,11 +123,11 @@ impl TaskQueue {
                 match msg {
                     Message::Enqueue(task) => {
                         {
-                            let mut map = tasks_worker.lock().unwrap();
+                            let mut map = tasks_worker.lock().await;
                             map.insert(task.id, task.clone());
                         }
-                        if _cancelled_worker.lock().unwrap().contains(&task.id) {
-                            if let Some(t) = tasks_worker.lock().unwrap().get_mut(&task.id) {
+                        if _cancelled_worker.lock().await.contains(&task.id) {
+                            if let Some(t) = tasks_worker.lock().await.get_mut(&task.id) {
                                 t.status = TaskStatus::Cancelled;
                             }
                             continue;
@@ -141,7 +141,7 @@ impl TaskQueue {
                         let handle = async_runtime::spawn(async move {
                             loop {
                                 let (cpu_limit, mem_limit) = {
-                                    let l = limits_clone.lock().unwrap();
+                                    let l = limits_clone.lock().await;
                                     (l.cpu, l.memory)
                                 };
                                 let mut sys = System::new();
@@ -161,7 +161,7 @@ impl TaskQueue {
                                 sleep(Duration::from_secs(1)).await;
                             }
                             {
-                                let mut map = tasks_clone.lock().unwrap();
+                                let mut map = tasks_clone.lock().await;
                                 if let Some(t) = map.get_mut(&id) {
                                     t.status = TaskStatus::Running;
                                 }
@@ -319,14 +319,14 @@ impl TaskQueue {
                                             break;
                                         }
                                         if let Ok(p) = line.trim().parse::<f32>() {
-                                            let mut map = tasks_clone.lock().unwrap();
+                                            let mut map = tasks_clone.lock().await;
                                             if let Some(t) = map.get_mut(&id) {
                                                 t.progress = p;
                                             }
                                         } else {
                                             output.push_str(&line);
                                         }
-                                        if _cancelled_clone.lock().unwrap().contains(&id) {
+                                        if _cancelled_clone.lock().await.contains(&id) {
                                             let _ = child.kill();
                                             return Err("cancelled".into());
                                         }
@@ -353,7 +353,7 @@ impl TaskQueue {
                                 }
                             };
                             {
-                                let mut map = tasks_clone.lock().unwrap();
+                                let mut map = tasks_clone.lock().await;
                                 if let Some(t) = map.get_mut(&id) {
                                     match &res {
                                         Ok(v) => {
@@ -370,14 +370,14 @@ impl TaskQueue {
                             drop(permit);
                             res
                         });
-                        _handles_worker.lock().unwrap().insert(id, handle);
+                        _handles_worker.lock().await.insert(id, handle);
                     }
                     Message::Cancel(id) => {
-                        _cancelled_worker.lock().unwrap().insert(id);
-                        if let Some(handle) = _handles_worker.lock().unwrap().remove(&id) {
+                        _cancelled_worker.lock().await.insert(id);
+                        if let Some(handle) = _handles_worker.lock().await.remove(&id) {
                             handle.abort();
                         }
-                        if let Some(t) = tasks_worker.lock().unwrap().get_mut(&id) {
+                        if let Some(t) = tasks_worker.lock().await.get_mut(&id) {
                             t.status = TaskStatus::Cancelled;
                         }
                     }
@@ -408,20 +408,20 @@ impl TaskQueue {
         id
     }
 
-    pub fn get(&self, id: u64) -> Option<Task> {
-        self.tasks.lock().unwrap().get(&id).cloned()
+    pub async fn get(&self, id: u64) -> Option<Task> {
+        self.tasks.lock().await.get(&id).cloned()
     }
 
-    pub fn list(&self) -> Vec<Task> {
-        self.tasks.lock().unwrap().values().cloned().collect()
+    pub async fn list(&self) -> Vec<Task> {
+        self.tasks.lock().await.values().cloned().collect()
     }
 
     pub async fn cancel(&self, id: u64) -> bool {
         self.tx.send(Message::Cancel(id)).await.is_ok()
     }
 
-    pub fn set_limits(&self, cpu: f32, memory: f32) {
-        let mut l = self.limits.lock().unwrap();
+    pub async fn set_limits(&self, cpu: f32, memory: f32) {
+        let mut l = self.limits.lock().await;
         l.cpu = cpu;
         l.memory = memory;
     }
