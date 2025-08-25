@@ -175,6 +175,32 @@ describe('useCalendar store', () => {
     expect(useCalendar.getState().tagTotals).toEqual({});
   });
 
+  it('removes events before a given date', () => {
+    const add = useCalendar.getState().addEvent;
+    add({
+      title: 'A',
+      date: '2024-01-01T09:00',
+      end: '2024-01-01T10:00',
+      tags: ['work'],
+      status: 'scheduled',
+      hasCountdown: false,
+    });
+    add({
+      title: 'B',
+      date: '2024-01-05T09:00',
+      end: '2024-01-05T10:00',
+      tags: ['play'],
+      status: 'scheduled',
+      hasCountdown: false,
+    });
+    useCalendar.getState().removeEventsBefore('2024-01-03T00:00');
+    const state = useCalendar.getState();
+    expect(state.events).toHaveLength(1);
+    expect(state.events[0].title).toBe('B');
+    const hour = 60 * 60 * 1000;
+    expect(state.tagTotals).toEqual({ play: 1 * hour });
+  });
+
   it('rejects events where end is not after start', () => {
     useCalendar.getState().addEvent({
       title: 'Bad',

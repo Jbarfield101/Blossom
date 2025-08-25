@@ -79,6 +79,7 @@ export default function Calendar() {
   const addEvent = useCalendar((s) => s.addEvent);
   const updateEvent = useCalendar((s) => s.updateEvent);
   const removeEvent = useCalendar((s) => s.removeEvent);
+  const removeEventsBefore = useCalendar((s) => s.removeEventsBefore);
   const statusColors = useStatusColors();
   const theme = useTheme();
   const eventsRef = useRef(events);
@@ -336,6 +337,23 @@ export default function Calendar() {
               </Button>
             ))}
           </ButtonGroup>
+          <Button
+            color="error"
+            variant="outlined"
+            onClick={() => {
+              const start = new Date();
+              start.setHours(0, 0, 0, 0);
+              if (
+                window.confirm(
+                  "Clear all events before today?"
+                )
+              ) {
+                removeEventsBefore(toLocalNaive(start));
+              }
+            }}
+          >
+            Clear Past Events
+          </Button>
         </Box>
       </Box>
 
