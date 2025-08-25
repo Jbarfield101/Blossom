@@ -356,18 +356,76 @@ def extract_lore(path: str):
 
 
 def extract_rules(path: str):
-    """Extract simple rule entries from a PDF file."""
+    """Extract rule entries from a PDF file using simple layout heuristics."""
     pdf_path = Path(path)
     rules = []
+
+    def _group_lines(words):
+        """Group extracted words into lines based on their vertical positions."""
+        lines = []
+        current = []
+        last_top = None
+        for w in words:
+            top = w.get("top")
+            if last_top is None or abs(top - last_top) <= 2:
+                current.append(w)
+            else:
+                lines.append(current)
+                current = [w]
+            last_top = top
+        if current:
+            lines.append(current)
+        return lines
+
     with pdfplumber.open(pdf_path) as pdf:
-        text = "\n".join(page.extract_text() or "" for page in pdf.pages)
-    for block in text.split("\n\n"):
-        lines = [ln.strip() for ln in block.splitlines() if ln.strip()]
-        if not lines:
-            continue
-        name = lines[0]
-        desc = " ".join(lines[1:])
-        rules.append({"name": name, "description": desc})
+        current = None
+        for page in pdf.pages:
+            words = page.extract_words(extra_attrs=["fontname", "size"]) or []
+            if words:
+                lines = _group_lines(words)
+                for line_words in lines:
+                    text = " ".join(w["text"] for w in line_words).strip()
+                    if not text:
+                        continue
+                    fonts = [w.get("fontname", "").lower() for w in line_words]
+                    is_heading = any("bold" in f for f in fonts) or text.isupper() or text.endswith(":")
+                    if is_heading:
+                        if current:
+                            rules.append(current)
+                        current = {"name": text.rstrip(":"), "description": ""}
+                    elif current:
+                        if current["description"]:
+                            current["description"] += " "
+                        current["description"] += text
+            else:
+                # Fallback to text extraction when word data is unavailable
+                for line in (page.extract_text() or "").splitlines():
+                    line = line.strip()
+                    if not line:
+                        continue
+                    if line.isupper() or line.endswith(":"):
+                        if current:
+                            rules.append(current)
+                        current = {"name": line.rstrip(":"), "description": ""}
+                    elif current:
+                        if current["description"]:
+                            current["description"] += " "
+                        current["description"] += line
+        if current:
+            rules.append(current)
+
+    # If heuristics produced nothing, fall back to simple paragraph splitting
+    if not rules:
+        with pdfplumber.open(pdf_path) as pdf:
+            text = "\n".join(page.extract_text() or "" for page in pdf.pages)
+        for block in text.split("\n\n"):
+            lines = [ln.strip() for ln in block.splitlines() if ln.strip()]
+            if not lines:
+                continue
+            name = lines[0]
+            desc = " ".join(lines[1:])
+            rules.append({"name": name, "description": desc})
+
     return {"rules": rules}
 
 
