@@ -68,6 +68,9 @@ export const useStocks = create<StockState>((set, get) => ({
         stale: boolean;
       }>('stocks_fetch', { tickers: [fetchSym], range: '1d' });
       const quote = bundle.quotes[0];
+      if (quote?.error) {
+        throw new Error(quote.error);
+      }
       const series = bundle.series[0];
       const history = series?.points?.map((p) => p.close) ?? [];
       const market_status = bundle.market.phase;
