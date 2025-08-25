@@ -382,6 +382,11 @@ describe('SongForm', () => {
       );
       expect(call[1].meta.album_name).toBe('My Album');
       expect(call[1].meta.track_names).toEqual(['T1', 'T2', 'T3']);
+      expect(call[1].meta.specs).toHaveLength(3);
+      expect(call[1].meta.specs[0]).toMatchObject({
+        title: 'Test Song 1',
+        album: 'My Album',
+      });
     });
   });
 

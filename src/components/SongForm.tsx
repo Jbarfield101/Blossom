@@ -748,6 +748,9 @@ export default function SongForm() {
 
     try {
       setBusy(true);
+      const specs = Array.from({ length: trackCount }, (_, i) =>
+        makeSpecForIndex(i)
+      );
       const res: { album_dir: string } = await invoke("generate_album", {
         meta: {
           track_count: trackCount,
@@ -755,6 +758,7 @@ export default function SongForm() {
           album_name: albumName,
           track_names: trackNames,
           out_dir: outDir,
+          specs,
         },
       });
       setOutDir(res.album_dir);
