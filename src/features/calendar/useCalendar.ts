@@ -7,6 +7,7 @@ interface Actions {
   addEvent: (e: Omit<CalendarEvent, 'id'>) => void;
   updateEvent: (id: string, patch: Partial<CalendarEvent>) => void;
   removeEvent: (id: string) => void;
+  removeEventsBefore: (date: string) => void;
   setSelectedCountdownId: (id: string | null) => void;
   /** Schedule a task and tag it for the calendar */
   scheduleTask: (
@@ -88,6 +89,15 @@ export const useCalendar = create<CalendarState & Actions>()(
             tagTotals[tag] = (tagTotals[tag] || 0) - ms;
             if (tagTotals[tag] <= 0) delete tagTotals[tag];
           }
+          return { events, tagTotals };
+        }),
+      removeEventsBefore: (date) =>
+        set((state) => {
+          const threshold = Date.parse(date);
+          const events = state.events.filter(
+            (e) => Date.parse(e.end) >= threshold
+          );
+          const tagTotals = recalcTagTotals(events);
           return { events, tagTotals };
         }),
       setSelectedCountdownId: (id) => set({ selectedCountdownId: id }),
