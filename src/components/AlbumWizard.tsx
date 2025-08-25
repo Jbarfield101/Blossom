@@ -14,6 +14,7 @@ export type Section = { name: string; bars: number; chords: string[] };
 type SongSpec = {
   title: string;
   outDir: string;
+  album?: string;
   bpm: number;
   key: string;
   structure: Section[];
@@ -130,6 +131,7 @@ export default function AlbumWizard() {
     return {
       title: titleBase,
       outDir,
+      album: undefined,
       bpm,
       key,
       structure: defaultTpl.structure,
