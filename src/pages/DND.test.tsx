@@ -6,7 +6,7 @@ import { useWorlds } from "../store/worlds";
 describe("DND world selector", () => {
   afterEach(() => {
     cleanup();
-    useWorlds.setState({ worlds: [] });
+    useWorlds.setState({ worlds: [], currentWorld: '' });
     useWorlds.persist.clearStorage();
     localStorage.clear();
     vi.restoreAllMocks();
@@ -20,5 +20,6 @@ describe("DND world selector", () => {
     });
     expect(screen.getByDisplayValue("Eberron")).toBeInTheDocument();
     expect(useWorlds.getState().worlds).toContain("Eberron");
+    expect(useWorlds.getState().currentWorld).toBe("Eberron");
   });
 });

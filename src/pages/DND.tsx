@@ -27,9 +27,10 @@ import { useWorlds } from "../store/worlds";
 export default function DND() {
   const [tab, setTab] = useState(0);
   const [selectedTheme, setSelectedTheme] = useState<DndTheme>("Parchment");
-  const [world, setWorld] = useState("");
   const worlds = useWorlds((s) => s.worlds);
+  const world = useWorlds((s) => s.currentWorld);
   const addWorld = useWorlds((s) => s.addWorld);
+  const setCurrentWorld = useWorlds((s) => s.setCurrentWorld);
   const handleChange = (_e: SyntheticEvent, v: number) => setTab(v);
   const handleWorldChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -37,10 +38,10 @@ export default function DND() {
       const name = window.prompt("Enter world name")?.trim();
       if (name) {
         addWorld(name);
-        setWorld(name);
+        setCurrentWorld(name);
       }
     } else {
-      setWorld(value);
+      setCurrentWorld(value);
     }
   };
   return (
