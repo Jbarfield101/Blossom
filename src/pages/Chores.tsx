@@ -26,14 +26,14 @@ export default function Chores() {
 
   const upcomingTasks = events.filter(
     (e) =>
-      e.tags.includes("task") &&
+      e.tags?.includes("task") &&
       e.status === "scheduled" &&
       new Date(e.date) >= startOfToday
   ).length;
 
   const missedTasks = events.filter(
     (e) =>
-      e.tags.includes("task") &&
+      e.tags?.includes("task") &&
       e.status === "scheduled" &&
       new Date(e.date) < startOfToday
   ).length;
