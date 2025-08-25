@@ -373,10 +373,20 @@ def _load_ambience_sample(name: str, n: int, rng=None) -> Optional[np.ndarray]:
         )
         return None
     arr = arr / max_int
-    if len(arr) < n:
-        reps = int(np.ceil(n / len(arr)))
+    fade_len = int(0.05 * SR)
+    needed = n + fade_len
+    if len(arr) < needed:
+        reps = int(np.ceil(needed / len(arr)))
         arr = np.tile(arr, reps)
+    arr = arr[:needed]
+
+    fade_out = np.linspace(1.0, 0.0, fade_len, dtype=np.float32)
+    fade_in = np.linspace(0.0, 1.0, fade_len, dtype=np.float32)
+    arr[-fade_len:] *= fade_out
+    arr[:fade_len] *= fade_in
+    arr[:fade_len] += arr[-fade_len:]
     arr = arr[:n]
+
     arr = _butter_highpass(arr, 200)
     arr = _butter_lowpass(arr, 5000)
     return arr * 0.002
