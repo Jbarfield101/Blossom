@@ -45,6 +45,24 @@ export default function NpcForm({ world }: Props) {
   const [result, setResult] = useState<NpcData | null>(null);
   const theme = useDndTheme();
 
+  const textFieldProps = {
+    variant: "outlined" as const,
+    InputLabelProps: { shrink: true },
+    InputProps: {
+      sx: {
+        "::placeholder": {
+          color: "gray",
+        },
+      },
+    },
+    sx: {
+      backgroundColor: "background.paper",
+      color: "text.primary",
+      borderRadius: 1,
+      boxShadow: 1,
+    },
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
@@ -130,6 +148,7 @@ export default function NpcForm({ world }: Props) {
             </Grid>
             <Grid item xs={8}>
               <TextField
+                {...textFieldProps}
                 id="name"
                 value={name}
                 onChange={(e) => {
@@ -152,6 +171,7 @@ export default function NpcForm({ world }: Props) {
             </Grid>
             <Grid item xs={8}>
               <TextField
+                {...textFieldProps}
                 id="species"
                 value={species}
                 onChange={(e) => {
@@ -176,6 +196,7 @@ export default function NpcForm({ world }: Props) {
             </Grid>
             <Grid item xs={8}>
               <TextField
+                {...textFieldProps}
                 id="role"
                 value={role}
                 onChange={(e) => {
@@ -198,6 +219,7 @@ export default function NpcForm({ world }: Props) {
             </Grid>
             <Grid item xs={8}>
               <TextField
+                {...textFieldProps}
                 id="alignment"
                 value={alignment}
                 onChange={(e) => {
@@ -246,6 +268,7 @@ export default function NpcForm({ world }: Props) {
             </Grid>
             <Grid item xs={8}>
               <TextField
+                {...textFieldProps}
                 id="backstory"
                 value={backstory}
                 onChange={(e) => setBackstory(e.target.value)}
@@ -260,6 +283,7 @@ export default function NpcForm({ world }: Props) {
             </Grid>
             <Grid item xs={8}>
               <TextField
+                {...textFieldProps}
                 id="location"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
@@ -274,6 +298,7 @@ export default function NpcForm({ world }: Props) {
             </Grid>
             <Grid item xs={8}>
               <TextField
+                {...textFieldProps}
                 id="hooks"
                 value={hooks}
                 onChange={(e) => {
@@ -296,6 +321,7 @@ export default function NpcForm({ world }: Props) {
             </Grid>
             <Grid item xs={8}>
               <TextField
+                {...textFieldProps}
                 id="quirks"
                 value={quirks}
                 onChange={(e) => setQuirks(e.target.value)}
@@ -310,6 +336,7 @@ export default function NpcForm({ world }: Props) {
             </Grid>
             <Grid item xs={8}>
               <TextField
+                {...textFieldProps}
                 id="tags"
                 value={tags}
                 onChange={(e) => {
@@ -342,6 +369,7 @@ export default function NpcForm({ world }: Props) {
             </Grid>
             <Grid item xs={8}>
               <TextField
+                {...textFieldProps}
                 id="portrait"
                 value={portrait}
                 onChange={(e) => setPortrait(e.target.value)}
@@ -356,6 +384,7 @@ export default function NpcForm({ world }: Props) {
             </Grid>
             <Grid item xs={8}>
               <TextField
+                {...textFieldProps}
                 id="icon"
                 value={icon}
                 onChange={(e) => setIcon(e.target.value)}
@@ -385,6 +414,7 @@ export default function NpcForm({ world }: Props) {
                 </Grid>
                 <Grid item xs={8}>
                   <TextField
+                    {...textFieldProps}
                     id="voice-style"
                     value={voiceStyle}
                     onChange={(e) => {
@@ -411,6 +441,7 @@ export default function NpcForm({ world }: Props) {
                 </Grid>
                 <Grid item xs={8}>
                   <TextField
+                    {...textFieldProps}
                     id="voice-provider"
                     value={voiceProvider}
                     onChange={(e) => {
@@ -442,6 +473,7 @@ export default function NpcForm({ world }: Props) {
                 </Grid>
                 <Grid item xs={8}>
                   <TextField
+                    {...textFieldProps}
                     id="voice-preset"
                     value={voicePreset}
                     onChange={(e) => {
@@ -477,6 +509,7 @@ export default function NpcForm({ world }: Props) {
                 </Grid>
                 <Grid item xs={8}>
                   <TextField
+                    {...textFieldProps}
                     id="statblock"
                     value={statblock}
                     onChange={(e) => {
@@ -504,6 +537,7 @@ export default function NpcForm({ world }: Props) {
                 </Grid>
                 <Grid item xs={8}>
                   <TextField
+                    {...textFieldProps}
                     id="sections"
                     value={sections}
                     onChange={(e) => {
