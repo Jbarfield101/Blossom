@@ -1,5 +1,11 @@
 import { Canvas } from "@react-three/fiber";
-import { Physics, useBox, usePlane } from "@react-three/cannon";
+import {
+  Physics,
+  useBox,
+  useConvexPolyhedron,
+  useCylinder,
+  usePlane,
+} from "@react-three/cannon";
 import { Box, Button, TextField, Typography } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
@@ -88,7 +94,44 @@ function Die({
 }) {
   const geometry = useMemo(() => getGeometry(sides), [sides]);
   const materials = useMemo(() => createDiceMaterials(sides), [sides]);
-  const [ref, api] = useBox(() => ({ mass: 1, args: [1, 1, 1] }));
+  const convexArgs = useMemo(() => {
+    const vertices: [number, number, number][] = [];
+    const faces: number[][] = [];
+    const position = geometry.attributes.position;
+    for (let i = 0; i < position.count; i++) {
+      vertices.push([position.getX(i), position.getY(i), position.getZ(i)]);
+    }
+    const index = geometry.index;
+    if (index) {
+      for (let i = 0; i < index.count; i += 3) {
+        faces.push([
+          index.getX(i),
+          index.getX(i + 1),
+          index.getX(i + 2),
+        ]);
+      }
+    }
+    return [vertices, faces] as [
+      [number, number, number][],
+      number[][],
+    ];
+  }, [geometry]);
+
+  const common = {
+    mass: 1,
+    allowSleep: true,
+    sleepSpeedLimit: 0.1,
+    sleepTimeLimit: 1,
+    linearDamping: 0.3,
+    angularDamping: 0.3,
+  } as const;
+
+  const [ref, api] =
+    sides === 6
+      ? useBox(() => ({ ...common, args: [1, 1, 1] }))
+      : sides === 10
+        ? useCylinder(() => ({ ...common, args: [1, 1, 1, 10] }))
+        : useConvexPolyhedron(() => ({ ...common, args: convexArgs }));
 
   useEffect(() => {
     api.position.set(position[0], position[1], position[2]);
@@ -145,7 +188,7 @@ export default function DiceRoller() {
           <Plane />
           {dice.map((s, i) => (
             <Die
-              key={i}
+              key={`${i}-${s}`}
               sides={s}
               roll={roll}
               position={[-2 + i * 2, 2, 0]}
