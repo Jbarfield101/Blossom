@@ -1,15 +1,21 @@
-import { IconButton, Tooltip } from "@mui/material";
+import { IconButton, Tooltip, Badge } from "@mui/material";
 import type { SxProps } from "@mui/material";
 import { fixedIconButtonSx } from "./sx";
-import { FaHome, FaWrench, FaUser } from "react-icons/fa";
+import { FaHome, FaWrench, FaUser, FaTasks } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import SettingsDrawer from "./SettingsDrawer";
+import TaskDrawer from "./TaskDrawer";
+import { useTasks } from "../store/tasks";
 
 export default function TopBar() {
   const nav = useNavigate();
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
+  const [taskOpen, setTaskOpen] = useState(false);
+  const taskCount = useTasks((s) =>
+    Object.values(s.tasks).filter((t) => t.status === "queued" || t.status === "running").length
+  );
   const activeSx = (p: string): SxProps =>
     pathname === p
       ? { color: "#000", backgroundColor: "#fff", borderRadius: 4 }
@@ -47,6 +53,25 @@ export default function TopBar() {
         </IconButton>
       </Tooltip>
 
+      <Tooltip title="Tasks">
+        <Badge badgeContent={taskCount} color="secondary" invisible={taskCount === 0}>
+          <IconButton
+            onClick={() => setTaskOpen(true)}
+            sx={{
+              ...fixedIconButtonSx,
+              right: { xs: 44, sm: 60 },
+              color: taskOpen ? "#000" : "white",
+              backgroundColor: taskOpen ? "#fff" : "transparent",
+              borderRadius: 4,
+            }}
+            aria-label="Tasks"
+            aria-expanded={taskOpen}
+          >
+            <FaTasks />
+          </IconButton>
+        </Badge>
+      </Tooltip>
+
       <Tooltip title="Settings">
         <IconButton
           onClick={() => setOpen(true)}
@@ -64,6 +89,7 @@ export default function TopBar() {
         </IconButton>
       </Tooltip>
       <SettingsDrawer open={open} onClose={() => setOpen(false)} />
+      <TaskDrawer open={taskOpen} onClose={() => setTaskOpen(false)} />
     </>
   );
 }
