@@ -12,11 +12,5 @@ setup(
         'pydub>=0.25.0',
         'audioop-lts; python_version >= "3.13"',
     ],
-    extras_require={
-        'TTS': [
-            'TTS>=0.15; python_version < "3.12"',
-            'torch>=2.0',
-        ],
-    },
     python_requires='>=3.10,<3.12',
 )

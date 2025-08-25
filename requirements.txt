@@ -12,6 +12,3 @@ aiohttp>=3.9.0
 vosk>=0.3.45
 audioop-lts ; python_version >= "3.13"  # audioop module for Python 3.13+
 
-# Optional dependencies for text-to-speech support
-# TTS>=0.15; python_version < "3.12"
-# torch>=2.0
