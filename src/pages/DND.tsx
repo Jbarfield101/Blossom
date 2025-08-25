@@ -26,6 +26,12 @@ import WarTable from "../features/dnd/WarTable";
 import { useWorlds } from "../store/worlds";
 import NewWorldDialog from "../components/NewWorldDialog";
 
+type TabConfig = {
+  icon: JSX.Element;
+  label: string;
+  component: JSX.Element;
+};
+
 export default function DND() {
   const [tab, setTab] = useState(0);
   const worlds = useWorlds((s) => s.worlds);
@@ -46,6 +52,18 @@ export default function DND() {
     addWorld(name);
     setCurrentWorld(name);
   };
+  const tabs: TabConfig[] = [
+    { icon: <Person />, label: "NPC", component: <NpcForm world={world} /> },
+    { icon: <LibraryBooks />, label: "NPC Library", component: <NPCList /> },
+    { icon: <MenuBook />, label: "Lore", component: <LoreForm world={world} /> },
+    { icon: <TravelExplore />, label: "Quest", component: <QuestForm /> },
+    { icon: <SportsKabaddi />, label: "Encounter", component: <EncounterForm /> },
+    { icon: <Gavel />, label: "Rulebook", component: <RuleForm /> },
+    { icon: <AutoStories />, label: "Spellbook", component: <SpellForm /> },
+    { icon: <Casino />, label: "Dice", component: <DiceRoller /> },
+    { icon: <Map />, label: "Tabletop", component: <TabletopMap /> },
+    { icon: <MilitaryTech />, label: "War Table", component: <WarTable /> },
+  ];
   return (
     <Box sx={{ p: 2 }}>
       <Box sx={{ my: 2, maxWidth: 200, mx: "auto" }}>
@@ -77,27 +95,11 @@ export default function DND() {
             variant="scrollable"
             scrollButtons="auto"
           >
-            <Tab icon={<Person />} label="NPC" />
-            <Tab icon={<LibraryBooks />} label="NPC Library" />
-            <Tab icon={<MenuBook />} label="Lore" />
-            <Tab icon={<TravelExplore />} label="Quest" />
-            <Tab icon={<SportsKabaddi />} label="Encounter" />
-            <Tab icon={<Gavel />} label="Rulebook" />
-            <Tab icon={<AutoStories />} label="Spellbook" />
-            <Tab icon={<Casino />} label="Dice" />
-            <Tab icon={<Map />} label="Tabletop" />
-            <Tab icon={<MilitaryTech />} label="War Table" />
+            {tabs.map(({ icon, label }, idx) => (
+              <Tab key={idx} icon={icon} label={label} />
+            ))}
           </Tabs>
-          {tab === 0 && <NpcForm world={world} />}
-          {tab === 1 && <NPCList />}
-          {tab === 2 && <LoreForm world={world} />}
-          {tab === 3 && <QuestForm />}
-          {tab === 4 && <EncounterForm />}
-          {tab === 5 && <RuleForm />}
-          {tab === 6 && <SpellForm />}
-          {tab === 7 && <DiceRoller />}
-          {tab === 8 && <TabletopMap />}
-          {tab === 9 && <WarTable />}
+          {tabs[tab]?.component}
         </>
       )}
     </Box>

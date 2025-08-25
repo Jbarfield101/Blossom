@@ -6,6 +6,7 @@ import MenuBookIcon from "@mui/icons-material/MenuBook";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import SettingsDrawer from "./SettingsDrawer";
+import ErrorBoundary from "./ErrorBoundary";
 import TaskDrawer from "./TaskDrawer";
 import { useTasks } from "../store/tasks";
 
@@ -119,7 +120,9 @@ export default function TopBar() {
           <FaWrench />
         </IconButton>
       </Tooltip>
-      <SettingsDrawer open={open} onClose={() => setOpen(false)} />
+      <ErrorBoundary>
+        <SettingsDrawer open={open} onClose={() => setOpen(false)} />
+      </ErrorBoundary>
       <TaskDrawer open={taskOpen} onClose={() => setTaskOpen(false)} />
     </>
   );
