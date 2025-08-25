@@ -1,6 +1,13 @@
 import { Canvas } from "@react-three/fiber";
 import { Physics, useBox, usePlane } from "@react-three/cannon";
-import { Box, Button, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  ToggleButton,
+  ToggleButtonGroup,
+} from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 import { rollDiceExpression } from "../../dnd/rules";
@@ -113,6 +120,8 @@ export default function DiceRoller() {
   const [rolls, setRolls] = useState<number[]>([]);
   const [dice, setDice] = useState<number[]>([6]);
   const [roll, setRoll] = useState(0);
+  const [diceCount, setDiceCount] = useState(1);
+  const [selectedSides, setSelectedSides] = useState<number | null>(6);
 
   const handleRoll = () => {
     const { total, rolls } = rollDiceExpression(expression);
@@ -122,8 +131,50 @@ export default function DiceRoller() {
     setDice(rolls.map((r) => r.sides));
   };
 
+  const handleSidesChange = (
+    _event: React.MouseEvent<HTMLElement>,
+    newSides: number | null
+  ) => {
+    if (newSides !== null) {
+      setSelectedSides(newSides);
+      setExpression(`${diceCount}d${newSides}`);
+    }
+  };
+
+  const handleCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10);
+    const count = Number.isNaN(value) ? 1 : value;
+    setDiceCount(count);
+    if (selectedSides !== null) {
+      setExpression(`${count}d${selectedSides}`);
+    }
+  };
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+        <TextField
+          label="Count"
+          type="number"
+          value={diceCount}
+          onChange={handleCountChange}
+          inputProps={{ min: 1 }}
+          sx={{ width: 80 }}
+        />
+        <ToggleButtonGroup
+          value={selectedSides}
+          exclusive
+          onChange={handleSidesChange}
+          aria-label="dice type"
+          size="small"
+        >
+          {[4, 6, 8, 10, 12, 20].map((s) => (
+            <ToggleButton key={s} value={s} aria-label={`d${s}`}>
+              d{s}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+      </Box>
       <TextField
         label="Dice"
         value={expression}
