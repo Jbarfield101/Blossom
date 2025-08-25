@@ -20,6 +20,7 @@ import clsx from "clsx";
 import { useTheme } from "@mui/material/styles";
 import { MOODS, INSTR } from "../utils/musicData";
 import { useTasks } from "../store/tasks";
+import { useSongJobs, Job } from "../store/songJobs";
 
 export type Section = { name: string; bars: number; chords: string[]; barsStr?: string };
 
@@ -68,16 +69,6 @@ export type TemplateSpec = {
   limiterDrive: number;
   dither: boolean;
   bpmJitterPct: number;
-};
-
-type Job = {
-  id: string;
-  title: string;
-  spec: SongSpec;
-  status: string;
-  outPath?: string;
-  error?: string;
-  progress?: number;
 };
 
 function friendlyError(msg: string): string {
@@ -335,7 +326,9 @@ export default function SongForm() {
 
   // UI state
   const [busy, setBusy] = useState(false);
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const jobs = useSongJobs((s) => s.jobs);
+  const setJobs = useSongJobs((s) => s.setJobs);
+  const updateJob = useSongJobs((s) => s.updateJob);
   const [globalStatus, setGlobalStatus] = useState<string>("");
   const [err, setErr] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -398,6 +391,15 @@ export default function SongForm() {
 
   const tasks = useTasks((s) => s.tasks);
   const tasksSubscribe = useTasks((s) => s.subscribe);
+  const fetchStatus = useTasks((s) => s.fetchStatus);
+
+  useEffect(() => {
+    const running = Object.values(tasks).find((t) =>
+      ["queued", "running"].includes(t.status)
+    );
+    if (running) fetchStatus(running.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     let unlisten: (() => void) | null = null;
@@ -451,15 +453,11 @@ export default function SongForm() {
           if (pct !== undefined) {
             setProgress(pct);
             if (runningJobId) {
-              setJobs((prev) =>
-                prev.map((j) => (j.id === runningJobId ? { ...j, progress: pct } : j))
-              );
+              updateJob(runningJobId, { progress: pct });
             }
           }
           if (runningJobId) {
-            setJobs((prev) =>
-              prev.map((j) => (j.id === runningJobId ? { ...j, status: pretty } : j))
-            );
+            updateJob(runningJobId, { status: pretty });
           } else {
             setGlobalStatus(pretty);
           }
@@ -471,7 +469,7 @@ export default function SongForm() {
     return () => {
       if (unlisten) unlisten();
     };
-  }, [runningJobId]);
+  }, [runningJobId, updateJob]);
 
   const hasInvalidBars = useMemo(
     () =>
@@ -704,26 +702,22 @@ export default function SongForm() {
     try {
       for (let i = 0; i < newJobs.length; i++) {
         const job = newJobs[i];
-        setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, status: "starting…", progress: 0 } : j)));
+        updateJob(job.id, { status: "starting…", progress: 0 });
         setProgress(0);
         try {
           const outPath = await invoke<string>("run_lofi_song", { spec: job.spec });
-          setJobs((prev) =>
-            prev.map((j) => (j.id === job.id ? { ...j, outPath, status: "done", progress: 100 } : j))
-          );
+          updateJob(job.id, { outPath, status: "done", progress: 100 });
           setProgress(100);
         } catch (e: any) {
           const message = e?.message || String(e);
           console.error("run_lofi_song failed:", e);
-          setJobs((prev) =>
-            prev.map((j) => (j.id === job.id ? { ...j, status: "error", error: message, progress: 100 } : j))
-          );
+          updateJob(job.id, { status: "error", error: message, progress: 100 });
           setProgress(100);
         }
       }
 
       if (playLast) {
-        const latestJobs = await getFreshJobs();
+        const latestJobs = useSongJobs.getState().jobs;
         const lastOut = [...latestJobs].reverse().find((j) => j.outPath)?.outPath;
         if (lastOut) {
           const url = convertFileSrc(lastOut.replace(/\\/g, "/"));
@@ -827,10 +821,6 @@ export default function SongForm() {
       await a.play();
       setIsPlaying(true);
     }
-  }
-
-  async function getFreshJobs(): Promise<Job[]> {
-    return new Promise((r) => setJobs((prev) => (r(prev), prev)));
   }
 
   function restoreLastSettings() {

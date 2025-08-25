@@ -6,6 +6,7 @@ import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { open as openOpener } from '@tauri-apps/plugin-opener';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
+import { useSongJobs } from '../store/songJobs';
 
 vi.mock('@tauri-apps/plugin-dialog', () => ({ open: vi.fn() }));
 vi.mock('@tauri-apps/plugin-opener', () => ({ open: vi.fn() }));
@@ -58,6 +59,7 @@ describe('SongForm', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.resetAllMocks();
+    useSongJobs.setState({ jobs: [] });
     Object.defineProperty(global.HTMLMediaElement.prototype, 'play', {
       configurable: true,
       value: vi.fn(),
