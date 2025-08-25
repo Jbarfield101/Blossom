@@ -9,8 +9,10 @@ Install the following tools before working with the project:
 
 - **Rust** – required for the Tauri backend. Install via [rustup](https://rustup.rs/).
 - **Node.js** – version 18 or later for the React/Vite front‑end.
-- **Python** – version 3.10+ for audio scripts. Python 3.13 or later also
-  requires the [`audioop-lts`](https://pypi.org/project/audioop-lts/) module.
+- **Python** – version 3.10+ for audio scripts. Coqui TTS supports only
+  Python 3.9–3.11, so use Python 3.10 or 3.11 for speech features. Python 3.13
+  or later also requires the
+  [`audioop-lts`](https://pypi.org/project/audioop-lts/) module.
 - **FFmpeg** – used by the Python scripts for reading and writing audio. Ensure
   `ffmpeg` and `ffprobe` are available on your `PATH`. On macOS or Linux install
   via your package manager (for example `brew install ffmpeg` or `sudo apt install ffmpeg`).
@@ -88,6 +90,8 @@ Blossom can announce track titles or host voice‑overs using the
 [Coqui TTS](https://github.com/coqui-ai/TTS) library.
 
 1. **Install the library**
+
+   Coqui TTS requires Python 3.9–3.11.
 
    ```bash
    pip install TTS

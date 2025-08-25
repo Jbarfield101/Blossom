@@ -13,4 +13,5 @@ setup(
         'gTTS>=2.5.1',
         'audioop-lts; python_version >= "3.13"',
     ],
+    python_requires='>=3.10,<3.12',
 )
