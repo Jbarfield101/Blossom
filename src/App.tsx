@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import TopBar from "./components/TopBar";
+import ErrorBoundary from "./components/ErrorBoundary";
 import Home from "./pages/Home";
 import Objects from "./pages/Objects";
 import Blender from "./pages/Blender";
@@ -29,7 +30,7 @@ import BigBrother from "./pages/BigBrother";
 
 export default function App() {
   return (
-    <>
+    <ErrorBoundary>
       <TopBar />
       <Routes>
         <Route path="/" element={<Home />} />
@@ -59,6 +60,6 @@ export default function App() {
         <Route path="/user" element={<User />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </>
+    </ErrorBoundary>
   );
 }
