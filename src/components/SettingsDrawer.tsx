@@ -16,6 +16,7 @@ import {
   ListItemText,
   Autocomplete,
   Breadcrumbs,
+  CircularProgress,
 } from "@mui/material";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
@@ -229,6 +230,8 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   const [pathsSaved, setPathsSaved] = useState(false);
   const [appearanceSaved, setAppearanceSaved] = useState(false);
   const [outputSaved, setOutputSaved] = useState(false);
+  const [ambienceMessage, setAmbienceMessage] = useState<string | null>(null);
+  const [generatingAmbience, setGeneratingAmbience] = useState(false);
 
   const [pythonDraft, setPythonDraft] = useState(pythonPath);
   const [comfyDraft, setComfyDraft] = useState(comfyPath);
@@ -469,6 +472,28 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
           }
         />
       </Box>
+      <Button
+        variant="contained"
+        sx={{ mt: 2 }}
+        onClick={async () => {
+          setGeneratingAmbience(true);
+          try {
+            await invoke("generate_ambience");
+            setAmbienceMessage("Ambience generated");
+          } catch (e) {
+            setAmbienceMessage(
+              `Failed to generate ambience: ${
+                e instanceof Error ? e.message : String(e)
+              }`,
+            );
+          } finally {
+            setGeneratingAmbience(false);
+          }
+        }}
+        disabled={generatingAmbience}
+      >
+        {generatingAmbience ? <CircularProgress size={24} /> : "Generate Ambience"}
+      </Button>
       <Button variant="contained" sx={{ mt: 2 }} onClick={() => setAudioSaved(true)}>
         Save Audio Defaults
       </Button>
@@ -578,6 +603,12 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
           {section === "editor" && <EditorSection />}
           {section === "appearance" && <AppearanceSection />}
           {section === "integrations" && <IntegrationsSection />}
+          <Snackbar
+            open={!!ambienceMessage}
+            autoHideDuration={3000}
+            onClose={() => setAmbienceMessage(null)}
+            message={ambienceMessage}
+          />
           <Snackbar
             open={audioSaved}
             autoHideDuration={3000}
