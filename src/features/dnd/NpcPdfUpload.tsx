@@ -5,6 +5,7 @@ import { Button, Snackbar, Alert, LinearProgress } from "@mui/material";
 import { useTasks } from "../../store/tasks";
 import { useNPCs } from "../../store/npcs";
 import type { NpcData } from "./types";
+import NpcLog from "./NpcLog";
 
 interface Props {
   world: string;
@@ -17,6 +18,7 @@ export default function NpcPdfUpload({ world }: Props) {
   const [taskId, setTaskId] = useState<number | null>(null);
   const [status, setStatus] = useState<"idle" | "uploading" | "completed">("idle");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [showLog, setShowLog] = useState(false);
 
   async function handleUpload() {
     const selected = await open({ filters: [{ name: "PDF", extensions: ["pdf"] }] });
@@ -47,12 +49,18 @@ export default function NpcPdfUpload({ world }: Props) {
           }
           if (overwrite) {
             await invoke("save_npc", { world, npc, overwrite });
+            await invoke("append_npc_log", {
+              world,
+              id: npc.id,
+              name: npc.name,
+            });
           }
         }
         await loadNPCs();
         setStatus("completed");
         setSnackbarOpen(true);
         setTaskId(null);
+        setShowLog(true);
       })();
     }
   }, [taskId, tasks, world, loadNPCs]);
@@ -73,6 +81,14 @@ export default function NpcPdfUpload({ world }: Props) {
         variant="contained"
       >
         Upload NPC PDF
+      </Button>
+      <Button
+        type="button"
+        onClick={() => setShowLog((s) => !s)}
+        sx={{ ml: 2 }}
+        size="small"
+      >
+        {showLog ? "Hide Log" : "View Log"}
       </Button>
       {task && task.status === "running" && (
         <LinearProgress
@@ -96,6 +112,7 @@ export default function NpcPdfUpload({ world }: Props) {
             : "Uploading NPC PDF..."}
         </Alert>
       </Snackbar>
+      {showLog && <NpcLog />}
     </div>
   );
 }

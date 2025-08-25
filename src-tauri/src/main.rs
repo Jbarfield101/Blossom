@@ -71,6 +71,8 @@ fn main() {
             commands::blender_run_script,
             commands::save_npc,
             commands::list_npcs,
+            commands::append_npc_log,
+            commands::read_npc_log,
             commands::save_rule,
             commands::list_rules,
             commands::save_spell,
