@@ -6,6 +6,7 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import Draggable from "react-draggable";
 import { nanoid } from "nanoid";
 import { invoke } from "@tauri-apps/api/core";
+import { useTasks } from "../store/tasks";
 import { PRESET_TEMPLATES } from "./songTemplates";
 import { SystemInfo } from "../features/system/useSystemInfo";
 
@@ -22,6 +23,7 @@ export default function HomeChat() {
   const [minimized, setMinimized] = useState(false);
   const nodeRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const enqueueTask = useTasks((s) => s.enqueueTask);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -66,8 +68,10 @@ export default function HomeChat() {
             `Templates: ${templates}\n` +
             `Example: /music My Song template="Classic Lofi" tracks=3`;
         } else {
-          await invoke("generate_album", {
-            meta: { track_count: trackCount, title_base: title, template },
+          await enqueueTask("Music Generation", {
+            GenerateAlbum: {
+              meta: { track_count: trackCount, title_base: title, template },
+            },
           });
           const plural = trackCount === 1 ? "track" : "tracks";
           reply = `Started music generation for "${title}" using "${template}" with ${trackCount} ${plural}.`;

@@ -25,8 +25,10 @@ vi.mock('../features/lofi/SongForm', () => ({
     setSeed: vi.fn(),
   }),
 }));
+const enqueueTask = vi.fn(() => Promise.resolve(1));
 vi.mock('../store/tasks', () => ({
-  useTasks: (selector: any) => selector({ tasks: {}, fetchStatus: vi.fn() }),
+  useTasks: (selector: any) =>
+    selector({ tasks: {}, fetchStatus: vi.fn(), enqueueTask }),
 }));
 
 function openSection(id: string) {
@@ -58,6 +60,7 @@ describe('SongForm', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.resetAllMocks();
+    enqueueTask.mockResolvedValue(1);
     useSongJobs.setState({ jobs: [] });
     Object.defineProperty(global.HTMLMediaElement.prototype, 'play', {
       configurable: true,
@@ -75,6 +78,7 @@ describe('SongForm', () => {
 
   it('renders default form', () => {
     const { asFragment } = render(<SongForm />);
+    expect(screen.getByText('Song Builder')).toBeInTheDocument();
     expect(asFragment()).toMatchSnapshot();
   });
 
@@ -136,25 +140,33 @@ describe('SongForm', () => {
   it('generates a title with ollama', async () => {
     (invoke as any).mockImplementation((cmd: string) => {
       if (cmd === 'start_ollama') return Promise.resolve();
-      if (cmd === 'general_chat') return Promise.resolve('Morning Chill');
+      if (cmd === 'general_chat')
+        return Promise.resolve(
+          'Morning Chill\nEvening Jazz\nMidnight Coffee\nSunset Vibes\nRainy Day'
+        );
       return Promise.resolve('');
     });
 
-    render(<SongForm />);
+    const rand = vi.spyOn(Math, 'random').mockReturnValue(0);
+    try {
+      render(<SongForm />);
 
-    fireEvent.click(screen.getByText(/generate title/i));
+      fireEvent.click(screen.getByText(/generate title/i));
 
-    await waitFor(() => {
-      const calls = (invoke as any).mock.calls.map(([c]: any) => c);
-      expect(calls).toContain('start_ollama');
-      expect(calls).toContain('general_chat');
-    });
+      await waitFor(() => {
+        const calls = (invoke as any).mock.calls.map(([c]: any) => c);
+        expect(calls).toContain('start_ollama');
+        expect(calls).toContain('general_chat');
+      });
 
-    await waitFor(() =>
-      expect(
-        (screen.getByPlaceholderText(/song title base/i) as HTMLInputElement).value
-      ).toBe('Morning Chill')
-    );
+      await waitFor(() =>
+        expect(
+          (screen.getByPlaceholderText(/song title base/i) as HTMLInputElement).value
+        ).toBe('Morning Chill')
+      );
+    } finally {
+      rand.mockRestore();
+    }
   });
 
   it('remembers last used template', () => {
@@ -389,13 +401,12 @@ describe('SongForm', () => {
     fireEvent.click(screen.getByText(/create album/i));
 
     await waitFor(() => {
-      const call = (invoke as any).mock.calls.find(
-        ([c]: any) => c === 'generate_album'
-      );
-      expect(call[1].meta.album_name).toBe('My Album');
-      expect(call[1].meta.track_names).toEqual(['T1', 'T2', 'T3']);
-      expect(call[1].meta.specs).toHaveLength(3);
-      expect(call[1].meta.specs[0]).toMatchObject({
+      expect(enqueueTask).toHaveBeenCalled();
+      const args = enqueueTask.mock.calls[0][1];
+      expect(args.GenerateAlbum.meta.album_name).toBe('My Album');
+      expect(args.GenerateAlbum.meta.track_names).toEqual(['T1', 'T2', 'T3']);
+      expect(args.GenerateAlbum.meta.specs).toHaveLength(3);
+      expect(args.GenerateAlbum.meta.specs[0]).toMatchObject({
         title: 'Test Song 1',
         album: 'My Album',
       });
