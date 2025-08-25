@@ -26,6 +26,7 @@ export type Section = { name: string; bars: number; chords: string[]; barsStr?: 
 type SongSpec = {
   title: string;
   outDir: string;
+  album?: string;
   bpm: number;
   key: string;
   structure?: Section[];
@@ -650,6 +651,7 @@ export default function SongForm() {
     return {
       title: buildTitle(i),
       outDir,
+      album: albumMode ? albumName : undefined,
       bpm: jitterBpm(i),
       key: formatSpecKey(pickKey(i)),
       structure: structure.map(({ name, bars, chords }) => ({ name, bars, chords })),
