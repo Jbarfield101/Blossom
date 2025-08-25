@@ -2,6 +2,7 @@ import { IconButton, Tooltip, Badge } from "@mui/material";
 import type { SxProps } from "@mui/material";
 import { fixedIconButtonSx } from "./sx";
 import { FaHome, FaWrench, FaUser, FaTasks } from "react-icons/fa";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import SettingsDrawer from "./SettingsDrawer";
@@ -50,6 +51,21 @@ export default function TopBar() {
           aria-current={pathname === "/user" ? "page" : undefined}
         >
           <FaUser />
+        </IconButton>
+      </Tooltip>
+
+      <Tooltip title="NPC Library">
+        <IconButton
+          onClick={() => nav("/dnd/npcs-library")}
+          sx={{
+            ...fixedIconButtonSx,
+            left: { xs: 80, sm: 108 },
+            ...activeSx("/dnd/npcs-library"),
+          }}
+          aria-label="NPC Library"
+          aria-current={pathname === "/dnd/npcs-library" ? "page" : undefined}
+        >
+          <MenuBookIcon />
         </IconButton>
       </Tooltip>
 
