@@ -73,13 +73,12 @@ export default function NPCList() {
         ) : (
           <List>
             {filtered.map((npc) => (
-              <ListItemButton key={npc.id}>
-                <Link
-                  to={`/dnd/npcs/${npc.id}`}
-                  style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}
-                >
-                  <ListItemText primary={npc.name} />
-                </Link>
+              <ListItemButton
+                key={npc.id}
+                component={Link}
+                to={`/dnd/npcs/${npc.id}`}
+              >
+                <ListItemText primary={npc.name} />
               </ListItemButton>
             ))}
           </List>
