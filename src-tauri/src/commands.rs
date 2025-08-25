@@ -231,10 +231,6 @@ pub struct AppConfig {
     pub python_path: Option<String>,
     pub comfy_path: Option<String>,
     pub alphavantage_api_key: Option<String>,
-    pub tts_model_path: Option<String>,
-    pub tts_config_path: Option<String>,
-    pub tts_speaker: Option<String>,
-    pub tts_language: Option<String>,
 }
 
 fn config_path() -> PathBuf {
@@ -278,10 +274,6 @@ pub async fn load_paths() -> Result<AppConfig, String> {
 pub async fn save_paths(
     python_path: Option<String>,
     comfy_path: Option<String>,
-    tts_model_path: Option<String>,
-    tts_config_path: Option<String>,
-    tts_speaker: Option<String>,
-    tts_language: Option<String>,
 ) -> Result<(), String> {
     let mut cfg = load_config();
     if python_path.is_some() {
@@ -289,18 +281,6 @@ pub async fn save_paths(
     }
     if comfy_path.is_some() {
         cfg.comfy_path = comfy_path;
-    }
-    if tts_model_path.is_some() {
-        cfg.tts_model_path = tts_model_path;
-    }
-    if tts_config_path.is_some() {
-        cfg.tts_config_path = tts_config_path;
-    }
-    if tts_speaker.is_some() {
-        cfg.tts_speaker = tts_speaker;
-    }
-    if tts_language.is_some() {
-        cfg.tts_language = tts_language;
     }
     save_config(&cfg)
 }
@@ -1999,10 +1979,6 @@ pub async fn dj_mix<R: Runtime>(
     specs: Vec<String>,
     out: String,
     host: bool,
-    tts_model_path: Option<String>,
-    tts_config: Option<String>,
-    tts_speaker: Option<String>,
-    tts_language: Option<String>,
 ) -> Result<(), String> {
     let py = conda_python();
     if !py.exists() {
@@ -2020,18 +1996,6 @@ pub async fn dj_mix<R: Runtime>(
         .arg(&out);
     if host {
         cmd.arg("--host");
-    }
-    if let Some(p) = tts_model_path {
-        cmd.arg("--tts-model-path").arg(p);
-    }
-    if let Some(p) = tts_config {
-        cmd.arg("--tts-config").arg(p);
-    }
-    if let Some(p) = tts_speaker {
-        cmd.arg("--tts-speaker").arg(p);
-    }
-    if let Some(p) = tts_language {
-        cmd.arg("--tts-language").arg(p);
     }
     let output = cmd
         .output()
