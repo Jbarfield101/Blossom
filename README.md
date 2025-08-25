@@ -53,6 +53,35 @@ fn conda_python() -> PathBuf {
 Activate your Python environment first. The high‑quality generator lives at
 `src-tauri/python/lofi/renderer.py`.
 
+### FFmpeg for audio decoding
+
+`renderer.py` uses [pydub](https://github.com/jiaaro/pydub) to decode audio, which
+relies on the [FFmpeg](https://ffmpeg.org/) binaries. Install FFmpeg for your
+platform and ensure `ffmpeg` and `ffprobe` are available on your `PATH`:
+
+- **macOS**
+
+  ```bash
+  brew install ffmpeg
+  ```
+
+- **Debian/Ubuntu Linux**
+
+  ```bash
+  sudo apt update && sudo apt install ffmpeg
+  ```
+
+- **Windows**
+
+  ```powershell
+  choco install ffmpeg
+  ```
+
+  If not using Chocolatey, download a build from [ffmpeg.org](https://ffmpeg.org/download.html)
+  and add its `bin` directory to your `PATH`.
+
+After installation, verify the binaries are visible with `ffmpeg -version`.
+
 ## Text-to-Speech (TTS) models
 
 Blossom can announce track titles or host voice‑overs using the
