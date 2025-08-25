@@ -5,12 +5,16 @@ import sys
 
 import pytest
 
+from fpdf import FPDF
+
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 import pdf_tools
 
 
 def test_add_pdf_and_search(monkeypatch, tmp_path):
     os.environ["BLOSSOM_OUTPUT_DIR"] = str(tmp_path)
+    monkeypatch.setattr(pdf_tools, "BASE_DIR", Path(tmp_path))
+    monkeypatch.setattr(pdf_tools, "INDEX_DIR", Path(tmp_path) / "Index")
     dummy_pdf = tmp_path / "doc.pdf"
     dummy_pdf.write_bytes(b"dummy")
 
@@ -41,10 +45,45 @@ def test_validate_entry(monkeypatch):
         return Dummy(0)
 
     def run_fail(*args, **kwargs):
-        return Dummy(1)
+        raise subprocess.CalledProcessError(1, args[0])
 
     monkeypatch.setattr(subprocess, "run", run_ok)
     assert pdf_tools._validate_entry("npc", {"name": "Bob"})
 
     monkeypatch.setattr(subprocess, "run", run_fail)
     assert not pdf_tools._validate_entry("npc", {"name": "Bob"})
+
+
+def _make_pdf(tmp_path, entries, use_bold=True, use_colon=False):
+    """Create a simple PDF file with given entries.
+
+    entries: list of (name, description)
+    use_bold: whether to render headings in bold
+    use_colon: whether to append ':' to headings
+    """
+    pdf = FPDF()
+    pdf.add_page()
+    for name, desc in entries:
+        heading = f"{name}:" if use_colon else name
+        pdf.set_font("Helvetica", "B" if use_bold else "", 14)
+        pdf.cell(0, 10, heading, ln=1)
+        pdf.set_font("Helvetica", "", 12)
+        pdf.multi_cell(0, 10, desc)
+    path = tmp_path / "doc.pdf"
+    pdf.output(str(path))
+    return str(path)
+
+
+def test_extract_rules_with_bold_headings(tmp_path):
+    path = _make_pdf(tmp_path, [("Rule One", "Desc one"), ("Rule Two", "Desc two")], use_bold=True)
+    res = pdf_tools.extract_rules(path)
+    names = [r["name"] for r in res["rules"]]
+    assert names == ["Rule One", "Rule Two"]
+
+
+def test_extract_rules_with_colon_headings(tmp_path):
+    entries = [("RULE THREE", "Third desc"), ("RULE FOUR", "Fourth desc")]
+    path = _make_pdf(tmp_path, entries, use_bold=False, use_colon=True)
+    res = pdf_tools.extract_rules(path)
+    names = [r["name"] for r in res["rules"]]
+    assert names == ["RULE THREE", "RULE FOUR"]
