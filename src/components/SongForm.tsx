@@ -308,7 +308,9 @@ export default function SongForm() {
   // VARIATION / BATCH
   const [numSongs, setNumSongs] = useState(1);
   const [titleSuffixMode, setTitleSuffixMode] = useState<"number" | "timestamp">("number");
-  const [seedBase, setSeedBase] = useState(12345);
+  const [seedBase, setSeedBase] = useState(() =>
+    Math.floor(Math.random() * 1_000_000_000)
+  );
   const [seedMode, setSeedMode] = useState<"increment" | "random">("random");
   const [autoKeyPerSong, setAutoKeyPerSong] = useState(false);
   const [bpmJitterPct, setBpmJitterPct] = useState(5);
@@ -668,6 +670,11 @@ export default function SongForm() {
   function makeSpecForIndex(i: number): SongSpec {
     const amb = Math.max(0, Math.min(1, ambienceLevel));
     const varPct = Math.max(0, Math.min(100, variety));
+    const instrs = instruments.length
+      ? instruments
+      : leadInstrument
+        ? [leadInstrument]
+        : [];
 
     return {
       title: buildTitle(i),
@@ -677,7 +684,7 @@ export default function SongForm() {
       key: formatSpecKey(pickKey(i)),
       structure: structure.map(({ name, bars, chords }) => ({ name, bars, chords })),
       mood,
-      instruments,
+      instruments: instrs,
       lead_instrument: leadInstrument,
       ambience,
       ambience_level: amb,
