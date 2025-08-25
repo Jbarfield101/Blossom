@@ -46,6 +46,10 @@
             "type": "string"
           }
         },
+        "appearance": {
+          "type": "string",
+          "minLength": 1
+        },
         "voice": {
           "type": "object",
           "properties": {

@@ -39,6 +39,7 @@ async function main() {
       alignment: "Neutral",
       playerCharacter: false,
       hooks: ["A mysterious opportunity"],
+      appearance: "A nondescript figure",
       statblock: {},
       tags: [theme],
     };

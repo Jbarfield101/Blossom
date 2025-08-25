@@ -26,6 +26,7 @@ export const useCharacter = create<CharacterState>()(
           location: '',
           hooks: [],
           quirks: [],
+          appearance: 'Unknown',
           portrait: 'placeholder.png',
           icon: 'placeholder-icon.png',
           sections: {},
