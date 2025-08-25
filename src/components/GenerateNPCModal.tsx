@@ -43,6 +43,7 @@ export default function GenerateNPCModal({ open, onClose }: Props) {
             alignment: 'Unaligned',
             playerCharacter: false,
             hooks: [],
+            appearance: 'Unknown',
             statblock: {},
             tags: [],
             portrait: 'placeholder.png',

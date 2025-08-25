@@ -34,6 +34,7 @@ export const zNpc = z.object({
   location: z.string().optional(),
   hooks: z.array(z.string()).nonempty(),
   quirks: z.array(z.string()).optional(),
+  appearance: z.string().min(1).optional(),
   voice: zVoice.optional(),
   portrait: z.string().min(1).optional(),
   icon: z.string().min(1).optional(),
