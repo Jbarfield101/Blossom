@@ -3,7 +3,6 @@ import { Typography, TextField, Button, Grid, Box } from "@mui/material";
 import { zLore } from "./schemas";
 import { LoreData } from "./types";
 import LorePdfUpload from "./LorePdfUpload";
-import { useDndTheme, themeStyles } from "./theme";
 
 interface Props {
   world: string;
@@ -16,7 +15,6 @@ export default function LoreForm({ world }: Props) {
   const [hooks, setHooks] = useState("");
   const [tags, setTags] = useState("");
   const [result, setResult] = useState<LoreData | null>(null);
-  const theme = useDndTheme();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +33,7 @@ export default function LoreForm({ world }: Props) {
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={themeStyles[theme]}>
+    <Box component="form" onSubmit={handleSubmit}>
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Typography variant="h6">Lore Form</Typography>

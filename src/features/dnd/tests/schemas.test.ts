@@ -159,7 +159,6 @@ describe("dnd schemas", () => {
       beats: ["start"],
       rewards: { gp: 100 },
       complications: ["orcs"],
-        theme: "Parchment",
     };
     expect(zQuest.parse(quest)).toEqual(quest);
   });
@@ -172,7 +171,6 @@ describe("dnd schemas", () => {
       summary: "Find the ring summary",
       rewards: { gp: 100 },
       complications: ["orcs"],
-        theme: "Parchment",
     };
     expect(() => zQuest.parse(quest)).toThrowError();
   });
@@ -186,7 +184,6 @@ describe("dnd schemas", () => {
       beats: ["start"],
       rewards: { gp: 100 },
       complications: ["orcs"],
-        theme: "Parchment",
     };
     expect(() => zQuest.parse(quest)).toThrowError();
   });
@@ -200,7 +197,6 @@ describe("dnd schemas", () => {
       beats: [],
       rewards: { gp: 100 },
       complications: [],
-        theme: "Parchment",
     } as any;
     expect(() => zQuest.parse(quest)).toThrowError();
   });
@@ -215,7 +211,6 @@ describe("dnd schemas", () => {
       terrain: "forest",
       treasure: "gold",
       scaling: "add more goblins",
-        theme: "Cyberpunk",
     };
     expect(zEncounter.parse(encounter)).toEqual(encounter);
   });
@@ -229,7 +224,6 @@ describe("dnd schemas", () => {
       terrain: "forest",
       treasure: "gold",
       scaling: "add more goblins",
-        theme: "Cyberpunk",
     };
     expect(() => zEncounter.parse(encounter)).toThrowError();
   });
@@ -244,7 +238,6 @@ describe("dnd schemas", () => {
       terrain: "forest",
       treasure: "gold",
       scaling: "add more goblins",
-        theme: "Cyberpunk",
     };
     expect(() => zEncounter.parse(encounter)).toThrowError();
   });
@@ -259,7 +252,6 @@ describe("dnd schemas", () => {
       terrain: "forest",
       treasure: "gold",
       scaling: "add more goblins",
-        theme: "Cyberpunk",
     } as any;
     expect(() => zEncounter.parse(encounter)).toThrowError();
   });

@@ -3,8 +3,6 @@ export interface DndBase {
   name: string;
 }
 
-export type DndTheme = "Parchment" | "Cyberpunk";
-
 import type { Npc } from "../../dnd/schemas/npc";
 
 export type NpcData = Npc;
@@ -26,7 +24,6 @@ export interface QuestData extends DndBase {
     favors?: string;
   };
   complications: string[];
-  theme: DndTheme;
 }
 
 export interface EncounterData extends DndBase {
@@ -36,7 +33,6 @@ export interface EncounterData extends DndBase {
   terrain: string;
   treasure: string;
   scaling: string;
-  theme: DndTheme;
 }
 
 export interface RuleData extends DndBase {
