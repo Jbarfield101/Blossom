@@ -40,8 +40,6 @@ describe("RulePdfUpload", () => {
   });
 
   it("saves parsed rules when task completes", async () => {
-    vi.spyOn(React, "useState").mockImplementationOnce(() => [1, vi.fn()]);
-    vi.spyOn(React, "useEffect").mockImplementation((fn) => fn());
     state.tasks[1] = {
       status: "completed",
       result: {
@@ -51,17 +49,18 @@ describe("RulePdfUpload", () => {
         ],
       },
     };
+    (open as any).mockResolvedValue("/tmp/rules.pdf");
     (invoke as any).mockImplementation((cmd: string) => {
       if (cmd === "list_rules") return Promise.resolve([]);
       return Promise.resolve();
     });
 
     render(<RulePdfUpload />);
-
+    fireEvent.click(screen.getByText(/upload rule pdf/i));
+    await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
     await waitFor(() =>
       expect(
-        invoke.mock.calls.filter(([cmd]: any[]) => cmd === "save_rule")
-          .length,
+        invoke.mock.calls.filter(([cmd]: any[]) => cmd === "save_rule").length,
       ).toBe(2),
     );
   });
