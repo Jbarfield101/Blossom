@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import React from "react";
 import {
   render,
@@ -23,6 +23,9 @@ import { invoke } from "@tauri-apps/api/core";
 import RulePdfUpload from "../RulePdfUpload";
 
 describe("RulePdfUpload", () => {
+  beforeEach(() => {
+    enqueueTask.mockResolvedValue(1);
+  });
   afterEach(() => {
     cleanup();
     vi.resetAllMocks();
@@ -65,4 +68,3 @@ describe("RulePdfUpload", () => {
     );
   });
 });
-
