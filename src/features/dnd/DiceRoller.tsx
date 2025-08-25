@@ -256,10 +256,10 @@ export default function DiceRoller() {
   const [expression, setExpression] = useState("1d6");
   const [result, setResult] = useState<number | null>(null);
   const [rolls, setRolls] = useState<number[]>([]);
-  const [dice, setDice] = useState<number[]>([6]);
   const [roll, setRoll] = useState(0);
   const [diceCount, setDiceCount] = useState(1);
   const [selectedSides, setSelectedSides] = useState<number | null>(6);
+  const [dice, setDice] = useState<number[]>([selectedSides ?? 6]);
 
   const handleRoll = () => {
     const { total, rolls } = rollDiceExpression(expression);
@@ -276,6 +276,7 @@ export default function DiceRoller() {
     if (newSides !== null) {
       setSelectedSides(newSides);
       setExpression(`${diceCount}d${newSides}`);
+      setDice(Array(diceCount).fill(newSides));
     }
   };
 
@@ -283,9 +284,9 @@ export default function DiceRoller() {
     const value = parseInt(e.target.value, 10);
     const count = Number.isNaN(value) ? 1 : value;
     setDiceCount(count);
-    if (selectedSides !== null) {
-      setExpression(`${count}d${selectedSides}`);
-    }
+    const sides = selectedSides ?? 6;
+    setExpression(`${count}d${sides}`);
+    setDice(Array(count).fill(sides));
   };
 
   return (
