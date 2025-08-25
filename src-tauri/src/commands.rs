@@ -1,7 +1,8 @@
 // src-tauri/src/commands.rs
 use std::{
-    env, fs,
-    io::{BufRead, BufReader, Read},
+    env,
+    fs::{self, OpenOptions},
+    io::{BufRead, BufReader, Read, Write},
     path::{Path, PathBuf},
     process::{Child, Command as PCommand, Stdio},
     sync::{Mutex, OnceLock},
@@ -14,7 +15,7 @@ use crate::stocks::{stocks_fetch as stocks_fetch_impl, StockBundle};
 use crate::task_queue::{Task, TaskCommand, TaskQueue};
 use chrono::{DateTime, Local, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{json, Value};
 use serde_yaml;
 use sysinfo::System;
 use tauri::{AppHandle, Emitter, Manager, Runtime, State, Window};
@@ -1237,6 +1238,66 @@ pub async fn list_npcs<R: Runtime>(app: AppHandle<R>, world: String) -> Result<V
         }
     }
     Ok(npcs)
+}
+
+#[tauri::command]
+pub async fn append_npc_log<R: Runtime>(
+    app: AppHandle<R>,
+    world: String,
+    id: String,
+    name: String,
+) -> Result<(), String> {
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|_| "app data dir".to_string())?
+        .join("npc")
+        .join("log");
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let path = dir.join("npc-import.log");
+    let mut file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&path)
+        .map_err(|e| e.to_string())?;
+    let entry = json!({
+        "timestamp": Utc::now().to_rfc3339(),
+        "world": world,
+        "id": id,
+        "name": name,
+    });
+    writeln!(file, "{}", entry.to_string()).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn read_npc_log<R: Runtime>(
+    app: AppHandle<R>,
+    limit: Option<usize>,
+) -> Result<Vec<Value>, String> {
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|_| "app data dir".to_string())?
+        .join("npc")
+        .join("log");
+    let path = dir.join("npc-import.log");
+    let file = match fs::File::open(&path) {
+        Ok(f) => f,
+        Err(_) => return Ok(vec![]),
+    };
+    let reader = BufReader::new(file);
+    let mut entries: Vec<Value> = reader
+        .lines()
+        .filter_map(|l| l.ok())
+        .filter_map(|l| serde_json::from_str(&l).ok())
+        .collect();
+    if let Some(lim) = limit {
+        if entries.len() > lim {
+            entries = entries[entries.len() - lim..].to_vec();
+        }
+    }
+    Ok(entries)
 }
 
 /* ==============================
