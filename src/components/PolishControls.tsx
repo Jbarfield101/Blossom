@@ -16,6 +16,8 @@ interface Props {
   setLimiterDrive: (val: number) => void;
   dither: boolean;
   setDither: (val: boolean) => void;
+  lofiFilter: boolean;
+  setLofiFilter: (val: boolean) => void;
 }
 
 export default function PolishControls({
@@ -31,6 +33,8 @@ export default function PolishControls({
   setLimiterDrive,
   dither,
   setDither,
+  lofiFilter,
+  setLofiFilter,
 }: Props) {
   return (
     <div className={clsx(styles.panel, "mt-3")}>
@@ -82,6 +86,17 @@ export default function PolishControls({
                 type="checkbox"
                 checked={hqChorus}
                 onChange={(e) => setHqChorus(e.target.checked)}
+              />
+            </label>
+            <label className={styles.optionCard}>
+              <span>
+                Lofi Filter
+                <HelpIcon text="Applies lofi low-pass filter (default on)" />
+              </span>
+              <input
+                type="checkbox"
+                checked={lofiFilter}
+                onChange={(e) => setLofiFilter(e.target.checked)}
               />
             </label>
           </div>

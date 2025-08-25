@@ -644,9 +644,11 @@ pub struct SongSpec {
     pub hq_chorus: Option<bool>,
     #[serde(alias = "limiterDrive", skip_serializing_if = "Option::is_none")]
     pub limiter_drive: Option<f32>,
+    #[serde(alias = "lofiFilter", skip_serializing_if = "Option::is_none")]
+    pub lofi_filter: Option<bool>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct AlbumRequest {
     pub track_count: u32,
@@ -705,6 +707,7 @@ mod tests {
             hq_sidechain: None,
             hq_chorus: None,
             limiter_drive: None,
+            lofi_filter: None,
         };
         let v = serde_json::to_value(&spec).unwrap();
         assert!(v.get("ambience_level").is_some());

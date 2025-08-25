@@ -48,6 +48,7 @@ type SongSpec = {
   hq_chorus?: boolean;
   limiter_drive?: number;
   dither_amount?: number;
+  lofi_filter?: boolean;
 };
 
 export type TemplateSpec = {
@@ -329,6 +330,10 @@ export default function SongForm() {
     const stored = localStorage.getItem("dither");
     return stored === null ? true : stored === "true";
   });
+  const [lofiFilter, setLofiFilter] = useState(() => {
+    const stored = localStorage.getItem("lofiFilter");
+    return stored === null ? true : stored === "true";
+  });
 
   // UI state
   const [busy, setBusy] = useState(false);
@@ -389,6 +394,10 @@ export default function SongForm() {
   useEffect(() => {
     localStorage.setItem("dither", String(dither));
   }, [dither]);
+
+  useEffect(() => {
+    localStorage.setItem("lofiFilter", String(lofiFilter));
+  }, [lofiFilter]);
 
   const runningJobId = useMemo(
     () => jobs.find((j) => !j.error && !j.outPath)?.id,
@@ -683,6 +692,7 @@ export default function SongForm() {
       hq_chorus: hqChorus,
       limiter_drive: Math.max(0.5, Math.min(2, limiterDrive)),
       dither_amount: dither ? 1 : 0,
+      lofi_filter: lofiFilter,
     };
   }
 
@@ -1278,6 +1288,8 @@ export default function SongForm() {
           setLimiterDrive={setLimiterDrive}
           dither={dither}
           setDither={setDither}
+          lofiFilter={lofiFilter}
+          setLofiFilter={setLofiFilter}
         />
         {/* album mode toggle */}
         <div className={styles.panel}>
