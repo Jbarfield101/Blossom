@@ -51,11 +51,18 @@ export default function TaskList() {
             <Typography variant="body2" sx={{ fontWeight: 500 }}>
               {task.label}
             </Typography>
-            <LinearProgress
-              variant="determinate"
-              value={Math.max(0, Math.min(100, task.progress * 100))}
-              sx={{ my: 0.5 }}
-            />
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <LinearProgress
+                variant="determinate"
+                value={Math.max(0, Math.min(100, task.progress * 100))}
+                sx={{ my: 0.5, flexGrow: 1, mr: 1 }}
+              />
+              {task.started_at && (
+                <Typography variant="caption" sx={{ minWidth: 48, textAlign: "right" }}>
+                  {formatElapsed(task.started_at)}
+                </Typography>
+              )}
+            </Box>
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
               <Typography variant="caption">{task.status}</Typography>
               {task.status === "queued" || task.status === "running" ? (
@@ -69,5 +76,13 @@ export default function TaskList() {
       )}
     </Box>
   );
+}
+
+function formatElapsed(started_at: string) {
+  const diff = Date.now() - new Date(started_at).getTime();
+  const sec = Math.max(0, Math.floor(diff / 1000));
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 

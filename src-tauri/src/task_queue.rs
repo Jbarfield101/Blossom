@@ -7,6 +7,7 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use chrono::{DateTime, Utc};
 use sysinfo::System;
 use tauri::async_runtime::{self, JoinHandle};
 use tauri::{AppHandle, Manager, Wry};
@@ -106,6 +107,7 @@ pub struct Task {
     pub status: TaskStatus,
     pub progress: f32,
     pub result: Option<Value>,
+    pub started_at: Option<DateTime<Utc>>,
 }
 
 enum Message {
@@ -188,10 +190,19 @@ impl TaskQueue {
                                 }
                                 sleep(Duration::from_secs(1)).await;
                             }
-                            {
+                            let snapshot = {
                                 let mut map = tasks_clone.lock().await;
                                 if let Some(t) = map.get_mut(&id) {
                                     t.status = TaskStatus::Running;
+                                    t.started_at = Some(Utc::now());
+                                    Some(t.clone())
+                                } else {
+                                    None
+                                }
+                            };
+                            if let Some(task) = snapshot {
+                                if let Some(app) = app_handle.lock().unwrap().clone() {
+                                    let _ = app.emit_all("task_updated", task);
                                 }
                             }
                             let res: Result<Value, TaskError> = match command {
@@ -560,6 +571,7 @@ impl TaskQueue {
             status: TaskStatus::Queued,
             progress: 0.0,
             result: None,
+            started_at: Some(Utc::now()),
         };
         let _ = self.tx.send(Message::Enqueue(task)).await;
         id

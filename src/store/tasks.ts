@@ -17,6 +17,7 @@ export interface Task {
   result?: unknown;
   error?: string;
   errorCode?: string;
+  started_at?: string;
 }
 
 interface RawTask {
@@ -25,6 +26,7 @@ interface RawTask {
   status: string | { Failed: { code: string; message: string } };
   progress: number;
   result?: unknown;
+  started_at?: string;
 }
 
 function normalize(raw: RawTask): Task {
@@ -35,6 +37,7 @@ function normalize(raw: RawTask): Task {
       status: raw.status.toLowerCase() as TaskStatus,
       progress: raw.progress,
       result: raw.result,
+      started_at: raw.started_at,
     };
   }
   return {
@@ -45,6 +48,7 @@ function normalize(raw: RawTask): Task {
     result: raw.result,
     error: raw.status.Failed.message,
     errorCode: raw.status.Failed.code,
+    started_at: raw.started_at,
   };
 }
 
@@ -68,7 +72,7 @@ export const useTasks = create<TasksState>((set, get) => ({
       set((state) => ({
         tasks: {
           ...state.tasks,
-          [id]: { id, label, status: 'queued', progress: 0 },
+          [id]: { id, label, status: 'queued', progress: 0, started_at: new Date().toISOString() },
         },
       }));
       get().startPolling(id);
