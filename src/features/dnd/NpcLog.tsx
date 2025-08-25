@@ -7,6 +7,8 @@ interface LogEntry {
   world: string;
   id: string;
   name: string;
+  errorCode?: string;
+  message?: string;
 }
 
 export default function NpcLog() {
@@ -42,8 +44,12 @@ export default function NpcLog() {
         {entries.map((e, i) => (
           <ListItem key={i}>
             <ListItemText
-              primary={`${e.name} (${e.world})`}
-              secondary={new Date(e.timestamp).toLocaleString()}
+              primary={
+                e.errorCode || e.message
+                  ? `Failed to import${e.name ? ` ${e.name}` : ""} (${e.errorCode ?? "unknown"}): ${e.message ?? ""}`
+                  : `${e.name} (${e.world})`
+              }
+              secondary={`${e.world} – ${new Date(e.timestamp).toLocaleString()}`}
             />
           </ListItem>
         ))}

@@ -1378,6 +1378,8 @@ pub async fn append_npc_log<R: Runtime>(
     world: String,
     id: String,
     name: String,
+    error_code: Option<String>,
+    message: Option<String>,
 ) -> Result<(), String> {
     let dir = app
         .path()
@@ -1392,12 +1394,18 @@ pub async fn append_npc_log<R: Runtime>(
         .append(true)
         .open(&path)
         .map_err(|e| e.to_string())?;
-    let entry = json!({
+    let mut entry = json!({
         "timestamp": Utc::now().to_rfc3339(),
         "world": world,
         "id": id,
         "name": name,
     });
+    if let Some(code) = error_code {
+        entry["errorCode"] = Value::String(code);
+    }
+    if let Some(msg) = message {
+        entry["message"] = Value::String(msg);
+    }
     writeln!(file, "{}", entry.to_string()).map_err(|e| e.to_string())?;
     Ok(())
 }
