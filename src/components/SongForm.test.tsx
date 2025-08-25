@@ -390,16 +390,19 @@ describe('SongForm', () => {
     });
   });
 
-  it('generates image prompt for album', async () => {
+  it('generates album and track titles with specs and image prompt', async () => {
     let gcCount = 0;
-    (invoke as any).mockImplementation((cmd: string) => {
+    let gcArgs: any;
+    (invoke as any).mockImplementation((cmd: string, args: any) => {
       if (cmd === 'start_ollama') return Promise.resolve();
       if (cmd === 'general_chat') {
         gcCount++;
-        if (gcCount === 1)
+        if (gcCount === 1) {
+          gcArgs = args;
           return Promise.resolve(
             JSON.stringify({ album: 'Cool Album', tracks: ['T1', 'T2', 'T3'] })
           );
+        }
         return Promise.resolve('a cozy night cityscape with neon lights');
       }
       return Promise.resolve('');
@@ -407,7 +410,16 @@ describe('SongForm', () => {
 
     render(<SongForm />);
     fireEvent.click(screen.getByLabelText(/album mode/i));
+    const tcInput = screen.getByDisplayValue('6') as HTMLInputElement;
+    fireEvent.change(tcInput, { target: { value: '3' } });
     fireEvent.click(screen.getByText(/generate album titles/i));
+
+    await screen.findByDisplayValue('Cool Album');
+    expect((screen.getByPlaceholderText('Track 1 name') as HTMLInputElement).value).toBe('T1');
+    expect((screen.getByPlaceholderText('Track 2 name') as HTMLInputElement).value).toBe('T2');
+    expect((screen.getByPlaceholderText('Track 3 name') as HTMLInputElement).value).toBe('T3');
+    expect(gcArgs.messages[1].content).toContain('"mood":["calm","cozy","nostalgic"]');
+    expect(gcArgs.messages[1].content).toContain('"instruments":["rhodes","nylon guitar","upright bass"]');
 
     await screen.findByText(/album art prompt/i);
     expect(

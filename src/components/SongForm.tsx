@@ -543,6 +543,10 @@ export default function SongForm() {
       setGenTitleLoading(true);
       await invoke("start_ollama");
       if (albumMode) {
+        const trackSummaries = Array.from({ length: trackCount }, (_, i) => {
+          const spec = makeSpecForIndex(i);
+          return { mood: spec.mood, instruments: spec.instruments };
+        });
         const reply: string = await invoke("general_chat", {
           messages: [
             {
@@ -552,7 +556,7 @@ export default function SongForm() {
             },
             {
               role: "user",
-              content: `Theme: ${titleBase}. Number of tracks: ${trackCount}`,
+              content: `Theme: ${titleBase}. Track count: ${trackCount}. Track specs: ${JSON.stringify(trackSummaries)}`,
             },
           ],
         });
