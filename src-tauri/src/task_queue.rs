@@ -10,11 +10,11 @@ use serde_json::Value;
 use chrono::{DateTime, Utc};
 use sysinfo::System;
 use tauri::async_runtime::{self, JoinHandle};
-use tauri::{AppHandle, Manager, Wry};
+use tauri::{AppHandle, Emitter, Manager, Wry};
 use tokio::sync::{mpsc, Mutex, Semaphore};
 use tokio::time::sleep;
 
-use crate::commands::{run_lofi_song, AlbumRequest, ShortSpec, SongSpec};
+use crate::commands::{run_lofi_song, AlbumRequest, ShortSpec};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TaskCommand {
@@ -140,7 +140,7 @@ impl TaskQueue {
             cpu: cpu_limit,
             memory: memory_limit,
         }));
-        let app = Arc::new(StdMutex::new(None));
+        let app = Arc::new(StdMutex::new(None::<AppHandle<Wry>>));
         let tasks_worker = tasks.clone();
         let _handles_worker = _handles.clone();
         let _cancelled_worker = _cancelled.clone();
@@ -202,7 +202,7 @@ impl TaskQueue {
                             };
                             if let Some(task) = snapshot {
                                 if let Some(app) = app_handle.lock().unwrap().clone() {
-                                    let _ = app.emit_all("task_updated", task);
+                                    let _ = app.emit("task_updated", task);
                                 }
                             }
                             let res: Result<Value, TaskError> = match command {
@@ -457,7 +457,9 @@ impl TaskQueue {
                                         .ok_or_else(|| TaskError {
                                             code: PdfErrorCode::Unknown,
                                             message: "no main window".into(),
-                                        })?;
+                                        })?
+                                        .as_ref()
+                                        .window();
                                     let specs = meta.specs.ok_or_else(|| TaskError {
                                         code: PdfErrorCode::Unknown,
                                         message: "missing specs".into(),
@@ -492,7 +494,7 @@ impl TaskQueue {
                                             }
                                         }
                                         if let Some(task) = snapshot {
-                                            let _ = app.emit_all("task_updated", task);
+                                            let _ = app.emit("task_updated", task);
                                         }
                                         if _cancelled_clone.lock().await.contains(&id) {
                                             return Err(TaskError {
@@ -531,7 +533,7 @@ impl TaskQueue {
                             };
                             if let Some(task) = snapshot {
                                 if let Some(app) = app_handle.lock().unwrap().clone() {
-                                    let _ = app.emit_all("task_updated", task);
+                                    let _ = app.emit("task_updated", task);
                                 }
                             }
                             drop(permit);
