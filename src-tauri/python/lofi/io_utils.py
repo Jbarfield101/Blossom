@@ -11,6 +11,16 @@ __all__ = ["set_ffmpeg_paths", "apply_dither", "ensure_wav_bitdepth"]
 
 logger = logging.getLogger(__name__)
 
+# Check for FFmpeg on import so missing binaries fail fast.
+# This prevents pydub from raising less-clear errors later in the render flow.
+FFMPEG_BINARY = which("ffmpeg")
+if not FFMPEG_BINARY:
+    raise RuntimeError(
+        "FFmpeg is required but was not found. Install FFmpeg and ensure it is on PATH. "
+        "macOS: brew install ffmpeg; Linux: sudo apt install ffmpeg; "
+        "Windows: choco install ffmpeg or download from https://ffmpeg.org/download.html"
+    )
+
 
 def set_ffmpeg_paths() -> None:
     """Configure pydub to find ffmpeg/ffprobe binaries."""
@@ -19,7 +29,7 @@ def set_ffmpeg_paths() -> None:
         os.path.join(exe_dir, "ffmpeg.exe"),
         os.path.join(exe_dir, "Library", "bin", "ffmpeg.exe"),
         os.path.join(exe_dir, "..", "Library", "bin", "ffmpeg.exe"),
-        which("ffmpeg"),
+        FFMPEG_BINARY,
     ]
     candidates_ffprobe = [
         os.path.join(exe_dir, "ffprobe.exe"),
@@ -87,7 +97,4 @@ def ensure_wav_bitdepth(
 
 
 # Configure ffmpeg paths on import so pydub can locate binaries.
-try:
-    set_ffmpeg_paths()
-except Exception:
-    pass
+set_ffmpeg_paths()
