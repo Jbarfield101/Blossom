@@ -9,10 +9,8 @@ Install the following tools before working with the project:
 
 - **Rust** – required for the Tauri backend. Install via [rustup](https://rustup.rs/).
 - **Node.js** – version 18 or later for the React/Vite front‑end.
-- **Python** – version 3.10+ for audio scripts. Coqui TTS supports only
-  Python 3.9–3.11, so use Python 3.10 or 3.11 for speech features. Python 3.13
-  or later also requires the
-  [`audioop-lts`](https://pypi.org/project/audioop-lts/) module.
+- **Python** – version 3.10+ for audio scripts. Python 3.13 or later also
+  requires the [`audioop-lts`](https://pypi.org/project/audioop-lts/) module.
 - **FFmpeg** – used by the Python scripts for reading and writing audio. Ensure
   `ffmpeg` and `ffprobe` are available on your `PATH`. On macOS or Linux install
   via your package manager (for example `brew install ffmpeg` or `sudo apt install ffmpeg`).
@@ -27,8 +25,6 @@ Install JavaScript and Python dependencies:
 npm install
 # create/activate a Python environment, then
 pip install -r requirements.txt  # base dependencies
-# optional: enable text-to-speech features
-# pip install .[TTS]
 ```
 
 `audioop-lts` is included in the requirements and will be installed automatically on
@@ -85,50 +81,6 @@ platform and ensure `ffmpeg` and `ffprobe` are available on your `PATH`:
   and add its `bin` directory to your `PATH`.
 
 After installation, verify the binaries are visible with `ffmpeg -version`.
-
-## Text-to-Speech (TTS) models
-
-Blossom can announce track titles or host voice‑overs using the
-[Coqui TTS](https://github.com/coqui-ai/TTS) library.
-
-1. **Install the library**
-
-   Coqui TTS requires Python 3.9–3.11.
-
-   ```bash
-   pip install blossom-audio[TTS]
-   # or, from a clone:
-   pip install .[TTS]
-   ```
-
-2. **Download a model** – use `tts --list_models` to view available voices and
-   download one. For example, to grab the English VITS model (≈500 MB):
-
-   ```bash
-    tts --model_name tts_models/en/vctk/vits --output_path ~/blossom_tts
-   ```
-
-   The download produces a `model.pth` and matching `config.json`. Store them in
-   any directory. High‑quality multi‑speaker models can exceed 1 GB.
-
-3. **Point the scripts to the model** – pass the path with `--tts-model-path`
-   and the config alongside it:
-
-   ```bash
-   python src-tauri/python/dj_mix.py \
-     --specs song1.json song2.json \
-     --out mix.wav \
-     --tts-model-path ~/blossom_tts/model.pth \
-     --tts-config ~/blossom_tts/config.json
-   ```
-
-   You can also set the `TTS_MODEL_PATH` and `TTS_CONFIG_PATH` environment
-   variables to avoid passing the arguments each time.
-
-4. **GPU notes** – inference runs fastest on a modern NVIDIA GPU. A 16 GB card
-   such as an RTX 4080 is recommended for real‑time speech; slower GPUs or CPU
-   mode will work but take longer.
-
 
 ## Testing
 
