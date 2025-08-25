@@ -14,7 +14,8 @@ use tauri::{AppHandle, Manager, Wry};
 use tokio::sync::{mpsc, Mutex, Semaphore};
 use tokio::time::sleep;
 
-use crate::commands::{run_lofi_song, AlbumRequest, ShortSpec, SongSpec};
+use crate::commands::{run_lofi_song, AlbumRequest, ShortSpec};
+use tauri::Emitter;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TaskCommand {
@@ -140,7 +141,7 @@ impl TaskQueue {
             cpu: cpu_limit,
             memory: memory_limit,
         }));
-        let app = Arc::new(StdMutex::new(None));
+        let app = Arc::new(StdMutex::new(None::<AppHandle<Wry>>));
         let tasks_worker = tasks.clone();
         let _handles_worker = _handles.clone();
         let _cancelled_worker = _cancelled.clone();
@@ -202,7 +203,7 @@ impl TaskQueue {
                             };
                             if let Some(task) = snapshot {
                                 if let Some(app) = app_handle.lock().unwrap().clone() {
-                                    let _ = app.emit_all("task_updated", task);
+                                    let _ = app.emit("task_updated", task);
                                 }
                             }
                             let res: Result<Value, TaskError> = match command {
@@ -492,7 +493,7 @@ impl TaskQueue {
                                             }
                                         }
                                         if let Some(task) = snapshot {
-                                            let _ = app.emit_all("task_updated", task);
+                                            let _ = app.emit("task_updated", task);
                                         }
                                         if _cancelled_clone.lock().await.contains(&id) {
                                             return Err(TaskError {
@@ -531,7 +532,7 @@ impl TaskQueue {
                             };
                             if let Some(task) = snapshot {
                                 if let Some(app) = app_handle.lock().unwrap().clone() {
-                                    let _ = app.emit_all("task_updated", task);
+                                    let _ = app.emit("task_updated", task);
                                 }
                             }
                             drop(permit);

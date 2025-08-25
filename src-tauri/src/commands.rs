@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use serde_yaml;
 use sysinfo::System;
-use tauri::{AppHandle, Emitter, Manager, Runtime, State, Window};
+use tauri::{AppHandle, Emitter, Manager, Runtime, State, WebviewWindow, Window};
 use tokio::{
     io::{AsyncBufReadExt, BufReader as TokioBufReader},
     process::Child,
@@ -802,7 +802,7 @@ pub async fn lofi_generate_gpu<R: Runtime>(
 /// Run full-song generation based on a structured spec (typed, camelCase-friendly).
 #[tauri::command]
 pub async fn run_lofi_song<R: Runtime>(
-    window: Window<R>,
+    window: WebviewWindow<R>,
     app: AppHandle<R>,
     spec: SongSpec,
 ) -> Result<String, String> {
@@ -885,7 +885,7 @@ pub async fn run_lofi_song<R: Runtime>(
 
 #[tauri::command]
 pub async fn generate_album<R: Runtime>(
-    window: Window<R>,
+    window: WebviewWindow<R>,
     app: AppHandle<R>,
     meta: AlbumRequest,
 ) -> Result<AlbumMeta, String> {
