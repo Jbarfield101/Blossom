@@ -112,222 +112,6 @@ pub trait StockProvider: Send + Sync {
     async fn fetch_series(&self, ticker: &str, range: &Range) -> Result<Vec<SeriesPoint>, String>;
 }
 
-struct YahooProvider;
-
-static YAHOO_QUOTE_CACHE: Lazy<Mutex<HashMap<String, (Quote, Instant)>>> =
-    Lazy::new(|| Mutex::new(HashMap::new()));
-
-fn yahoo_cache_ttl() -> Duration {
-    std::env::var("YAHOO_PROVIDER_CACHE_SECS")
-        .ok()
-        .and_then(|s| s.parse::<u64>().ok())
-        .map(Duration::from_secs)
-        .unwrap_or(Duration::from_secs(30))
-}
-
-#[async_trait]
-impl StockProvider for YahooProvider {
-    async fn fetch_quote(&self, ticker: &str) -> Result<Quote, String> {
-        let ttl = yahoo_cache_ttl();
-        if let Some((q, ts)) = {
-            let cache = YAHOO_QUOTE_CACHE.lock().await;
-            cache.get(ticker).cloned()
-        } {
-            if ts.elapsed() < ttl {
-                return Ok(q);
-            }
-        }
-        let url = format!(
-            "https://query1.finance.yahoo.com/v7/finance/quote?symbols={}",
-            ticker
-        );
-        let start = Instant::now();
-        let mut attempt = 0;
-        let max_retries = 3;
-        let mut delay = Duration::from_secs(1);
-        let resp = loop {
-            let resp = reqwest::get(&url).await;
-            let resp = match resp {
-                Ok(resp) => resp,
-                Err(e) => {
-                    attempt += 1;
-                    if attempt >= max_retries {
-                        if let Some((q, _)) = {
-                            let cache = YAHOO_QUOTE_CACHE.lock().await;
-                            cache.get(ticker).cloned()
-                        } {
-                            log::warn!(
-                                "error fetching quote for {}: {} using cached data",
-                                ticker,
-                                e
-                            );
-                            return Ok(q);
-                        }
-                        return Err(e.to_string());
-                    }
-                    let jitter_ms: u64 = thread_rng().gen_range(0..=500);
-                    let wait = delay + Duration::from_millis(jitter_ms);
-                    log::warn!(
-                        "error fetching quote for {}: {} retrying in {:?}",
-                        ticker,
-                        e,
-                        wait
-                    );
-                    sleep(wait).await;
-                    delay *= 2;
-                    continue;
-                }
-            };
-            if resp.status() == StatusCode::TOO_MANY_REQUESTS {
-                attempt += 1;
-                if attempt >= max_retries {
-                    if let Some((q, _)) = {
-                        let cache = YAHOO_QUOTE_CACHE.lock().await;
-                        cache.get(ticker).cloned()
-                    } {
-                        log::warn!(
-                            "rate limited fetching quote for {}: returning cached data",
-                            ticker
-                        );
-                        return Ok(q);
-                    }
-                    return Err("Yahoo Finance rate limit exceeded—please try again later.".into());
-                }
-                let wait = resp
-                    .headers()
-                    .get(RETRY_AFTER)
-                    .and_then(|h| h.to_str().ok())
-                    .and_then(|s| s.parse::<u64>().ok())
-                    .map(Duration::from_secs)
-                    .unwrap_or(delay);
-                let jitter_ms: u64 = thread_rng().gen_range(0..=500);
-                let wait = wait + Duration::from_millis(jitter_ms);
-                log::warn!(
-                    "rate limited fetching quote for {}: retrying in {:?}",
-                    ticker,
-                    wait
-                );
-                sleep(wait).await;
-                delay *= 2;
-                continue;
-            }
-            if !resp.status().is_success() {
-                if let Some((q, _)) = {
-                    let cache = YAHOO_QUOTE_CACHE.lock().await;
-                    cache.get(ticker).cloned()
-                } {
-                    log::warn!(
-                        "failed to fetch quote for {}: HTTP {} using cached data",
-                        ticker,
-                        resp.status()
-                    );
-                    return Ok(q);
-                }
-                return Err(format!(
-                    "failed to fetch quote for {}: HTTP {}",
-                    ticker,
-                    resp.status()
-                ));
-            }
-            break resp;
-        };
-        let size = resp.content_length().unwrap_or_default();
-        let json: serde_json::Value = match resp.json().await {
-            Ok(j) => j,
-            Err(e) => {
-                if let Some((q, _)) = {
-                    let cache = YAHOO_QUOTE_CACHE.lock().await;
-                    cache.get(ticker).cloned()
-                } {
-                    log::warn!(
-                        "error parsing quote for {}: {} using cached data",
-                        ticker,
-                        e
-                    );
-                    return Ok(q);
-                }
-                return Err(e.to_string());
-            }
-        };
-        let result = json["quoteResponse"]["result"].get(0).ok_or("no result")?;
-        let price = result
-            .get("regularMarketPrice")
-            .and_then(|v| v.as_f64())
-            .ok_or("no price")?;
-        let change_percent = result
-            .get("regularMarketChangePercent")
-            .and_then(|v| v.as_f64())
-            .unwrap_or(0.0);
-        let status = result
-            .get("marketState")
-            .and_then(|v| v.as_str())
-            .unwrap_or("UNKNOWN")
-            .to_string();
-        let volume = result.get("regularMarketVolume").and_then(|v| v.as_u64());
-        log::info!(
-            "quote {} fetched in {} ms ({} bytes)",
-            ticker,
-            start.elapsed().as_millis(),
-            size
-        );
-        let q = Quote {
-            ticker: ticker.to_string(),
-            price,
-            change_percent,
-            status,
-            volume,
-            error: None,
-        };
-        {
-            let mut cache = YAHOO_QUOTE_CACHE.lock().await;
-            cache.insert(ticker.to_string(), (q.clone(), Instant::now()));
-        }
-        Ok(q)
-    }
-
-    async fn fetch_series(&self, ticker: &str, range: &Range) -> Result<Vec<SeriesPoint>, String> {
-        let url = format!(
-            "https://query1.finance.yahoo.com/v8/finance/chart/{}?range={}&interval=5m",
-            ticker,
-            range.as_str()
-        );
-        let start = Instant::now();
-        let resp = reqwest::get(&url).await.map_err(|e| e.to_string())?;
-        if !resp.status().is_success() {
-            return Err(format!(
-                "failed to fetch series for {}: HTTP {}",
-                ticker,
-                resp.status()
-            ));
-        }
-        let size = resp.content_length().unwrap_or_default();
-        let json: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
-        let result = json["chart"]["result"].get(0).ok_or("no result")?;
-        let timestamps = result
-            .get("timestamp")
-            .and_then(|v| v.as_array())
-            .ok_or("no ts")?;
-        let closes = result["indicators"]["quote"]
-            .get(0)
-            .and_then(|v| v["close"].as_array())
-            .ok_or("no close")?;
-        let mut points = Vec::new();
-        for (ts, close) in timestamps.iter().zip(closes.iter()) {
-            if let (Some(ts), Some(close)) = (ts.as_i64(), close.as_f64()) {
-                points.push(SeriesPoint { ts, close });
-            }
-        }
-        log::info!(
-            "series {} {} points fetched in {} ms ({} bytes)",
-            ticker,
-            points.len(),
-            start.elapsed().as_millis(),
-            size
-        );
-        Ok(points)
-    }
-}
-
 struct TwelveDataProvider {
     api_key: String,
     base_url: String,
@@ -418,9 +202,7 @@ impl StockProvider for TwelveDataProvider {
                         );
                         return Ok(q);
                     }
-                    return Err(
-                        "Twelve Data rate limit exceeded—please try again later.".into(),
-                    );
+                    return Err("Twelve Data rate limit exceeded—please try again later.".into());
                 }
                 let wait = resp
                     .headers()
@@ -513,11 +295,7 @@ impl StockProvider for TwelveDataProvider {
         Ok(q)
     }
 
-    async fn fetch_series(
-        &self,
-        ticker: &str,
-        range: &Range,
-    ) -> Result<Vec<SeriesPoint>, String> {
+    async fn fetch_series(&self, ticker: &str, range: &Range) -> Result<Vec<SeriesPoint>, String> {
         let (interval, outputsize) = match range {
             Range::OneDay => ("1min", "390"),
             Range::FiveDay => ("15min", "130"),
@@ -549,9 +327,7 @@ impl StockProvider for TwelveDataProvider {
             if resp.status() == StatusCode::TOO_MANY_REQUESTS {
                 attempt += 1;
                 if attempt >= max_retries {
-                    return Err(
-                        "Twelve Data rate limit exceeded—please try again later.".into(),
-                    );
+                    return Err("Twelve Data rate limit exceeded—please try again later.".into());
                 }
                 let wait = resp
                     .headers()
@@ -632,10 +408,12 @@ impl StockProvider for StubProvider {
 }
 
 pub fn provider_from_env() -> Arc<dyn StockProvider + Send + Sync> {
-    match std::env::var("STOCKS_PROVIDER").unwrap_or_default().as_str() {
+    match std::env::var("STOCKS_PROVIDER")
+        .unwrap_or_default()
+        .as_str()
+    {
         "stub" => Arc::new(StubProvider),
-        "twelvedata" => Arc::new(TwelveDataProvider::new()),
-        _ => Arc::new(YahooProvider),
+        _ => Arc::new(TwelveDataProvider::new()),
     }
 }
 

@@ -5,7 +5,7 @@ fn greet(name: &str) -> String {
 }
 
 pub mod commands;
-mod stocks;
+pub mod stocks;
 mod task_queue;
 pub use stocks::stocks_fetch;
 
