@@ -290,7 +290,7 @@ body.theme-studio input[type="range"]::-moz-range-thumb {
 .retro-tv-screen::before {
   content: "";
   position: absolute;
-  top: -100%;
+  top: 0;
   left: 0;
   width: 100%;
   height: 100%;
@@ -301,14 +301,17 @@ body.theme-studio input[type="range"]::-moz-range-thumb {
     transparent 2px,
     transparent 4px
   );
-  animation: retro-scan 2s linear infinite;
+  background-size: 100% 4px;
+  animation: retro-scan 0.5s linear infinite;
+  pointer-events: none;
+  z-index: 2;
 }
 
 @keyframes retro-scan {
   from {
-    transform: translateY(-100%);
+    background-position-y: 0;
   }
   to {
-    transform: translateY(100%);
+    background-position-y: 4px;
   }
 }
