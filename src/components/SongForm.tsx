@@ -356,6 +356,7 @@ export default function SongForm() {
     setBpm: setPreviewBpm,
     setKey: setPreviewKey,
     setSeed: setPreviewSeed,
+    setSfzInstrument: setPreviewSfzInstrument,
     weatherPreset,
     weatherEnabled,
     setWeatherEnabled,
@@ -524,6 +525,7 @@ export default function SongForm() {
       });
       if (file) {
         setSfzInstrument(file as string);
+        setPreviewSfzInstrument(file as string);
       }
     } catch (e: any) {
       setErr(e?.message || String(e));
@@ -537,7 +539,9 @@ export default function SongForm() {
       const path = await resolveResource(
         "sfz_sounds/UprightPianoKW-20220221.sfz"
       );
-      setSfzInstrument(convertFileSrc(path));
+      const url = convertFileSrc(path);
+      setSfzInstrument(url);
+      setPreviewSfzInstrument(url);
     } catch (e: any) {
       setErr(e?.message || String(e));
     }

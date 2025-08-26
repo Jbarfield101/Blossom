@@ -18,6 +18,7 @@ vi.mock('@tauri-apps/api/event', () => ({ listen: vi.fn() }));
 vi.mock('@tauri-apps/api/path', () => ({
   resolveResource: (p: string) => Promise.resolve(p),
 }));
+const setPreviewSfzInstrument = vi.fn();
 vi.mock('../features/lofi/SongForm', () => ({
   useLofi: () => ({
     isPlaying: false,
@@ -26,6 +27,7 @@ vi.mock('../features/lofi/SongForm', () => ({
     setBpm: vi.fn(),
     setKey: vi.fn(),
     setSeed: vi.fn(),
+    setSfzInstrument: setPreviewSfzInstrument,
   }),
 }));
 const enqueueTask = vi.fn(() => Promise.resolve(1));
@@ -65,6 +67,7 @@ describe('SongForm', () => {
     vi.resetAllMocks();
     enqueueTask.mockResolvedValue(1);
     useSongJobs.setState({ jobs: [] });
+    setPreviewSfzInstrument.mockClear();
     Object.defineProperty(global.HTMLMediaElement.prototype, 'play', {
       configurable: true,
       value: vi.fn(),
@@ -296,6 +299,7 @@ describe('SongForm', () => {
     fireEvent.click(screen.getByText(/choose sfz/i));
     await screen.findByText('piano.sfz');
     expect(openDialog).toHaveBeenCalled();
+    expect(setPreviewSfzInstrument).toHaveBeenCalledWith('/tmp/piano.sfz');
   });
 
   it('loads acoustic grand piano and clears instruments', async () => {
@@ -308,6 +312,9 @@ describe('SongForm', () => {
       expect(screen.getByRole('checkbox', { name })).not.toBeChecked();
     });
     expect(screen.getByRole('radio', { name: 'synth' })).not.toBeChecked();
+    expect(setPreviewSfzInstrument).toHaveBeenCalledWith(
+      'sfz_sounds/UprightPianoKW-20220221.sfz'
+    );
   });
 
   it('keeps preset templates when loading custom templates', () => {
