@@ -1,12 +1,13 @@
 // src-tauri/src/commands.rs
 use std::{
+    collections::HashMap,
     env,
     fs::{self, OpenOptions},
     io::{BufRead, BufReader, Read, Write},
     path::{Path, PathBuf},
     process::{Command as PCommand, Stdio},
     sync::{Mutex, OnceLock},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use dirs;
@@ -14,15 +15,20 @@ use dirs;
 use crate::stocks::{stocks_fetch as stocks_fetch_impl, StockBundle};
 use crate::task_queue::{Task, TaskCommand, TaskQueue};
 use chrono::{DateTime, Local, NaiveDateTime, Utc};
+use once_cell::sync::Lazy;
+use rand::{thread_rng, Rng};
+use reqwest::{self, header::RETRY_AFTER, StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use serde_yaml;
 use sysinfo::System;
+use tauri::async_runtime::Mutex as AsyncMutex;
 use tauri::{AppHandle, Emitter, Manager, Runtime, State, Window};
 use tokio::{
     io::{AsyncBufReadExt, BufReader as TokioBufReader},
     process::Child,
     task::JoinHandle,
+    time::sleep,
 };
 use which::which;
 
@@ -1677,6 +1683,85 @@ pub struct StockForecast {
     pub long_term: String,
 }
 
+static YAHOO_CHART_CACHE: Lazy<AsyncMutex<HashMap<(String, String, String), (Value, Instant)>>> =
+    Lazy::new(|| AsyncMutex::new(HashMap::new()));
+
+fn yahoo_cache_ttl() -> Duration {
+    std::env::var("YAHOO_PROVIDER_CACHE_SECS")
+        .ok()
+        .and_then(|s| s.parse::<u64>().ok())
+        .map(Duration::from_secs)
+        .unwrap_or(Duration::from_secs(30))
+}
+
+async fn fetch_chart(sym: &str, range: &str, interval: &str) -> Result<Value, String> {
+    let ttl = yahoo_cache_ttl();
+    let key = (sym.to_string(), range.to_string(), interval.to_string());
+    if let Some((v, ts)) = {
+        let cache = YAHOO_CHART_CACHE.lock().await;
+        cache.get(&key).cloned()
+    } {
+        if ts.elapsed() < ttl {
+            return Ok(v);
+        }
+    }
+
+    let url = format!(
+        "https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range={range}&interval={interval}"
+    );
+    let mut attempt = 0;
+    let max_retries = 3;
+    let mut delay = Duration::from_secs(1);
+    loop {
+        let resp = reqwest::get(&url).await;
+        let resp = match resp {
+            Ok(r) => r,
+            Err(e) => {
+                attempt += 1;
+                if attempt >= max_retries {
+                    return Err(e.to_string());
+                }
+                let jitter_ms: u64 = thread_rng().gen_range(0..=500);
+                let wait = delay + Duration::from_millis(jitter_ms);
+                sleep(wait).await;
+                delay *= 2;
+                continue;
+            }
+        };
+        if resp.status() == StatusCode::TOO_MANY_REQUESTS {
+            attempt += 1;
+            if attempt >= max_retries {
+                return Err("Yahoo Finance rate limit exceeded—please try again later.".into());
+            }
+            let wait = resp
+                .headers()
+                .get(RETRY_AFTER)
+                .and_then(|h| h.to_str().ok())
+                .and_then(|s| s.parse::<u64>().ok())
+                .map(Duration::from_secs)
+                .unwrap_or(delay);
+            let jitter_ms: u64 = thread_rng().gen_range(0..=500);
+            let wait = wait + Duration::from_millis(jitter_ms);
+            sleep(wait).await;
+            delay *= 2;
+            continue;
+        }
+        if !resp.status().is_success() {
+            return Err(format!(
+                "failed to fetch series for {}: HTTP {}",
+                sym,
+                resp.status()
+            ));
+        }
+        let json: Value = resp.json().await.map_err(|e| e.to_string())?;
+        {
+            let mut cache = YAHOO_CHART_CACHE.lock().await;
+            cache.insert(key, (json.clone(), Instant::now()));
+        }
+        return Ok(json);
+    }
+}
+
 #[tauri::command]
 pub async fn stock_forecast<R: Runtime>(
     app: AppHandle<R>,
@@ -1685,10 +1770,7 @@ pub async fn stock_forecast<R: Runtime>(
     let sym = symbol.to_uppercase();
 
     // recent 5 day series
-    let recent_url =
-        format!("https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=5d&interval=1d");
-    let recent_resp = reqwest::get(&recent_url).await.map_err(|e| e.to_string())?;
-    let recent_json: Value = recent_resp.json().await.map_err(|e| e.to_string())?;
+    let recent_json = fetch_chart(&sym, "5d", "1d").await?;
     let result = recent_json["chart"]["result"]
         .get(0)
         .ok_or_else(|| "chart result missing".to_string())?;
@@ -1709,10 +1791,7 @@ pub async fn stock_forecast<R: Runtime>(
     let recent_summary = recent_parts.join(", ");
 
     // 6 month series (weekly)
-    let long_url =
-        format!("https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=6mo&interval=1wk");
-    let long_resp = reqwest::get(&long_url).await.map_err(|e| e.to_string())?;
-    let long_json: Value = long_resp.json().await.map_err(|e| e.to_string())?;
+    let long_json = fetch_chart(&sym, "6mo", "1wk").await?;
     let result = long_json["chart"]["result"]
         .get(0)
         .ok_or_else(|| "chart result missing".to_string())?;
