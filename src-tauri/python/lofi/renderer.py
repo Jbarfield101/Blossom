@@ -1170,7 +1170,8 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
             section_name=section_name,
             motif_store=motif,
         )
-        melody = _apply_melody_timbre(melody, [lead] if lead else instrs)
+        instrs_for_timbre = instrs + ([lead] if lead else [])
+        melody = _apply_melody_timbre(melody, instrs_for_timbre)
     else:
         melody = np.zeros(n, dtype=np.float32)
 
