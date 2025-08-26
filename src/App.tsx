@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import TopBar from "./components/TopBar";
 import ErrorBoundary from "./components/ErrorBoundary";
 import CreateUserDialog from "./components/CreateUserDialog";
+import RetroTV from "./components/RetroTV";
 import { useUsers } from "./features/users/useUsers";
 import Home from "./pages/Home";
 import Objects from "./pages/Objects";
@@ -49,6 +50,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <TopBar />
+      <RetroTV />
       <CreateUserDialog open={showUserDialog} onClose={() => setShowUserDialog(false)} />
       <Routes>
         <Route path="/" element={<Home />} />
