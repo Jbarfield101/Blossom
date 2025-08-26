@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTheme } from "../features/theme/ThemeContext";
 
 interface RetroTVProps {
@@ -7,19 +7,68 @@ interface RetroTVProps {
 
 export default function RetroTV({ children }: RetroTVProps) {
   const { theme } = useTheme();
+  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<"image" | "video" | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (mediaUrl) URL.revokeObjectURL(mediaUrl);
+    const url = URL.createObjectURL(file);
+    setMediaUrl(url);
+    setMediaType(file.type.startsWith("video") ? "video" : "image");
+  };
+
+  useEffect(() => {
+    return () => {
+      if (mediaUrl) URL.revokeObjectURL(mediaUrl);
+    };
+  }, [mediaUrl]);
+
   if (theme !== "retro") return null;
-  const content = children ? (
-    <div className="retro-tv-content">{children}</div>
-  ) : (
-    <img
-      src="/assets/logo.png"
-      className="retro-tv-content"
-      alt="Blossom logo"
-    />
-  );
+
+  let content: React.ReactNode;
+  if (mediaUrl) {
+    content =
+      mediaType === "video" ? (
+        <video src={mediaUrl} className="retro-tv-content" controls />
+      ) : (
+        <img src={mediaUrl} className="retro-tv-content" alt="Uploaded media" />
+      );
+  } else if (children) {
+    content = <div className="retro-tv-content">{children}</div>;
+  } else {
+    content = (
+      <img
+        src="/assets/logo.png"
+        className="retro-tv-content"
+        alt="Blossom logo"
+      />
+    );
+  }
+
   return (
     <div className="retro-tv-container">
-      <div className="retro-tv-screen">{content}</div>
+      <input
+        type="file"
+        accept="image/*,video/*"
+        ref={fileInput}
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+      />
+      <div className="retro-tv-screen">
+        {content}
+        <button
+          type="button"
+          className="retro-tv-upload"
+          onClick={() => fileInput.current?.click()}
+        >
+          Upload
+        </button>
+      </div>
     </div>
   );
 }
