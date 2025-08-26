@@ -1,8 +1,8 @@
 # SFZ Sounds
 
-Static SFZ instrument definitions and their samples live here. The folder is
-served from `/sfz_sounds` at runtime so front-end code can fetch files by
-relative URL.
+Static SFZ instrument definitions and their samples live here. When the app is
+packaged with Tauri, this directory is bundled into the application's resource
+folder and is resolved at runtime via Tauri's asset APIs.
 
 ## Naming and layout
 
@@ -29,11 +29,12 @@ Inside the `.sfz`, reference samples using paths relative to the `.sfz` file:
 
 ## Loading
 
-Future code will load instruments from this directory using relative paths. When
-invoking the loader, pass only the file name:
+At runtime, resolve the path to an instrument using `resolveResource` and then
+convert it to a URL with `convertFileSrc` before handing it to the loader:
 
 ```ts
-loadSfz('piano.sfz'); // resolves to /sfz_sounds/piano.sfz
+const path = await resolveResource('sfz_sounds/piano.sfz');
+loadSfz(convertFileSrc(path));
 ```
 
 Because sample paths are relative, the loader automatically locates files inside
