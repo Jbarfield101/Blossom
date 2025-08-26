@@ -33,6 +33,7 @@ type SongSpec = {
   hq_chorus?: boolean;
   limiter_drive?: number;
   dither_amount?: number;
+  sfzInstrument?: string;
 };
 
 const AMBI = [
@@ -150,6 +151,7 @@ export default function AlbumWizard() {
       hq_chorus: hqChorus,
       limiter_drive: limiterDrive,
       dither_amount: dither ? 1 : 0,
+      sfzInstrument: undefined,
     };
   }
 

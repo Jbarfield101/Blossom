@@ -642,6 +642,8 @@ pub struct SongSpec {
     pub limiter_drive: Option<f32>,
     #[serde(alias = "lofiFilter", skip_serializing_if = "Option::is_none")]
     pub lofi_filter: Option<bool>,
+    #[serde(alias = "sfzInstrument", skip_serializing_if = "Option::is_none")]
+    pub sfz_instrument: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -704,6 +706,7 @@ mod tests {
             hq_chorus: None,
             limiter_drive: None,
             lofi_filter: None,
+            sfz_instrument: None,
         };
         let v = serde_json::to_value(&spec).unwrap();
         assert!(v.get("ambience_level").is_some());

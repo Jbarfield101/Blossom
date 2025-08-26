@@ -49,6 +49,7 @@ type SongSpec = {
   limiter_drive?: number;
   dither_amount?: number;
   lofi_filter?: boolean;
+  sfzInstrument?: string;
 };
 
 export type TemplateSpec = {
@@ -172,6 +173,7 @@ export default function SongForm() {
   const [leadInstrument, setLeadInstrument] = useState<string>(() =>
     inferLeadInstrument(defaultInstruments)
   );
+  const [sfzInstrument] = useState<string | undefined>();
   const [ambience, setAmbience] = useState<string[]>(["rain"]);
   const [ambienceLevel, setAmbienceLevel] = useState(0.5);
   const [templates, setTemplates] = useState<Record<string, TemplateSpec>>(() => {
@@ -677,6 +679,7 @@ export default function SongForm() {
       mood,
       instruments: instrs,
       lead_instrument: leadInstrument,
+      sfzInstrument,
       ambience,
       ambience_level: amb,
       seed: pickSeed(i),
