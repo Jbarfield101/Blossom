@@ -11,7 +11,7 @@ const features: Feature[] = [
   { label: "Prompt Factory" },
   { label: "Script" },
   { label: "Music" },
-  { label: "SEO" },
+  { label: "SEO", path: "/assistant/seo" },
   { label: "Orchestration" },
   { label: "RAG" },
   { label: "General Chat", path: "/assistant/general-chat" },
