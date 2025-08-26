@@ -13,6 +13,7 @@ import Calendar from "./pages/Calendar";
 import Comfy from "./pages/Comfy";
 import Assistant from "./pages/Assistant";
 import GeneralChat from "./pages/GeneralChat";
+import Seo from "./pages/Seo";
 import WorldBuilder from "./pages/WorldBuilder";
 import NPCMaker from "./pages/NPCMaker";
 import NPCList from "./pages/NPCList";
@@ -61,6 +62,7 @@ export default function App() {
         <Route path="/comfy" element={<Comfy />} />
         <Route path="/assistant" element={<Assistant />} />
         <Route path="/assistant/general-chat" element={<GeneralChat />} />
+        <Route path="/assistant/seo" element={<Seo />} />
         <Route path="/dnd/world-builder" element={<WorldBuilder />} />
         <Route path="/dnd/npcs-maker" element={<NPCMaker />} />
         <Route path="/dnd/npcs-library" element={<NPCList />} />

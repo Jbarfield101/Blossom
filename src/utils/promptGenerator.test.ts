@@ -24,6 +24,12 @@ describe('generatePrompt', () => {
     );
   });
 
+  it('creates an SEO prompt', () => {
+    expect(generatePrompt('blogs', 'seo')).toBe(
+      'Create SEO optimized copy about blogs.'
+    );
+  });
+
   it('returns empty string for empty input', () => {
     expect(generatePrompt('   ', 'video')).toBe('');
   });
