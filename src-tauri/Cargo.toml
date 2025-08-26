@@ -43,6 +43,7 @@ futures = "0.3"
 sysinfo = "0.37"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "io-util", "process"] }
 png = "0.17"
+rand = "0.8"
 
 [dev-dependencies]
 tauri = { version = "2", features = ["protocol-asset", "test"] }
