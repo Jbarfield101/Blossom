@@ -471,7 +471,9 @@ export default function SongForm() {
           } else {
             setGlobalStatus(pretty);
           }
-          console.log("lofi_progress:", raw);
+          if (import.meta.env.DEV) {
+            console.log("lofi_progress:", raw);
+          }
         } catch {}
       });
       unlisten = off;
