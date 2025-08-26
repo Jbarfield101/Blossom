@@ -37,6 +37,7 @@ from pathlib import Path
 import numpy as np
 from pydub import AudioSegment
 from pydub.exceptions import CouldntDecodeError
+import soundfile as sf
 
 from lofi.dsp import (
     SR,
@@ -258,6 +259,100 @@ def _env_ad(decay_ms: float, length_ms: int):
         tail = np.linspace(1.0, 0.0, d, dtype=np.float32)
         env[-d:] *= tail
     return env
+
+
+class SfzSampler:
+    """Very small SFZ sampler supporting <region> with basic opcodes."""
+
+    def __init__(self, regions):
+        self.regions = regions
+
+    @staticmethod
+    def _load_region(opcodes, base_dir):
+        sample_file = opcodes.get("sample")
+        if not sample_file:
+            return None
+        sample_path = base_dir / sample_file
+        data, sr = sf.read(sample_path, dtype="float32")
+        if data.ndim > 1:
+            data = data.mean(axis=1)
+        return {
+            "sample": data.astype(np.float32),
+            "sr": int(sr),
+            "lokey": int(opcodes.get("lokey", 0)),
+            "hikey": int(opcodes.get("hikey", 127)),
+            "pitch_keycenter": int(opcodes.get("pitch_keycenter", 60)),
+        }
+
+    @classmethod
+    def from_file(cls, path):
+        path = Path(path)
+        base = path.parent
+        regions = []
+        current = {}
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("//"):
+                    continue
+                if line.startswith("<region>"):
+                    if current:
+                        r = cls._load_region(current, base)
+                        if r:
+                            regions.append(r)
+                        current = {}
+                else:
+                    if "=" in line:
+                        k, v = line.split("=", 1)
+                        current[k.strip()] = v.strip()
+        if current:
+            r = cls._load_region(current, base)
+            if r:
+                regions.append(r)
+        return cls(regions)
+
+    def render(self, freq_hz, ms):
+        midi = 69 + 12 * np.log2(freq_hz / 440.0)
+        region = next((r for r in self.regions if r["lokey"] <= midi <= r["hikey"]), self.regions[0])
+        data = region["sample"]
+        sr = region["sr"]
+        if sr != SR:
+            data = np.interp(
+                np.linspace(0, len(data), int(len(data) * SR / sr), endpoint=False),
+                np.arange(len(data)),
+                data,
+            ).astype(np.float32)
+            sr = SR
+        semitones = midi - region["pitch_keycenter"]
+        ratio = 2 ** (semitones / 12)
+        if ratio != 1.0:
+            n_out = max(1, int(len(data) / ratio))
+            data = np.interp(
+                np.linspace(0, len(data), n_out, endpoint=False),
+                np.arange(len(data)),
+                data,
+            ).astype(np.float32)
+        n = int(ms * SR / 1000)
+        out = data[:n]
+        if len(out) < n:
+            pad = np.zeros(n, dtype=np.float32)
+            pad[: len(out)] = out
+            out = pad
+        out *= _env_ad(ms * 0.8, ms)
+        return out
+
+
+def _resolve_sfz_path(p: str) -> Path:
+    path = Path(p)
+    if path.is_absolute() and path.exists():
+        return path
+    root = Path(__file__).resolve().parents[3]
+    rel = Path(str(path).lstrip("/\\"))
+    candidate = root / rel
+    if candidate.exists():
+        return candidate
+    alt = root / "public" / rel
+    return alt
 
 def _sine(freq, ms, amp=0.5):
     t = np.arange(int(ms * SR / 1000)) / SR
@@ -744,10 +839,13 @@ def _render_melody(
     chord_span_beats=4,
     section_name="",
     motif_store=None,
+    sampler: Optional[SfzSampler] = None,
 ):
     """Lead line with 2-bar motif and minimum note density."""
 
     def _mel_note(freq, ms):
+        if sampler is not None:
+            return sampler.render(freq, ms)
         x = _sine(freq, ms, amp=0.22)
         x *= _env_ad(ms * 0.8, ms)
         x = _butter_lowpass(x, 4000)
@@ -1159,6 +1257,7 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
     if is_intro_outro and rng.random() < 0.5:
         melody_active = False
     if melody_active:
+        sampler = motif.get("sfz_sampler")
         melody = _render_melody(
             prog_seq,
             key_letter,
@@ -1169,9 +1268,11 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
             chord_span_beats,
             section_name=section_name,
             motif_store=motif,
+            sampler=sampler,
         )
-        instrs_for_timbre = instrs + ([lead] if lead else [])
-        melody = _apply_melody_timbre(melody, instrs_for_timbre)
+        if sampler is None:
+            instrs_for_timbre = instrs + ([lead] if lead else [])
+            melody = _apply_melody_timbre(melody, instrs_for_timbre)
     else:
         melody = np.zeros(n, dtype=np.float32)
 
@@ -1541,6 +1642,14 @@ def render_from_spec(spec: Dict[str, Any]) -> Tuple[AudioSegment, int]:
         lead = _normalize_instruments([lead])[0]
 
     sfz_inst = spec.get("sfz_instrument")
+    sfz_sampler = None
+    if sfz_inst:
+        try:
+            sfz_path = _resolve_sfz_path(sfz_inst)
+            sfz_sampler = SfzSampler.from_file(sfz_path)
+            lead = None
+        except Exception as e:
+            logger.warning({"stage": "sfz_load_fail", "error": str(e)})
 
     motif = {
         "mood": spec.get("mood") or [],
@@ -1557,8 +1666,9 @@ def render_from_spec(spec: Dict[str, Any]) -> Tuple[AudioSegment, int]:
         "hq_chorus": spec.get("hq_chorus", True),
         "limiter_drive": limiter_drive,
     }
-    if sfz_inst:
+    if sfz_sampler is not None:
         motif["sfz_instrument"] = sfz_inst
+        motif["sfz_sampler"] = sfz_sampler
 
     try:
         chord_span_beats = int(spec.get("chord_span_beats", 4))
