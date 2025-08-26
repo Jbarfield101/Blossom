@@ -20,8 +20,20 @@ export default function Blender() {
   }, []);
 
   useEffect(() => {
+    loadState<string>("blenderOutputDir").then((data) => {
+      if (data) setOutputDir(data);
+    });
+  }, []);
+
+  useEffect(() => {
     saveState("blenderTemplates", templates).catch(() => {});
   }, [templates]);
+
+  useEffect(() => {
+    if (outputDir !== null) {
+      saveState("blenderOutputDir", outputDir).catch(() => {});
+    }
+  }, [outputDir]);
 
   const selectOutput = async () => {
     const selected = await open({ directory: true });
@@ -117,8 +129,14 @@ export default function Blender() {
         <Button variant="outlined" onClick={selectOutput}>
           Select Output Folder
         </Button>
-        <Button variant="contained" onClick={run}>Run in Blender</Button>
-        {outputDir && <div>Selected Output Folder: {outputDir}</div>}
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Button variant="contained" onClick={run}>
+            Run in Blender
+          </Button>
+          <div>
+            Output Folder: {outputDir ?? "Not selected"}
+          </div>
+        </Stack>
         {status && <div>{status}</div>}
       </Stack>
     </Center>
