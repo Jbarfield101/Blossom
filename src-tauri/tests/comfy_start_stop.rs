@@ -1,5 +1,6 @@
 use blossom_lib::commands::{comfy_start, comfy_stop, __has_comfy_child};
 use std::{env, fs};
+use tauri::Manager;
 
 #[tokio::test]
 async fn start_and_stop_comfy() {
@@ -7,9 +8,10 @@ async fn start_and_stop_comfy() {
     let app = tauri::test::mock_builder()
         .build(tauri::test::mock_context(tauri::test::noop_assets()))
         .unwrap();
-    let window = tauri::WebviewWindowBuilder::new(&app, "main", Default::default())
+    let _webview = tauri::WebviewWindowBuilder::new(&app, "main", Default::default())
         .build()
         .unwrap();
+    let window = app.get_window("main").unwrap();
 
     let dir = tempfile::tempdir().unwrap();
     fs::write(
