@@ -2,7 +2,7 @@ import { useState } from "react";
 import { TextField, Button, Stack } from "@mui/material";
 import Center from "./_Center";
 import { invoke } from "@tauri-apps/api/core";
-import { open } from "@tauri-apps/api/dialog";
+import { open } from "@tauri-apps/plugin-dialog";
 
 export default function Blender() {
   const [code, setCode] = useState("import bpy\n\n# example cube\nbpy.ops.mesh.primitive_cube_add()");
