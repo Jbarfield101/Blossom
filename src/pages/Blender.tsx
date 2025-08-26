@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { TextField, Button, Stack, MenuItem, Box } from "@mui/material";
+import { TextField, Button, Stack, MenuItem, Box, Typography } from "@mui/material";
+import Editor from "@monaco-editor/react";
 import Center from "./_Center";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
@@ -122,12 +123,23 @@ export default function Blender() {
         >
           Delete Template
         </Button>
-        <TextField
-          label="Blender bpy code"
-          multiline
-          minRows={6}
+        <Typography variant="subtitle1">Blender bpy code</Typography>
+        <Editor
+          height="200px"
+          defaultLanguage="python"
           value={code}
-          onChange={(e) => setCode(e.target.value)}
+          onChange={(value) => setCode(value ?? "")}
+          options={{
+            lineNumbers: "on",
+            minimap: { enabled: false },
+            automaticLayout: true,
+          }}
+          onMount={(editor, monaco) => {
+            editor.addCommand(
+              monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+              () => run()
+            );
+          }}
         />
         <Button variant="outlined" onClick={selectOutput}>
           Select Output Folder
