@@ -400,6 +400,7 @@ export default function Calendar() {
                   <CalendarDay
                     key={idx}
                     day={day}
+                    month={month + 1}
                     events={day ? dayEvents(day) : []}
                     onDayClick={handleDayClick}
                     onPrefill={prefillDay}

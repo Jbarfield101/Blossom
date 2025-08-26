@@ -1,11 +1,14 @@
 import { Box, Typography, Tooltip, IconButton } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import React, { useCallback } from 'react';
+import HistoryIcon from '@mui/icons-material/History';
+import React, { useCallback, useState } from 'react';
 import { useStatusColors } from '../features/calendar/statusColors';
 import type { CalendarEvent } from '../features/calendar/types';
+import HistoryDialog from './HistoryDialog';
 
 interface Props {
   day: number | null;
+  month: number;
   events: CalendarEvent[];
   onDayClick: (day: number, e: React.MouseEvent<HTMLDivElement>) => void;
   onPrefill: (day: number) => void;
@@ -18,6 +21,7 @@ interface Props {
 const CalendarDay = React.memo(
   ({
     day,
+    month,
     events,
     onDayClick,
     onPrefill,
@@ -27,6 +31,14 @@ const CalendarDay = React.memo(
     holiday,
   }: Props) => {
     const statusColors = useStatusColors();
+    const [historyOpen, setHistoryOpen] = useState(false);
+    const [historyEvents, setHistoryEvents] = useState<
+      {
+        year: number;
+        text: string;
+        pages?: { content_urls?: { desktop?: { page?: string } } }[];
+      }[]
+    >([]);
     if (!day) {
       return <Box sx={{ minHeight: 96, bgcolor: 'grey.50' }} />;
     }
@@ -45,6 +57,24 @@ const CalendarDay = React.memo(
         onDayClick(day, e as unknown as React.MouseEvent<HTMLDivElement>);
       },
       [day, onDayClick, onPrefill]
+    );
+
+    const handleHistory = useCallback(
+      async (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+        try {
+          const res = await fetch(
+            `https://api.wikimedia.org/feed/v1/wikipedia/en/onthisday/events/${month}/${day}`,
+            { headers: { 'User-Agent': 'Blossom' } }
+          );
+          const data = await res.json();
+          setHistoryEvents(data.events || []);
+        } catch {
+          setHistoryEvents([]);
+        }
+        setHistoryOpen(true);
+      },
+      [day, month]
     );
 
     return (
@@ -88,6 +118,13 @@ const CalendarDay = React.memo(
           >
             <AddIcon fontSize="small" />
           </IconButton>
+          <IconButton
+            size="small"
+            aria-label={`Show history for day ${day}`}
+            onClick={handleHistory}
+          >
+            <HistoryIcon fontSize="small" />
+          </IconButton>
           {holiday && (
             <Tooltip title={holiday}>
               <Box sx={{ fontSize: 12 }}>🎉</Box>
@@ -119,6 +156,11 @@ const CalendarDay = React.memo(
             </Tooltip>
           )}
         </Box>
+        <HistoryDialog
+          open={historyOpen}
+          onClose={() => setHistoryOpen(false)}
+          events={historyEvents}
+        />
       </Box>
     );
   }
