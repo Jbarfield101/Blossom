@@ -46,15 +46,8 @@ npm run tauri build  # build a release bundle
 ```
 
 The Rust backend can launch local tools such as ComfyUI and Ollama. Set the
-ComfyUI folder location in the app's Settings page and update the Python path in
-`src-tauri/src/commands.rs` if needed:
-
-```rust
-fn conda_python() -> PathBuf {
-    // Python interpreter to run the bundled scripts
-    PathBuf::from(r"C:\\Users\\Owner\\.conda\\envs\\blossom-ml\\python.exe")
-}
-```
+ComfyUI folder location in the app's Settings page. Python is detected
+automatically, and you can adjust the interpreter path from Settings if needed.
 
 ## Running Python scripts
 
@@ -113,9 +106,8 @@ When a user uploads a video, it plays automatically on an endless loop.
 - **Stock data provider:** Set `STOCKS_PROVIDER=twelvedata` and provide a
   `TWELVEDATA_API_KEY` to fetch quotes and time series from Twelve Data. The
   free tier allows up to 800 requests per day and 8 per minute.
-- **Paths:** Set the ComfyUI directory in the Settings page and edit
-  `conda_python()` in `src-tauri/src/commands.rs` so the app can find your Python
-  interpreter.
+- **Paths:** Set the ComfyUI directory in the Settings page. The Python
+  interpreter path is detected automatically but can be changed there if needed.
 - **Blender path:** If Blender is not on your system `PATH`, set the
   `BLENDER_PATH` environment variable to the Blender executable so `/objects/blender`
   can run scripts.
