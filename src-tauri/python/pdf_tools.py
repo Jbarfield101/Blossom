@@ -100,9 +100,19 @@ def chunk_text(pages, doc_id, chunk_size: int = 500):
 
 
 def hash_embed(text: str, dim: int = EMBED_DIM):
+    """Create a simple bag-of-words embedding with stable token hashing.
+
+    Tokens are lowercased and hashed using SHA-256 so that the mapping
+    from tokens to vector indices is deterministic across Python sessions.
+    The digest is interpreted as a big-endian integer and reduced modulo
+    ``dim`` to select the bucket for each token. This ensures embeddings
+    persist across runs of the application.
+    """
     vec = np.zeros(dim, dtype=np.float32)
     for token in text.lower().split():
-        vec[hash(token) % dim] += 1.0
+        digest = hashlib.sha256(token.encode("utf-8")).digest()
+        idx = int.from_bytes(digest, "big") % dim
+        vec[idx] += 1.0
     norm = np.linalg.norm(vec)
     if norm > 0:
         vec /= norm
