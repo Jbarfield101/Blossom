@@ -48,4 +48,5 @@ rand = "0.8"
 [dev-dependencies]
 tauri = { version = "2", features = ["protocol-asset", "test"] }
 tempfile = "3"
+httpmock = "0.6"
 

@@ -95,6 +95,9 @@ npm test
 - **Alpha Vantage API key:** Set the `ALPHAVANTAGE_API_KEY` environment variable (or add
   `alphavantage_api_key` to `~/.blossom/config.json`) so the app can fetch stock
   news.
+- **Stock data provider:** Set `STOCKS_PROVIDER=twelvedata` and provide a
+  `TWELVEDATA_API_KEY` to fetch quotes and time series from Twelve Data. The
+  free tier allows up to 800 requests per day and 8 per minute.
 - **Paths:** Set the ComfyUI directory in the Settings page and edit
   `conda_python()` in `src-tauri/src/commands.rs` so the app can find your Python
   interpreter.

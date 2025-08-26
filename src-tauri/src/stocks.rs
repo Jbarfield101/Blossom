@@ -107,7 +107,7 @@ pub struct StockBundle {
 // ========================
 
 #[async_trait]
-trait StockProvider: Send + Sync {
+pub trait StockProvider: Send + Sync {
     async fn fetch_quote(&self, ticker: &str) -> Result<Quote, String>;
     async fn fetch_series(&self, ticker: &str, range: &Range) -> Result<Vec<SeriesPoint>, String>;
 }
@@ -328,6 +328,282 @@ impl StockProvider for YahooProvider {
     }
 }
 
+struct TwelveDataProvider {
+    api_key: String,
+    base_url: String,
+}
+
+impl TwelveDataProvider {
+    fn new() -> Self {
+        let api_key = std::env::var("TWELVEDATA_API_KEY").unwrap_or_default();
+        let base_url = std::env::var("TWELVEDATA_BASE_URL")
+            .unwrap_or_else(|_| "https://api.twelvedata.com".into());
+        Self { api_key, base_url }
+    }
+}
+
+static TWELVE_QUOTE_CACHE: Lazy<Mutex<HashMap<String, (Quote, Instant)>>> =
+    Lazy::new(|| Mutex::new(HashMap::new()));
+
+fn twelvedata_cache_ttl() -> Duration {
+    std::env::var("TWELVEDATA_PROVIDER_CACHE_SECS")
+        .ok()
+        .and_then(|s| s.parse::<u64>().ok())
+        .map(Duration::from_secs)
+        .unwrap_or(Duration::from_secs(30))
+}
+
+#[async_trait]
+impl StockProvider for TwelveDataProvider {
+    async fn fetch_quote(&self, ticker: &str) -> Result<Quote, String> {
+        let ttl = twelvedata_cache_ttl();
+        if let Some((q, ts)) = {
+            let cache = TWELVE_QUOTE_CACHE.lock().await;
+            cache.get(ticker).cloned()
+        } {
+            if ts.elapsed() < ttl {
+                return Ok(q);
+            }
+        }
+
+        let price_url = format!(
+            "{}/price?symbol={}&apikey={}",
+            self.base_url, ticker, self.api_key
+        );
+        let series_url = format!(
+            "{}/time_series?symbol={}&interval=1day&outputsize=2&apikey={}",
+            self.base_url, ticker, self.api_key
+        );
+
+        let mut attempt = 0;
+        let max_retries = 3;
+        let mut delay = Duration::from_secs(1);
+        let price_resp = loop {
+            let resp = reqwest::get(&price_url).await;
+            let resp = match resp {
+                Ok(r) => r,
+                Err(e) => {
+                    attempt += 1;
+                    if attempt >= max_retries {
+                        if let Some((q, _)) = {
+                            let cache = TWELVE_QUOTE_CACHE.lock().await;
+                            cache.get(ticker).cloned()
+                        } {
+                            log::warn!(
+                                "error fetching quote for {}: {} using cached data",
+                                ticker,
+                                e
+                            );
+                            return Ok(q);
+                        }
+                        return Err(e.to_string());
+                    }
+                    let jitter_ms: u64 = thread_rng().gen_range(0..=500);
+                    let wait = delay + Duration::from_millis(jitter_ms);
+                    sleep(wait).await;
+                    delay *= 2;
+                    continue;
+                }
+            };
+            if resp.status() == StatusCode::TOO_MANY_REQUESTS {
+                attempt += 1;
+                if attempt >= max_retries {
+                    if let Some((q, _)) = {
+                        let cache = TWELVE_QUOTE_CACHE.lock().await;
+                        cache.get(ticker).cloned()
+                    } {
+                        log::warn!(
+                            "rate limited fetching quote for {}: returning cached data",
+                            ticker
+                        );
+                        return Ok(q);
+                    }
+                    return Err(
+                        "Twelve Data rate limit exceeded—please try again later.".into(),
+                    );
+                }
+                let wait = resp
+                    .headers()
+                    .get(RETRY_AFTER)
+                    .and_then(|h| h.to_str().ok())
+                    .and_then(|s| s.parse::<u64>().ok())
+                    .map(Duration::from_secs)
+                    .unwrap_or(delay);
+                let jitter_ms: u64 = thread_rng().gen_range(0..=500);
+                let wait = wait + Duration::from_millis(jitter_ms);
+                sleep(wait).await;
+                delay *= 2;
+                continue;
+            }
+            if !resp.status().is_success() {
+                if let Some((q, _)) = {
+                    let cache = TWELVE_QUOTE_CACHE.lock().await;
+                    cache.get(ticker).cloned()
+                } {
+                    log::warn!(
+                        "failed to fetch quote for {}: HTTP {} using cached data",
+                        ticker,
+                        resp.status()
+                    );
+                    return Ok(q);
+                }
+                return Err(format!(
+                    "failed to fetch quote for {}: HTTP {}",
+                    ticker,
+                    resp.status()
+                ));
+            }
+            break resp;
+        };
+
+        let price_json: serde_json::Value = price_resp.json().await.map_err(|e| e.to_string())?;
+        let price = price_json
+            .get("price")
+            .and_then(|v| v.as_str())
+            .and_then(|s| s.parse::<f64>().ok())
+            .ok_or("no price")?;
+
+        let series_resp = reqwest::get(&series_url).await.map_err(|e| e.to_string())?;
+        if !series_resp.status().is_success() {
+            return Err(format!(
+                "failed to fetch series for {}: HTTP {}",
+                ticker,
+                series_resp.status()
+            ));
+        }
+        let series_json: serde_json::Value = series_resp.json().await.map_err(|e| e.to_string())?;
+        let values = series_json
+            .get("values")
+            .and_then(|v| v.as_array())
+            .ok_or("no values")?;
+        let latest = values.get(0).ok_or("no latest")?;
+        let prev = values.get(1).ok_or("no prev")?;
+        let latest_close = latest
+            .get("close")
+            .and_then(|v| v.as_str())
+            .and_then(|s| s.parse::<f64>().ok())
+            .ok_or("no close")?;
+        let prev_close = prev
+            .get("close")
+            .and_then(|v| v.as_str())
+            .and_then(|s| s.parse::<f64>().ok())
+            .unwrap_or(latest_close);
+        let change_percent = if prev_close != 0.0 {
+            (latest_close - prev_close) / prev_close * 100.0
+        } else {
+            0.0
+        };
+        let volume = latest
+            .get("volume")
+            .and_then(|v| v.as_str())
+            .and_then(|s| s.parse::<u64>().ok());
+
+        let q = Quote {
+            ticker: ticker.to_string(),
+            price,
+            change_percent,
+            status: "ok".into(),
+            volume,
+            error: None,
+        };
+        {
+            let mut cache = TWELVE_QUOTE_CACHE.lock().await;
+            cache.insert(ticker.to_string(), (q.clone(), Instant::now()));
+        }
+        Ok(q)
+    }
+
+    async fn fetch_series(
+        &self,
+        ticker: &str,
+        range: &Range,
+    ) -> Result<Vec<SeriesPoint>, String> {
+        let (interval, outputsize) = match range {
+            Range::OneDay => ("1min", "390"),
+            Range::FiveDay => ("15min", "130"),
+            Range::OneMonth => ("1day", "30"),
+        };
+        let url = format!(
+            "{}/time_series?symbol={ticker}&interval={interval}&outputsize={outputsize}&apikey={}",
+            self.base_url, self.api_key
+        );
+        let mut attempt = 0;
+        let max_retries = 3;
+        let mut delay = Duration::from_secs(1);
+        let resp = loop {
+            let resp = reqwest::get(&url).await;
+            let resp = match resp {
+                Ok(r) => r,
+                Err(e) => {
+                    attempt += 1;
+                    if attempt >= max_retries {
+                        return Err(e.to_string());
+                    }
+                    let jitter_ms: u64 = thread_rng().gen_range(0..=500);
+                    let wait = delay + Duration::from_millis(jitter_ms);
+                    sleep(wait).await;
+                    delay *= 2;
+                    continue;
+                }
+            };
+            if resp.status() == StatusCode::TOO_MANY_REQUESTS {
+                attempt += 1;
+                if attempt >= max_retries {
+                    return Err(
+                        "Twelve Data rate limit exceeded—please try again later.".into(),
+                    );
+                }
+                let wait = resp
+                    .headers()
+                    .get(RETRY_AFTER)
+                    .and_then(|h| h.to_str().ok())
+                    .and_then(|s| s.parse::<u64>().ok())
+                    .map(Duration::from_secs)
+                    .unwrap_or(delay);
+                let jitter_ms: u64 = thread_rng().gen_range(0..=500);
+                let wait = wait + Duration::from_millis(jitter_ms);
+                sleep(wait).await;
+                delay *= 2;
+                continue;
+            }
+            if !resp.status().is_success() {
+                return Err(format!(
+                    "failed to fetch series for {}: HTTP {}",
+                    ticker,
+                    resp.status()
+                ));
+            }
+            break resp;
+        };
+        let json: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
+        let values = json
+            .get("values")
+            .and_then(|v| v.as_array())
+            .ok_or("no values")?;
+        let mut points = Vec::new();
+        for v in values.iter().rev() {
+            let ts_str = v
+                .get("datetime")
+                .and_then(|d| d.as_str())
+                .ok_or("no datetime")?;
+            let ts = chrono::NaiveDateTime::parse_from_str(ts_str, "%Y-%m-%d %H:%M:%S")
+                .or_else(|_| {
+                    chrono::NaiveDate::parse_from_str(ts_str, "%Y-%m-%d")
+                        .map(|d| d.and_hms_opt(0, 0, 0).unwrap())
+                })
+                .map(|dt| dt.and_utc().timestamp())
+                .map_err(|e| e.to_string())?;
+            let close = v
+                .get("close")
+                .and_then(|c| c.as_str())
+                .and_then(|s| s.parse::<f64>().ok())
+                .ok_or("no close")?;
+            points.push(SeriesPoint { ts, close });
+        }
+        Ok(points)
+    }
+}
+
 struct StubProvider;
 
 #[async_trait]
@@ -355,11 +631,11 @@ impl StockProvider for StubProvider {
     }
 }
 
-fn provider_from_env() -> Arc<dyn StockProvider + Send + Sync> {
-    if std::env::var("STOCKS_PROVIDER").unwrap_or_default() == "stub" {
-        Arc::new(StubProvider)
-    } else {
-        Arc::new(YahooProvider)
+pub fn provider_from_env() -> Arc<dyn StockProvider + Send + Sync> {
+    match std::env::var("STOCKS_PROVIDER").unwrap_or_default().as_str() {
+        "stub" => Arc::new(StubProvider),
+        "twelvedata" => Arc::new(TwelveDataProvider::new()),
+        _ => Arc::new(YahooProvider),
     }
 }
 

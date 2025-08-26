@@ -14,7 +14,7 @@ use dirs;
 
 use crate::stocks::{stocks_fetch as stocks_fetch_impl, StockBundle};
 use crate::task_queue::{Task, TaskCommand, TaskQueue};
-use chrono::{DateTime, Local, NaiveDateTime, Utc};
+use chrono::{Local, NaiveDateTime, Utc};
 use once_cell::sync::Lazy;
 use rand::{thread_rng, Rng};
 use reqwest::{self, header::RETRY_AFTER, StatusCode};
@@ -1591,6 +1591,7 @@ pub async fn stop_ollama() -> Result<(), String> {
     Ok(())
 }
 
+#[cfg(not(test))]
 #[tauri::command]
 pub async fn general_chat<R: Runtime>(
     app: AppHandle<R>,
@@ -1636,6 +1637,14 @@ pub async fn general_chat<R: Runtime>(
         .or_else(|| json["content"].as_str())
         .ok_or("no content")?;
     Ok(content.to_string())
+}
+
+#[cfg(test)]
+pub async fn general_chat<R: Runtime>(
+    _app: AppHandle<R>,
+    _messages: Vec<ChatMessage>,
+) -> Result<String, String> {
+    Ok("{\"shortTerm\":\"up\",\"longTerm\":\"down\"}".into())
 }
 
 #[tauri::command]
@@ -1703,22 +1712,26 @@ pub struct StockForecast {
     pub long_term: String,
 }
 
-static YAHOO_CHART_CACHE: Lazy<AsyncMutex<HashMap<(String, String, String), (Value, Instant)>>> =
+static TWELVE_SERIES_CACHE: Lazy<AsyncMutex<HashMap<(String, String, u32), (Value, Instant)>>> =
     Lazy::new(|| AsyncMutex::new(HashMap::new()));
 
-fn yahoo_cache_ttl() -> Duration {
-    std::env::var("YAHOO_PROVIDER_CACHE_SECS")
+fn twelvedata_cache_ttl() -> Duration {
+    std::env::var("TWELVEDATA_PROVIDER_CACHE_SECS")
         .ok()
         .and_then(|s| s.parse::<u64>().ok())
         .map(Duration::from_secs)
         .unwrap_or(Duration::from_secs(30))
 }
 
-async fn fetch_chart(sym: &str, range: &str, interval: &str) -> Result<Value, String> {
-    let ttl = yahoo_cache_ttl();
-    let key = (sym.to_string(), range.to_string(), interval.to_string());
+async fn fetch_twelvedata_series(
+    sym: &str,
+    interval: &str,
+    outputsize: u32,
+) -> Result<Value, String> {
+    let ttl = twelvedata_cache_ttl();
+    let key = (sym.to_string(), interval.to_string(), outputsize);
     if let Some((v, ts)) = {
-        let cache = YAHOO_CHART_CACHE.lock().await;
+        let cache = TWELVE_SERIES_CACHE.lock().await;
         cache.get(&key).cloned()
     } {
         if ts.elapsed() < ttl {
@@ -1726,8 +1739,11 @@ async fn fetch_chart(sym: &str, range: &str, interval: &str) -> Result<Value, St
         }
     }
 
+    let base = std::env::var("TWELVEDATA_BASE_URL")
+        .unwrap_or_else(|_| "https://api.twelvedata.com".into());
+    let api_key = std::env::var("TWELVEDATA_API_KEY").unwrap_or_default();
     let url = format!(
-        "https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range={range}&interval={interval}"
+        "{base}/time_series?symbol={sym}&interval={interval}&outputsize={outputsize}&apikey={api_key}"
     );
     let mut attempt = 0;
     let max_retries = 3;
@@ -1751,7 +1767,7 @@ async fn fetch_chart(sym: &str, range: &str, interval: &str) -> Result<Value, St
         if resp.status() == StatusCode::TOO_MANY_REQUESTS {
             attempt += 1;
             if attempt >= max_retries {
-                return Err("Yahoo Finance rate limit exceeded—please try again later.".into());
+                return Err("Twelve Data rate limit exceeded—please try again later.".into());
             }
             let wait = resp
                 .headers()
@@ -1775,7 +1791,7 @@ async fn fetch_chart(sym: &str, range: &str, interval: &str) -> Result<Value, St
         }
         let json: Value = resp.json().await.map_err(|e| e.to_string())?;
         {
-            let mut cache = YAHOO_CHART_CACHE.lock().await;
+            let mut cache = TWELVE_SERIES_CACHE.lock().await;
             cache.insert(key, (json.clone(), Instant::now()));
         }
         return Ok(json);
@@ -1790,43 +1806,29 @@ pub async fn stock_forecast<R: Runtime>(
     let sym = symbol.to_uppercase();
 
     // recent 5 day series
-    let recent_json = fetch_chart(&sym, "5d", "1d").await?;
-    let result = recent_json["chart"]["result"]
-        .get(0)
-        .ok_or_else(|| "chart result missing".to_string())?;
-    let timestamps = result["timestamp"].as_array().ok_or("timestamps missing")?;
-    let closes = result["indicators"]["quote"]
-        .get(0)
-        .and_then(|q| q["close"].as_array())
-        .ok_or("closes missing")?;
+    let recent_json = fetch_twelvedata_series(&sym, "1day", 5).await?;
+    let values = recent_json["values"].as_array().ok_or("values missing")?;
     let mut recent_parts = Vec::new();
-    for (ts, close) in timestamps.iter().zip(closes.iter()) {
-        if let (Some(ts), Some(price)) = (ts.as_i64(), close.as_f64()) {
-            if let Some(dt) = DateTime::<Utc>::from_timestamp(ts, 0) {
-                let date = dt.format("%Y-%m-%d").to_string();
-                recent_parts.push(format!("{date}: {:.2}", price));
-            }
+    for v in values.iter().rev() {
+        if let (Some(dt), Some(close)) = (
+            v["datetime"].as_str(),
+            v["close"].as_str().and_then(|s| s.parse::<f64>().ok()),
+        ) {
+            recent_parts.push(format!("{dt}: {:.2}", close));
         }
     }
     let recent_summary = recent_parts.join(", ");
 
     // 6 month series (weekly)
-    let long_json = fetch_chart(&sym, "6mo", "1wk").await?;
-    let result = long_json["chart"]["result"]
-        .get(0)
-        .ok_or_else(|| "chart result missing".to_string())?;
-    let timestamps = result["timestamp"].as_array().ok_or("timestamps missing")?;
-    let closes = result["indicators"]["quote"]
-        .get(0)
-        .and_then(|q| q["close"].as_array())
-        .ok_or("closes missing")?;
+    let long_json = fetch_twelvedata_series(&sym, "1week", 26).await?;
+    let values = long_json["values"].as_array().ok_or("values missing")?;
     let mut long_parts = Vec::new();
-    for (ts, close) in timestamps.iter().zip(closes.iter()) {
-        if let (Some(ts), Some(price)) = (ts.as_i64(), close.as_f64()) {
-            if let Some(dt) = DateTime::<Utc>::from_timestamp(ts, 0) {
-                let date = dt.format("%Y-%m-%d").to_string();
-                long_parts.push(format!("{date}: {:.2}", price));
-            }
+    for v in values.iter().rev() {
+        if let (Some(dt), Some(close)) = (
+            v["datetime"].as_str(),
+            v["close"].as_str().and_then(|s| s.parse::<f64>().ok()),
+        ) {
+            long_parts.push(format!("{dt}: {:.2}", close));
         }
     }
     let long_summary = long_parts.join(", ");
