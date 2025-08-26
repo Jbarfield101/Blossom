@@ -28,6 +28,7 @@ import { useAudioDefaults } from "../features/audioDefaults/useAudioDefaults";
 import { useTheme, type Theme } from "../features/theme/ThemeContext";
 import { useComfyTutorial } from "../features/comfyTutorial/useComfyTutorial";
 import { useUsers } from "../features/users/useUsers";
+import VoiceSettings from "../features/settings/VoiceSettings";
 import HelpIcon from "./HelpIcon";
 import CreateUserDialog from "./CreateUserDialog";
 
@@ -242,13 +243,20 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   useEffect(() => setComfyDraft(comfyPath), [comfyPath]);
   useEffect(() => setFolderDraft(folder), [folder]);
   useEffect(() => setThemeDraft(theme), [theme]);
-  type Section = "user" | "environment" | "editor" | "appearance" | "integrations";
+  type Section =
+    | "user"
+    | "environment"
+    | "editor"
+    | "appearance"
+    | "integrations"
+    | "voices";
   const sectionLabels: Record<Section, string> = {
     user: "User",
     environment: "Environment",
     editor: "Editor",
     appearance: "Appearance",
     integrations: "Integrations",
+    voices: "Voices",
   };
   const [section, setSection] = useState<Section>("environment");
   const [searchValue, setSearchValue] = useState("");
@@ -271,6 +279,11 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
       label: "Show ComfyUI Tutorial",
       section: "integrations" as Section,
       elementId: "show-tutorial",
+    },
+    {
+      label: "Voices",
+      section: "voices" as Section,
+      elementId: "voice-settings",
     },
   ];
   const moduleIndex = (Object.entries(MODULE_LABELS) as [ModuleKey, string][]) .map(
@@ -601,6 +614,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
           {section === "editor" && <EditorSection />}
           {section === "appearance" && <AppearanceSection />}
           {section === "integrations" && <IntegrationsSection />}
+          {section === "voices" && <VoiceSettings />}
           <Snackbar
             open={!!ambienceMessage}
             autoHideDuration={3000}
