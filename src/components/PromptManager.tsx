@@ -4,10 +4,11 @@ import { generatePrompt, type PromptType } from "../utils/promptGenerator";
 export default function PromptManager() {
   const [open, setOpen] = useState(false);
   const [prompt, setPrompt] = useState("");
+  const [generated, setGenerated] = useState("");
 
   const handlePrompt = (type: PromptType) => {
-    const label = type.charAt(0).toUpperCase() + type.slice(1);
-    console.log(`${label} Prompt:`, generatePrompt(prompt, type));
+    const result = generatePrompt(prompt, type);
+    setGenerated(result);
   };
 
   return (
@@ -23,6 +24,17 @@ export default function PromptManager() {
             style={styles.textarea}
             placeholder="Enter prompt"
           />
+          {generated && (
+            <div style={styles.generatedContainer}>
+              <div style={styles.generated}>{generated}</div>
+              <button
+                onClick={() => navigator.clipboard.writeText(generated)}
+                style={styles.copyBtn}
+              >
+                Copy
+              </button>
+            </div>
+          )}
           <div style={styles.actions}>
             <button
               onClick={() => handlePrompt("image")}
@@ -99,6 +111,30 @@ const styles: Record<string, React.CSSProperties> = {
     background: "#3a82f6",
     color: "#fff",
     cursor: "pointer",
+  },
+  generatedContainer: {
+    display: "flex",
+    gap: 8,
+    alignItems: "flex-start",
+    marginBottom: 8,
+  },
+  generated: {
+    flex: 1,
+    background: "#1e1e1e",
+    color: "#fff",
+    padding: 8,
+    borderRadius: 8,
+    border: "1px solid #333",
+    whiteSpace: "pre-wrap",
+  },
+  copyBtn: {
+    padding: "6px 10px",
+    borderRadius: 8,
+    border: "none",
+    background: "#3a82f6",
+    color: "#fff",
+    cursor: "pointer",
+    flexShrink: 0,
   },
 };
 
