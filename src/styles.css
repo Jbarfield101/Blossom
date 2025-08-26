@@ -263,12 +263,12 @@ body.theme-studio input[type="range"]::-moz-range-thumb {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 520px;
-  height: 400px;
-  padding: 30px;
+  width: 640px;
+  height: 480px;
+  padding: 40px;
   background: #111;
   border: 8px solid #0f0;
-  border-radius: 40px;
+  border-radius: 50px;
   box-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
   pointer-events: none;
 }
