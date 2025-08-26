@@ -9,9 +9,29 @@ import * as Tone from "tone";
  * @returns A ToneAudioBuffer containing the spoken audio
  */
 export async function generateAudio(text: string, speaker: string): Promise<Tone.ToneAudioBuffer> {
-  const data = await invoke<Uint8Array>("bark_tts", { text, speaker });
+  if (!text.trim()) {
+    throw new Error("Bark TTS requires non-empty text");
+  }
+  if (!speaker.trim()) {
+    throw new Error("Bark TTS requires a speaker");
+  }
+
+  let data: Uint8Array;
+  try {
+    data = await invoke<Uint8Array>("bark_tts", { text, speaker });
+  } catch (err) {
+    throw new Error(`Bark TTS invocation failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
   const ctx = Tone.getContext();
   const arrayBuffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
-  const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+
+  let audioBuffer: AudioBuffer;
+  try {
+    audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+  } catch (err) {
+    throw new Error(`Bark TTS audio decode failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
   return new Tone.ToneAudioBuffer(audioBuffer);
 }
