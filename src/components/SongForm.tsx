@@ -173,7 +173,7 @@ export default function SongForm() {
   const [leadInstrument, setLeadInstrument] = useState<string>(() =>
     inferLeadInstrument(defaultInstruments)
   );
-  const [sfzInstrument, setSfzInstrument] = useState<string | null>(null);
+  const [sfzInstrument, setSfzInstrumentState] = useState<string | null>(null);
   const [ambience, setAmbience] = useState<string[]>(["rain"]);
   const [ambienceLevel, setAmbienceLevel] = useState(0.5);
   const [templates, setTemplates] = useState<Record<string, TemplateSpec>>(() => {
@@ -358,6 +358,7 @@ export default function SongForm() {
     weatherPreset,
     weatherEnabled,
     setWeatherEnabled,
+    setSfzInstrument: setPreviewSfzInstrument,
   } = useLofi();
 
   // one audio element
@@ -522,7 +523,8 @@ export default function SongForm() {
         filters: [{ name: "SFZ Instrument", extensions: ["sfz"] }],
       });
       if (file) {
-        setSfzInstrument(file as string);
+        setSfzInstrumentState(file as string);
+        setPreviewSfzInstrument(file as string);
       }
     } catch (e: any) {
       setErr(e?.message || String(e));
@@ -532,7 +534,9 @@ export default function SongForm() {
   function loadAcousticGrand() {
     setInstruments([]);
     setLeadInstrument("");
-    setSfzInstrument("/sfz_sounds/UprightPianoKW-20220221.sfz");
+    const path = "/sfz_sounds/UprightPianoKW-20220221.sfz";
+    setSfzInstrumentState(path);
+    setPreviewSfzInstrument(path);
   }
 
   async function generateAlbumArtPrompt(name: string) {
