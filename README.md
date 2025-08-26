@@ -98,6 +98,12 @@ Run the test suite to verify the application:
 npm test
 ```
 
+## RetroTV component
+
+The `RetroTV` component renders its children inside a styled television frame when
+the active theme is set to `retro`. If no children are provided, the component
+automatically displays `/assets/logo.png` as a fallback.
+
 ## Configuration and optional features
 
 - **Alpha Vantage API key:** Set the `ALPHAVANTAGE_API_KEY` environment variable (or add
