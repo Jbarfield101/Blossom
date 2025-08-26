@@ -13,6 +13,7 @@ use tauri::async_runtime::Mutex;
 use tauri::{AppHandle, Runtime};
 use tokio::time::sleep;
 
+use rand::{thread_rng, Rng};
 use reqwest::{header::RETRY_AFTER, StatusCode};
 
 use chrono::{Datelike, TimeZone, Utc};
@@ -113,9 +114,29 @@ trait StockProvider: Send + Sync {
 
 struct YahooProvider;
 
+static YAHOO_QUOTE_CACHE: Lazy<Mutex<HashMap<String, (Quote, Instant)>>> =
+    Lazy::new(|| Mutex::new(HashMap::new()));
+
+fn yahoo_cache_ttl() -> Duration {
+    std::env::var("YAHOO_PROVIDER_CACHE_SECS")
+        .ok()
+        .and_then(|s| s.parse::<u64>().ok())
+        .map(Duration::from_secs)
+        .unwrap_or(Duration::from_secs(30))
+}
+
 #[async_trait]
 impl StockProvider for YahooProvider {
     async fn fetch_quote(&self, ticker: &str) -> Result<Quote, String> {
+        let ttl = yahoo_cache_ttl();
+        if let Some((q, ts)) = {
+            let cache = YAHOO_QUOTE_CACHE.lock().await;
+            cache.get(ticker).cloned()
+        } {
+            if ts.elapsed() < ttl {
+                return Ok(q);
+            }
+        }
         let url = format!(
             "https://query1.finance.yahoo.com/v7/finance/quote?symbols={}",
             ticker
@@ -125,10 +146,51 @@ impl StockProvider for YahooProvider {
         let max_retries = 3;
         let mut delay = Duration::from_secs(1);
         let resp = loop {
-            let resp = reqwest::get(&url).await.map_err(|e| e.to_string())?;
+            let resp = reqwest::get(&url).await;
+            let resp = match resp {
+                Ok(resp) => resp,
+                Err(e) => {
+                    attempt += 1;
+                    if attempt >= max_retries {
+                        if let Some((q, _)) = {
+                            let cache = YAHOO_QUOTE_CACHE.lock().await;
+                            cache.get(ticker).cloned()
+                        } {
+                            log::warn!(
+                                "error fetching quote for {}: {} using cached data",
+                                ticker,
+                                e
+                            );
+                            return Ok(q);
+                        }
+                        return Err(e.to_string());
+                    }
+                    let jitter_ms: u64 = thread_rng().gen_range(0..=500);
+                    let wait = delay + Duration::from_millis(jitter_ms);
+                    log::warn!(
+                        "error fetching quote for {}: {} retrying in {:?}",
+                        ticker,
+                        e,
+                        wait
+                    );
+                    sleep(wait).await;
+                    delay *= 2;
+                    continue;
+                }
+            };
             if resp.status() == StatusCode::TOO_MANY_REQUESTS {
                 attempt += 1;
                 if attempt >= max_retries {
+                    if let Some((q, _)) = {
+                        let cache = YAHOO_QUOTE_CACHE.lock().await;
+                        cache.get(ticker).cloned()
+                    } {
+                        log::warn!(
+                            "rate limited fetching quote for {}: returning cached data",
+                            ticker
+                        );
+                        return Ok(q);
+                    }
                     return Err("Yahoo Finance rate limit exceeded—please try again later.".into());
                 }
                 let wait = resp
@@ -138,6 +200,8 @@ impl StockProvider for YahooProvider {
                     .and_then(|s| s.parse::<u64>().ok())
                     .map(Duration::from_secs)
                     .unwrap_or(delay);
+                let jitter_ms: u64 = thread_rng().gen_range(0..=500);
+                let wait = wait + Duration::from_millis(jitter_ms);
                 log::warn!(
                     "rate limited fetching quote for {}: retrying in {:?}",
                     ticker,
@@ -147,17 +211,44 @@ impl StockProvider for YahooProvider {
                 delay *= 2;
                 continue;
             }
+            if !resp.status().is_success() {
+                if let Some((q, _)) = {
+                    let cache = YAHOO_QUOTE_CACHE.lock().await;
+                    cache.get(ticker).cloned()
+                } {
+                    log::warn!(
+                        "failed to fetch quote for {}: HTTP {} using cached data",
+                        ticker,
+                        resp.status()
+                    );
+                    return Ok(q);
+                }
+                return Err(format!(
+                    "failed to fetch quote for {}: HTTP {}",
+                    ticker,
+                    resp.status()
+                ));
+            }
             break resp;
         };
-        if !resp.status().is_success() {
-            return Err(format!(
-                "failed to fetch quote for {}: HTTP {}",
-                ticker,
-                resp.status()
-            ));
-        }
         let size = resp.content_length().unwrap_or_default();
-        let json: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
+        let json: serde_json::Value = match resp.json().await {
+            Ok(j) => j,
+            Err(e) => {
+                if let Some((q, _)) = {
+                    let cache = YAHOO_QUOTE_CACHE.lock().await;
+                    cache.get(ticker).cloned()
+                } {
+                    log::warn!(
+                        "error parsing quote for {}: {} using cached data",
+                        ticker,
+                        e
+                    );
+                    return Ok(q);
+                }
+                return Err(e.to_string());
+            }
+        };
         let result = json["quoteResponse"]["result"].get(0).ok_or("no result")?;
         let price = result
             .get("regularMarketPrice")
@@ -179,14 +270,19 @@ impl StockProvider for YahooProvider {
             start.elapsed().as_millis(),
             size
         );
-        Ok(Quote {
+        let q = Quote {
             ticker: ticker.to_string(),
             price,
             change_percent,
             status,
             volume,
             error: None,
-        })
+        };
+        {
+            let mut cache = YAHOO_QUOTE_CACHE.lock().await;
+            cache.insert(ticker.to_string(), (q.clone(), Instant::now()));
+        }
+        Ok(q)
     }
 
     async fn fetch_series(&self, ticker: &str, range: &Range) -> Result<Vec<SeriesPoint>, String> {
