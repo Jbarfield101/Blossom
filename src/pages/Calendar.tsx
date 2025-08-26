@@ -34,13 +34,6 @@ function pad(n: number) {
   return n.toString().padStart(2, "0");
 }
 
-const HOLIDAYS = [
-  { month: 0, day: 1, title: "New Year's Day" },
-  { month: 6, day: 4, title: "Independence Day" },
-  { month: 9, day: 31, title: "Halloween" },
-  { month: 11, day: 25, title: "Christmas Day" },
-];
-
 export default function Calendar() {
   const [current, setCurrent] = useState(new Date());
   const [view, setView] = useState<"month" | "week" | "agenda">("month");
@@ -95,6 +88,29 @@ export default function Calendar() {
   for (let i = 0; i < firstDay; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
   while (cells.length % 7 !== 0) cells.push(null);
+
+  const [holidaysByDate, setHolidaysByDate] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let canceled = false;
+    fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/US`)
+      .then((res) => res.json())
+      .then((data: { date: string; localName: string }[]) => {
+        if (canceled) return;
+        const map: Record<string, string> = {};
+        data.forEach((h) => {
+          const key = h.date.slice(5);
+          map[key] = h.localName;
+        });
+        setHolidaysByDate(map);
+      })
+      .catch(() => {
+        if (!canceled) setHolidaysByDate({});
+      });
+    return () => {
+      canceled = true;
+    };
+  }, [year]);
 
   const save = () => {
     if (!title || !date || !end || timeError) return;
@@ -392,9 +408,9 @@ export default function Calendar() {
                     isSelected={selectedDay === day}
                     holiday={
                       day
-                        ? HOLIDAYS.find(
-                            (h) => h.month === month && h.day === day,
-                          )?.title || null
+                        ? holidaysByDate[
+                            `${pad(month + 1)}-${pad(day)}`
+                          ] || null
                         : null
                     }
                   />

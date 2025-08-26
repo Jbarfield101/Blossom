@@ -1,5 +1,12 @@
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import {
+  render,
+  screen,
+  fireEvent,
+  cleanup,
+  waitFor,
+  within,
+} from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Calendar from './Calendar';
 import { useCalendar } from '../features/calendar/useCalendar';
 
@@ -253,5 +260,45 @@ describe('Calendar time validation', () => {
 
     fireEvent.click(screen.getByText('month'));
     expect(screen.getByTestId(`day-${parseInt(dd, 10)}`)).toBeInTheDocument();
+  });
+});
+
+describe('Calendar holidays', () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const mm = String(month + 1).padStart(2, '0');
+  const originalFetch = global.fetch;
+
+  beforeEach(() => {
+    useCalendar.setState({ events: [], selectedCountdownId: null, tagTotals: {} });
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        json: () =>
+          Promise.resolve([
+            { date: `${year}-${mm}-01`, localName: 'Holiday One' },
+            { date: `${year}-${mm}-02`, localName: 'Holiday Two' },
+          ]),
+      })
+    ) as unknown as typeof fetch;
+  });
+
+  afterEach(() => {
+    cleanup();
+    useCalendar.setState({ events: [], selectedCountdownId: null, tagTotals: {} });
+    global.fetch = originalFetch;
+  });
+
+  it('displays holidays returned by the API', async () => {
+    render(<Calendar />);
+    await waitFor(() =>
+      expect(global.fetch).toHaveBeenCalledWith(
+        `https://date.nager.at/api/v3/PublicHolidays/${year}/US`,
+      ),
+    );
+    await waitFor(() => {
+      expect(within(screen.getByTestId('day-1')).getByText('🎉')).toBeInTheDocument();
+      expect(within(screen.getByTestId('day-2')).getByText('🎉')).toBeInTheDocument();
+    });
   });
 });
