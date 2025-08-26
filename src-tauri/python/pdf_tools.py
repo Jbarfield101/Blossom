@@ -100,9 +100,19 @@ def chunk_text(pages, doc_id, chunk_size: int = 500):
 
 
 def hash_embed(text: str, dim: int = EMBED_DIM):
+    """Create a simple bag-of-words embedding with stable token hashing.
+
+    Tokens are lowercased and hashed using SHA-256 so that the mapping
+    from tokens to vector indices is deterministic across Python sessions.
+    The digest is interpreted as a big-endian integer and reduced modulo
+    ``dim`` to select the bucket for each token. This ensures embeddings
+    persist across runs of the application.
+    """
     vec = np.zeros(dim, dtype=np.float32)
     for token in text.lower().split():
-        vec[hash(token) % dim] += 1.0
+        digest = hashlib.sha256(token.encode("utf-8")).digest()
+        idx = int.from_bytes(digest, "big") % dim
+        vec[idx] += 1.0
     norm = np.linalg.norm(vec)
     if norm > 0:
         vec /= norm
@@ -433,23 +443,30 @@ def search(query: str, k: int = 3):
     ensure_dirs()
     conn = get_db()
     qvec = hash_embed(query)
-    rows = conn.execute(
-        "SELECT chunk_id, embedding, doc_id, page_start, page_end, text FROM embeddings"
-    ).fetchall()
-    scored = []
-    for row in rows:
-        emb = np.frombuffer(row[1], dtype=np.float32)
-        score = float(np.dot(qvec, emb))
-        scored.append((score, row))
-    scored.sort(key=lambda x: x[0], reverse=True)
+
+    def _score(blob: bytes) -> float:
+        emb = np.frombuffer(blob, dtype=np.float32)
+        return float(np.dot(qvec, emb))
+
+    conn.create_function("cosine_sim", 1, _score)
+    cursor = conn.execute(
+        """
+        SELECT chunk_id, doc_id, page_start, page_end, text,
+               cosine_sim(embedding) AS score
+        FROM embeddings
+        ORDER BY score DESC
+        LIMIT ?
+        """,
+        (k,),
+    )
     results = []
-    for score, row in scored[:k]:
+    for row in cursor:
         results.append(
             {
-                "doc_id": row[2],
-                "page_range": [row[3], row[4]],
-                "text": row[5],
-                "score": score,
+                "doc_id": row[1],
+                "page_range": [row[2], row[3]],
+                "text": row[4],
+                "score": row[5],
             }
         )
     return {"results": results}

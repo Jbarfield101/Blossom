@@ -36,6 +36,36 @@ def test_add_pdf_and_search(monkeypatch, tmp_path):
     assert "hello world" in first["text"]
 
 
+def test_search_large_embeddings(monkeypatch, tmp_path):
+    os.environ["BLOSSOM_OUTPUT_DIR"] = str(tmp_path)
+    monkeypatch.setattr(pdf_tools, "BASE_DIR", Path(tmp_path))
+    monkeypatch.setattr(pdf_tools, "INDEX_DIR", Path(tmp_path) / "Index")
+    pdf_tools.ensure_dirs()
+
+    conn = pdf_tools.get_db()
+    # insert many random embeddings
+    for i in range(1000):
+        text = f"doc {i}"
+        emb = pdf_tools.hash_embed(text).tobytes()
+        conn.execute(
+            "INSERT OR REPLACE INTO embeddings VALUES (?,?,?,?,?,?)",
+            (f"id{i}", emb, f"doc{i}", 1, 1, text),
+        )
+
+    special_text = "special phrase"
+    emb = pdf_tools.hash_embed(special_text).tobytes()
+    conn.execute(
+        "INSERT OR REPLACE INTO embeddings VALUES (?,?,?,?,?,?)",
+        ("special", emb, "special_doc", 1, 1, special_text),
+    )
+    conn.commit()
+
+    res = pdf_tools.search("special phrase", k=5)
+    assert res["results"]
+    assert res["results"][0]["doc_id"] == "special_doc"
+    assert len(res["results"]) == 5
+
+
 def test_validate_entry(monkeypatch):
     class Dummy:
         def __init__(self, code):
