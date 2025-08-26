@@ -1,12 +1,10 @@
 use blossom_lib::commands::{comfy_start, comfy_stop, __has_comfy_child};
 use std::{env, fs};
+use tauri::test::mock_app;
 
 #[tokio::test]
 async fn start_and_stop_comfy() {
-    let _rt = tauri::test::mock_runtime();
-    let app = tauri::test::mock_builder()
-        .build(tauri::test::mock_context(tauri::test::noop_assets()))
-        .unwrap();
+    let app = mock_app();
     let window = tauri::WebviewWindowBuilder::new(&app, "main", Default::default())
         .build()
         .unwrap();

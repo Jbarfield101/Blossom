@@ -4,7 +4,6 @@ use std::{env, fs};
 
 #[tokio::test]
 async fn save_paths_writes_config() {
-    let _rt = tauri::test::mock_runtime();
     let dir = tempfile::tempdir().unwrap();
     env::set_var("HOME", dir.path());
 
