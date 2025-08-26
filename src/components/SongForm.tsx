@@ -529,6 +529,12 @@ export default function SongForm() {
     }
   }
 
+  function loadAcousticGrand() {
+    setInstruments([]);
+    setLeadInstrument("");
+    setSfzInstrument("/sfz_sounds/UprightPianoKW-20220221.sfz");
+  }
+
   async function generateAlbumArtPrompt(name: string) {
     try {
       const reply: string = await invoke("general_chat", {
@@ -1282,6 +1288,9 @@ export default function SongForm() {
           <div className="mt-2 flex items-center gap-2">
             <button className={styles.btn} onClick={pickSfzInstrument}>
               Choose SFZ
+            </button>
+            <button className={styles.btn} onClick={loadAcousticGrand}>
+              Acoustic Grand Piano
             </button>
             <span className={styles.small}>
               {sfzInstrument ? sfzInstrument.split(/[\\/]/).pop() : "none selected"}

@@ -2159,6 +2159,11 @@ exports[`SongForm > renders default form 1`] = `
           >
             Choose SFZ
           </button>
+          <button
+            class="_btn_913096"
+          >
+            Acoustic Grand Piano
+          </button>
           <span
             class="_small_913096"
           >
