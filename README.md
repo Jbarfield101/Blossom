@@ -24,11 +24,19 @@ Install JavaScript and Python dependencies:
 ```bash
 npm install
 # create/activate a Python environment, then
-pip install -r requirements.txt  # base dependencies
+pip install -r requirements.txt  # base dependencies including Bark
 ```
 
 `audioop-lts` is included in the requirements and will be installed automatically on
 Python 3.13+ to replace the removed `audioop` module.
+
+`bark` (>=0.1.5) provides text‑to‑speech support and depends on `torch` (>=2.8.0)
+and `soundfile` (>=0.13.1). These packages are included in `requirements.txt`, or
+install them separately with:
+
+```bash
+pip install bark>=0.1.5 torch>=2.8.0 soundfile>=0.13.1
+```
 
 ## Running the Tauri app
 
