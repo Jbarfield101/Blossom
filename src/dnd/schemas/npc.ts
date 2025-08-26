@@ -36,6 +36,7 @@ export const zNpc = z.object({
   quirks: z.array(z.string()).optional(),
   appearance: z.string().min(1).optional(),
   voice: zVoice.optional(),
+  voiceId: z.string().min(1).optional(),
   portrait: z.string().min(1).optional(),
   icon: z.string().min(1).optional(),
   sections: z.record(z.unknown()).optional(),

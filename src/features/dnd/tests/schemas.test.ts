@@ -13,7 +13,7 @@ describe("dnd schemas", () => {
       playerCharacter: false,
       hooks: ["steal"],
       appearance: "Wears patched leather",
-      voice: { style: "gravelly", provider: "acme", preset: "goblin" },
+      voiceId: "goblin-voice",
       portrait: "portrait.png",
       icon: "icon.png",
       sections: { bio: "Lives in cave" },
@@ -23,7 +23,7 @@ describe("dnd schemas", () => {
     expect(zNpc.parse(npc)).toEqual(npc);
   });
 
-  it("rejects NPCs with empty voice fields", () => {
+  it("rejects NPCs with empty voiceId", () => {
     const npc = {
       id: "1",
       name: "Goblin Scout",
@@ -33,7 +33,7 @@ describe("dnd schemas", () => {
       playerCharacter: false,
       hooks: ["steal"],
       appearance: "Wears patched leather",
-      voice: { style: "", provider: "", preset: "" },
+      voiceId: "",
       portrait: "portrait.png",
       icon: "icon.png",
       statblock: {},
@@ -51,7 +51,7 @@ describe("dnd schemas", () => {
       playerCharacter: false,
       hooks: ["steal"],
       appearance: "Wears patched leather",
-      voice: { style: "gravelly", provider: "acme", preset: "goblin" },
+      voiceId: "goblin-voice",
       portrait: "portrait.png",
       icon: "icon.png",
       statblock: {},
@@ -70,7 +70,7 @@ describe("dnd schemas", () => {
       playerCharacter: false,
       hooks: [], // empty array
       appearance: "Wears patched leather",
-      voice: { style: "gravelly", provider: "acme", preset: "goblin" },
+      voiceId: "goblin-voice",
       portrait: "portrait.png",
       icon: "icon.png",
       statblock: {},
@@ -89,7 +89,7 @@ describe("dnd schemas", () => {
       // hooks should be an array of strings
       hooks: "steal",
       appearance: "Wears patched leather",
-      voice: { style: "gravelly", provider: "acme", preset: "goblin" },
+      voiceId: "goblin-voice",
       portrait: "portrait.png",
       icon: "icon.png",
       statblock: {},
@@ -107,7 +107,7 @@ describe("dnd schemas", () => {
       alignment: "CE",
       hooks: ["steal"],
       appearance: "Wears patched leather",
-      voice: { style: "gravelly", provider: "acme", preset: "goblin" },
+      voiceId: "goblin-voice",
       sections: "not-an-object" as any,
       portrait: "portrait.png",
       icon: "icon.png",

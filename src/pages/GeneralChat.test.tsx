@@ -52,7 +52,7 @@ describe('GeneralChat', () => {
       SYSTEM_PROMPT + " The user's name is Test User. Address them by name.";
     await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
 
-    fireEvent.change(screen.getAllByRole('textbox')[0], { target: { value: 'Hello' } });
+    fireEvent.change(screen.getByLabelText(/message/i), { target: { value: 'Hello' } });
     fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
 
     await waitFor(() => {
@@ -87,7 +87,7 @@ describe('GeneralChat', () => {
     await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
 
     // first message
-    fireEvent.change(screen.getAllByRole('textbox')[0], { target: { value: 'Hi' } });
+    fireEvent.change(screen.getByLabelText(/message/i), { target: { value: 'Hi' } });
     fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
     await waitFor(() => {
       const calls = (invoke as any).mock.calls;
@@ -102,7 +102,7 @@ describe('GeneralChat', () => {
     expect(await screen.findByText('Reply')).toBeInTheDocument();
 
     // second message
-    fireEvent.change(screen.getAllByRole('textbox')[0], { target: { value: 'How are you?' } });
+    fireEvent.change(screen.getByLabelText(/message/i), { target: { value: 'How are you?' } });
     fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
     await waitFor(() => {
       const calls = (invoke as any).mock.calls;
@@ -130,7 +130,7 @@ describe('GeneralChat', () => {
     render(<GeneralChat />);
     await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
 
-    fireEvent.change(screen.getAllByRole('textbox')[0], { target: { value: 'Hi' } });
+    fireEvent.change(screen.getByLabelText(/message/i), { target: { value: 'Hi' } });
     fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
 
     await waitFor(() => expect(screen.getByText('fail')).toBeInTheDocument());
@@ -149,7 +149,7 @@ describe('GeneralChat', () => {
     render(<GeneralChat />);
     await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
 
-    fireEvent.change(screen.getAllByRole('textbox')[0], {
+    fireEvent.change(screen.getByLabelText(/message/i), {
       target: { value: 'stats' },
     });
     fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
@@ -172,7 +172,7 @@ describe('GeneralChat', () => {
     render(<GeneralChat />);
     await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
 
-    fireEvent.change(screen.getAllByRole('textbox')[0], {
+    fireEvent.change(screen.getByLabelText(/message/i), {
       target: { value: 'My Song template="Classic Lofi" tracks=2' },
     });
     fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
@@ -208,7 +208,7 @@ describe('GeneralChat', () => {
     render(<GeneralChat />);
     await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
 
-    fireEvent.change(screen.getAllByRole('textbox')[0], {
+    fireEvent.change(screen.getByLabelText(/message/i), {
       target: { value: 'can you show system stats?' },
     });
     fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
@@ -231,7 +231,7 @@ describe('GeneralChat', () => {
     render(<GeneralChat />);
     await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
 
-    fireEvent.change(screen.getAllByRole('textbox')[0], {
+    fireEvent.change(screen.getByLabelText(/message/i), {
       target: { value: 'generate a chill song with three tracks' },
     });
     fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
