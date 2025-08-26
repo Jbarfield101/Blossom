@@ -258,3 +258,52 @@ body.theme-studio input[type="range"]::-moz-range-thumb {
     transform: translate(-50%, -50%) scale(1) rotate(0deg);
   }
 }
+.retro-tv-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 260px;
+  height: 200px;
+  padding: 15px;
+  background: #111;
+  border: 4px solid #0f0;
+  border-radius: 20px;
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+  pointer-events: none;
+}
+
+.retro-tv-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.retro-tv-screen::before {
+  content: "";
+  position: absolute;
+  top: -100%;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 255, 0, 0.15) 0px,
+    rgba(0, 255, 0, 0.15) 2px,
+    transparent 2px,
+    transparent 4px
+  );
+  animation: retro-scan 2s linear infinite;
+}
+
+@keyframes retro-scan {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
