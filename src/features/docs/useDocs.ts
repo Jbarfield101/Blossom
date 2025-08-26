@@ -8,6 +8,13 @@ export interface DocMeta {
   created?: string;
 }
 
+export interface SearchResult {
+  doc_id: string;
+  page: number;
+  snippet: string;
+  score: number;
+}
+
 export function useDocs() {
   const [docs, setDocs] = useState<DocMeta[]>([]);
 
@@ -42,12 +49,27 @@ export function useDocs() {
     refresh();
   }
 
-  async function searchDocs(query: string) {
-    return invoke("pdf_search", { query });
+  async function searchDocs(query: string): Promise<SearchResult[]> {
+    try {
+      const hits = await invoke<
+        { doc_id: string; page_range: [number, number]; text: string; score: number }[]
+      >("pdf_search", { query });
+      return hits.map((hit) => ({
+        doc_id: hit.doc_id,
+        page: hit.page_range[0],
+        snippet: hit.text,
+        score: hit.score,
+      }));
+    } catch (err) {
+      if (err instanceof Error) {
+        throw new Error(`Failed to search docs: ${err.message}`);
+      }
+      return [];
+    }
   }
 
   return { docs, refresh, addDoc, removeDoc, searchDocs, ingestDoc };
 }
 
-export type { DocMeta };
+export type { DocMeta, SearchResult };
 
