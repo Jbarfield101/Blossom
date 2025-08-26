@@ -36,7 +36,15 @@ export function parseSfz(text: string, basePath = ''): SfzRegion[] {
       const key = match[1].trim();
       const value = match[2].trim();
       if (key === 'sample') {
-        current.sample = basePath ? basePath + value : value;
+        if (basePath) {
+          try {
+            current.sample = new URL(value, basePath).toString();
+          } catch {
+            current.sample = basePath + value;
+          }
+        } else {
+          current.sample = value;
+        }
       } else {
         const num = Number(value);
         current[key] = isNaN(num) ? value : num;
