@@ -17,24 +17,22 @@ export default function Blender() {
   const [selectedTemplate, setSelectedTemplate] = useState("");
 
   useEffect(() => {
-    loadState<{ name: string; code: string }[]>("blenderTemplates").then((data) => {
-      if (data) setTemplates(data);
-    });
+    (async () => {
+      const loadedTemplates = await loadState<{ name: string; code: string }[]>(
+        "blenderTemplates"
+      );
+      if (loadedTemplates) setTemplates(loadedTemplates);
+      const loadedOutput = await loadState<string>("blenderOutputDir");
+      if (loadedOutput) setOutputDir(loadedOutput);
+    })();
   }, []);
-
-  useEffect(() => {
-    loadState<string>("blenderOutputDir").then((data) => {
-      if (data) setOutputDir(data);
-    });
-  }, []);
-
-  useEffect(() => {
-    saveState("blenderTemplates", templates).catch(() => {});
-  }, [templates]);
 
   useEffect(() => {
     if (outputDir !== null) {
-      saveState("blenderOutputDir", outputDir).catch(() => {});
+      (async () => {
+        const ok = await saveState("blenderOutputDir", outputDir);
+        if (!ok) setStatus("Failed to save output directory");
+      })();
     }
   }, [outputDir]);
 
@@ -59,18 +57,21 @@ export default function Blender() {
     }
   };
 
-  const saveTemplate = () => {
+  const saveTemplate = async () => {
     if (!templateName.trim()) return;
-    setTemplates((prev) => {
-      const existing = prev.find((t) => t.name === templateName);
-      if (existing) {
-        return prev.map((t) =>
+    const existing = templates.find((t) => t.name === templateName);
+    const updated = existing
+      ? templates.map((t) =>
           t.name === templateName ? { name: templateName, code } : t
-        );
-      }
-      return [...prev, { name: templateName, code }];
-    });
-    setSelectedTemplate(templateName);
+        )
+      : [...templates, { name: templateName, code }];
+    const ok = await saveState("blenderTemplates", updated);
+    if (ok) {
+      setTemplates(updated);
+      setSelectedTemplate(templateName);
+    } else {
+      setStatus("Failed to save template");
+    }
   };
 
   const selectTemplate = (name: string) => {
@@ -82,13 +83,19 @@ export default function Blender() {
     }
   };
 
-  const deleteTemplate = (name: string) => {
-    setTemplates((prev) => prev.filter((t) => t.name !== name));
-    if (selectedTemplate === name) {
-      setSelectedTemplate("");
-    }
-    if (templateName === name) {
-      setTemplateName("");
+  const deleteTemplate = async (name: string) => {
+    const updated = templates.filter((t) => t.name !== name);
+    const ok = await saveState("blenderTemplates", updated);
+    if (ok) {
+      setTemplates(updated);
+      if (selectedTemplate === name) {
+        setSelectedTemplate("");
+      }
+      if (templateName === name) {
+        setTemplateName("");
+      }
+    } else {
+      setStatus("Failed to delete template");
     }
   };
 
