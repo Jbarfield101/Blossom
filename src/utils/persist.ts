@@ -10,11 +10,19 @@ export async function saveState<T>(
 ): Promise<void> {
   const serialized = JSON.stringify(state);
   if (backendUrl) {
-    await fetch(backendUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key, state }),
-    });
+    try {
+      const response = await fetch(backendUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, state }),
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to save state: ${response.status} ${response.statusText}`);
+      }
+    } catch (err) {
+      console.error("Failed to save state", err);
+      throw err;
+    }
   } else {
     try {
       window.localStorage.setItem(key, serialized);
@@ -31,9 +39,13 @@ export async function loadState<T>(
   if (backendUrl) {
     try {
       const res = await fetch(`${backendUrl}?key=${encodeURIComponent(key)}`);
-      if (!res.ok) return null;
+      if (!res.ok) {
+        console.error(`Failed to load state: ${res.status} ${res.statusText}`);
+        return null;
+      }
       return (await res.json()) as T;
-    } catch {
+    } catch (err) {
+      console.error("Failed to load state", err);
       return null;
     }
   }
