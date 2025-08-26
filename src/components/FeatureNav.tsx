@@ -70,53 +70,66 @@ export default function FeatureNav({
   const enabled = useMemo(() => ITEMS.filter((it) => modules[it.key]), [modules]);
 
   if (variant === "grid") {
-      return (
-        <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          gap={48}
-          sx={{ height: "100vh", position: "relative", zIndex: 1, flexWrap: "wrap" }}
-        >
-          {enabled.map((it, i) => {
-            const fullColor = it.color.replace("0.55", "1");
-            const textColor = getContrastColor(fullColor);
-            return (
-              <div key={i} style={{ textAlign: "center" }}>
-                <IconButton
-                  sx={{
-                    fontSize: "3rem",
-                    color: textColor,
-                    transition: "all .2s",
-                    "&:hover": {
-                      color: fullColor,
-                      transform: "scale(1.08)",
-                      filter: "drop-shadow(0 8px 18px rgba(0,0,0,.18))",
-                    },
-                  }}
-                  onMouseEnter={() => onHoverColor(it.color)}
-                  onMouseLeave={() => onHoverColor("rgba(255,255,255,0.22)")}
-                  onClick={() => nav(it.path)}
-                  aria-label={it.label}
-                >
-                  {it.icon}
-                </IconButton>
-                <div style={{ color: textColor, marginTop: 8, fontSize: 14 }}>
-                  {it.label}
-                </div>
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        gap={48}
+        sx={{ height: "100vh", position: "relative", zIndex: 1, flexWrap: "wrap" }}
+      >
+        {enabled.map((it, i) => {
+          const fullColor = it.color.replace("0.55", "1");
+          const textColor = getContrastColor(fullColor);
+          return (
+            <div key={i} style={{ textAlign: "center" }}>
+              <IconButton
+                sx={{
+                  fontSize: "3rem",
+                  color: textColor,
+                  transition: "all .2s",
+                  "&:hover": {
+                    color: fullColor,
+                    transform: "scale(1.08)",
+                    filter: "drop-shadow(0 8px 18px rgba(0,0,0,.18))",
+                  },
+                }}
+                onMouseEnter={() => onHoverColor(it.color)}
+                onMouseLeave={() => onHoverColor("rgba(255,255,255,0.22)")}
+                onClick={() => {
+                  localStorage.setItem("featureNavLast", it.key);
+                  nav(it.path);
+                }}
+                aria-label={it.label}
+              >
+                {it.icon}
+              </IconButton>
+              <div style={{ color: textColor, marginTop: 8, fontSize: 14 }}>
+                {it.label}
               </div>
-            );
-          })}
-        </Box>
-      );
+            </div>
+          );
+        })}
+      </Box>
+    );
   }
 
   // carousel variant
   const ACCENT = "#00bcd4";
-  const [i, setI] = useState(0);
+  const [i, setI] = useState(() => {
+    const last = localStorage.getItem("featureNavLast");
+    const idx = ITEMS.findIndex((it) => it.key === last);
+    return idx !== -1 ? idx : 0;
+  });
   const len = enabled.length;
   const mod = (n: number, m: number) => ((n % m) + m) % m;
   const go = (dir: 1 | -1) => setI((v) => mod(v + dir, len));
+
+  useEffect(() => {
+    const last = localStorage.getItem("featureNavLast");
+    const idx = enabled.findIndex((it) => it.key === last);
+    setI(idx !== -1 ? idx : 0);
+  }, [enabled]);
 
   useEffect(() => {
     if (i >= len) setI(0);
@@ -164,7 +177,10 @@ export default function FeatureNav({
                 sx={carouselIconButtonSx(center, ACCENT)}
                 onMouseEnter={() => onHoverColor(`${ACCENT}55`)}
                 onMouseLeave={() => onHoverColor("rgba(255,255,255,0.22)")}
-                onClick={() => (center ? nav(it.path) : setI(idx))}
+                onClick={() => {
+                  localStorage.setItem("featureNavLast", it.key);
+                  center ? nav(it.path) : setI(idx);
+                }}
                 aria-label={it.label}
                 role="option"
                 aria-selected={center}
