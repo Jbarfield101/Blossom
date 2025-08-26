@@ -479,15 +479,6 @@ export default function SongForm() {
     };
   }, [runningJobId, updateJob]);
 
-  const hasInvalidBars = useMemo(
-    () =>
-      structure.some((s) => {
-        const val = s.barsStr ?? String(s.bars);
-        const n = parseInt(val, 10);
-        return !(val && /^\d+$/.test(val) && n >= 1);
-      }),
-    [structure]
-  );
 
   const totalBars = useMemo(
     () =>
@@ -1377,7 +1368,6 @@ export default function SongForm() {
           busy={busy}
           outDir={outDir}
           titleBase={titleBase}
-          hasInvalidBars={hasInvalidBars}
           albumMode={albumMode}
           albumReady={albumReady}
           onRender={handleRender}
