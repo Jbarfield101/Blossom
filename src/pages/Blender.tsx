@@ -96,33 +96,40 @@ export default function Blender() {
     <>
       <Center>
         <Stack spacing={2} sx={{ width: "100%", maxWidth: 600 }}>
-        <TextField
-          label="Template Name"
-          value={templateName}
-          onChange={(e) => setTemplateName(e.target.value)}
-        />
-        <Button variant="outlined" onClick={saveTemplate}>
-          Save Template
-        </Button>
-        <TextField
-          select
-          label="Templates"
-          value={selectedTemplate}
-          onChange={(e) => selectTemplate(e.target.value)}
-        >
-          {templates.map((t) => (
-            <MenuItem key={t.name} value={t.name}>
-              {t.name}
-            </MenuItem>
-          ))}
-        </TextField>
-        <Button
-          variant="outlined"
-          onClick={() => deleteTemplate(selectedTemplate)}
-          disabled={!selectedTemplate}
-        >
-          Delete Template
-        </Button>
+        <Box>
+          <Typography variant="subtitle1">Template Actions</Typography>
+          <Stack spacing={2} mt={1}>
+            <TextField
+              select
+              label="Templates"
+              value={selectedTemplate}
+              onChange={(e) => selectTemplate(e.target.value)}
+            >
+              {templates.map((t) => (
+                <MenuItem key={t.name} value={t.name}>
+                  {t.name}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              label="Template Name"
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+            />
+            <Stack direction="row" spacing={2}>
+              <Button variant="outlined" onClick={saveTemplate}>
+                Save Template
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => deleteTemplate(selectedTemplate)}
+                disabled={!selectedTemplate}
+              >
+                Delete Template
+              </Button>
+            </Stack>
+          </Stack>
+        </Box>
         <Typography variant="subtitle1">Blender bpy code</Typography>
         <Editor
           height="200px"
