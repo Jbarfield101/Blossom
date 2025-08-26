@@ -7,7 +7,7 @@ export async function saveState<T>(
   key: string,
   state: T,
   backendUrl?: string
-): Promise<void> {
+): Promise<boolean> {
   const serialized = JSON.stringify(state);
   if (backendUrl) {
     try {
@@ -17,17 +17,23 @@ export async function saveState<T>(
         body: JSON.stringify({ key, state }),
       });
       if (!response.ok) {
-        throw new Error(`Failed to save state: ${response.status} ${response.statusText}`);
+        console.error(
+          `Failed to save state: ${response.status} ${response.statusText}`
+        );
+        return false;
       }
+      return true;
     } catch (err) {
       console.error("Failed to save state", err);
-      throw err;
+      return false;
     }
   } else {
     try {
       window.localStorage.setItem(key, serialized);
-    } catch {
-      // ignore write errors
+      return window.localStorage.getItem(key) === serialized;
+    } catch (err) {
+      console.error("Failed to save state", err);
+      return false;
     }
   }
 }

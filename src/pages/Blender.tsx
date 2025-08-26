@@ -14,14 +14,17 @@ export default function Blender() {
   const [selectedTemplate, setSelectedTemplate] = useState("");
 
   useEffect(() => {
-    loadState<{ name: string; code: string }[]>("blenderTemplates").then((data) => {
-      if (data) setTemplates(data);
-    });
+    (async () => {
+      try {
+        const data = await loadState<{ name: string; code: string }[]>(
+          "blenderTemplates"
+        );
+        if (data) setTemplates(data);
+      } catch (err) {
+        console.error("Failed to load templates", err);
+      }
+    })();
   }, []);
-
-  useEffect(() => {
-    saveState("blenderTemplates", templates).catch(() => {});
-  }, [templates]);
 
   const selectOutput = async () => {
     const selected = await open({ directory: true });
@@ -44,18 +47,24 @@ export default function Blender() {
     }
   };
 
-  const saveTemplate = () => {
+  const saveTemplate = async () => {
     if (!templateName.trim()) return;
-    setTemplates((prev) => {
-      const existing = prev.find((t) => t.name === templateName);
+    const newTemplates = (() => {
+      const existing = templates.find((t) => t.name === templateName);
       if (existing) {
-        return prev.map((t) =>
+        return templates.map((t) =>
           t.name === templateName ? { name: templateName, code } : t
         );
       }
-      return [...prev, { name: templateName, code }];
-    });
-    setSelectedTemplate(templateName);
+      return [...templates, { name: templateName, code }];
+    })();
+    const success = await saveState("blenderTemplates", newTemplates);
+    if (success) {
+      setTemplates(newTemplates);
+      setSelectedTemplate(templateName);
+    } else {
+      setStatus("Failed to save template");
+    }
   };
 
   const selectTemplate = (name: string) => {
@@ -67,13 +76,19 @@ export default function Blender() {
     }
   };
 
-  const deleteTemplate = (name: string) => {
-    setTemplates((prev) => prev.filter((t) => t.name !== name));
-    if (selectedTemplate === name) {
-      setSelectedTemplate("");
-    }
-    if (templateName === name) {
-      setTemplateName("");
+  const deleteTemplate = async (name: string) => {
+    const newTemplates = templates.filter((t) => t.name !== name);
+    const success = await saveState("blenderTemplates", newTemplates);
+    if (success) {
+      setTemplates(newTemplates);
+      if (selectedTemplate === name) {
+        setSelectedTemplate("");
+      }
+      if (templateName === name) {
+        setTemplateName("");
+      }
+    } else {
+      setStatus("Failed to delete template");
     }
   };
 
