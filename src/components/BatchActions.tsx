@@ -15,7 +15,6 @@ interface Props {
   busy: boolean;
   outDir: string;
   titleBase: string;
-  hasInvalidBars: boolean;
   albumMode: boolean;
   albumReady: boolean;
   onRender: () => void;
@@ -37,7 +36,6 @@ export default function BatchActions({
   busy,
   outDir,
   titleBase,
-  hasInvalidBars,
   albumMode,
   albumReady,
   onRender,
@@ -113,7 +111,6 @@ export default function BatchActions({
             busy ||
             !outDir ||
             !titleBase ||
-            hasInvalidBars ||
             (albumMode && !albumReady)
           }
           onClick={onRender}
