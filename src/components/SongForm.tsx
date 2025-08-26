@@ -4,6 +4,7 @@ import { useAudioDefaults } from "../features/audioDefaults/useAudioDefaults";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { openPath } from "@tauri-apps/plugin-opener";
 import { invoke, convertFileSrc } from "@tauri-apps/api/core";
+import { resolveResource } from "@tauri-apps/api/path";
 import { listen } from "@tauri-apps/api/event";
 import { useLofi } from "../features/lofi/SongForm";
 import { WEATHER_PRESETS } from "../features/lofi/weather";
@@ -529,10 +530,17 @@ export default function SongForm() {
     }
   }
 
-  function loadAcousticGrand() {
+  async function loadAcousticGrand() {
     setInstruments([]);
     setLeadInstrument("");
-    setSfzInstrument("/sfz_sounds/UprightPianoKW-20220221.sfz");
+    try {
+      const path = await resolveResource(
+        "sfz_sounds/UprightPianoKW-20220221.sfz"
+      );
+      setSfzInstrument(convertFileSrc(path));
+    } catch (e: any) {
+      setErr(e?.message || String(e));
+    }
   }
 
   async function generateAlbumArtPrompt(name: string) {

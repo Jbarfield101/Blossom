@@ -15,6 +15,9 @@ vi.mock('@tauri-apps/api/core', () => ({
   convertFileSrc: (p: string) => p,
 }));
 vi.mock('@tauri-apps/api/event', () => ({ listen: vi.fn() }));
+vi.mock('@tauri-apps/api/path', () => ({
+  resolveResource: (p: string) => Promise.resolve(p),
+}));
 vi.mock('../features/lofi/SongForm', () => ({
   useLofi: () => ({
     isPlaying: false,
@@ -295,13 +298,11 @@ describe('SongForm', () => {
     expect(openDialog).toHaveBeenCalled();
   });
 
-  it('loads acoustic grand piano and clears instruments', () => {
+  it('loads acoustic grand piano and clears instruments', async () => {
     render(<SongForm />);
     openSection('sfz-section');
     fireEvent.click(screen.getByText(/acoustic grand piano/i));
-    expect(
-      screen.getByText('UprightPianoKW-20220221.sfz')
-    ).toBeInTheDocument();
+    await screen.findByText('UprightPianoKW-20220221.sfz');
     openSection('vibe-section');
     ['rhodes', 'nylon guitar', 'upright bass'].forEach((name) => {
       expect(screen.getByRole('checkbox', { name })).not.toBeChecked();
