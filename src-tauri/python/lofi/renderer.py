@@ -33,6 +33,7 @@ import re
 import logging
 from typing import List, Dict, Tuple, Any, Optional
 from pathlib import Path
+from urllib.parse import unquote
 
 import numpy as np
 from pydub import AudioSegment
@@ -343,7 +344,7 @@ class SfzSampler:
 
 
 def _resolve_sfz_path(p: str) -> Path:
-    path = Path(p)
+    path = Path(unquote(p))
     if path.is_absolute() and path.exists():
         return path
     root = Path(__file__).resolve().parents[3]

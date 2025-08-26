@@ -12,7 +12,7 @@ vi.mock('@tauri-apps/plugin-dialog', () => ({ open: vi.fn() }));
 vi.mock('@tauri-apps/plugin-opener', () => ({ open: vi.fn() }));
 vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn(),
-  convertFileSrc: (p: string) => p,
+  convertFileSrc: (p: string) => `tauri://${encodeURI(p)}`,
 }));
 vi.mock('@tauri-apps/api/event', () => ({ listen: vi.fn() }));
 vi.mock('@tauri-apps/api/path', () => ({
@@ -299,7 +299,9 @@ describe('SongForm', () => {
     fireEvent.click(screen.getByText(/choose sfz/i));
     await screen.findByText('piano.sfz');
     expect(openDialog).toHaveBeenCalled();
-    expect(setPreviewSfzInstrument).toHaveBeenCalledWith('/tmp/piano.sfz');
+    expect(setPreviewSfzInstrument).toHaveBeenCalledWith(
+      'tauri:///tmp/piano.sfz'
+    );
   });
 
   it('loads acoustic grand piano and clears instruments', async () => {
@@ -313,7 +315,7 @@ describe('SongForm', () => {
     });
     expect(screen.getByRole('radio', { name: 'synth' })).not.toBeChecked();
     expect(setPreviewSfzInstrument).toHaveBeenCalledWith(
-      'sfz_sounds/UprightPianoKW-20220221.sfz'
+      'tauri://sfz_sounds/UprightPianoKW-20220221.sfz'
     );
   });
 
@@ -357,6 +359,38 @@ describe('SongForm', () => {
     await waitFor(() => expect(invoke).toHaveBeenCalled());
     const call = (invoke as any).mock.calls.find(([c]: any) => c === 'run_lofi_song');
     expect(call[1].spec.instruments).toEqual(['harp', 'lute', 'pan flute']);
+  });
+
+  it('uses raw sfz path in render spec', async () => {
+    (openDialog as any)
+      .mockResolvedValueOnce('/tmp/out')
+      .mockResolvedValueOnce('/tmp/piano file.sfz');
+    (invoke as any).mockResolvedValue('');
+    (listen as any).mockResolvedValue(() => {});
+
+    render(<SongForm />);
+
+    fireEvent.click(screen.getByText(/choose folder/i));
+    await screen.findByText('/tmp/out');
+
+    openSection('sfz-section');
+    fireEvent.click(screen.getByText(/choose sfz/i));
+    await screen.findByText('piano file.sfz');
+
+    fireEvent.change(screen.getByPlaceholderText(/song title base/i), {
+      target: { value: 'Test Song' },
+    });
+
+    fireEvent.click(screen.getByText(/render songs/i));
+
+    await waitFor(() => expect(invoke).toHaveBeenCalled());
+    const call = (invoke as any).mock.calls.find(
+      ([c]: any) => c === 'run_lofi_song'
+    );
+    expect(call[1].spec.sfzInstrument).toBe('/tmp/piano file.sfz');
+    expect(setPreviewSfzInstrument).toHaveBeenCalledWith(
+      'tauri:///tmp/piano%20file.sfz'
+    );
   });
 
   it('updates lead instrument when adding a lead-capable instrument', () => {

@@ -524,8 +524,9 @@ export default function SongForm() {
         filters: [{ name: "SFZ Instrument", extensions: ["sfz"] }],
       });
       if (file) {
-        setSfzInstrument(file as string);
-        setPreviewSfzInstrument(file as string);
+        const rawPath = file as string;
+        setSfzInstrument(rawPath);
+        setPreviewSfzInstrument(convertFileSrc(rawPath));
       }
     } catch (e: any) {
       setErr(e?.message || String(e));
@@ -539,9 +540,8 @@ export default function SongForm() {
       const path = await resolveResource(
         "sfz_sounds/UprightPianoKW-20220221.sfz"
       );
-      const url = convertFileSrc(path);
-      setSfzInstrument(url);
-      setPreviewSfzInstrument(url);
+      setSfzInstrument(path);
+      setPreviewSfzInstrument(convertFileSrc(path));
     } catch (e: any) {
       setErr(e?.message || String(e));
     }
