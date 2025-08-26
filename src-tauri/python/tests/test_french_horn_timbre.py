@@ -13,3 +13,13 @@ def test_french_horn_timbre_bandpass():
     rms_in = np.sqrt(np.mean(x**2))
     rms_out = np.sqrt(np.mean(y**2))
     assert 0 < rms_out < rms_in
+
+
+def test_french_horn_influences_when_not_lead():
+    rng = np.random.default_rng(1)
+    x = rng.standard_normal(44100).astype(np.float32)
+    lead_only = _apply_melody_timbre(x, ["piano"])
+    with_horn = _apply_melody_timbre(x, ["french horn", "piano"])
+    rms_lead = np.sqrt(np.mean(lead_only**2))
+    rms_horn = np.sqrt(np.mean(with_horn**2))
+    assert rms_horn < rms_lead
