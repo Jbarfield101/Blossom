@@ -1,5 +1,6 @@
 import Center from "./_Center";
 import { useUsers } from "../features/users/useUsers";
+import { Box, Typography, List, ListItem, ListItemText } from "@mui/material";
 
 export default function User() {
   const user = useUsers((state) => {
@@ -13,23 +14,33 @@ export default function User() {
 
   return (
     <Center>
-      <div style={{ textAlign: "left" }}>
-        <h1>User Info</h1>
-        <p><strong>ID:</strong> {user.id}</p>
-        <p><strong>Name:</strong> {user.name}</p>
-        <p><strong>Theme:</strong> {user.theme}</p>
-        <p><strong>Money:</strong> {user.money}</p>
-        <div>
-          <h2>Modules</h2>
-          <ul>
+      <Box sx={{ textAlign: "left", maxWidth: 400 }}>
+        <Typography variant="h4" gutterBottom>
+          User Info
+        </Typography>
+        <Typography>
+          <strong>ID:</strong> {user.id}
+        </Typography>
+        <Typography>
+          <strong>Name:</strong> {user.name}
+        </Typography>
+        <Typography>
+          <strong>Theme:</strong> {user.theme}
+        </Typography>
+        <Typography>
+          <strong>Money:</strong> {user.money}
+        </Typography>
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="h6">Modules</Typography>
+          <List dense>
             {Object.entries(user.modules).map(([key, enabled]) => (
-              <li key={key}>
-                {key}: {enabled ? "on" : "off"}
-              </li>
+              <ListItem key={key}>
+                <ListItemText primary={`${key}: ${enabled ? "on" : "off"}`} />
+              </ListItem>
             ))}
-          </ul>
-        </div>
-      </div>
+          </List>
+        </Box>
+      </Box>
     </Center>
   );
 }

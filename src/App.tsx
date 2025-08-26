@@ -1,6 +1,9 @@
 import { Routes, Route } from "react-router-dom";
+import { useEffect, useState } from "react";
 import TopBar from "./components/TopBar";
 import ErrorBoundary from "./components/ErrorBoundary";
+import CreateUserDialog from "./components/CreateUserDialog";
+import { useUsers } from "./features/users/useUsers";
 import Home from "./pages/Home";
 import Objects from "./pages/Objects";
 import Blender from "./pages/Blender";
@@ -29,9 +32,24 @@ import Simulation from "./pages/Simulation";
 import BigBrother from "./pages/BigBrother";
 
 export default function App() {
+  const users = useUsers((s) => s.users);
+  const currentUserId = useUsers((s) => s.currentUserId);
+  const switchUser = useUsers((s) => s.switchUser);
+  const [showUserDialog, setShowUserDialog] = useState(false);
+
+  useEffect(() => {
+    const ids = Object.keys(users);
+    if (!ids.length) {
+      setShowUserDialog(true);
+    } else if (!currentUserId) {
+      switchUser(ids[ids.length - 1]);
+    }
+  }, [users, currentUserId, switchUser]);
+
   return (
     <ErrorBoundary>
       <TopBar />
+      <CreateUserDialog open={showUserDialog} onClose={() => setShowUserDialog(false)} />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/objects" element={<Objects />} />

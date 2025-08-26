@@ -9,6 +9,7 @@ import SettingsDrawer from "./SettingsDrawer";
 import ErrorBoundary from "./ErrorBoundary";
 import TaskDrawer from "./TaskDrawer";
 import { useTasks } from "../store/tasks";
+import { useUsers } from "../features/users/useUsers";
 
 export default function TopBar() {
   const nav = useNavigate();
@@ -19,6 +20,10 @@ export default function TopBar() {
     Object.values(s.tasks).filter((t) => t.status === "queued" || t.status === "running").length
   );
   const subscribe = useTasks((s) => s.subscribe);
+  const userName = useUsers((s) => {
+    const id = s.currentUserId;
+    return id ? s.users[id]?.name : null;
+  });
 
   useEffect(() => {
     let unlisten: (() => void) | null = null;
@@ -55,7 +60,7 @@ export default function TopBar() {
         </IconButton>
       </Tooltip>
 
-      <Tooltip title="User">
+      <Tooltip title={userName ? `User: ${userName}` : "User"}>
         <IconButton
           onClick={() => nav("/user")}
           sx={{
