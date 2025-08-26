@@ -49,9 +49,9 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <TopBar />
-      <RetroTV />
-      <CreateUserDialog open={showUserDialog} onClose={() => setShowUserDialog(false)} />
+        <TopBar />
+        <RetroTV>NO SIGNAL</RetroTV>
+        <CreateUserDialog open={showUserDialog} onClose={() => setShowUserDialog(false)} />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/objects" element={<Objects />} />

@@ -282,6 +282,11 @@ body.theme-studio input[type="range"]::-moz-range-thumb {
   overflow: hidden;
 }
 
+.retro-tv-content {
+  position: relative;
+  z-index: 1;
+}
+
 .retro-tv-screen::before {
   content: "";
   position: absolute;
