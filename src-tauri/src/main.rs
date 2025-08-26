@@ -6,8 +6,8 @@ mod stocks;
 mod task_queue;
 
 use task_queue::TaskQueue;
-use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
 use tauri::Manager;
+use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
 
 fn main() {
     env_logger::init();
@@ -54,6 +54,7 @@ fn main() {
             commands::cancel_album,
             commands::dj_mix,
             commands::generate_ambience,
+            commands::bark_tts,
             // ComfyUI:
             commands::comfy_status,
             commands::comfy_start,

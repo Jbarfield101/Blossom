@@ -2008,6 +2008,16 @@ fn dj_mix_script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
         .join("dj_mix.py")
 }
 
+fn bark_tts_script_path() -> PathBuf {
+    if let Ok(cwd) = env::current_dir() {
+        let dev = cwd.join("src-tauri").join("python").join("bark_tts.py");
+        if dev.exists() {
+            return dev;
+        }
+    }
+    PathBuf::from("bark_tts.py")
+}
+
 fn run_transcribe_script<R: Runtime>(app: &AppHandle<R>, audio: &Path) -> Result<String, String> {
     let py = conda_python();
     if !py.exists() {
@@ -2075,6 +2085,34 @@ pub async fn transcribe_audio<R: Runtime>(
     save_transcripts(&entries)?;
 
     Ok(text)
+}
+
+#[tauri::command]
+pub async fn bark_tts(text: String, speaker: String) -> Result<Vec<u8>, String> {
+    let py = conda_python();
+    if !py.exists() {
+        return Err(format!("Python not found at {}", py.display()));
+    }
+    let script = bark_tts_script_path();
+    if !script.exists() {
+        return Err(format!("Script not found at {}", script.display()));
+    }
+    let output = PCommand::new(&py)
+        .arg(&script)
+        .arg(&text)
+        .arg(&speaker)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .output()
+        .map_err(|e| format!("Failed to start python: {e}"))?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!(
+            "Python exited with status {}:\n{}",
+            output.status, stderr
+        ));
+    }
+    Ok(output.stdout)
 }
 
 #[tauri::command]
