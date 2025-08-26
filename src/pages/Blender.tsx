@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
-import { TextField, Button, Stack, MenuItem } from "@mui/material";
+import { TextField, Button, Stack, MenuItem, Box } from "@mui/material";
 import Center from "./_Center";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { loadState, saveState } from "../utils/persist";
+import SystemInfoWidget from "../components/SystemInfoWidget";
+import { systemInfoWidgetSx } from "./homeStyles";
 
 export default function Blender() {
   const [code, setCode] = useState("import bpy\n\n# example cube\nbpy.ops.mesh.primitive_cube_add()");
@@ -78,8 +80,9 @@ export default function Blender() {
   };
 
   return (
-    <Center>
-      <Stack spacing={2} sx={{ width: "100%", maxWidth: 600 }}>
+    <>
+      <Center>
+        <Stack spacing={2} sx={{ width: "100%", maxWidth: 600 }}>
         <TextField
           label="Template Name"
           value={templateName}
@@ -120,7 +123,11 @@ export default function Blender() {
         <Button variant="contained" onClick={run}>Run in Blender</Button>
         {outputDir && <div>Selected Output Folder: {outputDir}</div>}
         {status && <div>{status}</div>}
-      </Stack>
-    </Center>
+        </Stack>
+      </Center>
+      <Box sx={systemInfoWidgetSx}>
+        <SystemInfoWidget />
+      </Box>
+    </>
   );
 }
