@@ -29,6 +29,7 @@ import { useTheme, type Theme } from "../features/theme/ThemeContext";
 import { useComfyTutorial } from "../features/comfyTutorial/useComfyTutorial";
 import { useUsers } from "../features/users/useUsers";
 import HelpIcon from "./HelpIcon";
+import CreateUserDialog from "./CreateUserDialog";
 
 const KEY_OPTIONS = [
   "Auto",
@@ -218,7 +219,10 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   } = useAudioDefaults();
   const { theme, setTheme } = useTheme();
   const currentUserId = useUsers((state) => state.currentUserId);
+  const users = useUsers((s) => s.users);
+  const switchUser = useUsers((s) => s.switchUser);
   const hasUser = currentUserId !== null;
+  const [createUserOpen, setCreateUserOpen] = useState(false);
   const { showTutorial, setShowTutorial } = useComfyTutorial();
   const { modules, toggleModule } = useSettings();
   const [audioSaved, setAudioSaved] = useState(false);
@@ -238,8 +242,9 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   useEffect(() => setComfyDraft(comfyPath), [comfyPath]);
   useEffect(() => setFolderDraft(folder), [folder]);
   useEffect(() => setThemeDraft(theme), [theme]);
-  type Section = "environment" | "editor" | "appearance" | "integrations";
+  type Section = "user" | "environment" | "editor" | "appearance" | "integrations";
   const sectionLabels: Record<Section, string> = {
+    user: "User",
     environment: "Environment",
     editor: "Editor",
     appearance: "Appearance",
@@ -249,6 +254,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   const [searchValue, setSearchValue] = useState("");
 
   const baseIndex = [
+    { label: "Current User", section: "user" as Section, elementId: "current-user" },
     { label: "Python Path", section: "environment" as Section, elementId: "python-path" },
     { label: "ComfyUI Folder", section: "environment" as Section, elementId: "comfy-path" },
     { label: "Default Save Folder", section: "environment" as Section, elementId: "output-folder" },
@@ -508,10 +514,36 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
           </Button>
         </>
       ) : (
-        <Typography variant="body2" sx={{ mt: 2 }}>
-          Create a user to customize the theme.
-        </Typography>
+        <Button variant="outlined" sx={{ mt: 2 }} onClick={() => setCreateUserOpen(true)}>
+          Create New User
+        </Button>
       )}
+    </>
+  );
+
+  const UserSection = () => (
+    <>
+      <Typography variant="subtitle1">User</Typography>
+      {Object.keys(users).length > 0 && (
+        <FormControl fullWidth size="small" sx={{ mt: 2 }} id="current-user">
+          <InputLabel id="current-user-label">Current User</InputLabel>
+          <Select
+            labelId="current-user-label"
+            value={currentUserId ?? ""}
+            label="Current User"
+            onChange={(e) => switchUser(e.target.value as string)}
+          >
+            {Object.values(users).map((u) => (
+              <MenuItem key={u.id} value={u.id}>
+                {u.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      )}
+      <Button variant="outlined" sx={{ mt: 2 }} onClick={() => setCreateUserOpen(true)}>
+        Create New User
+      </Button>
     </>
   );
 
@@ -564,6 +596,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
             renderInput={(params) => <TextField {...params} label="Search settings" />}
             sx={{ mb: 2 }}
           />
+          {section === "user" && <UserSection />}
           {section === "environment" && <EnvironmentSection />}
           {section === "editor" && <EditorSection />}
           {section === "appearance" && <AppearanceSection />}
@@ -600,6 +633,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
           />
         </Box>
       </Box>
+      <CreateUserDialog open={createUserOpen} onClose={() => setCreateUserOpen(false)} />
     </Drawer>
   );
 }
