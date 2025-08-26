@@ -34,7 +34,13 @@ export default function RetroTV({ children }: RetroTVProps) {
   if (mediaUrl) {
     content =
       mediaType === "video" ? (
-        <video src={mediaUrl} className="retro-tv-content" controls />
+        <video
+          src={mediaUrl}
+          className="retro-tv-content"
+          controls
+          autoPlay
+          loop
+        />
       ) : (
         <img src={mediaUrl} className="retro-tv-content" alt="Uploaded media" />
       );
