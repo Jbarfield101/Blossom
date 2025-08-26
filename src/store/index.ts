@@ -5,6 +5,7 @@ import { useCharacter } from "./character";
 import { useEncounterStore } from "./encounter";
 import { useWarTableStore } from "./warTable";
 import { useTabletopStore } from "./tabletop";
+import { useVoices } from "./voices";
 
 // Export individual stores for existing imports elsewhere
 export {
@@ -14,6 +15,7 @@ export {
   useEncounterStore,
   useWarTableStore,
   useTabletopStore,
+  useVoices,
 };
 
 const slices = {

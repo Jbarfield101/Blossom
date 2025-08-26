@@ -1,4 +1,4 @@
-import { useReducer, useState } from "react";
+import { useReducer, useState, useEffect } from "react";
 import {
   Typography,
   Button,
@@ -9,6 +9,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Autocomplete,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import FormErrorText from "./FormErrorText";
@@ -16,6 +17,7 @@ import { zNpc } from "../../dnd/schemas/npc";
 import { NpcData } from "./types";
 import NpcPdfUpload from "./NpcPdfUpload";
 import StyledTextField from "./StyledTextField";
+import { useVoices } from "../../store/voices";
 
 interface FormState {
   name: string;
@@ -78,6 +80,15 @@ interface Props {
 
 export default function NpcForm({ world }: Props) {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const voices = useVoices((s) => s.voices);
+  const loadVoices = useVoices((s) => s.load);
+  useEffect(() => {
+    loadVoices();
+  }, [loadVoices]);
+  const providerOptions = Array.from(new Set(voices.map((v) => v.provider)));
+  const presetOptions = voices
+    .filter((v) => !state.voice.provider || v.provider === state.voice.provider)
+    .map((v) => v.preset);
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [result, setResult] = useState<NpcData | null>(null);
 
@@ -462,29 +473,36 @@ export default function NpcForm({ world }: Props) {
                   </Typography>
                 </Grid>
                 <Grid item xs={8}>
-                  <StyledTextField
-                    id="voice-provider"
-                    value={state.voice.provider}
-                    onChange={(e) => {
-                      dispatch({ type: "SET_VOICE", field: "provider", value: e.target.value });
+                  <Autocomplete
+                    freeSolo
+                    options={providerOptions}
+                    inputValue={state.voice.provider}
+                    onInputChange={(_e, v) => {
+                      dispatch({ type: "SET_VOICE", field: "provider", value: v });
                       setErrors((prev) => ({
                         ...prev,
                         ["voice.provider"]: null,
                       }));
                     }}
+                    renderInput={(params) => (
+                      <StyledTextField
+                        {...params}
+                        id="voice-provider"
+                        margin="normal"
+                        error={Boolean(errors["voice.provider"])}
+                        helperText={
+                          <FormErrorText id="voice-provider-error">
+                            {errors["voice.provider"]}
+                          </FormErrorText>
+                        }
+                        aria-describedby={
+                          errors["voice.provider"]
+                            ? "voice-provider-error"
+                            : undefined
+                        }
+                      />
+                    )}
                     fullWidth
-                    margin="normal"
-                    error={Boolean(errors["voice.provider"])}
-                    helperText={
-                      <FormErrorText id="voice-provider-error">
-                        {errors["voice.provider"]}
-                      </FormErrorText>
-                    }
-                    aria-describedby={
-                      errors["voice.provider"]
-                        ? "voice-provider-error"
-                        : undefined
-                    }
                   />
                 </Grid>
                 <Grid item xs={4}>
@@ -493,24 +511,31 @@ export default function NpcForm({ world }: Props) {
                   </Typography>
                 </Grid>
                 <Grid item xs={8}>
-                  <StyledTextField
-                    id="voice-preset"
-                    value={state.voice.preset}
-                    onChange={(e) => {
-                      dispatch({ type: "SET_VOICE", field: "preset", value: e.target.value });
+                  <Autocomplete
+                    freeSolo
+                    options={presetOptions}
+                    inputValue={state.voice.preset}
+                    onInputChange={(_e, v) => {
+                      dispatch({ type: "SET_VOICE", field: "preset", value: v });
                       setErrors((prev) => ({ ...prev, ["voice.preset"]: null }));
                     }}
+                    renderInput={(params) => (
+                      <StyledTextField
+                        {...params}
+                        id="voice-preset"
+                        margin="normal"
+                        error={Boolean(errors["voice.preset"])}
+                        helperText={
+                          <FormErrorText id="voice-preset-error">
+                            {errors["voice.preset"]}
+                          </FormErrorText>
+                        }
+                        aria-describedby={
+                          errors["voice.preset"] ? "voice-preset-error" : undefined
+                        }
+                      />
+                    )}
                     fullWidth
-                    margin="normal"
-                    error={Boolean(errors["voice.preset"])}
-                    helperText={
-                      <FormErrorText id="voice-preset-error">
-                        {errors["voice.preset"]}
-                      </FormErrorText>
-                    }
-                    aria-describedby={
-                      errors["voice.preset"] ? "voice-preset-error" : undefined
-                    }
                   />
                 </Grid>
               </Grid>
