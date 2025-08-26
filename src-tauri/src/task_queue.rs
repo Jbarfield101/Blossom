@@ -170,12 +170,12 @@ impl TaskQueue {
                         let permit = semaphore.clone().acquire_owned().await.unwrap();
                         let id = task.id;
                         let handle = async_runtime::spawn(async move {
+                            let mut sys = System::new();
                             loop {
                                 let (cpu_limit, mem_limit) = {
                                     let l = limits_clone.lock().await;
                                     (l.cpu, l.memory)
                                 };
-                                let mut sys = System::new();
                                 sys.refresh_cpu_usage();
                                 tokio::time::sleep(Duration::from_millis(100)).await;
                                 sys.refresh_cpu_usage();
