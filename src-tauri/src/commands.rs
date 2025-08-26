@@ -919,8 +919,16 @@ Blender integration
 ============================== */
 
 #[tauri::command]
-pub async fn blender_run_script(code: String) -> Result<(), String> {
+pub async fn blender_run_script(code: String, output_dir: Option<String>) -> Result<(), String> {
     let tmp = std::env::temp_dir().join("blossom_bpy_script.py");
+    let mut code = code;
+    if let Some(ref dir) = output_dir {
+        code.push('\n');
+        code.push_str(&format!(
+            "bpy.ops.wm.save_mainfile(filepath=r\"{}/output.blend\")\n",
+            dir
+        ));
+    }
     fs::write(&tmp, code).map_err(|e| e.to_string())?;
 
     let status = PCommand::new(blender_path())
@@ -931,7 +939,16 @@ pub async fn blender_run_script(code: String) -> Result<(), String> {
         .map_err(|e| format!("failed to run blender: {e}"))?;
 
     if status.success() {
-        Ok(())
+        if let Some(dir) = output_dir {
+            let output_path = Path::new(&dir).join("output.blend");
+            if output_path.exists() {
+                Ok(())
+            } else {
+                Err("failed to save blend file".to_string())
+            }
+        } else {
+            Ok(())
+        }
     } else {
         Err(format!("blender exited with status {status}"))
     }
