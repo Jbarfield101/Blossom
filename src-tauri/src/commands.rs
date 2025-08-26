@@ -1640,6 +1640,7 @@ pub async fn general_chat<R: Runtime>(
 }
 
 #[cfg(test)]
+#[tauri::command]
 pub async fn general_chat<R: Runtime>(
     _app: AppHandle<R>,
     _messages: Vec<ChatMessage>,
