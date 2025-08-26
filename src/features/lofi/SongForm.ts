@@ -7,6 +7,7 @@ import {
   applyVinylEffect,
   scheduleSpokenWord,
 } from './spokenWord';
+import { loadSfz } from '../../utils/sfzLoader';
 
 // small deterministic PRNG for pattern variation
 function mulberry32(a: number) {
@@ -21,7 +22,7 @@ function mulberry32(a: number) {
 let initialized = false;
 let loop: Tone.Loop | null = null;
 let chain: {
-  lead: Tone.MonoSynth;
+  lead: Tone.MonoSynth | Tone.Sampler;
   bass: Tone.MonoSynth;
   hat: Tone.NoiseSynth;
   kick: Tone.MembraneSynth;
@@ -245,7 +246,7 @@ function makePattern(seed: number, key: string) {
   chordStep = 0;
 }
 
-function init() {
+async function init(sfzPath?: string) {
   if (initialized) return;
 
   // route instruments through a master bus and use a parallel reverb send
@@ -256,10 +257,23 @@ function init() {
     node.connect(send);
   };
 
-  const lead = new Tone.MonoSynth({
-    oscillator: { type: 'triangle' },
-    envelope: { attack: 0.01, decay: 0.2, sustain: 0.3, release: 1.2 },
-  }).connect(master);
+  let lead: Tone.MonoSynth | Tone.Sampler;
+  if (sfzPath) {
+    try {
+      const { sampler } = await loadSfz(sfzPath);
+      lead = sampler.connect(master);
+    } catch {
+      lead = new Tone.MonoSynth({
+        oscillator: { type: 'triangle' },
+        envelope: { attack: 0.01, decay: 0.2, sustain: 0.3, release: 1.2 },
+      }).connect(master);
+    }
+  } else {
+    lead = new Tone.MonoSynth({
+      oscillator: { type: 'triangle' },
+      envelope: { attack: 0.01, decay: 0.2, sustain: 0.3, release: 1.2 },
+    }).connect(master);
+  }
   addSend(lead, 0.3);
 
   const bass = new Tone.MonoSynth({
@@ -342,6 +356,7 @@ type Actions = {
   setKey: (key: string) => void;
   setWeatherPreset: (preset: WeatherPreset | null) => void;
   setWeatherEnabled: (enabled: boolean) => void;
+  setSfzInstrument: (path: string | undefined) => void;
 };
 
 export const useLofi = create<LofiState & Actions>((set, get) => ({
@@ -351,9 +366,10 @@ export const useLofi = create<LofiState & Actions>((set, get) => ({
   key: 'C',
   weatherPreset: null,
   weatherEnabled: true,
+  sfzInstrument: undefined,
 
   play: async () => {
-    init();
+    await init(get().sfzInstrument);
     const s = get().seed || Math.floor(Math.random() * 1_000_000);
     makePattern(s, get().key);
     set({ seed: s });
@@ -390,5 +406,9 @@ export const useLofi = create<LofiState & Actions>((set, get) => ({
 
   setWeatherEnabled: (weatherEnabled) => {
     set({ weatherEnabled });
+  },
+
+  setSfzInstrument: (sfzInstrument) => {
+    set({ sfzInstrument });
   },
 }));

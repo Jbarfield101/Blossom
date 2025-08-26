@@ -7,4 +7,5 @@ export type LofiState = {
   key: string;
   weatherPreset: WeatherPreset | null;
   weatherEnabled: boolean;
+  sfzInstrument?: string;
 };
