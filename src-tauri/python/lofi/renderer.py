@@ -1540,6 +1540,8 @@ def render_from_spec(spec: Dict[str, Any]) -> Tuple[AudioSegment, int]:
     if lead:
         lead = _normalize_instruments([lead])[0]
 
+    sfz_inst = spec.get("sfz_instrument")
+
     motif = {
         "mood": spec.get("mood") or [],
         "instruments": spec.get("instruments") or [],
@@ -1555,6 +1557,8 @@ def render_from_spec(spec: Dict[str, Any]) -> Tuple[AudioSegment, int]:
         "hq_chorus": spec.get("hq_chorus", True),
         "limiter_drive": limiter_drive,
     }
+    if sfz_inst:
+        motif["sfz_instrument"] = sfz_inst
 
     try:
         chord_span_beats = int(spec.get("chord_span_beats", 4))
