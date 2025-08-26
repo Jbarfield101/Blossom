@@ -248,7 +248,7 @@ export default function SongForm() {
   }, [instruments]);
 
   useEffect(() => {
-    if (!instruments.includes(leadInstrument)) {
+    if (instruments.length && !instruments.includes(leadInstrument)) {
       setLeadInstrument(inferLeadInstrument(instruments));
     }
   }, [instruments]);

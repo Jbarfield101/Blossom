@@ -295,6 +295,20 @@ describe('SongForm', () => {
     expect(openDialog).toHaveBeenCalled();
   });
 
+  it('loads acoustic grand piano and clears instruments', () => {
+    render(<SongForm />);
+    openSection('sfz-section');
+    fireEvent.click(screen.getByText(/acoustic grand piano/i));
+    expect(
+      screen.getByText('UprightPianoKW-20220221.sfz')
+    ).toBeInTheDocument();
+    openSection('vibe-section');
+    ['rhodes', 'nylon guitar', 'upright bass'].forEach((name) => {
+      expect(screen.getByRole('checkbox', { name })).not.toBeChecked();
+    });
+    expect(screen.getByRole('radio', { name: 'synth' })).not.toBeChecked();
+  });
+
   it('keeps preset templates when loading custom templates', () => {
     localStorage.setItem(
       'songTemplates',
