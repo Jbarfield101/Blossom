@@ -173,7 +173,7 @@ export default function SongForm() {
   const [leadInstrument, setLeadInstrument] = useState<string>(() =>
     inferLeadInstrument(defaultInstruments)
   );
-  const [sfzInstrument] = useState<string | undefined>();
+  const [sfzInstrument, setSfzInstrument] = useState<string | null>(null);
   const [ambience, setAmbience] = useState<string[]>(["rain"]);
   const [ambienceLevel, setAmbienceLevel] = useState(0.5);
   const [templates, setTemplates] = useState<Record<string, TemplateSpec>>(() => {
@@ -513,6 +513,20 @@ export default function SongForm() {
     }
   }
 
+  async function pickSfzInstrument() {
+    try {
+      const file = await openDialog({
+        multiple: false,
+        filters: [{ name: "SFZ Instrument", extensions: ["sfz"] }],
+      });
+      if (file) {
+        setSfzInstrument(file as string);
+      }
+    } catch (e: any) {
+      setErr(e?.message || String(e));
+    }
+  }
+
   async function generateAlbumArtPrompt(name: string) {
     try {
       const reply: string = await invoke("general_chat", {
@@ -679,7 +693,7 @@ export default function SongForm() {
       mood,
       instruments: instrs,
       lead_instrument: leadInstrument,
-      sfzInstrument,
+      sfzInstrument: sfzInstrument ?? undefined,
       ambience,
       ambience_level: amb,
       seed: pickSeed(i),
@@ -1256,6 +1270,20 @@ export default function SongForm() {
               ambienceLevel={ambienceLevel}
               setAmbienceLevel={setAmbienceLevel}
             />
+          </div>
+        </details>
+        {/* sfz instrument selector */}
+        <details className="mt-3" data-testid="sfz-section">
+          <summary className="cursor-pointer text-xs opacity-80">
+            Select SFZ instrument
+          </summary>
+          <div className="mt-2 flex items-center gap-2">
+            <button className={styles.btn} onClick={pickSfzInstrument}>
+              Choose SFZ
+            </button>
+            <span className={styles.small}>
+              {sfzInstrument ? sfzInstrument.split(/[\\/]/).pop() : "none selected"}
+            </span>
           </div>
         </details>
 

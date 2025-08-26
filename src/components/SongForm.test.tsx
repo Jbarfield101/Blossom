@@ -285,6 +285,16 @@ describe('SongForm', () => {
     });
   });
 
+  it('allows selecting an sfz instrument file', async () => {
+    (openDialog as any).mockResolvedValue('/tmp/piano.sfz');
+    render(<SongForm />);
+    openSection('sfz-section');
+    expect(screen.getByText(/none selected/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByText(/choose sfz/i));
+    await screen.findByText('piano.sfz');
+    expect(openDialog).toHaveBeenCalled();
+  });
+
   it('keeps preset templates when loading custom templates', () => {
     localStorage.setItem(
       'songTemplates',

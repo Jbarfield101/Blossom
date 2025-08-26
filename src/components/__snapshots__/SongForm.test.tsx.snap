@@ -2144,6 +2144,30 @@ exports[`SongForm > renders default form 1`] = `
       </details>
       <details
         class="mt-3"
+        data-testid="sfz-section"
+      >
+        <summary
+          class="cursor-pointer text-xs opacity-80"
+        >
+          Select SFZ instrument
+        </summary>
+        <div
+          class="mt-2 flex items-center gap-2"
+        >
+          <button
+            class="_btn_913096"
+          >
+            Choose SFZ
+          </button>
+          <span
+            class="_small_913096"
+          >
+            none selected
+          </span>
+        </div>
+      </details>
+      <details
+        class="mt-3"
         data-testid="rhythm-section"
       >
         <summary
