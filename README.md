@@ -103,6 +103,7 @@ npm test
 The `RetroTV` component renders its children inside a styled television frame when
 the active theme is set to `retro`. If no children are provided, the component
 automatically displays `/assets/logo.png` as a fallback.
+When a user uploads a video, it plays automatically on an endless loop.
 
 ## Configuration and optional features
 
