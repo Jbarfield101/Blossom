@@ -23,6 +23,15 @@ export default function NpcLog() {
     }
   }
 
+  async function clear() {
+    try {
+      await invoke("clear_npc_log");
+      await load();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
   useEffect(() => {
     load();
   }, []);
@@ -34,6 +43,9 @@ export default function NpcLog() {
       </Typography>
       <Button size="small" onClick={load} sx={{ mb: 1 }}>
         Refresh
+      </Button>
+      <Button size="small" onClick={clear} sx={{ mb: 1, ml: 1 }}>
+        Clear Log
       </Button>
       <List dense>
         {entries.length === 0 && (
