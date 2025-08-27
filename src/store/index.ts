@@ -6,6 +6,7 @@ import { useEncounterStore } from "./encounter";
 import { useWarTableStore } from "./warTable";
 import { useTabletopStore } from "./tabletop";
 import { useVoices } from "./voices";
+import { useInventory } from "./inventory";
 
 // Export individual stores for existing imports elsewhere
 export {
@@ -16,6 +17,7 @@ export {
   useWarTableStore,
   useTabletopStore,
   useVoices,
+  useInventory,
 };
 
 const slices = {
@@ -25,6 +27,7 @@ const slices = {
   encounter: useEncounterStore,
   warTable: useWarTableStore,
   tabletop: useTabletopStore,
+  inventory: useInventory,
 };
 
 type StoreState<T> = {
