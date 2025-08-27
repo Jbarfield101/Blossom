@@ -111,7 +111,7 @@ export const useTasks = create<TasksState>((set, get) => ({
       } else if (TASK_IDS.includes(label as TaskCommand['id'])) {
         cmd = buildTaskCommand(label as TaskCommand['id'], command as Record<string, unknown>);
       } else {
-        throw new Error('Task command must include an id field');
+        throw new Error(`Task command for ${label} is missing id: ${JSON.stringify(command)}`);
       }
       const id = await invoke<number>('enqueue_task', { label, command: cmd });
       set((state) => ({
@@ -123,6 +123,7 @@ export const useTasks = create<TasksState>((set, get) => ({
       get().startPolling(id);
       return id;
     } catch (error) {
+      console.error(error);
       throw error;
     }
   },

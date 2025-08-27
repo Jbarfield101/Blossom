@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import TopBar from "./components/TopBar";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -35,6 +35,7 @@ import BigBrother from "./pages/BigBrother";
 import Voices from "./pages/Voices";
 
 export default function App() {
+  const { pathname } = useLocation();
   const users = useUsers((s) => s.users);
   const currentUserId = useUsers((s) => s.currentUserId);
   const switchUser = useUsers((s) => s.switchUser);
@@ -52,7 +53,7 @@ export default function App() {
   return (
     <ErrorBoundary>
         <TopBar />
-        <RetroTV>NO SIGNAL</RetroTV>
+        {pathname !== "/calendar" && <RetroTV>NO SIGNAL</RetroTV>}
         <CreateUserDialog open={showUserDialog} onClose={() => setShowUserDialog(false)} />
       <Routes>
         <Route path="/" element={<Home />} />

@@ -68,6 +68,8 @@ describe('enqueueTask validation', () => {
   it('throws when command id is missing and label is not a task id', async () => {
     await expect(
       useTasks.getState().enqueueTask('NotATask', {} as any),
-    ).rejects.toThrow('id');
+    ).rejects.toThrow(
+      'Task command for NotATask is missing id: {}',
+    );
   });
 });

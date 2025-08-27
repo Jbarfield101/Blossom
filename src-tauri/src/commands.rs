@@ -14,6 +14,7 @@ use dirs;
 
 use crate::stocks::{stocks_fetch as stocks_fetch_impl, StockBundle};
 use crate::task_queue::{Task, TaskCommand, TaskQueue};
+use base64::{engine::general_purpose, Engine as _};
 use chrono::{Local, NaiveDateTime, Utc};
 use once_cell::sync::Lazy;
 use rand::{thread_rng, Rng};
@@ -31,7 +32,6 @@ use tokio::{
     time::sleep,
 };
 use which::which;
-use base64::{engine::general_purpose, Engine as _};
 
 #[derive(Debug)]
 struct LoggedChild {
@@ -1363,10 +1363,7 @@ pub async fn save_npc<R: Runtime>(
     let icons = dir.join("icons");
     fs::create_dir_all(&icons).map_err(|e| e.to_string())?;
 
-    match validated
-        .get("portrait")
-        .and_then(|v| v.as_str())
-    {
+    match validated.get("portrait").and_then(|v| v.as_str()) {
         Some(p) if !p.is_empty() && p != "placeholder.png" => {
             let src = PathBuf::from(p);
             let ext = src.extension().and_then(|s| s.to_str()).unwrap_or("png");
@@ -1381,10 +1378,7 @@ pub async fn save_npc<R: Runtime>(
         }
     }
 
-    match validated
-        .get("icon")
-        .and_then(|v| v.as_str())
-    {
+    match validated.get("icon").and_then(|v| v.as_str()) {
         Some(p) if !p.is_empty() && p != "placeholder-icon.png" => {
             let src = PathBuf::from(p);
             let ext = src.extension().and_then(|s| s.to_str()).unwrap_or("png");
@@ -2332,8 +2326,10 @@ Task queue commands
 pub async fn enqueue_task(
     queue: State<'_, TaskQueue>,
     label: String,
-    command: TaskCommand,
+    command: Value,
 ) -> Result<u64, String> {
+    let command = serde_json::from_value::<TaskCommand>(command)
+        .map_err(|e| format!("invalid task command: {e}; payload: {command}"))?;
     Ok(queue.enqueue(label, command).await)
 }
 
