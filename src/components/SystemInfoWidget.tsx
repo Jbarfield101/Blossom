@@ -2,6 +2,7 @@ import { Box } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useSystemInfo } from "../features/system/useSystemInfo";
 import { Theme, useTheme } from "../features/theme/ThemeContext";
+import { useAudioLevel } from "../utils/useAudioLevel";
 
 const themeColors: Record<Theme, string> = {
   default: "rgba(255,255,255,0.22)",
@@ -24,12 +25,19 @@ export default function SystemInfoWidget() {
   const info = useSystemInfo();
   const { theme } = useTheme();
   const nav = useNavigate();
+  const level = useAudioLevel();
+
+  const retroAlpha = 0.22 + level * (1 - 0.22);
 
   return (
     <Box
       onClick={() => nav("/system")}
       sx={{
-        backgroundColor: themeColors[theme],
+        backgroundColor:
+          theme === "retro"
+            ? "rgba(0,255,0,var(--audio-alpha))"
+            : themeColors[theme],
+        "--audio-alpha": theme === "retro" ? retroAlpha : undefined,
         color: "#fff",
         px: 2,
         py: 1,
