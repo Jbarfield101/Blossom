@@ -273,6 +273,7 @@ def extract_npcs(path: str):
             or data.get("origin/domain"),
             "hooks": hooks,
             "quirks": [q.strip() for q in data.get("quirks", "").split(",") if q.strip()] or None,
+            "appearance": data.get("appearance"),
             "statblock": {},
             "tags": tags,
         }
@@ -331,6 +332,7 @@ def extract_npcs(path: str):
                 "origin/domain",
                 "hooks",
                 "quirks",
+                "appearance",
                 "portrait",
                 "icon",
                 "voice",
