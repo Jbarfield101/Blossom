@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Button,
@@ -12,7 +12,9 @@ import StarBorderIcon from "@mui/icons-material/StarBorder";
 import { useVoices } from "../../store/voices";
 
 export default function VoiceSettings() {
-  const voices = useVoices((s) => s.voices.filter(s.filter));
+  const allVoices = useVoices((s) => s.voices);
+  const voiceFilter = useVoices((s) => s.filter);
+  const voices = useMemo(() => allVoices.filter(voiceFilter), [allVoices, voiceFilter]);
   const addVoice = useVoices((s) => s.addVoice);
   const removeVoice = useVoices((s) => s.removeVoice);
   const setTags = useVoices((s) => s.setTags);

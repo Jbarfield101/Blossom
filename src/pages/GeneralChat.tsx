@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useTasks } from "../store/tasks";
 import { listen } from "@tauri-apps/api/event";
@@ -52,7 +52,9 @@ export default function GeneralChat() {
   const [error, setError] = useState<string>("");
   const [logs, setLogs] = useState<string[]>([]);
   const enqueueTask = useTasks((s) => s.enqueueTask);
-  const voices = useVoices((s) => s.voices.filter(s.filter));
+  const allVoices = useVoices((s) => s.voices);
+  const voiceFilter = useVoices((s) => s.filter);
+  const voices = useMemo(() => allVoices.filter(voiceFilter), [allVoices, voiceFilter]);
   const toggleFavorite = useVoices((s) => s.toggleFavorite);
   const loadVoices = useVoices((s) => s.load);
   const [voiceId, setVoiceId] = useState<string>("");

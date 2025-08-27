@@ -1,4 +1,4 @@
-import { useReducer, useState, useEffect } from "react";
+import { useReducer, useState, useEffect, useMemo } from "react";
 import {
   Typography,
   Button,
@@ -79,7 +79,9 @@ interface Props {
 
 export default function NpcForm({ world }: Props) {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const voices = useVoices((s) => s.voices.filter(s.filter));
+  const allVoices = useVoices((s) => s.voices);
+  const voiceFilter = useVoices((s) => s.filter);
+  const voices = useMemo(() => allVoices.filter(voiceFilter), [allVoices, voiceFilter]);
   const toggleFavorite = useVoices((s) => s.toggleFavorite);
   const loadVoices = useVoices((s) => s.load);
   useEffect(() => {

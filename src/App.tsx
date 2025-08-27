@@ -32,6 +32,7 @@ import Transcription from "./pages/Transcription";
 import Construction from "./pages/Construction";
 import Simulation from "./pages/Simulation";
 import BigBrother from "./pages/BigBrother";
+import Voices from "./pages/Voices";
 
 export default function App() {
   const users = useUsers((s) => s.users);
@@ -71,6 +72,7 @@ export default function App() {
         <Route path="/fusion" element={<Fusion />} />
         <Route path="/construction" element={<Construction />} />
         <Route path="/lofi" element={<Lofi />} />
+        <Route path="/voices" element={<Voices />} />
         <Route path="/stocks" element={<Stocks />} />
         <Route path="/shorts" element={<Shorts />} />
         <Route path="/chores" element={<Chores />} />
