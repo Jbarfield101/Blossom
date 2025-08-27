@@ -3,10 +3,6 @@ import {
   Box,
   Button,
   ButtonGroup,
-  Checkbox,
-  Collapse,
-  FormControlLabel,
-  Grid,
   IconButton,
   MenuItem,
   Paper,
@@ -46,27 +42,19 @@ export default function Calendar() {
   const [quickTitle, setQuickTitle] = useState("");
   const [quickTime, setQuickTime] = useState("09:00");
   const [quickDuration, setQuickDuration] = useState(60);
+  const [quickTags, setQuickTags] = useState("");
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const quickTitleRef = useRef<HTMLInputElement>(null);
   const lastFocusedDayRef = useRef<HTMLDivElement | null>(null);
   const closeQuickAdd = useCallback(() => {
     setQuickAdd(null);
+    setEditingEvent(null);
+    setQuickTitle("");
+    setQuickTime("09:00");
+    setQuickDuration(60);
+    setQuickTags("");
     lastFocusedDayRef.current?.focus();
   }, []);
-
-  // add-event form state
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState("");
-  const [end, setEnd] = useState("");
-  const [timeError, setTimeError] = useState(false);
-  const [tags, setTags] = useState("");
-  const [status, setStatus] = useState<
-    "scheduled" | "canceled" | "missed" | "completed"
-  >("scheduled");
-  const [hasCountdown, setHasCountdown] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [duration, setDuration] = useState(60);
-  const [showMore, setShowMore] = useState(false);
-  const [overlapWarning, setOverlapWarning] = useState<string | null>(null);
 
   const events = useCalendar((s) => s.events);
   const addEvent = useCalendar((s) => s.addEvent);
@@ -112,114 +100,105 @@ export default function Calendar() {
     };
   }, [year]);
 
-  const save = () => {
-    if (!title || !date || !end || timeError) return;
-    const tagsArr = tags
+  const saveQuick = () => {
+    if (!quickAdd || !quickTitle) return;
+    const dayStr = `${year}-${pad(month + 1)}-${pad(quickAdd.day)}`;
+    const start = new Date(`${dayStr}T${quickTime}`);
+    const endTime = new Date(start.getTime() + quickDuration * 60000);
+    const tagsArr = quickTags
       .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
-    if (editingId) {
-      updateEvent(editingId, {
-        title,
-        date,
-        end,
+    if (editingEvent) {
+      updateEvent(editingEvent.id, {
+        title: quickTitle,
+        date: toLocalNaive(start),
+        end: toLocalNaive(endTime),
         tags: tagsArr,
-        status,
-        hasCountdown,
+        status: editingEvent.status,
+        hasCountdown: editingEvent.hasCountdown,
       });
     } else {
-      addEvent({ title, date, end, tags: tagsArr, status, hasCountdown });
+      addEvent({
+        title: quickTitle,
+        date: toLocalNaive(start),
+        end: toLocalNaive(endTime),
+        tags: tagsArr,
+        status: "scheduled",
+        hasCountdown: false,
+      });
     }
-    setTitle("");
-    setDate("");
-    setEnd("");
-    setTags("");
-    setStatus("scheduled");
-    setHasCountdown(false);
-    setEditingId(null);
-    setDuration(60);
-    setShowMore(false);
-    setOverlapWarning(null);
+    closeQuickAdd();
   };
-
-  useEffect(() => {
-    if (!date || !end) {
-      setTimeError(false);
-      setOverlapWarning(null);
-      return;
-    }
-    const startTime = new Date(date).getTime();
-    const endTime = new Date(end).getTime();
-    if (isNaN(startTime) || isNaN(endTime)) {
-      setTimeError(true);
-      setOverlapWarning(null);
-      return;
-    }
-    setTimeError(endTime <= startTime);
-  }, [date, end]);
-
-  useEffect(() => {
-    if (!date || !end || timeError) {
-      setOverlapWarning(null);
-      return;
-    }
-    const startTime = new Date(date).getTime();
-    const endTime = new Date(end).getTime();
-    if (isNaN(startTime) || isNaN(endTime)) {
-      setOverlapWarning(null);
-      return;
-    }
-    const overlap = events.some((e) => {
-      if (editingId && e.id === editingId) return false;
-      const s = new Date(e.date).getTime();
-      const en = new Date(e.end).getTime();
-      return startTime < en && endTime > s;
-    });
-    setOverlapWarning(overlap ? "Event overlaps with another event" : null);
-  }, [date, end, events, editingId, timeError]);
 
   const dayEvents = (day: number) => {
     const dayStr = `${year}-${pad(month + 1)}-${pad(day)}`;
     return events.filter((e) => e.date.slice(0, 10) === dayStr);
   };
 
-  const prefillDay = (day: number) => {
-    const dayStr = `${year}-${pad(month + 1)}-${pad(day)}`;
-    const start = `${dayStr}T09:00`;
-    const endTime = `${dayStr}T10:00`;
-    setDate(start);
-    setEnd(endTime);
-    setDuration(60);
-    setSelectedDay(day);
-    setFocusedDay(day);
+  const openQuickAddDay = (day: number) => {
+    const el = document.querySelector(
+      `[data-testid="day-${day}"]`,
+    ) as HTMLElement | null;
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      const width = 224;
+      const height = 300;
+      let top = rect.bottom;
+      let left = rect.left;
+      top = Math.min(top, window.innerHeight - height);
+      left = Math.min(left, window.innerWidth - width);
+      top = Math.max(0, top);
+      left = Math.max(0, left);
+      lastFocusedDayRef.current = el;
+      setQuickAdd({ day, top, left });
+      setQuickTitle("");
+      setQuickTime("09:00");
+      setQuickDuration(60);
+      setQuickTags("");
+      setEditingEvent(null);
+      setSelectedDay(day);
+      setFocusedDay(day);
+    }
   };
 
   const startEdit = (ev: CalendarEvent) => {
-    setTitle(ev.title);
-    setDate(ev.date);
-    setEnd(ev.end);
-    setTags((ev.tags ?? []).join(", "));
-    setStatus(ev.status ?? "scheduled");
-    setHasCountdown(ev.hasCountdown ?? false);
-    setEditingId(ev.id);
-    setDuration(
+    const d = new Date(ev.date);
+    const day = d.getDate();
+    let top = quickAdd?.top ?? 0;
+    let left = quickAdd?.left ?? 0;
+    if (!quickAdd) {
+      const el = document.querySelector(
+        `[data-testid="day-${day}"]`,
+      ) as HTMLElement | null;
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        const width = 224;
+        const height = 300;
+        top = Math.min(rect.bottom, window.innerHeight - height);
+        left = Math.min(rect.left, window.innerWidth - width);
+        top = Math.max(0, top);
+        left = Math.max(0, left);
+        lastFocusedDayRef.current = el;
+      }
+    }
+    setQuickAdd({ day, top, left });
+    setQuickTitle(ev.title);
+    setQuickTime(ev.date.slice(11, 16));
+    setQuickDuration(
       Math.round(
         (new Date(ev.end).getTime() - new Date(ev.date).getTime()) / 60000,
       ),
     );
-    setShowMore(
-      !!(ev.tags?.length || ev.status !== "scheduled" || ev.hasCountdown),
-    );
-    const d = new Date(ev.date);
-    const day = d.getDate();
+    setQuickTags((ev.tags ?? []).join(", "));
+    setEditingEvent(ev);
     setSelectedDay(day);
     setFocusedDay(day);
-    setQuickAdd(null);
   };
 
   const { focusedDay, setFocusedDay } = useKeyboardNavigation(
     daysInMonth,
-    prefillDay,
+    openQuickAddDay,
   );
 
   const today = new Date();
@@ -247,27 +226,11 @@ export default function Calendar() {
     setQuickTitle("");
     setQuickTime("09:00");
     setQuickDuration(60);
+    setQuickTags("");
+    setEditingEvent(null);
     setSelectedDay(day);
     setFocusedDay(day);
   };
-
-  const addQuick = () => {
-    if (!quickAdd || !quickTitle) return;
-    const dayStr = `${year}-${pad(month + 1)}-${pad(quickAdd.day)}`;
-    const start = new Date(`${dayStr}T${quickTime}`);
-    const endTime = new Date(start.getTime() + quickDuration * 60000);
-    addEvent({
-      title: quickTitle,
-      date: toLocalNaive(start),
-      end: toLocalNaive(endTime),
-      tags: [],
-      status: "scheduled",
-      hasCountdown: false,
-    });
-    closeQuickAdd();
-    setQuickTitle("");
-  };
-
   useEffect(() => {
     if (!quickAdd) return;
     quickTitleRef.current?.focus();
@@ -382,6 +345,7 @@ export default function Calendar() {
                 sx={{
                   display: "grid",
                   gridTemplateColumns: "repeat(7, 1fr)",
+                  gridAutoRows: "minmax(140px, auto)",
                   gap: 1,
                   mb: 8,
                 }}
@@ -403,7 +367,7 @@ export default function Calendar() {
                     month={month + 1}
                     events={day ? dayEvents(day) : []}
                     onDayClick={handleDayClick}
-                    onPrefill={prefillDay}
+                    onPrefill={openQuickAddDay}
                     isToday={day ? isToday(day) : false}
                     isFocused={focusedDay === day}
                     isSelected={selectedDay === day}
@@ -489,142 +453,6 @@ export default function Calendar() {
                     ))}
                   </Box>
                 )}
-              </Paper>
-
-              <Paper sx={{ p: 2 }}>
-                <Typography variant="h6" gutterBottom>
-                  {editingId ? "Edit Event" : "Add Event"}
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      id="title"
-                      label="Title"
-                      fullWidth
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      id="start"
-                      type="datetime-local"
-                      label="Start Time"
-                      fullWidth
-                      value={date}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        setDate(value);
-                        const startMs = Date.parse(value);
-                        if (!Number.isNaN(startMs)) {
-                          setEnd(toLocalNaive(new Date(startMs + duration * 60000)));
-                        } else {
-                          setEnd("");
-                        }
-                      }}
-                      inputProps={{ "data-testid": "date-input" }}
-                      InputLabelProps={{ shrink: true }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      id="end"
-                      type="datetime-local"
-                      label="End Time"
-                      fullWidth
-                      value={end}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        setEnd(value);
-                        const startMs = Date.parse(date);
-                        const endMs = Date.parse(value);
-                        if (!Number.isNaN(startMs) && !Number.isNaN(endMs)) {
-                          setDuration(Math.round((endMs - startMs) / 60000));
-                        }
-                      }}
-                      inputProps={{ "data-testid": "end-input" }}
-                      InputLabelProps={{ shrink: true }}
-                    />
-                    {timeError && (
-                      <Typography
-                        color="error"
-                        variant="body2"
-                        data-testid="time-error"
-                      >
-                        End time must be after start time
-                      </Typography>
-                    )}
-                    {!timeError && overlapWarning && (
-                      <Typography
-                        sx={{ color: "warning.main" }}
-                        variant="body2"
-                        data-testid="overlap-warning"
-                      >
-                        {overlapWarning}
-                      </Typography>
-                    )}
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Button
-                      size="small"
-                      onClick={() => setShowMore((v) => !v)}
-                      data-testid="toggle-advanced"
-                    >
-                      {showMore ? "Less options" : "More options"}
-                    </Button>
-                    <Collapse in={showMore} sx={{ mt: 2 }} unmountOnExit>
-                      <Grid container spacing={2}>
-                        <Grid item xs={12} md={6}>
-                          <TextField
-                            id="tags"
-                            label="Tags"
-                            fullWidth
-                            placeholder="tag1, tag2"
-                            value={tags}
-                            onChange={(e) => setTags(e.target.value)}
-                          />
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                          <TextField
-                            id="status"
-                            label="Status"
-                            select
-                            fullWidth
-                            value={status}
-                            onChange={(e) => setStatus(e.target.value as any)}
-                          >
-                            <MenuItem value="scheduled">Scheduled</MenuItem>
-                            <MenuItem value="canceled">Canceled</MenuItem>
-                            <MenuItem value="missed">Missed</MenuItem>
-                            <MenuItem value="completed">Completed</MenuItem>
-                          </TextField>
-                        </Grid>
-                        <Grid item xs={12}>
-                          <FormControlLabel
-                            control={
-                              <Checkbox
-                                id="countdown"
-                                checked={hasCountdown}
-                                onChange={(e) => setHasCountdown(e.target.checked)}
-                              />
-                            }
-                            label="Countdown"
-                          />
-                        </Grid>
-                      </Grid>
-                    </Collapse>
-                  </Grid>
-                </Grid>
-                <Box display="flex" justifyContent="flex-end" mt={3}>
-                  <Button
-                    variant="contained"
-                    onClick={save}
-                    disabled={timeError || !title || !date || !end}
-                    data-testid="add-button"
-                  >
-                    {editingId ? "Update Event" : "Add Event"}
-                  </Button>
-                </Box>
               </Paper>
 
               <TagStats />
@@ -738,8 +566,17 @@ export default function Calendar() {
                 <option value={90}>1h 30m</option>
                 <option value={120}>2h</option>
               </TextField>
-              <Button fullWidth variant="contained" onClick={addQuick}>
-                Add
+              <TextField
+                type="text"
+                fullWidth
+                placeholder="Tags (comma separated)"
+                inputProps={{ "aria-label": "Tags" }}
+                value={quickTags}
+                onChange={(e) => setQuickTags(e.target.value)}
+                sx={{ mb: 2 }}
+              />
+              <Button fullWidth variant="contained" onClick={saveQuick}>
+                {editingEvent ? "Save" : "Add"}
               </Button>
             </Box>
           </Paper>
