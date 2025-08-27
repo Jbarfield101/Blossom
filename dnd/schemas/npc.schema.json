@@ -27,6 +27,10 @@
         "playerCharacter": {
           "type": "boolean"
         },
+        "age": {
+          "type": "integer",
+          "exclusiveMinimum": 0
+        },
         "backstory": {
           "type": "string"
         },
