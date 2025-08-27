@@ -87,10 +87,12 @@ After installation, verify the binaries are visible with `ffmpeg -version`.
 
 ## Testing
 
-Run the test suite to verify the application:
+Install the Python test dependencies and run the test suites:
 
 ```bash
-npm test
+pip install -r requirements-dev.txt  # includes pytest
+pytest  # run Python tests
+npm test  # run JavaScript tests
 ```
 
 ## RetroTV component
