@@ -6,7 +6,15 @@ export default function StyledTextField(props: TextFieldProps) {
     <TextField
       variant="outlined"
       label={label}
-      InputLabelProps={InputLabelProps}
+      InputLabelProps={{
+        ...InputLabelProps,
+        sx: {
+          backgroundColor: "background.paper",
+          px: 0.5,
+          color: "text.primary",
+          ...(InputLabelProps && (InputLabelProps as any).sx),
+        },
+      }}
       InputProps={{
         ...InputProps,
         sx: {
