@@ -5,15 +5,15 @@ import { useEffect, useRef, useState } from "react";
  *
  * It attaches an {@link AnalyserNode} to the provided source node and
  * returns a normalized RMS amplitude between `0` and `1`.
- * If no source is given the hook monitors the active
- * {@link AudioContext}'s destination.
+ * If no source is given the hook taps the user's microphone as a fallback
+ * input.
  *
  * ```ts
  * const level = useAudioLevel(player);
  * ```
  *
- * @param source Optional {@link AudioNode} to tap. Defaults to the global
- *               audio context's destination.
+ * @param source Optional {@link AudioNode} to tap. Defaults to the user's
+ *               microphone input.
  */
 export function useAudioLevel(source?: AudioNode): number {
   const [level, setLevel] = useState(0);
@@ -29,10 +29,21 @@ export function useAudioLevel(source?: AudioNode): number {
     analyser.fftSize = 256;
     const data = new Uint8Array(analyser.fftSize);
 
+    let micStream: MediaStream | undefined;
+    let micNode: MediaStreamAudioSourceNode | undefined;
     if (source) {
       source.connect(analyser);
-    } else {
-      ctx.destination.connect(analyser);
+    } else if (navigator?.mediaDevices?.getUserMedia) {
+      navigator.mediaDevices
+        .getUserMedia({ audio: true })
+        .then((stream) => {
+          micStream = stream;
+          micNode = ctx.createMediaStreamSource(stream);
+          micNode.connect(analyser);
+        })
+        .catch(() => {
+          /* ignore denial */
+        });
     }
 
     const update = () => {
@@ -52,7 +63,8 @@ export function useAudioLevel(source?: AudioNode): number {
       if (source) {
         source.disconnect(analyser);
       } else {
-        ctx.destination.disconnect(analyser);
+        micNode?.disconnect();
+        micStream?.getTracks().forEach((t) => t.stop());
         ctx.close();
       }
     };
