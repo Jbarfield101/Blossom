@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useTheme } from "../features/theme/ThemeContext";
+import BouncingIcons from "./BouncingIcons";
 
 interface RetroTVProps {
   children?: React.ReactNode;
@@ -47,13 +48,7 @@ export default function RetroTV({ children }: RetroTVProps) {
   } else if (children) {
     content = <div className="retro-tv-content">{children}</div>;
   } else {
-    content = (
-      <img
-        src="/assets/logo.png"
-        className="retro-tv-content"
-        alt="Blossom logo"
-      />
-    );
+    content = <BouncingIcons />;
   }
 
   return (
