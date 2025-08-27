@@ -43,3 +43,31 @@ describe('useTasks error handling', () => {
     expect(state.tasks[1]).toMatchObject({ status: 'failed', error: 'nope' });
   });
 });
+
+describe('enqueueTask validation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useTasks.setState({ tasks: {}, pollers: {} });
+  });
+
+  afterEach(() => {
+    const { pollers, stopPolling } = useTasks.getState();
+    Object.keys(pollers).forEach((id) => stopPolling(Number(id)));
+  });
+
+  it('builds command when label is a valid id and id is missing', async () => {
+    (invoke as any).mockResolvedValue(1);
+    const id = await useTasks.getState().enqueueTask('ParseSpellPdf', { path: 'x' } as any);
+    expect(id).toBe(1);
+    expect(invoke).toHaveBeenCalledWith('enqueue_task', {
+      label: 'ParseSpellPdf',
+      command: { id: 'ParseSpellPdf', path: 'x' },
+    });
+  });
+
+  it('throws when command id is missing and label is not a task id', async () => {
+    await expect(
+      useTasks.getState().enqueueTask('NotATask', {} as any),
+    ).rejects.toThrow('id');
+  });
+});

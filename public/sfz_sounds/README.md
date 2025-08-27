@@ -39,3 +39,17 @@ loadSfz(convertFileSrc(path));
 
 Because sample paths are relative, the loader automatically locates files inside
 the matching sample folder (`piano/` in this example).
+
+## Using in song specs
+
+Reference SFZ files in the song JSON to swap instruments:
+
+```json
+{
+  "sfz_chords": "sfz_sounds/piano.sfz",
+  "sfz_pads": "sfz_sounds/pads.sfz",
+  "sfz_bass": "sfz_sounds/bass.sfz"
+}
+```
+
+`sfz_instrument` remains available for lead melodies.

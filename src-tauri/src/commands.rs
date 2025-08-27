@@ -3,7 +3,7 @@ use std::{
     collections::HashMap,
     env,
     fs::{self, OpenOptions},
-    io::{BufRead, BufReader, Read, Write},
+    io::{BufRead, BufReader, Write},
     path::{Path, PathBuf},
     process::{Command as PCommand, Stdio},
     sync::{Arc, Mutex, OnceLock},
@@ -2087,14 +2087,18 @@ fn dj_mix_script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
         .join("dj_mix.py")
 }
 
-fn bark_tts_script_path() -> PathBuf {
-    if let Ok(cwd) = env::current_dir() {
+fn bark_tts_script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
+    if let Ok(cwd) = std::env::current_dir() {
         let dev = cwd.join("src-tauri").join("python").join("bark_tts.py");
         if dev.exists() {
             return dev;
         }
     }
-    PathBuf::from("bark_tts.py")
+    app.path()
+        .resource_dir()
+        .expect("resource dir")
+        .join("python")
+        .join("bark_tts.py")
 }
 
 fn run_transcribe_script<R: Runtime>(app: &AppHandle<R>, audio: &Path) -> Result<String, String> {
@@ -2167,12 +2171,16 @@ pub async fn transcribe_audio<R: Runtime>(
 }
 
 #[tauri::command]
-pub async fn bark_tts(text: String, speaker: String) -> Result<Vec<u8>, String> {
+pub async fn bark_tts<R: Runtime>(
+    app: AppHandle<R>,
+    text: String,
+    speaker: String,
+) -> Result<Vec<u8>, String> {
     let py = conda_python();
     if !py.exists() {
         return Err(format!("Python not found at {}", py.display()));
     }
-    let script = bark_tts_script_path();
+    let script = bark_tts_script_path(&app);
     if !script.exists() {
         return Err(format!("Script not found at {}", script.display()));
     }
