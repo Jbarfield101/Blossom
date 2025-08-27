@@ -18,7 +18,8 @@ export default function SpellPdfUpload() {
     const selected = await open({ filters: [{ name: "PDF", extensions: ["pdf"] }] });
     if (typeof selected === "string") {
       const id = await enqueueTask("Import Spell PDF", {
-        ParseSpellPdf: { path: selected },
+        id: "ParseSpellPdf",
+        path: selected,
       });
       setTaskId(id);
     }

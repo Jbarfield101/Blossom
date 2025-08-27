@@ -292,28 +292,6 @@ img.retro-tv-content {
   filter: hue-rotate(90deg) saturate(0.6) brightness(0.9);
 }
 
-.retro-tv-upload {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
-  color: #0f0;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-  z-index: 3;
-}
-
-.retro-tv-screen:hover .retro-tv-upload {
-  opacity: 1;
-  pointer-events: auto;
-}
-
 .retro-tv-screen::before {
   content: "";
   position: absolute;

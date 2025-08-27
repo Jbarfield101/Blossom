@@ -2,6 +2,31 @@ import { create } from 'zustand';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 
+export type TaskCommand =
+  | { id: 'Example' }
+  | {
+      id: 'LofiGenerateGpu';
+      py: string;
+      script: string;
+      prompt: string;
+      duration: number;
+      seed: number;
+    }
+  | { id: 'PdfIngest'; py: string; script: string; doc_id: string }
+  | { id: 'ParseNpcPdf'; py?: string; script?: string; path: string; world: string }
+  | { id: 'ParseSpellPdf'; py?: string; script?: string; path: string }
+  | { id: 'ParseRulePdf'; py?: string; script?: string; path: string }
+  | { id: 'ParseLorePdf'; py?: string; script?: string; path: string; world: string }
+  | { id: 'GenerateAlbum'; meta: any }
+  | { id: 'GenerateShort'; spec: any };
+
+export function buildTaskCommand(
+  id: TaskCommand['id'],
+  fields: Record<string, unknown> = {}
+): TaskCommand {
+  return { id, ...fields } as TaskCommand;
+}
+
 export type TaskStatus =
   | 'queued'
   | 'running'
@@ -55,7 +80,7 @@ function normalize(raw: RawTask): Task {
 interface TasksState {
   tasks: Record<number, Task>;
   pollers: Record<number, ReturnType<typeof setInterval>>;
-  enqueueTask: (label: string, command: unknown) => Promise<number>;
+  enqueueTask: (label: string, command: TaskCommand) => Promise<number>;
   fetchStatus: (id: number) => Promise<void>;
   startPolling: (id: number, interval?: number) => void;
   stopPolling: (id: number) => void;

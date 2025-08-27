@@ -223,6 +223,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   const currentUserId = useUsers((state) => state.currentUserId);
   const users = useUsers((s) => s.users);
   const switchUser = useUsers((s) => s.switchUser);
+  const setRetroTvMedia = useUsers((s) => s.setRetroTvMedia);
   const hasUser = currentUserId !== null;
   const [createUserOpen, setCreateUserOpen] = useState(false);
   const { showTutorial, setShowTutorial } = useComfyTutorial();
@@ -302,6 +303,40 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
         document.getElementById(item.elementId)?.scrollIntoView({ behavior: "smooth" });
       }, 0);
     }
+  };
+
+  const handleRetroVideoUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUrl = reader.result as string;
+      const base64 = dataUrl.split(",")[1];
+      const ext = file.name.split(".").pop() || "mp4";
+      try {
+        const path: string = await invoke("save_retro_tv_video", {
+          data: base64,
+          ext,
+        });
+        const video = document.createElement("video");
+        video.src = dataUrl;
+        video.addEventListener(
+          "loadedmetadata",
+          () =>
+            setRetroTvMedia({
+              path,
+              width: video.videoWidth,
+              height: video.videoHeight,
+            }),
+          { once: true }
+        );
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const EnvironmentSection = () => (
@@ -516,6 +551,19 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
               </Box>
             ))}
           </Box>
+          {themeDraft === "retro" && (
+            <Box sx={{ mt: 2 }}>
+              <Button variant="outlined" component="label">
+                Upload Retro TV Video
+                <input
+                  type="file"
+                  accept="video/*"
+                  hidden
+                  onChange={handleRetroVideoUpload}
+                />
+              </Button>
+            </Box>
+          )}
           <Button
             variant="contained"
             sx={{ mt: 2 }}

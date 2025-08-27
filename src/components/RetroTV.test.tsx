@@ -3,7 +3,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
 import RetroTV from './RetroTV';
 
-const clearRetroTvMedia = vi.fn();
 vi.mock('../features/theme/ThemeContext', () => ({
   useTheme: () => ({ theme: 'retro' }),
 }));
@@ -11,10 +10,13 @@ vi.mock('../features/users/useUsers', () => ({
   useUsers: (selector: any) =>
     selector({
       currentUserId: '1',
-      users: { '1': { retroTvMedia: null } },
-      setRetroTvMedia: vi.fn(),
-      clearRetroTvMedia,
+      users: {
+        '1': { retroTvMedia: { path: '/tmp/video.mp4', width: 640, height: 480 } },
+      },
     }),
+}));
+vi.mock('@tauri-apps/api/core', () => ({
+  convertFileSrc: (p: string) => `tauri://${p}`,
 }));
 
 afterEach(() => {
@@ -23,10 +25,8 @@ afterEach(() => {
 });
 
 describe('RetroTV', () => {
-  it('clears media only on unmount', () => {
-    const { unmount } = render(<RetroTV />);
-    expect(clearRetroTvMedia).not.toHaveBeenCalled();
-    unmount();
-    expect(clearRetroTvMedia).toHaveBeenCalledTimes(1);
+  it('renders video when media is present', () => {
+    const { container } = render(<RetroTV />);
+    expect(container.querySelector('video')).not.toBeNull();
   });
 });
