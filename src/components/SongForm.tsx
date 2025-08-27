@@ -20,6 +20,7 @@ import styles from "./SongForm.module.css";
 import clsx from "clsx";
 import { useTheme } from "@mui/material/styles";
 import { MOODS, INSTR } from "../utils/musicData";
+import { log } from "../utils/logger";
 import { useTasks } from "../store/tasks";
 import { useSongJobs, Job } from "../store/songJobs";
 
@@ -473,9 +474,7 @@ export default function SongForm() {
           } else {
             setGlobalStatus(pretty);
           }
-          if (import.meta.env.DEV) {
-            console.log("lofi_progress:", raw);
-          }
+          log("lofi_progress:", raw);
         } catch {}
       });
       unlisten = off;
