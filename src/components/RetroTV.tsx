@@ -10,6 +10,8 @@ export default function RetroTV({ children }: RetroTVProps) {
   const { theme } = useTheme();
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<"image" | "video" | null>(null);
+  const [mediaWidth, setMediaWidth] = useState(640);
+  const [mediaHeight, setMediaHeight] = useState(480);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (
@@ -20,7 +22,28 @@ export default function RetroTV({ children }: RetroTVProps) {
     if (mediaUrl) URL.revokeObjectURL(mediaUrl);
     const url = URL.createObjectURL(file);
     setMediaUrl(url);
-    setMediaType(file.type.startsWith("video") ? "video" : "image");
+    const isVideo = file.type.startsWith("video");
+    setMediaType(isVideo ? "video" : "image");
+
+    if (isVideo) {
+      const video = document.createElement("video");
+      video.src = url;
+      video.addEventListener(
+        "loadedmetadata",
+        () => {
+          setMediaWidth(video.videoWidth);
+          setMediaHeight(video.videoHeight);
+        },
+        { once: true }
+      );
+    } else {
+      const img = new Image();
+      img.src = url;
+      img.onload = () => {
+        setMediaWidth(img.width);
+        setMediaHeight(img.height);
+      };
+    }
   };
 
   useEffect(() => {
@@ -52,7 +75,10 @@ export default function RetroTV({ children }: RetroTVProps) {
   }
 
   return (
-    <div className="retro-tv-container">
+    <div
+      className="retro-tv-container"
+      style={{ width: mediaWidth, height: mediaHeight }}
+    >
       <input
         type="file"
         accept="image/*,video/*"
