@@ -11,6 +11,8 @@ import {
   TextField,
   Typography,
   Autocomplete,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import StarIcon from "@mui/icons-material/Star";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
@@ -54,7 +56,14 @@ export default function GeneralChat() {
   const enqueueTask = useTasks((s) => s.enqueueTask);
   const allVoices = useVoices((s) => s.voices);
   const voiceFilter = useVoices((s) => s.filter);
-  const voices = useMemo(() => allVoices.filter(voiceFilter), [allVoices, voiceFilter]);
+  const [favoriteOnly, setFavoriteOnly] = useState(false);
+  const voices = useMemo(
+    () =>
+      allVoices
+        .filter(voiceFilter)
+        .filter((v) => !favoriteOnly || v.favorite),
+    [allVoices, voiceFilter, favoriteOnly]
+  );
   const toggleFavorite = useVoices((s) => s.toggleFavorite);
   const loadVoices = useVoices((s) => s.load);
   const [voiceId, setVoiceId] = useState<string>("");
@@ -345,6 +354,15 @@ export default function GeneralChat() {
       <Stack spacing={2} sx={{ p: 2, flexGrow: 1, width: "100%", maxWidth: 600, mx: "auto" }}>
         <ImagePromptGenerator onGenerate={(prompt) => send(prompt)} />
         <MusicPromptGenerator onGenerate={(prompt) => send(prompt)} />
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={favoriteOnly}
+              onChange={(e) => setFavoriteOnly(e.target.checked)}
+            />
+          }
+          label="Favorites"
+        />
         <Autocomplete
           options={voices}
           getOptionLabel={(v) => v.id}

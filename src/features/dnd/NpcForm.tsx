@@ -3,6 +3,7 @@ import {
   Typography,
   Button,
   Checkbox,
+  FormControlLabel,
   Grid,
   Box,
   Divider,
@@ -82,7 +83,14 @@ export default function NpcForm({ world }: Props) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const allVoices = useVoices((s) => s.voices);
   const voiceFilter = useVoices((s) => s.filter);
-  const voices = useMemo(() => allVoices.filter(voiceFilter), [allVoices, voiceFilter]);
+  const [favoriteOnly, setFavoriteOnly] = useState(false);
+  const voices = useMemo(
+    () =>
+      allVoices
+        .filter(voiceFilter)
+        .filter((v) => !favoriteOnly || v.favorite),
+    [allVoices, voiceFilter, favoriteOnly]
+  );
   const toggleFavorite = useVoices((s) => s.toggleFavorite);
   const loadVoices = useVoices((s) => s.load);
   useEffect(() => {
@@ -487,6 +495,15 @@ export default function NpcForm({ world }: Props) {
                   </Typography>
                 </Grid>
                 <Grid item xs={8}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={favoriteOnly}
+                        onChange={(e) => setFavoriteOnly(e.target.checked)}
+                      />
+                    }
+                    label="Favorites"
+                  />
                   <Autocomplete
                     options={voiceOptions}
                     getOptionLabel={(v) => v.id}
