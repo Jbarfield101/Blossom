@@ -32,7 +32,8 @@ export default function RulePdfUpload() {
     });
     if (typeof selected === "string") {
       const id = await enqueueTask("Import Rule PDF", {
-        ParseRulePdf: { path: selected },
+        id: "ParseRulePdf",
+        path: selected,
       });
       setTaskId(id);
     }

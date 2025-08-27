@@ -30,7 +30,9 @@ export default function NpcPdfUpload({ world, onParsed }: Props) {
     const selected = await open({ filters: [{ name: "PDF", extensions: ["pdf"] }] });
     if (typeof selected === "string") {
       const id = await enqueueTask("Import NPC PDF", {
-        ParseNpcPdf: { path: selected, world },
+        id: "ParseNpcPdf",
+        path: selected,
+        world,
       });
       setTaskId(id);
       setStatus("uploading");

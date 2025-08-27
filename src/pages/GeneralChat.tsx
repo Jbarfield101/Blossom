@@ -216,7 +216,8 @@ export default function GeneralChat() {
             `Example: /music My Song template="Classic Lofi" tracks=3`;
         } else {
           await enqueueTask("Music Generation", {
-            GenerateAlbum: { meta: { track_count: trackCount, title_base: title, template } },
+            id: "GenerateAlbum",
+            meta: { track_count: trackCount, title_base: title, template },
           });
           const plural = trackCount === 1 ? "track" : "tracks";
           reply = `Started music generation for "${title}" using "${template}" with ${trackCount} ${plural}.`;
