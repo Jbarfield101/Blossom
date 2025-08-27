@@ -2,6 +2,7 @@
 import SongForm from "../components/SongForm";
 import VersionBadge from "../components/VersionBadge";
 import SystemInfoWidget from "../components/SystemInfoWidget";
+import TaskList from "../components/TaskQueue/TaskList";
 import { Box } from "@mui/material";
 import { systemInfoWidgetSx } from "./homeStyles";
 
@@ -29,9 +30,10 @@ export default function Music() {
         <VersionBadge />
       </div>
 
-      {/* Checkbox Song Builder only */}
+      {/* Song builder and task list */}
       <div style={{ maxWidth: 980, margin: "0 auto", padding: "24px 16px" }}>
         <SongForm />
+        <TaskList />
       </div>
 
       {/* System info widget */}
