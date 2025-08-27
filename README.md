@@ -48,6 +48,8 @@ npm run tauri build  # build a release bundle
 The Rust backend can launch local tools such as ComfyUI and Ollama. Set the
 ComfyUI folder location in the app's Settings page. Python is detected
 automatically, and you can adjust the interpreter path from Settings if needed.
+Install the [`ollama`](https://github.com/ollama/ollama) CLI separately if you
+plan to use the general chat features; the Python package is not required.
 
 ## Running Python scripts
 
@@ -85,10 +87,12 @@ After installation, verify the binaries are visible with `ffmpeg -version`.
 
 ## Testing
 
-Run the test suite to verify the application:
+Install the Python test dependencies and run the test suites:
 
 ```bash
-npm test
+pip install -r requirements-dev.txt  # includes pytest
+pytest  # run Python tests
+npm test  # run JavaScript tests
 ```
 
 ## RetroTV component

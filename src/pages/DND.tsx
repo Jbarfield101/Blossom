@@ -11,6 +11,7 @@ import {
   Map,
   MilitaryTech,
   LibraryBooks,
+  Inventory,
 } from "@mui/icons-material";
 import { SyntheticEvent, useState, ChangeEvent } from "react";
 import { createDndTheme } from "../theme";
@@ -24,6 +25,7 @@ import SpellForm from "../features/dnd/SpellForm";
 import DiceRoller from "../features/dnd/DiceRoller";
 import TabletopMap from "../features/dnd/TabletopMap";
 import WarTable from "../features/dnd/WarTable";
+import WorldInventory from "./WorldInventory";
 import { useWorlds } from "../store/worlds";
 import NewWorldDialog from "../components/NewWorldDialog";
 
@@ -56,6 +58,7 @@ export default function DND() {
   const tabs: TabConfig[] = [
     { icon: <Person />, label: "NPC", component: <NpcForm world={world} /> },
     { icon: <LibraryBooks />, label: "NPC Library", component: <NPCList /> },
+    { icon: <Inventory />, label: "Inventory", component: <WorldInventory /> },
     { icon: <MenuBook />, label: "Lore", component: <LoreForm world={world} /> },
     { icon: <TravelExplore />, label: "Quest", component: <QuestForm /> },
     { icon: <SportsKabaddi />, label: "Encounter", component: <EncounterForm /> },

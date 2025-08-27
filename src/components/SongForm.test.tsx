@@ -395,7 +395,7 @@ describe('SongForm', () => {
 
     await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
     const [, args] = enqueueTask.mock.calls[0];
-    expect(args.id).toBe('GenerateShort');
+    expect(args.id).toBe('GenerateSong');
     expect(args.spec.sfzInstrument).toBeDefined();
     expect(args.spec.instruments).toEqual([]);
     expect(args.spec.lead_instrument).toBeUndefined();

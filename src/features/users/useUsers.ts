@@ -16,7 +16,8 @@ type ModuleKey =
   | 'stocks'
   | 'shorts'
   | 'chores'
-  | 'construction';
+  | 'construction'
+  | 'sfz';
 
 type ModulesState = Record<ModuleKey, boolean>;
 
@@ -35,6 +36,7 @@ const defaultModules: ModulesState = {
   shorts: true,
   chores: true,
   construction: true,
+  sfz: true,
 };
 
 interface RetroTvMedia {
