@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import TopBar from "./components/TopBar";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -38,6 +38,7 @@ export default function App() {
   const users = useUsers((s) => s.users);
   const currentUserId = useUsers((s) => s.currentUserId);
   const switchUser = useUsers((s) => s.switchUser);
+  const { pathname } = useLocation();
   const [showUserDialog, setShowUserDialog] = useState(false);
 
   useEffect(() => {
@@ -52,7 +53,7 @@ export default function App() {
   return (
     <ErrorBoundary>
         <TopBar />
-        <RetroTV>NO SIGNAL</RetroTV>
+        {!pathname.startsWith("/comfy") && <RetroTV>NO SIGNAL</RetroTV>}
         <CreateUserDialog open={showUserDialog} onClose={() => setShowUserDialog(false)} />
       <Routes>
         <Route path="/" element={<Home />} />
