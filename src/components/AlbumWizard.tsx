@@ -177,14 +177,13 @@ export default function AlbumWizard() {
     }
     try {
       const id = await enqueueTask("Music Generation", {
-        GenerateAlbum: {
-          meta: {
-            track_count: 1,
-            title_base: titleBase,
-            track_names: [titleBase],
-            out_dir: outDir,
-            specs: [makeSpec()],
-          },
+        id: "GenerateAlbum",
+        meta: {
+          track_count: 1,
+          title_base: titleBase,
+          track_names: [titleBase],
+          out_dir: outDir,
+          specs: [makeSpec()],
         },
       });
       setTaskId(id);

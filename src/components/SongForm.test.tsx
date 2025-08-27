@@ -107,7 +107,8 @@ describe('SongForm', () => {
 
     await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
     const [, args] = enqueueTask.mock.calls[0];
-    const spec = args.GenerateShort.spec;
+    const spec = args.spec;
+    expect(args.id).toBe('GenerateShort');
     expect(spec.structure[0]).toHaveProperty('chords');
     expect(spec.chord_span_beats).toBe(4);
     expect(spec).toMatchObject({
@@ -329,7 +330,8 @@ describe('SongForm', () => {
 
     await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
     const [, args] = enqueueTask.mock.calls[0];
-    expect(args.GenerateShort.spec.instruments).toEqual(['harp', 'lute', 'pan flute']);
+    expect(args.id).toBe('GenerateShort');
+    expect(args.spec.instruments).toEqual(['harp', 'lute', 'pan flute']);
   });
 
   it('uses raw sfz path in render spec', async () => {
@@ -355,7 +357,8 @@ describe('SongForm', () => {
 
     await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
     const [, args] = enqueueTask.mock.calls[0];
-    expect(args.GenerateShort.spec.sfzInstrument).toBe('/tmp/piano file.sfz');
+    expect(args.id).toBe('GenerateShort');
+    expect(args.spec.sfzInstrument).toBe('/tmp/piano file.sfz');
     expect(setPreviewSfzInstrument).toHaveBeenCalledWith(
       'tauri:///tmp/piano%20file.sfz'
     );
@@ -392,7 +395,8 @@ describe('SongForm', () => {
 
     await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
     const [, args] = enqueueTask.mock.calls[0];
-    expect(args.GenerateShort.spec.lead_instrument).toBe('flute');
+    expect(args.id).toBe('GenerateShort');
+    expect(args.spec.lead_instrument).toBe('flute');
   });
 
   it('exports an odd-bar through-composed preset', () => {
@@ -442,10 +446,11 @@ describe('SongForm', () => {
     await waitFor(() => {
       expect(enqueueTask).toHaveBeenCalled();
       const args = enqueueTask.mock.calls[0][1];
-      expect(args.GenerateAlbum.meta.album_name).toBe('My Album');
-      expect(args.GenerateAlbum.meta.track_names).toEqual(['T1', 'T2', 'T3']);
-      expect(args.GenerateAlbum.meta.specs).toHaveLength(3);
-      expect(args.GenerateAlbum.meta.specs[0]).toMatchObject({
+      expect(args.id).toBe('GenerateAlbum');
+      expect(args.meta.album_name).toBe('My Album');
+      expect(args.meta.track_names).toEqual(['T1', 'T2', 'T3']);
+      expect(args.meta.specs).toHaveLength(3);
+      expect(args.meta.specs[0]).toMatchObject({
         title: 'Test Song 1',
         album: 'My Album',
       });

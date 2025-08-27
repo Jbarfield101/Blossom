@@ -17,7 +17,9 @@ export default function LorePdfUpload({ world }: Props) {
     const selected = await open({ filters: [{ name: "PDF", extensions: ["pdf"] }] });
     if (typeof selected === "string") {
       const id = await enqueueTask("Import Lore PDF", {
-        ParseLorePdf: { path: selected, world },
+        id: "ParseLorePdf",
+        path: selected,
+        world,
       });
       setTaskId(id);
     }

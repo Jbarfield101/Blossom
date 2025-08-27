@@ -706,9 +706,10 @@ export default function SongForm() {
       for (let i = 0; i < newJobs.length; i++) {
         const job = newJobs[i];
         try {
-          const taskId = await enqueueTask("Music Generation", {
-            GenerateShort: { spec: job.spec },
-          });
+          const taskId = await enqueueTask(
+            "Music Generation",
+            { id: "GenerateShort", spec: job.spec }
+          );
           setJobs((prev) =>
             prev.map((j) => (j.id === job.id ? { ...j, taskId } : j))
           );
@@ -739,15 +740,14 @@ export default function SongForm() {
         makeSpecForIndex(i)
       );
       await enqueueTask("Music Generation", {
-        GenerateAlbum: {
-          meta: {
-            track_count: trackCount,
-            title_base: titleBase,
-            album_name: albumName,
-            track_names: trackNames,
-            out_dir: outDir,
-            specs,
-          },
+        id: "GenerateAlbum",
+        meta: {
+          track_count: trackCount,
+          title_base: titleBase,
+          album_name: albumName,
+          track_names: trackNames,
+          out_dir: outDir,
+          specs,
         },
       });
       setOutDir(outDir);

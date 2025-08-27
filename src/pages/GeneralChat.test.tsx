@@ -179,12 +179,11 @@ describe('GeneralChat', () => {
 
     await waitFor(() => {
       expect(enqueueTask).toHaveBeenCalledWith('Music Generation', {
-        GenerateAlbum: {
-          meta: {
-            track_count: 2,
-            title_base: 'My Song',
-            template: 'Classic Lofi',
-          },
+        id: 'GenerateAlbum',
+        meta: {
+          track_count: 2,
+          title_base: 'My Song',
+          template: 'Classic Lofi',
         },
       });
     });
@@ -276,12 +275,11 @@ describe('GeneralChat', () => {
       })
     );
     expect(enqueueTask).toHaveBeenCalledWith('Music Generation', {
-      GenerateAlbum: {
-        meta: {
-          track_count: 2,
-          title_base: 'calm flute',
-          template: 'Classic Lofi',
-        },
+      id: 'GenerateAlbum',
+      meta: {
+        track_count: 2,
+        title_base: 'calm flute',
+        template: 'Classic Lofi',
       },
     });
   });
