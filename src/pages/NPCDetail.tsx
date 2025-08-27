@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import {
   Typography,
   Stack,
@@ -12,6 +12,7 @@ import {
 import Center from './_Center';
 import { useNPCs } from '../store/npcs';
 import { useWorlds } from '../store/worlds';
+import { useInventory } from '../store/inventory';
 import { generateAudio } from '../features/voice/bark';
 import * as Tone from 'tone';
 
@@ -20,6 +21,7 @@ export default function NPCDetail() {
   const npcs = useNPCs((s) => s.npcs);
   const loadNPCs = useNPCs((s) => s.loadNPCs);
   const world = useWorlds((s) => s.currentWorld);
+  const items = useInventory((s) => s.items);
 
   useEffect(() => {
     if (world) loadNPCs(world);
@@ -92,11 +94,22 @@ export default function NPCDetail() {
               <strong>Inventory:</strong>
             </Typography>
             <List>
-              {npc.inventory.map((item, idx) => (
-                <ListItem key={idx}>
-                  <ListItemText primary={item} />
-                </ListItem>
-              ))}
+              {npc.inventory.map((item, idx) => {
+                const entry = Object.values(items).find((i) => i.name === item);
+                return (
+                  <ListItem key={idx}>
+                    <ListItemText
+                      primary={
+                        entry ? (
+                          <Link to={`/dnd/world-inventory#${entry.id}`}>{item}</Link>
+                        ) : (
+                          item
+                        )
+                      }
+                    />
+                  </ListItem>
+                );
+              })}
             </List>
           </div>
         )}
