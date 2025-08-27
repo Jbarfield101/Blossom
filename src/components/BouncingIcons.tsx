@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { ITEMS } from "./FeatureNav";
+import { useAudioLevel } from "../utils/useAudioLevel";
+import { useTheme } from "../features/theme/ThemeContext";
 
 /**
  * Displays the FeatureNav icons bouncing around inside the TV screen.
@@ -7,6 +9,14 @@ import { ITEMS } from "./FeatureNav";
 export default function BouncingIcons() {
   const containerRef = useRef<HTMLDivElement>(null);
   const iconRefs = useRef<HTMLDivElement[]>([]);
+  const { theme } = useTheme();
+  const audioLevel = useAudioLevel();
+  const levelRef = useRef(0);
+
+  // keep latest audio level in a ref for the animation loop
+  useEffect(() => {
+    levelRef.current = audioLevel;
+  }, [audioLevel]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -32,7 +42,11 @@ export default function BouncingIcons() {
         if (p.y <= 0 || p.y >= height - ICON_SIZE) p.vy *= -1;
         const el = iconRefs.current[i];
         if (el) {
-          el.style.transform = `translate(${p.x}px, ${p.y}px)`;
+          const level = levelRef.current;
+          const scale = 1 + level * 0.3;
+          const glow = level * 20;
+          el.style.transform = `translate(${p.x}px, ${p.y}px) scale(${scale})`;
+          el.style.filter = `brightness(${1 + level}) drop-shadow(0 0 ${glow}px rgba(0,255,0,${level}))`;
         }
       });
       frame = requestAnimationFrame(animate);
@@ -57,7 +71,7 @@ export default function BouncingIcons() {
           style={{
             position: "absolute",
             fontSize: "2rem",
-            color: it.color.replace("0.55", "1"),
+            color: theme === "retro" ? "#39ff14" : it.color.replace("0.55", "1"),
           }}
         >
           {it.icon}
