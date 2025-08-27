@@ -4,9 +4,9 @@ use tauri::{test::mock_app, Manager};
 
 #[tokio::test]
 async fn append_npc_log_includes_errors() {
-    let _rt = tauri::test::mock_runtime();
+    let _rt = <tauri::test::MockRuntime as tauri_runtime::Runtime<()>>::new(Default::default()).unwrap();
     let app = mock_app();
-    let handle = app.app_handle();
+    let handle = app.app_handle().clone();
 
     append_npc_log(
         handle.clone(),

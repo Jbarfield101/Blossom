@@ -49,4 +49,5 @@ rand = "0.8"
 tauri = { version = "2", features = ["protocol-asset", "test"] }
 tempfile = "3"
 httpmock = "0.6"
+tauri-runtime = { version = "2" }
 
