@@ -118,11 +118,7 @@ export default function FeatureNav({
 
   // carousel variant
   const ACCENT = "#00bcd4";
-  const [i, setI] = useState(() => {
-    const last = localStorage.getItem("featureNavLast");
-    const idx = ITEMS.findIndex((it) => it.key === last);
-    return idx !== -1 ? idx : 0;
-  });
+  const [i, setI] = useState(0);
   const len = enabled.length;
   const mod = (n: number, m: number) => ((n % m) + m) % m;
   const go = (dir: 1 | -1) => setI((v) => mod(v + dir, len));

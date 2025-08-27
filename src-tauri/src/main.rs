@@ -130,6 +130,7 @@ fn main() {
             commands::list_npcs,
             commands::append_npc_log,
             commands::read_npc_log,
+            commands::clear_npc_log,
             commands::save_rule,
             commands::list_rules,
             commands::save_spell,
