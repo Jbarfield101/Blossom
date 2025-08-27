@@ -551,6 +551,7 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-opener",
  "tauri-plugin-sql",
+ "tauri-runtime",
  "tempfile",
  "tokio",
  "url",
