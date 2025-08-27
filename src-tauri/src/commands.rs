@@ -2328,8 +2328,9 @@ pub async fn enqueue_task(
     label: String,
     command: Value,
 ) -> Result<u64, String> {
+    let payload = command.clone();
     let command = serde_json::from_value::<TaskCommand>(command)
-        .map_err(|e| format!("invalid task command: {e}; payload: {command}"))?;
+        .map_err(|e| format!("invalid task command: {e}; payload: {payload}"))?;
     Ok(queue.enqueue(label, command).await)
 }
 
