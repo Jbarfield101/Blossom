@@ -9,25 +9,19 @@ interface RetroTVProps {
 
 export default function RetroTV({ children }: RetroTVProps) {
   const { theme } = useTheme();
-  const {
-    currentUserId,
-    retroTvMedia,
-    setRetroTvMedia,
-    clearRetroTvMedia,
-  } = useUsers((state) => ({
-    currentUserId: state.currentUserId,
-    retroTvMedia: state.currentUserId
+  const currentUserId = useUsers((state) => state.currentUserId);
+  const retroTvMedia = useUsers((state) =>
+    state.currentUserId
       ? state.users[state.currentUserId]?.retroTvMedia
-      : null,
-    setRetroTvMedia: state.setRetroTvMedia,
-    clearRetroTvMedia: state.clearRetroTvMedia,
-  }));
+      : null
+  );
+  const setRetroTvMedia = useUsers((state) => state.setRetroTvMedia);
+  const clearRetroTvMedia = useUsers((state) => state.clearRetroTvMedia);
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<"image" | "video" | null>(null);
   const [mediaWidth, setMediaWidth] = useState(640);
   const [mediaHeight, setMediaHeight] = useState(480);
   const fileInput = useRef<HTMLInputElement>(null);
-  const mounted = useRef(false);
 
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -85,15 +79,7 @@ export default function RetroTV({ children }: RetroTVProps) {
     }
   }, [currentUserId, retroTvMedia]);
 
-  useEffect(() => {
-    return () => {
-      if (mounted.current) {
-        clearRetroTvMedia();
-      } else {
-        mounted.current = true;
-      }
-    };
-  }, [clearRetroTvMedia]);
+  useEffect(() => () => clearRetroTvMedia(), []);
 
   if (theme !== "retro") return null;
 
