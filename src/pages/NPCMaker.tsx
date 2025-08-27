@@ -18,6 +18,7 @@ export default function NPCMaker() {
     species: '',
     role: '',
     alignment: '',
+    age: undefined,
     backstory: '',
     location: '',
     hooks: ['Hook'],
@@ -105,7 +106,10 @@ export default function NPCMaker() {
     }
   }
 
-  function handleChange(field: keyof Omit<Npc, 'id'>, value: string | boolean) {
+  function handleChange(
+    field: keyof Omit<Npc, 'id'>,
+    value: string | boolean | number | undefined
+  ) {
     setNpc((prev) => ({ ...prev, [field]: value }));
   }
 
@@ -153,6 +157,7 @@ export default function NPCMaker() {
         species: '',
         role: '',
         alignment: '',
+        age: undefined,
         backstory: '',
         location: '',
         hooks: ['Hook'],
@@ -209,6 +214,15 @@ export default function NPCMaker() {
           label="Alignment"
           value={npc.alignment}
           onChange={(e) => handleChange('alignment', e.target.value)}
+          fullWidth
+        />
+        <TextField
+          label="Age"
+          type="number"
+          value={npc.age ?? ''}
+          onChange={(e) =>
+            handleChange('age', e.target.value ? Number(e.target.value) : undefined)
+          }
           fullWidth
         />
         <TextField
