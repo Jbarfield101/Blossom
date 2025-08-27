@@ -5,9 +5,55 @@ mod commands;
 mod stocks;
 mod task_queue;
 
+use std::fs;
+use std::path::{Path, PathBuf};
 use task_queue::TaskQueue;
 use tauri::Manager;
 use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
+
+fn copy_dir(src: &Path, dst: &Path) -> std::io::Result<()> {
+    fs::create_dir_all(dst)?;
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let src_path = entry.path();
+        let dst_path = dst.join(entry.file_name());
+        if src_path.is_dir() {
+            copy_dir(&src_path, &dst_path)?;
+        } else {
+            fs::copy(&src_path, &dst_path)?;
+        }
+    }
+    Ok(())
+}
+
+fn sync_sfz_assets() -> std::io::Result<()> {
+    let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let src_dir = manifest_dir.join("../public/sfz_sounds");
+    let dest_dir = manifest_dir.join("target/debug/sfz_sounds");
+    if !src_dir.exists() {
+        return Ok(());
+    }
+    fs::create_dir_all(&dest_dir)?;
+    for entry in fs::read_dir(&src_dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.extension().and_then(|e| e.to_str()) == Some("sfz") {
+            let file_name = entry.file_name();
+            let dest_file = dest_dir.join(&file_name);
+            if !dest_file.exists() {
+                fs::copy(&path, &dest_file)?;
+            }
+            if let Some(stem) = path.file_stem() {
+                let sample_src = src_dir.join(stem);
+                let sample_dest = dest_dir.join(stem);
+                if sample_src.is_dir() && !sample_dest.exists() {
+                    copy_dir(&sample_src, &sample_dest)?;
+                }
+            }
+        }
+    }
+    Ok(())
+}
 
 fn main() {
     env_logger::init();
@@ -17,6 +63,9 @@ fn main() {
         .setup(|app| {
             let handle = app.handle();
             app.state::<TaskQueue>().set_app_handle(handle.clone());
+            if let Err(e) = sync_sfz_assets() {
+                log::warn!("sfz asset sync failed: {e}");
+            }
             Ok(())
         })
         .plugin(tauri_plugin_dialog::init())
