@@ -72,6 +72,7 @@ export default function Voices() {
     <Box
       sx={{
         p: 2,
+        mt: 8,
         color: "#fff",
         display: "flex",
         flexDirection: "column",
