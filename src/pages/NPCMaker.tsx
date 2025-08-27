@@ -232,6 +232,12 @@ export default function NPCMaker() {
           onChange={(e) => handleChange('backstory', e.target.value)}
           fullWidth
         />
+        <TextField
+          label="Appearance"
+          value={npc.appearance}
+          onChange={(e) => handleChange('appearance', e.target.value)}
+          fullWidth
+        />
         <FormControlLabel
           control={
             <Checkbox

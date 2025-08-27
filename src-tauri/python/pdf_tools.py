@@ -270,6 +270,7 @@ def extract_npcs(path: str):
             "location": data.get("location"),
             "hooks": hooks,
             "quirks": [q.strip() for q in data.get("quirks", "").split(",") if q.strip()] or None,
+            "appearance": data.get("appearance"),
             "statblock": {},
             "tags": tags,
         }
@@ -325,15 +326,16 @@ def extract_npcs(path: str):
                 "location",
                 "hooks",
                 "quirks",
+                "appearance",
                 "portrait",
-            "icon",
-            "voice",
-            "voice_style",
-            "voice_provider",
-            "voice_preset",
-            "tags",
-            "age",
-        }
+                "icon",
+                "voice",
+                "voice_style",
+                "voice_provider",
+                "voice_preset",
+                "tags",
+                "age",
+            }
         }
         if sections:
             npc["sections"] = sections

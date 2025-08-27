@@ -34,6 +34,7 @@ interface FormState {
   location: string;
   hooks: string;
   quirks: string;
+  appearance: string;
   tags: string;
   portrait: string;
   icon: string;
@@ -53,6 +54,7 @@ const initialState: FormState = {
   location: "",
   hooks: "",
   quirks: "",
+  appearance: "",
   tags: "",
   portrait: "",
   icon: "",
@@ -146,6 +148,7 @@ export default function NpcForm({ world }: Props) {
       quirks: state.quirks
         ? state.quirks.split(",").map((q) => q.trim()).filter(Boolean)
         : undefined,
+      appearance: state.appearance || undefined,
       voiceId: state.voiceId || undefined,
       portrait: state.portrait || "placeholder.png",
       icon: state.icon || "placeholder-icon.png",
@@ -200,6 +203,7 @@ export default function NpcForm({ world }: Props) {
                   dispatch({ type: "SET_FIELD", field: "location", value: npc.location || "" });
                   dispatch({ type: "SET_FIELD", field: "hooks", value: (npc.hooks || []).join(", ") });
                   dispatch({ type: "SET_FIELD", field: "quirks", value: (npc.quirks || []).join(", ") });
+                  dispatch({ type: "SET_FIELD", field: "appearance", value: npc.appearance || "" });
                   dispatch({ type: "SET_FIELD", field: "tags", value: (npc.tags || []).join(", ") });
                   dispatch({ type: "SET_FIELD", field: "portrait", value: npc.portrait || "" });
                   dispatch({ type: "SET_FIELD", field: "icon", value: npc.icon || "" });
