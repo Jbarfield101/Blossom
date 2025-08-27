@@ -90,6 +90,15 @@ describe('SongForm', () => {
     }
   });
 
+  it('shows validation errors when required fields are missing', async () => {
+    render(<SongForm />);
+    const btn = screen.getByText(/render songs/i) as HTMLButtonElement;
+    expect(btn).not.toBeDisabled();
+    fireEvent.click(btn);
+    await screen.findByText(/choose an output folder/i);
+    expect(enqueueTask).not.toHaveBeenCalled();
+  });
+
   it('adds a job and enqueues task', async () => {
     (openDialog as any).mockResolvedValue('/tmp/out');
     (invoke as any).mockResolvedValue('');
