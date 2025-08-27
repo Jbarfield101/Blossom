@@ -14,7 +14,7 @@ use tauri::{AppHandle, Emitter, Wry};
 use tokio::sync::{mpsc, Mutex, Semaphore};
 use tokio::time::sleep;
 
-use crate::commands::{run_lofi_song, AlbumRequest, ShortSpec};
+use crate::commands::{run_lofi_song, AlbumRequest, ShortSpec, SongSpec};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "id")]
@@ -62,6 +62,9 @@ pub enum TaskCommand {
         script: String,
         path: String,
         world: String,
+    },
+    GenerateSong {
+        spec: SongSpec,
     },
     GenerateAlbum {
         meta: AlbumRequest,
@@ -512,6 +515,23 @@ impl TaskQueue {
                                         }
                                     }
                                     Ok(serde_json::json!({ "tracks": tracks }))
+                                }
+                                TaskCommand::GenerateSong { spec } => {
+                                    let app = app_handle
+                                        .lock()
+                                        .unwrap()
+                                        .clone()
+                                        .ok_or_else(|| TaskError {
+                                            code: PdfErrorCode::Unknown,
+                                            message: "no app handle".into(),
+                                        })?;
+                                    let path = run_lofi_song(app.clone(), spec).await.map_err(|e| {
+                                        TaskError {
+                                            code: PdfErrorCode::ExecutionFailed,
+                                            message: e,
+                                        }
+                                    })?;
+                                    Ok(serde_json::json!({ "path": path }))
                                 }
                                 TaskCommand::GenerateShort { spec } => {
                                     println!("Generating short: {:?}", spec);
