@@ -892,6 +892,14 @@ pub async fn run_lofi_song<R: Runtime>(
 }
 
 #[tauri::command]
+pub async fn generate_song<R: Runtime>(
+    app: AppHandle<R>,
+    spec: SongSpec,
+) -> Result<String, String> {
+    run_lofi_song(app, spec).await
+}
+
+#[tauri::command]
 pub async fn generate_album<R: Runtime>(
     app: AppHandle<R>,
     meta: AlbumRequest,

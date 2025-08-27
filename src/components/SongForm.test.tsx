@@ -117,7 +117,7 @@ describe('SongForm', () => {
     await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
     const [, args] = enqueueTask.mock.calls[0];
     const spec = args.spec;
-    expect(args.id).toBe('GenerateShort');
+    expect(args.id).toBe('GenerateSong');
     expect(spec.structure[0]).toHaveProperty('chords');
     expect(spec.chord_span_beats).toBe(4);
     expect(spec).toMatchObject({
@@ -339,7 +339,7 @@ describe('SongForm', () => {
 
     await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
     const [, args] = enqueueTask.mock.calls[0];
-    expect(args.id).toBe('GenerateShort');
+    expect(args.id).toBe('GenerateSong');
     expect(args.spec.instruments).toEqual(['harp', 'lute', 'pan flute']);
   });
 
@@ -366,7 +366,7 @@ describe('SongForm', () => {
 
     await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
     const [, args] = enqueueTask.mock.calls[0];
-    expect(args.id).toBe('GenerateShort');
+    expect(args.id).toBe('GenerateSong');
     expect(args.spec.sfzInstrument).toBe('/tmp/piano file.sfz');
     expect(setPreviewSfzInstrument).toHaveBeenCalledWith(
       'tauri:///tmp/piano%20file.sfz'
@@ -404,7 +404,7 @@ describe('SongForm', () => {
 
     await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
     const [, args] = enqueueTask.mock.calls[0];
-    expect(args.id).toBe('GenerateShort');
+    expect(args.id).toBe('GenerateSong');
     expect(args.spec.lead_instrument).toBe('flute');
   });
 

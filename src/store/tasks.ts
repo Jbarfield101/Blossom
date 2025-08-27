@@ -17,6 +17,7 @@ export type TaskCommand =
   | { id: 'ParseSpellPdf'; py?: string; script?: string; path: string }
   | { id: 'ParseRulePdf'; py?: string; script?: string; path: string }
   | { id: 'ParseLorePdf'; py?: string; script?: string; path: string; world: string }
+  | { id: 'GenerateSong'; spec: any }
   | { id: 'GenerateAlbum'; meta: any }
   | { id: 'GenerateShort'; spec: any };
 
@@ -28,6 +29,7 @@ const TASK_IDS: TaskCommand['id'][] = [
   'ParseSpellPdf',
   'ParseRulePdf',
   'ParseLorePdf',
+  'GenerateSong',
   'GenerateAlbum',
   'GenerateShort',
 ];
