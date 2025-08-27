@@ -30,6 +30,7 @@ export const zNpc = z.object({
   role: z.string().min(1),
   alignment: z.string().min(1),
   playerCharacter: z.boolean(),
+  age: z.number().int().positive().optional(),
   backstory: z.string().optional(),
   location: z.string().optional(),
   hooks: z.array(z.string()).nonempty(),
