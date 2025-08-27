@@ -34,6 +34,7 @@ import Construction from "./pages/Construction";
 import Simulation from "./pages/Simulation";
 import BigBrother from "./pages/BigBrother";
 import Voices from "./pages/Voices";
+import TagManager from "./pages/TagManager";
 
 export default function App() {
   const { pathname } = useLocation();
@@ -78,6 +79,7 @@ export default function App() {
         <Route path="/construction" element={<Construction />} />
         <Route path="/lofi" element={<Lofi />} />
         <Route path="/voices" element={<Voices />} />
+        <Route path="/tags" element={<TagManager />} />
         <Route path="/stocks" element={<Stocks />} />
         <Route path="/shorts" element={<Shorts />} />
         <Route path="/chores" element={<Chores />} />

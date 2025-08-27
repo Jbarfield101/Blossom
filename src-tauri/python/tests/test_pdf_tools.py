@@ -187,3 +187,36 @@ def test_extract_rules_with_colon_headings(tmp_path):
     res = pdf_tools.extract_rules(path)
     names = [r["name"] for r in res["rules"]]
     assert names == ["RULE THREE", "RULE FOUR"]
+
+
+def test_extract_spells(tmp_path):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Helvetica", "", 12)
+    pdf.multi_cell(0, 10, "Magic Missile\nA bolt of force.")
+    path = tmp_path / "spells.pdf"
+    pdf.output(str(path))
+
+    res = pdf_tools.extract_spells(str(path))
+    spells = res["spells"]
+    assert spells == [{"name": "Magic Missile", "description": "A bolt of force."}]
+
+
+def test_extract_lore(tmp_path):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Helvetica", "", 12)
+    pdf.cell(0, 10, "Name: Ancient Forest", ln=1)
+    pdf.cell(0, 10, "Summary: A mythic wood", ln=1)
+    pdf.cell(0, 10, "Tags: history", ln=1)
+    pdf.cell(0, 10, "Location: North", ln=1)
+    pdf.cell(0, 10, "Hooks: Explore", ln=1)
+    pdf.cell(0, 10, "Extra: Hidden ruins", ln=1)
+    path = tmp_path / "lore.pdf"
+    pdf.output(str(path))
+
+    res = pdf_tools.extract_lore(str(path))
+    lore = res["lore"][0]
+    assert lore["name"] == "Ancient Forest"
+    assert lore["tags"] == ["history"]
+    assert lore["sections"].get("extra") == "Hidden ruins"

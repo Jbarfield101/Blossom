@@ -1,16 +1,40 @@
-import React from "react";
+import React, { useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { HashRouter } from "react-router-dom";
+import { appWindow } from "@tauri-apps/api/window";
 import App from "./App";
 import "./styles.css";
 import { ThemeProvider } from "./features/theme/ThemeContext";
+import SplashScreen from "./components/SplashScreen";
+
+function Root() {
+  const [ready, setReady] = React.useState(false);
+
+  React.useEffect(() => {
+    const id = requestAnimationFrame(() => setReady(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  return ready ? <App /> : <SplashScreen />;
+}
+
+function Root() {
+  useEffect(() => {
+    appWindow.maximize();
+  }, []);
+
+  return (
+    <HashRouter>
+      <ThemeProvider>
+        <Root />
+      </ThemeProvider>
+    </HashRouter>
+  );
+}
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <HashRouter>
-      <ThemeProvider>
-        <App />
-      </ThemeProvider>
-    </HashRouter>
-  </React.StrictMode>
+    <Root />
+  </React.StrictMode>,
 );
+

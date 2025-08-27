@@ -11,17 +11,29 @@
   },
   "app": {
     "windows": [
-      { "title": "blossom", "width": 800, "height": 600 }
+      {
+        "title": "blossom",
+        "width": 800,
+        "height": 600,
+        "decorations": true,
+        "maximized": true
+      }
     ],
     "security": {
-  "csp": null,
-  "assetProtocol": { "enable": true, "scope": ["**"] }
-}
-
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": [
+          "**"
+        ]
+      }
+    }
   },
   "plugins": {
     "sql": {
-      "preload": ["sqlite:stocks.db"]
+      "preload": [
+        "sqlite:stocks.db"
+      ]
     }
   },
   "bundle": {
@@ -40,6 +52,5 @@
       "python/ambience_generator.py",
       "python/bark_tts.py"
     ]
-
   }
 }
