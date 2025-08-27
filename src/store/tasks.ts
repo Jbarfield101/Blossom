@@ -20,6 +20,18 @@ export type TaskCommand =
   | { id: 'GenerateAlbum'; meta: any }
   | { id: 'GenerateShort'; spec: any };
 
+const TASK_IDS: TaskCommand['id'][] = [
+  'Example',
+  'LofiGenerateGpu',
+  'PdfIngest',
+  'ParseNpcPdf',
+  'ParseSpellPdf',
+  'ParseRulePdf',
+  'ParseLorePdf',
+  'GenerateAlbum',
+  'GenerateShort',
+];
+
 export function buildTaskCommand(
   id: TaskCommand['id'],
   fields: Record<string, unknown> = {}
@@ -93,7 +105,15 @@ export const useTasks = create<TasksState>((set, get) => ({
   pollers: {},
   enqueueTask: async (label, command) => {
     try {
-      const id = await invoke<number>('enqueue_task', { label, command });
+      let cmd: TaskCommand;
+      if ((command as any)?.id) {
+        cmd = command as TaskCommand;
+      } else if (TASK_IDS.includes(label as TaskCommand['id'])) {
+        cmd = buildTaskCommand(label as TaskCommand['id'], command as Record<string, unknown>);
+      } else {
+        throw new Error('Task command must include an id field');
+      }
+      const id = await invoke<number>('enqueue_task', { label, command: cmd });
       set((state) => ({
         tasks: {
           ...state.tasks,
