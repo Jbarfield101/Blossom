@@ -5,9 +5,9 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex as StdMutex};
 use std::time::Duration;
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use chrono::{DateTime, Utc};
 use sysinfo::System;
 use tauri::async_runtime::{self, JoinHandle};
 use tauri::{AppHandle, Emitter, Wry};
@@ -17,6 +17,7 @@ use tokio::time::sleep;
 use crate::commands::{run_lofi_song, AlbumRequest, ShortSpec};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "id")]
 pub enum TaskCommand {
     /// Placeholder variant for future expansion.
     Example,
@@ -86,7 +87,10 @@ pub struct TaskError {
 
 impl From<String> for TaskError {
     fn from(message: String) -> Self {
-        TaskError { code: PdfErrorCode::Unknown, message }
+        TaskError {
+            code: PdfErrorCode::Unknown,
+            message,
+        }
     }
 }
 
@@ -280,9 +284,11 @@ impl TaskQueue {
                                         })
                                     } else {
                                         let stdout = String::from_utf8_lossy(&output.stdout);
-                                        serde_json::from_str::<Value>(&stdout).map_err(|e| TaskError {
-                                            code: PdfErrorCode::InvalidJson,
-                                            message: e.to_string(),
+                                        serde_json::from_str::<Value>(&stdout).map_err(|e| {
+                                            TaskError {
+                                                code: PdfErrorCode::InvalidJson,
+                                                message: e.to_string(),
+                                            }
                                         })
                                     }
                                 }
@@ -312,9 +318,11 @@ impl TaskQueue {
                                         })
                                     } else {
                                         let stdout = String::from_utf8_lossy(&output.stdout);
-                                        serde_json::from_str::<Value>(&stdout).map_err(|e| TaskError {
-                                            code: PdfErrorCode::InvalidJson,
-                                            message: e.to_string(),
+                                        serde_json::from_str::<Value>(&stdout).map_err(|e| {
+                                            TaskError {
+                                                code: PdfErrorCode::InvalidJson,
+                                                message: e.to_string(),
+                                            }
                                         })
                                     }
                                 }
@@ -339,9 +347,11 @@ impl TaskQueue {
                                         })
                                     } else {
                                         let stdout = String::from_utf8_lossy(&output.stdout);
-                                        serde_json::from_str::<Value>(&stdout).map_err(|e| TaskError {
-                                            code: PdfErrorCode::InvalidJson,
-                                            message: e.to_string(),
+                                        serde_json::from_str::<Value>(&stdout).map_err(|e| {
+                                            TaskError {
+                                                code: PdfErrorCode::InvalidJson,
+                                                message: e.to_string(),
+                                            }
                                         })
                                     }
                                 }
@@ -366,9 +376,11 @@ impl TaskQueue {
                                         })
                                     } else {
                                         let stdout = String::from_utf8_lossy(&output.stdout);
-                                        serde_json::from_str::<Value>(&stdout).map_err(|e| TaskError {
-                                            code: PdfErrorCode::InvalidJson,
-                                            message: e.to_string(),
+                                        serde_json::from_str::<Value>(&stdout).map_err(|e| {
+                                            TaskError {
+                                                code: PdfErrorCode::InvalidJson,
+                                                message: e.to_string(),
+                                            }
                                         })
                                     }
                                 }
@@ -388,19 +400,19 @@ impl TaskQueue {
                                         code: PdfErrorCode::PythonNotFound,
                                         message: format!("Failed to start python: {e}"),
                                     })?;
-                                    let stdout =
-                                        child.stdout.take().ok_or_else(|| TaskError {
-                                            code: PdfErrorCode::ExecutionFailed,
-                                            message: "no stdout".to_string(),
-                                        })?;
+                                    let stdout = child.stdout.take().ok_or_else(|| TaskError {
+                                        code: PdfErrorCode::ExecutionFailed,
+                                        message: "no stdout".to_string(),
+                                    })?;
                                     let mut reader = BufReader::new(stdout);
                                     let mut output = String::new();
                                     loop {
                                         let mut line = String::new();
-                                        let n = reader.read_line(&mut line).map_err(|e| TaskError {
-                                            code: PdfErrorCode::Unknown,
-                                            message: e.to_string(),
-                                        })?;
+                                        let n =
+                                            reader.read_line(&mut line).map_err(|e| TaskError {
+                                                code: PdfErrorCode::Unknown,
+                                                message: e.to_string(),
+                                            })?;
                                         if n == 0 {
                                             break;
                                         }
@@ -438,20 +450,21 @@ impl TaskQueue {
                                             ),
                                         })
                                     } else {
-                                        serde_json::from_str::<Value>(&output).map_err(|e| TaskError {
-                                            code: PdfErrorCode::InvalidJson,
-                                            message: e.to_string(),
+                                        serde_json::from_str::<Value>(&output).map_err(|e| {
+                                            TaskError {
+                                                code: PdfErrorCode::InvalidJson,
+                                                message: e.to_string(),
+                                            }
                                         })
                                     }
                                 }
                                 TaskCommand::GenerateAlbum { meta } => {
-                                    let app = app_handle
-                                        .lock()
-                                        .unwrap()
-                                        .clone()
-                                        .ok_or_else(|| TaskError {
-                                            code: PdfErrorCode::Unknown,
-                                            message: "no app handle".into(),
+                                    let app =
+                                        app_handle.lock().unwrap().clone().ok_or_else(|| {
+                                            TaskError {
+                                                code: PdfErrorCode::Unknown,
+                                                message: "no app handle".into(),
+                                            }
                                         })?;
                                     let specs = meta.specs.ok_or_else(|| TaskError {
                                         code: PdfErrorCode::Unknown,
@@ -471,12 +484,12 @@ impl TaskQueue {
                                         if let Some(dir) = &meta.out_dir {
                                             spec.out_dir = dir.clone();
                                         }
-                                        let path = run_lofi_song(app.clone(), spec)
-                                            .await
-                                            .map_err(|e| TaskError {
+                                        let path = run_lofi_song(app.clone(), spec).await.map_err(
+                                            |e| TaskError {
                                                 code: PdfErrorCode::ExecutionFailed,
                                                 message: e,
-                                            })?;
+                                            },
+                                        )?;
                                         tracks.push(path);
                                         let mut snapshot = None;
                                         {
@@ -593,5 +606,23 @@ impl TaskQueue {
     pub fn set_app_handle(&self, handle: AppHandle<Wry>) {
         let mut h = self.app.lock().unwrap();
         *h = Some(handle);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn deserialize_task_command_from_id_object() {
+        let json = r#"{"id":"ParseNpcPdf","path":"p","world":"w"}"#;
+        let cmd: TaskCommand = serde_json::from_str(json).expect("failed to deserialize");
+        match cmd {
+            TaskCommand::ParseNpcPdf { path, world, .. } => {
+                assert_eq!(path, "p");
+                assert_eq!(world, "w");
+            }
+            other => panic!("unexpected variant: {:?}", other),
+        }
     }
 }
