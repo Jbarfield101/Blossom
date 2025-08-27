@@ -16,6 +16,10 @@ Install the following tools before working with the project:
   via your package manager (for example `brew install ffmpeg` or `sudo apt install ffmpeg`).
   On Windows download a build from [ffmpeg.org](https://ffmpeg.org/download.html)
   and add its `bin` directory to your `PATH`.
+- **Tesseract OCR** – required by `pytesseract` for image text recognition. Install
+  the Tesseract engine with `brew install tesseract` on macOS or
+  `sudo apt install tesseract-ocr` on Debian/Ubuntu. On Windows run
+  `choco install tesseract` or download an installer and add it to your `PATH`.
 
 ## Installation
 
