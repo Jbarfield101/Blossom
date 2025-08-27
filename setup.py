@@ -13,5 +13,5 @@ setup(
         'audioop-lts; python_version >= "3.13"',
         'pdfplumber>=0.10.3',
     ],
-    python_requires='>=3.10,<3.12',
+    python_requires='>=3.10',
 )
