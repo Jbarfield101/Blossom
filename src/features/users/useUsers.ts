@@ -169,4 +169,11 @@ export const useUsers = create<UsersState>()(
     )
   );
 
+useUsers.persist.onFinishHydration((state) => {
+  const id = state.currentUserId;
+  if (id && !state.users[id]) {
+    useUsers.setState({ currentUserId: null });
+  }
+});
+
 export { type ModuleKey, type ModulesState, defaultModules, type RetroTvMedia };
