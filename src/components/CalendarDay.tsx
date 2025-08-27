@@ -40,7 +40,7 @@ const CalendarDay = React.memo(
       }[]
     >([]);
     if (!day) {
-      return <Box sx={{ minHeight: 96, bgcolor: 'grey.50' }} />;
+      return <Box sx={{ minHeight: 140, bgcolor: 'grey.50' }} />;
     }
 
     const handleClick = useCallback(
@@ -90,7 +90,7 @@ const CalendarDay = React.memo(
         aria-current={isToday ? 'date' : undefined}
         sx={{
           position: 'relative',
-          minHeight: 96,
+          minHeight: 140,
           p: 2,
           border: '1px solid',
           borderColor: isToday ? 'primary.light' : 'grey.200',
