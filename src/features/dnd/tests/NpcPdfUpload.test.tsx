@@ -34,7 +34,7 @@ describe("NpcPdfUpload logging", () => {
 
   it("logs successful imports", async () => {
     tasksState.tasks = {
-      1: { status: "completed", result: [{ id: "1", name: "Bob" }] },
+      1: { status: "completed", result: { npcs: [{ id: "1", name: "Bob" }] } },
     };
     (invoke as any).mockImplementation((cmd: string) => {
       if (cmd === "list_npcs") return Promise.resolve([]);
@@ -80,7 +80,7 @@ describe("NpcPdfUpload logging", () => {
 
   it("exposes parsed NPC data via callback", async () => {
     tasksState.tasks = {
-      1: { status: "completed", result: [{ id: "1", name: "Bob" }] },
+      1: { status: "completed", result: { npcs: [{ id: "1", name: "Bob" }] } },
     };
     (invoke as any).mockImplementation((cmd: string) => {
       if (cmd === "list_npcs") return Promise.resolve([]);

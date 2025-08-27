@@ -43,8 +43,13 @@ export default function NpcPdfUpload({ world, onParsed }: Props) {
   useEffect(() => {
     if (!taskId) return;
     const task = tasks[taskId];
-    if (task && task.status === "completed" && Array.isArray(task.result)) {
-      const parsed = task.result as NpcData[];
+    if (
+      task &&
+      task.status === "completed" &&
+      task.result &&
+      Array.isArray((task.result as { npcs?: NpcData[] }).npcs)
+    ) {
+      const parsed = (task.result as { npcs: NpcData[] }).npcs;
       onParsed?.(parsed);
       (async () => {
         const existing = await invoke<NpcData[]>("list_npcs", { world });
