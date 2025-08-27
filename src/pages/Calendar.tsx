@@ -382,6 +382,7 @@ export default function Calendar() {
                 sx={{
                   display: "grid",
                   gridTemplateColumns: "repeat(7, 1fr)",
+                  gridAutoRows: "minmax(140px, auto)",
                   gap: 1,
                   mb: 8,
                 }}
