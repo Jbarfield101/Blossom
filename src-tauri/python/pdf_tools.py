@@ -244,7 +244,13 @@ def extract_npcs(path: str):
                 data[k.strip().lower()] = v.strip()
         if not data:
             continue
-        hooks = [h.strip() for h in (data.get("hooks") or "").split(",") if h.strip()]
+        hooks_raw = (
+            data.get("hooks")
+            or data.get("adventure hooks")
+            or data.get("adventure_hooks")
+            or ""
+        )
+        hooks = [h.strip() for h in hooks_raw.split(",") if h.strip()]
         if not hooks:
             hooks = ["hook"]
             warnings.warn(
@@ -330,6 +336,8 @@ def extract_npcs(path: str):
                 "domain",
                 "origin/domain",
                 "hooks",
+                "adventure hooks",
+                "adventure_hooks",
                 "quirks",
                 "portrait",
                 "icon",
@@ -363,18 +371,33 @@ def extract_lore(path: str):
                 data[k.strip().lower()] = v.strip()
         if not data:
             continue
+        hooks_raw = (
+            data.get("hooks")
+            or data.get("adventure hooks")
+            or data.get("adventure_hooks")
+            or ""
+        )
         lore = {
             "id": str(uuid.uuid4()),
             "name": data.get("name", "Unknown"),
             "summary": data.get("summary", ""),
             "location": data.get("location"),
-            "hooks": [h.strip() for h in data.get("hooks", "").split(",") if h.strip()] or None,
+            "hooks": [h.strip() for h in hooks_raw.split(",") if h.strip()] or None,
             "tags": [t.strip() for t in data.get("tags", "lore").split(",") if t.strip()],
         }
         sections = {
             k: v
             for k, v in data.items()
-            if k not in {"name", "summary", "location", "hooks", "tags"}
+            if k
+            not in {
+                "name",
+                "summary",
+                "location",
+                "hooks",
+                "adventure hooks",
+                "adventure_hooks",
+                "tags",
+            }
         }
         if sections:
             lore["sections"] = sections
