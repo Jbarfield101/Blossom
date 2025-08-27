@@ -105,7 +105,7 @@ const CalendarDay = React.memo(
         <Box
           sx={{
             position: 'absolute',
-            top: 4,
+            bottom: 4,
             right: 4,
             display: 'flex',
             gap: 0.5,
@@ -115,15 +115,17 @@ const CalendarDay = React.memo(
             size="small"
             aria-label={`Add event for day ${day}`}
             onClick={handleAdd}
+            sx={{ fontSize: 16 }}
           >
-            <AddIcon fontSize="small" />
+            <AddIcon fontSize="inherit" />
           </IconButton>
           <IconButton
             size="small"
             aria-label={`Show history for day ${day}`}
             onClick={handleHistory}
+            sx={{ fontSize: 16 }}
           >
-            <HistoryIcon fontSize="small" />
+            <HistoryIcon fontSize="inherit" />
           </IconButton>
           {holiday && (
             <Tooltip title={holiday}>
