@@ -10,6 +10,8 @@ import {
   TextField,
   FormControlLabel,
   Checkbox,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import Star from "@mui/icons-material/Star";
 import StarBorder from "@mui/icons-material/StarBorder";
@@ -31,6 +33,10 @@ export default function Voices() {
   const [selected, setSelected] = useState<Voice | null>(null);
   const [favoriteOnly, setFavoriteOnly] = useState(false);
   const [tagFilter, setTagFilter] = useState("");
+  const [status, setStatus] = useState<
+    "idle" | "testing" | "success" | "error"
+  >("idle");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     load();
@@ -48,10 +54,18 @@ export default function Voices() {
 
   const handleTest = async () => {
     if (!selected) return;
-    await Tone.start();
-    const buffer = await generateAudio(text, selected.preset);
-    const player = new Tone.Player(buffer).toDestination();
-    player.start();
+    setStatus("testing");
+    setError(null);
+    try {
+      await Tone.start();
+      const buffer = await generateAudio(text, selected.preset);
+      const player = new Tone.Player(buffer).toDestination();
+      player.start();
+      setStatus("success");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      setStatus("error");
+    }
   };
 
   return (
@@ -115,6 +129,32 @@ export default function Voices() {
       >
         Test
       </Button>
+      <Snackbar
+        open={status !== "idle"}
+        autoHideDuration={status === "testing" ? null : 3000}
+        onClose={() => {
+          setStatus("idle");
+          setError(null);
+        }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          severity={
+            status === "testing"
+              ? "info"
+              : status === "success"
+                ? "success"
+                : "error"
+          }
+          sx={{ width: "100%" }}
+        >
+          {status === "testing"
+            ? "Testing voice..."
+            : status === "success"
+              ? "Voice playback started."
+              : error}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
