@@ -3,10 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import SongForm from './SongForm';
 import { PRESET_TEMPLATES } from "./songTemplates";
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
-import { open as openOpener } from '@tauri-apps/plugin-opener';
 import { invoke } from '@tauri-apps/api/core';
-import { listen } from '@tauri-apps/api/event';
-import { useSongJobs } from '../store/songJobs';
 
 vi.mock('@tauri-apps/plugin-dialog', () => ({ open: vi.fn() }));
 vi.mock('@tauri-apps/plugin-opener', () => ({ open: vi.fn() }));
@@ -14,7 +11,6 @@ vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn(),
   convertFileSrc: (p: string) => `tauri://${encodeURI(p)}`,
 }));
-vi.mock('@tauri-apps/api/event', () => ({ listen: vi.fn() }));
 vi.mock('@tauri-apps/api/path', () => ({
   resolveResource: (p: string) => Promise.resolve(p),
 }));
@@ -66,7 +62,6 @@ describe('SongForm', () => {
     localStorage.clear();
     vi.resetAllMocks();
     enqueueTask.mockResolvedValue(1);
-    useSongJobs.setState({ jobs: [] });
     setPreviewSfzInstrument.mockClear();
     Object.defineProperty(global.HTMLMediaElement.prototype, 'play', {
       configurable: true,
@@ -95,22 +90,9 @@ describe('SongForm', () => {
     }
   });
 
-  it('adds a job and shows progress', async () => {
+  it('adds a job and enqueues task', async () => {
     (openDialog as any).mockResolvedValue('/tmp/out');
-    let resolveRun: (p: string) => void;
-    (invoke as any).mockImplementation((cmd: string) => {
-      if (cmd === 'run_lofi_song') {
-        return new Promise<string>((res) => {
-          resolveRun = res;
-        });
-      }
-      return Promise.resolve('');
-    });
-    let progressCb: any;
-    (listen as any).mockImplementation((_e: string, cb: any) => {
-      progressCb = cb;
-      return Promise.resolve(() => {});
-    });
+    (invoke as any).mockResolvedValue('');
 
     render(<SongForm />);
     fireEvent.click(screen.getByText(/choose folder/i));
@@ -121,16 +103,14 @@ describe('SongForm', () => {
       { target: { value: 'Test Song' } }
     );
 
-    const autoPlay = screen.getByText(/Auto‑play last successful render/).previousSibling as HTMLInputElement;
-    fireEvent.click(autoPlay);
-
     fireEvent.click(screen.getByText(/render songs/i));
 
-    await waitFor(() => expect(invoke).toHaveBeenCalled());
-    const call = (invoke as any).mock.calls.find(([c]: any) => c === 'run_lofi_song');
-    expect(call[1].spec.structure[0]).toHaveProperty('chords');
-    expect(call[1].spec.chord_span_beats).toBe(4);
-    expect(call[1].spec).toMatchObject({
+    await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
+    const [, args] = enqueueTask.mock.calls[0];
+    const spec = args.GenerateShort.spec;
+    expect(spec.structure[0]).toHaveProperty('chords');
+    expect(spec.chord_span_beats).toBe(4);
+    expect(spec).toMatchObject({
       ambience: ['rain'],
       ambience_level: 0.5,
       lead_instrument: 'synth lead',
@@ -140,14 +120,6 @@ describe('SongForm', () => {
       hq_chorus: true,
       limiter_drive: 1.02,
     });
-    await waitFor(() => expect(listen).toHaveBeenCalledTimes(2));
-
-    progressCb({ payload: JSON.stringify({ stage: 'render', message: '30%' }) });
-    expect(await screen.findByText(/render: 30%/i)).toBeInTheDocument();
-
-    resolveRun!('/tmp/out/song.wav');
-    expect(await screen.findByText('done')).toBeInTheDocument();
-    expect(screen.getByText('Play')).toBeInTheDocument();
   });
 
   it('generates a title with ollama', async () => {
@@ -335,7 +307,6 @@ describe('SongForm', () => {
   it('passes selected instruments in spec', async () => {
     (openDialog as any).mockResolvedValue('/tmp/out');
     (invoke as any).mockResolvedValue('');
-    (listen as any).mockResolvedValue(() => {});
 
     render(<SongForm />);
 
@@ -356,9 +327,9 @@ describe('SongForm', () => {
 
     fireEvent.click(screen.getByText(/render songs/i));
 
-    await waitFor(() => expect(invoke).toHaveBeenCalled());
-    const call = (invoke as any).mock.calls.find(([c]: any) => c === 'run_lofi_song');
-    expect(call[1].spec.instruments).toEqual(['harp', 'lute', 'pan flute']);
+    await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
+    const [, args] = enqueueTask.mock.calls[0];
+    expect(args.GenerateShort.spec.instruments).toEqual(['harp', 'lute', 'pan flute']);
   });
 
   it('uses raw sfz path in render spec', async () => {
@@ -366,7 +337,6 @@ describe('SongForm', () => {
       .mockResolvedValueOnce('/tmp/out')
       .mockResolvedValueOnce('/tmp/piano file.sfz');
     (invoke as any).mockResolvedValue('');
-    (listen as any).mockResolvedValue(() => {});
 
     render(<SongForm />);
 
@@ -383,11 +353,9 @@ describe('SongForm', () => {
 
     fireEvent.click(screen.getByText(/render songs/i));
 
-    await waitFor(() => expect(invoke).toHaveBeenCalled());
-    const call = (invoke as any).mock.calls.find(
-      ([c]: any) => c === 'run_lofi_song'
-    );
-    expect(call[1].spec.sfzInstrument).toBe('/tmp/piano file.sfz');
+    await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
+    const [, args] = enqueueTask.mock.calls[0];
+    expect(args.GenerateShort.spec.sfzInstrument).toBe('/tmp/piano file.sfz');
     expect(setPreviewSfzInstrument).toHaveBeenCalledWith(
       'tauri:///tmp/piano%20file.sfz'
     );
@@ -407,7 +375,6 @@ describe('SongForm', () => {
   it('passes lead instrument in spec', async () => {
     (openDialog as any).mockResolvedValue('/tmp/out');
     (invoke as any).mockResolvedValue('');
-    (listen as any).mockResolvedValue(() => {});
 
     render(<SongForm />);
 
@@ -423,9 +390,9 @@ describe('SongForm', () => {
 
     fireEvent.click(screen.getByText(/render songs/i));
 
-    await waitFor(() => expect(invoke).toHaveBeenCalled());
-    const call = (invoke as any).mock.calls.find(([c]: any) => c === 'run_lofi_song');
-    expect(call[1].spec.lead_instrument).toBe('flute');
+    await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
+    const [, args] = enqueueTask.mock.calls[0];
+    expect(args.GenerateShort.spec.lead_instrument).toBe('flute');
   });
 
   it('exports an odd-bar through-composed preset', () => {
@@ -444,7 +411,6 @@ describe('SongForm', () => {
   it('calls generate_album when album mode enabled', async () => {
     (openDialog as any).mockResolvedValue('/tmp/out');
     (invoke as any).mockResolvedValue({});
-    (listen as any).mockResolvedValue(() => {});
 
     render(<SongForm />);
 
