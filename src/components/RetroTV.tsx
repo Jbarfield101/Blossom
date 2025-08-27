@@ -32,12 +32,7 @@ export default function RetroTV({ children }: RetroTVProps) {
         setMediaWidth(width);
         setMediaHeight(height);
         if (currentUserId) {
-          setRetroTvMedia({
-            data: result,
-            type: isVideo ? "video" : "image",
-            width,
-            height,
-          });
+          setRetroTvMedia(result);
         }
       };
 
@@ -62,10 +57,31 @@ export default function RetroTV({ children }: RetroTVProps) {
     if (!currentUserId) return;
     const media = users[currentUserId]?.retroTvMedia;
     if (media) {
-      setMediaUrl(media.data);
-      setMediaType(media.type);
-      setMediaWidth(media.width);
-      setMediaHeight(media.height);
+      setMediaUrl(media);
+      const isVideo = media.startsWith("data:video");
+      setMediaType(isVideo ? "video" : "image");
+      if (isVideo) {
+        const video = document.createElement("video");
+        video.src = media;
+        video.addEventListener(
+          "loadedmetadata",
+          () => {
+            setMediaWidth(video.videoWidth);
+            setMediaHeight(video.videoHeight);
+          },
+          { once: true }
+        );
+      } else {
+        const img = new Image();
+        img.src = media;
+        img.onload = () => {
+          setMediaWidth(img.width);
+          setMediaHeight(img.height);
+        };
+      }
+    } else {
+      setMediaUrl(null);
+      setMediaType(null);
     }
   }, [currentUserId, users]);
 

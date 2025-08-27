@@ -37,13 +37,6 @@ const defaultModules: ModulesState = {
   construction: true,
 };
 
-interface RetroTvMedia {
-  data: string;
-  type: 'image' | 'video';
-  width: number;
-  height: number;
-}
-
 interface User {
   id: string;
   name: string;
@@ -52,7 +45,7 @@ interface User {
   modules: ModulesState;
   cpuLimit: number;
   memLimit: number;
-  retroTvMedia: RetroTvMedia | null;
+  retroTvMedia: string | null;
 }
 
 interface UsersState {
@@ -65,8 +58,7 @@ interface UsersState {
   toggleModule: (key: ModuleKey) => void;
   setCpuLimit: (limit: number) => void;
   setMemLimit: (limit: number) => void;
-  setRetroTvMedia: (media: RetroTvMedia) => void;
-  clearRetroTvMedia: () => void;
+  setRetroTvMedia: (dataUrl: string | null) => void;
 }
 
 export const useUsers = create<UsersState>()(
@@ -144,23 +136,13 @@ export const useUsers = create<UsersState>()(
             },
           }));
         },
-        setRetroTvMedia: (media) => {
+        setRetroTvMedia: (dataUrl) => {
           const id = get().currentUserId;
           if (!id) return;
           set((state) => ({
             users: {
               ...state.users,
-              [id]: { ...state.users[id], retroTvMedia: media },
-            },
-          }));
-        },
-        clearRetroTvMedia: () => {
-          const id = get().currentUserId;
-          if (!id) return;
-          set((state) => ({
-            users: {
-              ...state.users,
-              [id]: { ...state.users[id], retroTvMedia: null },
+              [id]: { ...state.users[id], retroTvMedia: dataUrl },
             },
           }));
         },
@@ -169,4 +151,7 @@ export const useUsers = create<UsersState>()(
     )
   );
 
-export { type ModuleKey, type ModulesState, defaultModules, type RetroTvMedia };
+export const setRetroTvMedia = (dataUrl: string | null) =>
+  useUsers.getState().setRetroTvMedia(dataUrl);
+
+export { type ModuleKey, type ModulesState, defaultModules };
