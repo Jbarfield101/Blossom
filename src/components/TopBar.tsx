@@ -1,7 +1,7 @@
 import { IconButton, Tooltip, Badge } from "@mui/material";
 import type { SxProps } from "@mui/material";
 import { fixedIconButtonSx } from "./sx";
-import { FaHome, FaWrench, FaUser, FaTasks } from "react-icons/fa";
+import { FaHome, FaWrench, FaUser, FaTasks, FaArrowLeft } from "react-icons/fa";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -45,12 +45,25 @@ export default function TopBar() {
 
   return (
     <>
+      <Tooltip title="Back">
+        <IconButton
+          onClick={() => nav(-1)}
+          sx={{
+            ...fixedIconButtonSx,
+            left: { xs: 8, sm: 12 },
+          }}
+          aria-label="Back"
+        >
+          <FaArrowLeft />
+        </IconButton>
+      </Tooltip>
+
       <Tooltip title="Home">
         <IconButton
           onClick={() => nav("/")}
           sx={{
             ...fixedIconButtonSx,
-            left: { xs: 8, sm: 12 },
+            left: { xs: 44, sm: 60 },
             ...activeSx("/"),
           }}
           aria-label="Home"
@@ -65,7 +78,7 @@ export default function TopBar() {
           onClick={() => nav("/user")}
           sx={{
             ...fixedIconButtonSx,
-            left: { xs: 44, sm: 60 },
+            left: { xs: 80, sm: 108 },
             ...activeSx("/user"),
           }}
           aria-label="User"
@@ -80,7 +93,7 @@ export default function TopBar() {
           onClick={() => nav("/dnd/npcs-library")}
           sx={{
             ...fixedIconButtonSx,
-            left: { xs: 80, sm: 108 },
+            left: { xs: 116, sm: 156 },
             ...activeSx("/dnd/npcs-library"),
           }}
           aria-label="NPC Library"
