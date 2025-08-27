@@ -7,7 +7,7 @@ import "./styles.css";
 import { ThemeProvider } from "./features/theme/ThemeContext";
 import SplashScreen from "./components/SplashScreen";
 
-function Root() {
+function RootContent() {
   const [ready, setReady] = React.useState(false);
 
   React.useEffect(() => {
@@ -26,7 +26,7 @@ function Root() {
   return (
     <HashRouter>
       <ThemeProvider>
-        <Root />
+        <RootContent />
       </ThemeProvider>
     </HashRouter>
   );
