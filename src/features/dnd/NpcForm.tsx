@@ -21,6 +21,7 @@ import { NpcData } from "./types";
 import NpcPdfUpload from "./NpcPdfUpload";
 import StyledTextField from "./StyledTextField";
 import { useVoices } from "../../store/voices";
+import { open } from "@tauri-apps/plugin-dialog";
 
 interface FormState {
   name: string;
@@ -88,6 +89,16 @@ export default function NpcForm({ world }: Props) {
   const voiceOptions = voices;
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [result, setResult] = useState<NpcData | null>(null);
+
+  const selectFile = async (field: "portrait" | "icon") => {
+    const selected = await open({
+      multiple: false,
+      filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "gif", "webp"] }],
+    });
+    if (typeof selected === "string") {
+      dispatch({ type: "SET_FIELD", field, value: selected });
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,7 +172,36 @@ export default function NpcForm({ world }: Props) {
               <Typography component="label">Upload NPC PDF</Typography>
             </Grid>
             <Grid item xs={8}>
-              <NpcPdfUpload world={world} />
+              <NpcPdfUpload
+                world={world}
+                onImported={(npcs) => {
+                  const npc = npcs[0];
+                  if (!npc) return;
+                  dispatch({ type: "SET_FIELD", field: "name", value: npc.name });
+                  dispatch({ type: "SET_FIELD", field: "species", value: npc.species });
+                  dispatch({ type: "SET_FIELD", field: "role", value: npc.role });
+                  dispatch({ type: "SET_FIELD", field: "alignment", value: npc.alignment });
+                  dispatch({ type: "SET_FIELD", field: "playerCharacter", value: npc.playerCharacter });
+                  dispatch({ type: "SET_FIELD", field: "backstory", value: npc.backstory || "" });
+                  dispatch({ type: "SET_FIELD", field: "location", value: npc.location || "" });
+                  dispatch({ type: "SET_FIELD", field: "hooks", value: (npc.hooks || []).join(", ") });
+                  dispatch({ type: "SET_FIELD", field: "quirks", value: (npc.quirks || []).join(", ") });
+                  dispatch({ type: "SET_FIELD", field: "tags", value: (npc.tags || []).join(", ") });
+                  dispatch({ type: "SET_FIELD", field: "portrait", value: npc.portrait || "" });
+                  dispatch({ type: "SET_FIELD", field: "icon", value: npc.icon || "" });
+                  dispatch({
+                    type: "SET_FIELD",
+                    field: "statblock",
+                    value: JSON.stringify(npc.statblock || {}, null, 2),
+                  });
+                  dispatch({
+                    type: "SET_FIELD",
+                    field: "sections",
+                    value: JSON.stringify(npc.sections || {}, null, 2),
+                  });
+                  dispatch({ type: "SET_FIELD", field: "voiceId", value: npc.voiceId || "" });
+                }}
+              />
             </Grid>
             <Grid item xs={4}>
               <Typography component="label" htmlFor="name">
@@ -389,35 +429,35 @@ export default function NpcForm({ world }: Props) {
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={4}>
               <Typography component="label" htmlFor="portrait">
-                Portrait URL
+                Portrait
               </Typography>
             </Grid>
             <Grid item xs={8}>
-              <StyledTextField
-                id="portrait"
-                value={state.portrait}
-                onChange={(e) =>
-                  dispatch({ type: "SET_FIELD", field: "portrait", value: e.target.value })
-                }
-                fullWidth
-                margin="normal"
-              />
+              <Button
+                variant="outlined"
+                onClick={() => selectFile("portrait")}
+                sx={{ mt: 1 }}
+              >
+                Upload Portrait
+              </Button>
+              {state.portrait && (
+                <Typography sx={{ mt: 1 }}>{state.portrait}</Typography>
+              )}
             </Grid>
             <Grid item xs={4}>
               <Typography component="label" htmlFor="icon">
-                Icon URL
+                Icon
               </Typography>
             </Grid>
             <Grid item xs={8}>
-              <StyledTextField
-                id="icon"
-                value={state.icon}
-                onChange={(e) =>
-                  dispatch({ type: "SET_FIELD", field: "icon", value: e.target.value })
-                }
-                fullWidth
-                margin="normal"
-              />
+              <Button
+                variant="outlined"
+                onClick={() => selectFile("icon")}
+                sx={{ mt: 1 }}
+              >
+                Upload Icon
+              </Button>
+              {state.icon && <Typography sx={{ mt: 1 }}>{state.icon}</Typography>}
             </Grid>
           </Grid>
         </Grid>

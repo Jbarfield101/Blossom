@@ -9,9 +9,10 @@ import NpcLog from "./NpcLog";
 
 interface Props {
   world: string;
+  onImported?: (npcs: NpcData[]) => void;
 }
 
-export default function NpcPdfUpload({ world }: Props) {
+export default function NpcPdfUpload({ world, onImported }: Props) {
   const enqueueTask = useTasks((s) => s.enqueueTask);
   const tasks = useTasks((s) => s.tasks);
   const loadNPCs = useNPCs((s) => s.loadNPCs);
@@ -23,6 +24,7 @@ export default function NpcPdfUpload({ world }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [showLog, setShowLog] = useState(false);
+  const [imported, setImported] = useState<NpcData[] | null>(null);
 
   async function handleUpload() {
     const selected = await open({ filters: [{ name: "PDF", extensions: ["pdf"] }] });
@@ -60,7 +62,9 @@ export default function NpcPdfUpload({ world }: Props) {
             });
           }
         }
-        await loadNPCs();
+        await loadNPCs(world);
+        setImported(parsed);
+        onImported?.(parsed);
         setStatus("completed");
         setSnackbarOpen(true);
         setTaskId(null);
@@ -83,7 +87,7 @@ export default function NpcPdfUpload({ world }: Props) {
       setTaskId(null);
       setShowLog(true);
     }
-  }, [taskId, tasks, world, loadNPCs]);
+  }, [taskId, tasks, world, loadNPCs, onImported]);
 
   const task = taskId ? tasks[taskId] : null;
 
@@ -137,7 +141,9 @@ export default function NpcPdfUpload({ world }: Props) {
           sx={{ width: "100%" }}
         >
           {status === "completed"
-            ? "NPCs imported successfully!"
+            ? `NPCs imported successfully: ${
+                imported?.map((n) => n.name).join(", ") ?? ""
+              }`
             : status === "failed"
             ? `Failed to import NPC PDF (${errorCode ?? "unknown"}): ${
                 error ?? ""

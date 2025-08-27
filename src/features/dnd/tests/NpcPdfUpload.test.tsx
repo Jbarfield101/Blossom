@@ -50,8 +50,9 @@ describe("NpcPdfUpload logging", () => {
         world: "w",
         id: "1",
         name: "Bob",
-      }),
+      })
     );
+    expect(loadNPCs).toHaveBeenCalledWith("w");
   });
 
   it("logs failed imports", async () => {
