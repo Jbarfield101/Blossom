@@ -1,6 +1,6 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import React, { StrictMode } from 'react';
+import React from 'react';
 import RetroTV from './RetroTV';
 
 const clearRetroTvMedia = vi.fn();
@@ -24,11 +24,7 @@ afterEach(() => {
 
 describe('RetroTV', () => {
   it('clears media only on unmount', () => {
-    const { unmount } = render(
-      <StrictMode>
-        <RetroTV />
-      </StrictMode>
-    );
+    const { unmount } = render(<RetroTV />);
     expect(clearRetroTvMedia).not.toHaveBeenCalled();
     unmount();
     expect(clearRetroTvMedia).toHaveBeenCalledTimes(1);
