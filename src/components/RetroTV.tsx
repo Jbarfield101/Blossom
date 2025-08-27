@@ -84,11 +84,13 @@ export default function RetroTV({ children }: RetroTVProps) {
     }
   }, [currentUserId, retroTvMedia]);
 
+  // Clear any stored media when the component unmounts
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     return () => {
       clearRetroTvMedia();
     };
-  }, [clearRetroTvMedia]);
+  }, []);
 
   if (theme !== "retro") return null;
 
