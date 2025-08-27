@@ -287,6 +287,11 @@ body.theme-studio input[type="range"]::-moz-range-thumb {
   z-index: 1;
 }
 
+video.retro-tv-content,
+img.retro-tv-content {
+  filter: hue-rotate(90deg) saturate(0.6) brightness(0.9);
+}
+
 .retro-tv-upload {
   position: absolute;
   top: 0;
