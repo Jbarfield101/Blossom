@@ -5,7 +5,6 @@ import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { openPath } from "@tauri-apps/plugin-opener";
 import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import { resolveResource } from "@tauri-apps/api/path";
-import { listen } from "@tauri-apps/api/event";
 import { useLofi } from "../features/lofi/SongForm";
 import { WEATHER_PRESETS } from "../features/lofi/weather";
 import Waveform from "./Waveform";
@@ -20,11 +19,16 @@ import styles from "./SongForm.module.css";
 import clsx from "clsx";
 import { useTheme } from "@mui/material/styles";
 import { MOODS, INSTR } from "../utils/musicData";
-import { log } from "../utils/logger";
 import { useTasks } from "../store/tasks";
-import { useSongJobs, Job } from "../store/songJobs";
 
 export type Section = { name: string; bars: number; chords: string[]; barsStr?: string };
+
+interface Job {
+  id: string;
+  title: string;
+  spec: SongSpec;
+  taskId?: number;
+}
 
 type SongSpec = {
   title: string;
@@ -343,9 +347,7 @@ export default function SongForm() {
 
   // UI state
   const [busy, setBusy] = useState(false);
-  const jobs = useSongJobs((s) => s.jobs);
-  const setJobs = useSongJobs((s) => s.setJobs);
-  const updateJob = useSongJobs((s) => s.updateJob);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [globalStatus, setGlobalStatus] = useState<string>("");
   const [err, setErr] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -406,22 +408,8 @@ export default function SongForm() {
     localStorage.setItem("lofiFilter", String(lofiFilter));
   }, [lofiFilter]);
 
-  const runningJobId = useMemo(
-    () => jobs.find((j) => !j.error && !j.outPath)?.id,
-    [jobs]
-  );
-
   const tasks = useTasks((s) => s.tasks);
-  const fetchStatus = useTasks((s) => s.fetchStatus);
   const enqueueTask = useTasks((s) => s.enqueueTask);
-
-  useEffect(() => {
-    const running = Object.values(tasks).find((t) =>
-      ["queued", "running"].includes(t.status)
-    );
-    if (running) fetchStatus(running.id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
 
   const activeTask = useMemo(
@@ -436,54 +424,15 @@ export default function SongForm() {
 
   useEffect(() => {
     if (activeTask) {
-      setProgress(activeTask.progress);
+      setProgress(activeTask.progress * 100);
       setGlobalStatus(activeTask.status);
       setBusy(true);
-    } else if (!runningJobId) {
+    } else {
       setBusy(false);
       setGlobalStatus("");
       setProgress(0);
     }
-  }, [activeTask, runningJobId]);
-
-  useEffect(() => {
-    let unlisten: (() => void) | undefined;
-    (async () => {
-      const off = await listen("lofi_progress", (e) => {
-        try {
-          const raw = typeof e.payload === "string" ? e.payload : JSON.stringify(e.payload);
-          let pretty = raw;
-          let pct: number | undefined;
-          try {
-            const obj = JSON.parse(raw);
-            if (obj && obj.stage && obj.message) {
-              pretty = `${obj.stage}: ${obj.message}`;
-              const map: Record<string, number> = { start: 10, generate: 60, post: 90, done: 100 };
-              if (typeof obj.progress === "number") pct = obj.progress * 100;
-              else if (map[obj.stage] !== undefined) pct = map[obj.stage];
-            }
-          } catch {}
-          if (pct !== undefined) {
-            setProgress(pct);
-            if (runningJobId) {
-              updateJob(runningJobId, { progress: pct });
-            }
-          }
-          if (runningJobId) {
-            updateJob(runningJobId, { status: pretty });
-          } else {
-            setGlobalStatus(pretty);
-          }
-          log("lofi_progress:", raw);
-        } catch {}
-      });
-      unlisten = off;
-    })();
-    return () => {
-      if (unlisten) unlisten();
-    };
-  }, [runningJobId, updateJob]);
-
+  }, [activeTask]);
 
   const totalBars = useMemo(
     () =>
@@ -748,7 +697,7 @@ export default function SongForm() {
     const newJobs: Job[] = Array.from({ length: numSongs }).map((_, i) => {
       const spec = makeSpecForIndex(i);
       const id = `${Date.now()}_${i}_${spec.seed}`;
-      return { id, title: spec.title, spec, status: "queued" };
+      return { id, title: spec.title, spec };
     });
     setJobs(newJobs);
     setBusy(true);
@@ -756,54 +705,17 @@ export default function SongForm() {
     try {
       for (let i = 0; i < newJobs.length; i++) {
         const job = newJobs[i];
-        updateJob(job.id, { status: "starting…", progress: 0 });
-        setProgress(0);
         try {
-          console.info("run_lofi_song starting", {
-            jobId: job.id,
-            seed: job.spec.seed,
-            instruments: job.spec.instruments,
-            sfzInstrument: job.spec.sfzInstrument,
-            spec: job.spec,
+          const taskId = await enqueueTask("Music Generation", {
+            GenerateShort: { spec: job.spec },
           });
-          const outPath = await invoke<string>("run_lofi_song", { spec: job.spec });
-          console.info("run_lofi_song completed", {
-            jobId: job.id,
-            outPath,
-            seed: job.spec.seed,
-            instruments: job.spec.instruments,
-            sfzInstrument: job.spec.sfzInstrument,
-            spec: job.spec,
-          });
-          updateJob(job.id, { outPath, status: "done", progress: 100 });
-          setProgress(100);
+          setJobs((prev) =>
+            prev.map((j) => (j.id === job.id ? { ...j, taskId } : j))
+          );
         } catch (e: any) {
           const message = e?.message || String(e);
-          console.info("run_lofi_song error", {
-            jobId: job.id,
-            error: e,
-            seed: job.spec.seed,
-            instruments: job.spec.instruments,
-            sfzInstrument: job.spec.sfzInstrument,
-            spec: job.spec,
-          });
-          console.error("run_lofi_song failed:", e);
-          updateJob(job.id, { status: "error", error: message, progress: 100 });
-          setProgress(100);
-        }
-      }
-
-      if (playLast) {
-        const latestJobs = useSongJobs.getState().jobs;
-        const lastOut = [...latestJobs].reverse().find((j) => j.outPath)?.outPath;
-        if (lastOut) {
-          const url = convertFileSrc(lastOut.replace(/\\/g, "/"));
-          const a = audioRef.current!;
-          a.pause();
-          a.src = url;
-          a.load();
-          await a.play();
-          setIsPlaying(true);
+          console.error("enqueueTask failed", e);
+          setErr(message);
         }
       }
     } finally {
@@ -880,10 +792,15 @@ export default function SongForm() {
   }
 
   async function handleCopyLast() {
-    const last = [...jobs].reverse().find((j) => j.outPath);
-    if (last?.outPath) {
+    const last = [...jobs]
+      .reverse()
+      .find((j) => typeof (j.taskId && tasks[j.taskId]?.result) === "string");
+    const outPath = last?.taskId
+      ? (tasks[last.taskId]?.result as string)
+      : undefined;
+    if (outPath) {
       try {
-        await navigator.clipboard.writeText(last.outPath);
+        await navigator.clipboard.writeText(outPath);
       } catch (e: any) {
         setErr(e?.message || String(e));
       }
@@ -1480,7 +1397,9 @@ export default function SongForm() {
               </tr>
             </thead>
             <tbody>
-              {jobs.map((j) => (
+              {jobs.map((j) => {
+                const task = j.taskId ? tasks[j.taskId] : undefined;
+                return (
                 <tr key={j.id}>
                   <td className={styles.td}>{j.id}</td>
                   <td className={styles.td}>{j.title}</td>
@@ -1491,33 +1410,33 @@ export default function SongForm() {
                     <div className={styles.progressOuter} style={{ marginTop: 0 }}>
                       <div
                         className={styles.progressInner}
-                        style={{ width: `${j.progress ?? 0}%` }}
+                        style={{ width: `${(task?.progress ?? 0) * 100}%` }}
                       />
                     </div>
                   </td>
                   <td className={styles.td}>
-                    {j.error ? (
+                    {task?.error ? (
                       <span style={{ color: theme.palette.error.main }}>
-                        {friendlyError(j.error)}
+                        {friendlyError(task.error!)}
                       </span>
                     ) : (
-                      j.status || "—"
+                      task?.status || "—"
                     )}
-                    {j.error && (
+                    {task?.error && (
                       <details className="mt-1">
                         <summary className="opacity-80 cursor-pointer">details</summary>
-                        <pre className="whitespace-pre-wrap">{j.error}</pre>
+                        <pre className="whitespace-pre-wrap">{task.error}</pre>
                       </details>
                     )}
                   </td>
                   <td className={styles.td}>
-                    {j.outPath ? (
+                    {typeof task?.result === "string" ? (
                       <div className="flex items-center gap-2">
-                        <Waveform src={convertFileSrc(j.outPath!.replace(/\\/g, "/"))} />
+                        <Waveform src={convertFileSrc((task.result as string).replace(/\\/g, "/"))} />
                         <button
                           className={styles.playBtn}
                           onClick={async () => {
-                            const url = convertFileSrc(j.outPath!.replace(/\\/g, "/"));
+                            const url = convertFileSrc((task.result as string).replace(/\\/g, "/"));
                             const a = audioRef.current!;
                             a.pause();
                             a.src = url;
@@ -1534,11 +1453,14 @@ export default function SongForm() {
                     )}
                   </td>
                 </tr>
-              ))}
+              );
+              })}
             </tbody>
           </table>
         )}
-        {jobs.some((j) => j.outPath) && (
+        {jobs.some((j) =>
+          j.taskId && typeof tasks[j.taskId]?.result === "string"
+        ) && (
           <div className={styles.nextSteps}>
             <span className={styles.small}>Next steps:</span>
             <button className={styles.playBtn} onClick={handlePlayLastTrack}>
