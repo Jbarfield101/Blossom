@@ -89,6 +89,61 @@ export default function NpcForm({ world }: Props) {
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [result, setResult] = useState<NpcData | null>(null);
 
+  const handleNpcImport = (npc: NpcData) => {
+    dispatch({ type: "SET_FIELD", field: "name", value: npc.name });
+    dispatch({ type: "SET_FIELD", field: "species", value: npc.species });
+    dispatch({ type: "SET_FIELD", field: "role", value: npc.role });
+    dispatch({ type: "SET_FIELD", field: "alignment", value: npc.alignment });
+    dispatch({
+      type: "SET_FIELD",
+      field: "playerCharacter",
+      value: npc.playerCharacter,
+    });
+    dispatch({
+      type: "SET_FIELD",
+      field: "backstory",
+      value: npc.backstory || "",
+    });
+    dispatch({
+      type: "SET_FIELD",
+      field: "location",
+      value: npc.location || "",
+    });
+    dispatch({
+      type: "SET_FIELD",
+      field: "hooks",
+      value: npc.hooks ? npc.hooks.join(", ") : "",
+    });
+    dispatch({
+      type: "SET_FIELD",
+      field: "quirks",
+      value: npc.quirks ? npc.quirks.join(", ") : "",
+    });
+    dispatch({
+      type: "SET_FIELD",
+      field: "tags",
+      value: npc.tags ? npc.tags.join(", ") : "",
+    });
+    dispatch({
+      type: "SET_FIELD",
+      field: "portrait",
+      value: npc.portrait || "",
+    });
+    dispatch({ type: "SET_FIELD", field: "icon", value: npc.icon || "" });
+    dispatch({
+      type: "SET_FIELD",
+      field: "statblock",
+      value: JSON.stringify(npc.statblock || {}, null, 2),
+    });
+    dispatch({
+      type: "SET_FIELD",
+      field: "sections",
+      value: JSON.stringify(npc.sections || {}, null, 2),
+    });
+    dispatch({ type: "SET_FIELD", field: "voiceId", value: npc.voiceId || "" });
+    setResult(npc);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
@@ -161,7 +216,7 @@ export default function NpcForm({ world }: Props) {
               <Typography component="label">Upload NPC PDF</Typography>
             </Grid>
             <Grid item xs={8}>
-              <NpcPdfUpload world={world} />
+              <NpcPdfUpload world={world} onParsed={handleNpcImport} />
             </Grid>
             <Grid item xs={4}>
               <Typography component="label" htmlFor="name">
