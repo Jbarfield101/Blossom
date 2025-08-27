@@ -129,6 +129,7 @@ const MODULE_LABELS: Record<ModuleKey, string> = {
   fusion: "Fusion",
   simulation: "Simulation",
   dnd: "D&D",
+  voices: "Voices",
   stocks: "Stocks",
   shorts: "Shorts",
   chores: "Chores",
