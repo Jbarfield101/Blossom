@@ -345,14 +345,24 @@ class SfzSampler:
 
 def _resolve_sfz_path(p: str) -> Path:
     path = Path(unquote(p))
+    logger.debug({"stage": "sfz_resolve", "original": str(path)})
     if path.is_absolute() and path.exists():
         return path
     root = Path(__file__).resolve().parents[3]
     rel = Path(str(path).lstrip("/\\"))
     candidate = root / rel
+    logger.debug({"stage": "sfz_resolve", "candidate": str(candidate)})
     if candidate.exists():
         return candidate
     alt = root / "public" / rel
+    logger.debug({"stage": "sfz_resolve", "fallback": str(alt)})
+    if not alt.exists():
+        logger.warning({
+            "stage": "sfz_resolve_missing",
+            "original": str(path),
+            "candidate": str(candidate),
+            "fallback": str(alt),
+        })
     return alt
 
 def _sine(freq, ms, amp=0.5):
