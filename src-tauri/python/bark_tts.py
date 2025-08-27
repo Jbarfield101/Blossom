@@ -47,8 +47,7 @@ def speak(text: str, speaker: str) -> bytes:
     if generate_audio is None:
         raise RuntimeError("bark library is not installed") from _import_error
 
-    device = _get_device()
-    audio_array: np.ndarray = generate_audio(text, history_prompt=speaker, device=device)
+    audio_array: np.ndarray = generate_audio(text, history_prompt=speaker)
 
     buffer = io.BytesIO()
     import soundfile as sf  # imported lazily to keep module light
