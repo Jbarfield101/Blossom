@@ -57,11 +57,11 @@ describe('enqueueTask validation', () => {
 
   it('builds command when label is a valid id and id is missing', async () => {
     (invoke as any).mockResolvedValue(1);
-    const id = await useTasks.getState().enqueueTask('ParseSpellPdf', { path: 'x' } as any);
+    const id = await useTasks.getState().enqueueTask('GenerateSong', { spec: {} } as any);
     expect(id).toBe(1);
     expect(invoke).toHaveBeenCalledWith('enqueue_task', {
-      label: 'ParseSpellPdf',
-      command: { id: 'ParseSpellPdf', path: 'x' },
+      label: 'GenerateSong',
+      command: { id: 'GenerateSong', spec: {} },
     });
   });
 

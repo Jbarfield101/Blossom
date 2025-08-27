@@ -722,7 +722,7 @@ export default function SongForm() {
         try {
           const taskId = await enqueueTask(
             "Music Generation",
-            { id: "GenerateShort", spec: job.spec }
+            { id: "GenerateSong", spec: job.spec }
           );
           setJobs((prev) =>
             prev.map((j) => (j.id === job.id ? { ...j, taskId } : j))

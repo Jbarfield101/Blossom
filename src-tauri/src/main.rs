@@ -99,6 +99,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             commands::lofi_generate_gpu,
             commands::run_lofi_song,
+            commands::generate_song,
             commands::generate_album,
             commands::cancel_album,
             commands::dj_mix,
