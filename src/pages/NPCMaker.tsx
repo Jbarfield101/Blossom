@@ -20,6 +20,7 @@ export default function NPCMaker() {
     alignment: '',
     age: undefined,
     backstory: '',
+    personality: '',
     location: '',
     hooks: ['Hook'],
     quirks: [],
@@ -159,6 +160,7 @@ export default function NPCMaker() {
         alignment: '',
         age: undefined,
         backstory: '',
+        personality: '',
         location: '',
         hooks: ['Hook'],
         quirks: [],
@@ -230,6 +232,12 @@ export default function NPCMaker() {
           multiline
           value={npc.backstory}
           onChange={(e) => handleChange('backstory', e.target.value)}
+          fullWidth
+        />
+        <TextField
+          label="Personality"
+          value={npc.personality}
+          onChange={(e) => handleChange('personality', e.target.value)}
           fullWidth
         />
         <FormControlLabel

@@ -267,6 +267,7 @@ def extract_npcs(path: str):
             "playerCharacter": data.get("playercharacter", "false").lower()
             == "true",
             "backstory": data.get("backstory"),
+            "personality": data.get("personality"),
             "location": data.get("location"),
             "hooks": hooks,
             "quirks": [q.strip() for q in data.get("quirks", "").split(",") if q.strip()] or None,
@@ -322,6 +323,7 @@ def extract_npcs(path: str):
                 "alignment",
                 "playercharacter",
                 "backstory",
+                "personality",
                 "location",
                 "hooks",
                 "quirks",

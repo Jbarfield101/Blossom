@@ -31,6 +31,7 @@ interface FormState {
   playerCharacter: boolean;
   age: string;
   backstory: string;
+  personality: string;
   location: string;
   hooks: string;
   quirks: string;
@@ -50,6 +51,7 @@ const initialState: FormState = {
   playerCharacter: false,
   age: "",
   backstory: "",
+  personality: "",
   location: "",
   hooks: "",
   quirks: "",
@@ -141,6 +143,7 @@ export default function NpcForm({ world }: Props) {
       playerCharacter: state.playerCharacter,
       age: state.age ? parseInt(state.age, 10) : undefined,
       backstory: state.backstory || undefined,
+      personality: state.personality || undefined,
       location: state.location || undefined,
       hooks: state.hooks.split(",").map((h) => h.trim()).filter(Boolean),
       quirks: state.quirks
