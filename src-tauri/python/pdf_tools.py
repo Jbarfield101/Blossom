@@ -267,7 +267,10 @@ def extract_npcs(path: str):
             "playerCharacter": data.get("playercharacter", "false").lower()
             == "true",
             "backstory": data.get("backstory"),
-            "location": data.get("location"),
+            "location": data.get("location")
+            or data.get("origin")
+            or data.get("domain")
+            or data.get("origin/domain"),
             "hooks": hooks,
             "quirks": [q.strip() for q in data.get("quirks", "").split(",") if q.strip()] or None,
             "statblock": {},
@@ -323,17 +326,20 @@ def extract_npcs(path: str):
                 "playercharacter",
                 "backstory",
                 "location",
+                "origin",
+                "domain",
+                "origin/domain",
                 "hooks",
                 "quirks",
                 "portrait",
-            "icon",
-            "voice",
-            "voice_style",
-            "voice_provider",
-            "voice_preset",
-            "tags",
-            "age",
-        }
+                "icon",
+                "voice",
+                "voice_style",
+                "voice_provider",
+                "voice_preset",
+                "tags",
+                "age",
+            }
         }
         if sections:
             npc["sections"] = sections
