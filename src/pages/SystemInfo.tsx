@@ -1,6 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import { useSystemInfo } from "../features/system/useSystemInfo";
 import { Theme, useTheme } from "../features/theme/ThemeContext";
+import { useAudioLevel } from "../utils/useAudioLevel";
 
 const themeColors: Record<Theme, string> = {
   default: "rgba(255,255,255,0.22)",
@@ -22,6 +23,8 @@ const themeColors: Record<Theme, string> = {
 export default function SystemInfo() {
   const info = useSystemInfo();
   const { theme } = useTheme();
+  const level = useAudioLevel();
+  const retroAlpha = 0.22 + level * (1 - 0.22);
 
   return (
     <Box
@@ -32,7 +35,11 @@ export default function SystemInfo() {
         justifyContent: "center",
         height: "100vh",
         color: "#fff",
-        backgroundColor: themeColors[theme],
+        backgroundColor:
+          theme === "retro"
+            ? "rgba(0,255,0,var(--audio-alpha))"
+            : themeColors[theme],
+        "--audio-alpha": theme === "retro" ? retroAlpha : undefined,
         textAlign: "center",
         p: 4,
       }}
