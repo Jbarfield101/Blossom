@@ -261,7 +261,7 @@ def extract_npcs(path: str):
         npc = {
             "id": str(uuid.uuid4()),
             "name": data.get("name", "Unknown"),
-            "species": data.get("species", "Unknown"),
+            "species": data.get("species") or data.get("race") or "Unknown",
             "role": data.get("role", "Unknown"),
             "alignment": data.get("alignment", "Neutral"),
             "playerCharacter": data.get("playercharacter", "false").lower()
@@ -308,6 +308,7 @@ def extract_npcs(path: str):
             not in {
                 "name",
                 "species",
+                "race",
                 "role",
                 "alignment",
                 "playercharacter",
