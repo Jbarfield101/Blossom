@@ -5,17 +5,9 @@ scipy>=1.9.0
 pdfplumber>=0.10.3
 pytesseract>=0.3.10
 fpdf2>=2.7
-Pillow>=9.0.0
-feedparser>=6.0.0
 requests>=2.32.0
-aiohttp>=3.9.0
 vosk>=0.3.45
 audioop-lts ; python_version >= "3.13"  # audioop module for Python 3.13+
 bark>=0.1.5
 torch>=2.8.0
 soundfile>=0.13.1
-
-pdfminer.six>=20221105
-SQLAlchemy>=2.0
-PySide6>=6.5
-ollama>=0.1.0
