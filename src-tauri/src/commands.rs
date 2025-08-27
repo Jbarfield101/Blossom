@@ -1361,23 +1361,41 @@ pub async fn save_npc<R: Runtime>(
     fs::create_dir_all(&portraits).map_err(|e| e.to_string())?;
     let icons = dir.join("icons");
     fs::create_dir_all(&icons).map_err(|e| e.to_string())?;
-    if validated
+
+    match validated
         .get("portrait")
         .and_then(|v| v.as_str())
-        .map_or(true, |s| s.is_empty() || s == "placeholder.png")
     {
-        let p = portraits.join(format!("{}.png", &id));
-        create_placeholder_image(&p, 900, 1200)?;
-        validated["portrait"] = Value::String(p.to_string_lossy().into());
+        Some(p) if !p.is_empty() && p != "placeholder.png" => {
+            let src = PathBuf::from(p);
+            let ext = src.extension().and_then(|s| s.to_str()).unwrap_or("png");
+            let dest = portraits.join(format!("{}.{}", &id, ext));
+            fs::copy(&src, &dest).map_err(|e| e.to_string())?;
+            validated["portrait"] = Value::String(dest.to_string_lossy().into());
+        }
+        _ => {
+            let dest = portraits.join(format!("{}.png", &id));
+            create_placeholder_image(&dest, 900, 1200)?;
+            validated["portrait"] = Value::String(dest.to_string_lossy().into());
+        }
     }
-    if validated
+
+    match validated
         .get("icon")
         .and_then(|v| v.as_str())
-        .map_or(true, |s| s.is_empty() || s == "placeholder-icon.png")
     {
-        let i = icons.join(format!("{}.png", &id));
-        create_placeholder_image(&i, 300, 300)?;
-        validated["icon"] = Value::String(i.to_string_lossy().into());
+        Some(p) if !p.is_empty() && p != "placeholder-icon.png" => {
+            let src = PathBuf::from(p);
+            let ext = src.extension().and_then(|s| s.to_str()).unwrap_or("png");
+            let dest = icons.join(format!("{}.{}", &id, ext));
+            fs::copy(&src, &dest).map_err(|e| e.to_string())?;
+            validated["icon"] = Value::String(dest.to_string_lossy().into());
+        }
+        _ => {
+            let dest = icons.join(format!("{}.png", &id));
+            create_placeholder_image(&dest, 300, 300)?;
+            validated["icon"] = Value::String(dest.to_string_lossy().into());
+        }
     }
     let json = serde_json::to_string_pretty(&validated).map_err(|e| e.to_string())?;
     fs::write(path, json).map_err(|e| e.to_string())?;

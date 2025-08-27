@@ -12,11 +12,13 @@ import AddIcon from '@mui/icons-material/Add';
 import Center from './_Center';
 import GenerateNPCModal from '../components/GenerateNPCModal';
 import { useNPCs } from '../store/npcs';
+import { useWorlds } from '../store/worlds';
 import { Link } from 'react-router-dom';
 
 export default function NPCList() {
   const npcs = useNPCs((s) => s.npcs);
   const loadNPCs = useNPCs((s) => s.loadNPCs);
+  const world = useWorlds((s) => s.currentWorld);
 
   const [tagFilter, setTagFilter] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
@@ -24,8 +26,8 @@ export default function NPCList() {
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
-    loadNPCs();
-  }, [loadNPCs]);
+    if (world) loadNPCs(world);
+  }, [loadNPCs, world]);
 
   const filtered = useMemo(() => {
     return npcs.filter((n) => {

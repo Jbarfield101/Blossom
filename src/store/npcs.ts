@@ -7,7 +7,7 @@ interface NpcState {
   npcs: Npc[];
   addNPC: (npc: Omit<Npc, 'id'>) => void;
   removeNPC: (id: string) => void;
-  loadNPCs: () => Promise<void>;
+  loadNPCs: (world: string) => Promise<void>;
 }
 
 export const useNPCs = create<NpcState>()(
@@ -20,8 +20,8 @@ export const useNPCs = create<NpcState>()(
         })),
       removeNPC: (id) =>
         set((state) => ({ npcs: state.npcs.filter((npc) => npc.id !== id) })),
-      loadNPCs: async () => {
-        const npcs = await invoke<Npc[]>('list_npcs');
+      loadNPCs: async (world: string) => {
+        const npcs = await invoke<Npc[]>('list_npcs', { world });
         set({ npcs });
       },
     }),

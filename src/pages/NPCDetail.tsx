@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import Center from './_Center';
 import { useNPCs } from '../store/npcs';
+import { useWorlds } from '../store/worlds';
 import { generateAudio } from '../features/voice/bark';
 import * as Tone from 'tone';
 
@@ -18,10 +19,11 @@ export default function NPCDetail() {
   const { id } = useParams<{ id: string }>();
   const npcs = useNPCs((s) => s.npcs);
   const loadNPCs = useNPCs((s) => s.loadNPCs);
+  const world = useWorlds((s) => s.currentWorld);
 
   useEffect(() => {
-    loadNPCs();
-  }, [loadNPCs]);
+    if (world) loadNPCs(world);
+  }, [loadNPCs, world]);
 
   const npc = npcs.find((n) => n.id === id);
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { open } from '@tauri-apps/plugin-dialog';
 import { Button, Stack, TextField, Typography, Alert, CircularProgress, Snackbar, FormControlLabel, Checkbox } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
@@ -108,6 +109,16 @@ export default function NPCMaker() {
     setNpc((prev) => ({ ...prev, [field]: value }));
   }
 
+  async function selectImage(field: 'portrait' | 'icon') {
+    const selected = await open({
+      multiple: false,
+      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp'] }],
+    });
+    if (typeof selected === 'string') {
+      handleChange(field, selected);
+    }
+  }
+
   async function save() {
     setError('');
     const required: (keyof Omit<Npc, 'id'>)[] = [
@@ -115,8 +126,6 @@ export default function NPCMaker() {
       'species',
       'role',
       'backstory',
-      'portrait',
-      'icon',
     ];
     for (const field of required) {
       const value = npc[field];
@@ -124,6 +133,13 @@ export default function NPCMaker() {
         setError('Please fill in all fields before saving.');
         return;
       }
+    }
+    if (
+      npc.portrait === 'placeholder.png' ||
+      npc.icon === 'placeholder-icon.png'
+    ) {
+      setError('Please upload a portrait and icon before saving.');
+      return;
     }
     if (!world) {
       setError('Please select a world before saving.');
@@ -211,18 +227,14 @@ export default function NPCMaker() {
           }
           label="Player Character"
         />
-        <TextField
-          label="Portrait URL"
-          value={npc.portrait}
-          onChange={(e) => handleChange('portrait', e.target.value)}
-          fullWidth
-        />
-        <TextField
-          label="Icon URL"
-          value={npc.icon}
-          onChange={(e) => handleChange('icon', e.target.value)}
-          fullWidth
-        />
+        <Button variant="outlined" onClick={() => selectImage('portrait')}>
+          Upload Portrait
+        </Button>
+        {npc.portrait && <Typography>{npc.portrait}</Typography>}
+        <Button variant="outlined" onClick={() => selectImage('icon')}>
+          Upload Icon
+        </Button>
+        {npc.icon && <Typography>{npc.icon}</Typography>}
         <Button variant="contained" onClick={save} disabled={loading}>
           Save NPC
         </Button>
