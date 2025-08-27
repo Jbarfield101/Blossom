@@ -39,4 +39,15 @@ describe('inventory scanning', () => {
     const sword = Object.values(useInventory.getState().items).find((i) => i.name === 'Sword');
     expect(sword?.npcIds).toEqual(['1']);
   });
+
+  it('clears npc references when items disappear', () => {
+    const npcs: Npc[] = [
+      { ...baseNpc, id: '1', name: 'A', inventory: ['Sword'] } as Npc,
+    ];
+    useInventory.getState().scanNPCs(npcs);
+    const swordId = Object.keys(useInventory.getState().items)[0];
+    useInventory.getState().scanNPCs([{ ...baseNpc, id: '1', name: 'A', inventory: [] } as Npc]);
+    const items = useInventory.getState().items;
+    expect(items[swordId].npcIds).toEqual([]);
+  });
 });

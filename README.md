@@ -95,6 +95,25 @@ pytest  # run Python tests
 npm test  # run JavaScript tests
 ```
 
+## UI Usage
+
+- **Uploading PDFs:** Use the D&D forms' PDF upload dialogs to import NPCs, rules,
+  lore, or spells. Parsed entries appear in their respective lists once the
+  background task finishes.
+- **World inventory:** After NPCs are loaded, open the *World Inventory* page to
+  see a consolidated list of items along with the NPCs that carry them.
+- **Ollama enrichment:** Features such as General Chat and the NPC Maker start
+  the local `ollama` model automatically. Ensure the `ollama` CLI is installed so
+  enrichment requests succeed.
+
+### Manual end‑to‑end test
+
+1. Start the app with `npm run tauri dev`.
+2. Upload an NPC PDF and confirm the character appears in the list.
+3. Visit *World Inventory* and verify items aggregate under their NPC owners.
+4. Open General Chat and send a message to trigger `start_ollama`; check that a
+   model response is received.
+
 ## RetroTV component
 
 The `RetroTV` component renders its children inside a styled television frame when
