@@ -759,11 +759,34 @@ export default function SongForm() {
         updateJob(job.id, { status: "starting…", progress: 0 });
         setProgress(0);
         try {
+          console.info("run_lofi_song starting", {
+            jobId: job.id,
+            seed: job.spec.seed,
+            instruments: job.spec.instruments,
+            sfzInstrument: job.spec.sfzInstrument,
+            spec: job.spec,
+          });
           const outPath = await invoke<string>("run_lofi_song", { spec: job.spec });
+          console.info("run_lofi_song completed", {
+            jobId: job.id,
+            outPath,
+            seed: job.spec.seed,
+            instruments: job.spec.instruments,
+            sfzInstrument: job.spec.sfzInstrument,
+            spec: job.spec,
+          });
           updateJob(job.id, { outPath, status: "done", progress: 100 });
           setProgress(100);
         } catch (e: any) {
           const message = e?.message || String(e);
+          console.info("run_lofi_song error", {
+            jobId: job.id,
+            error: e,
+            seed: job.spec.seed,
+            instruments: job.spec.instruments,
+            sfzInstrument: job.spec.sfzInstrument,
+            spec: job.spec,
+          });
           console.error("run_lofi_song failed:", e);
           updateJob(job.id, { status: "error", error: message, progress: 100 });
           setProgress(100);
