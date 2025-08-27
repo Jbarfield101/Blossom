@@ -22,7 +22,6 @@ import { NpcData } from "./types";
 import NpcPdfUpload from "./NpcPdfUpload";
 import StyledTextField from "./StyledTextField";
 import { useVoices } from "../../store/voices";
-import { open } from "@tauri-apps/plugin-dialog";
 
 interface FormState {
   name: string;
@@ -101,15 +100,14 @@ export default function NpcForm({ world }: Props) {
   const [result, setResult] = useState<NpcData | null>(null);
   const [importedName, setImportedName] = useState<string | null>(null);
 
-  const selectFile = async (field: "portrait" | "icon") => {
-    const selected = await open({
-      multiple: false,
-      filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "gif", "webp"] }],
-    });
-    if (typeof selected === "string") {
-      dispatch({ type: "SET_FIELD", field, value: selected });
-    }
-  };
+  const handleFileChange =
+    (field: "portrait" | "icon") =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        dispatch({ type: "SET_FIELD", field, value: file.name });
+      }
+    };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -443,14 +441,20 @@ export default function NpcForm({ world }: Props) {
           <Divider sx={{ mb: 2 }} />
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={4}>
-              <Typography component="label" htmlFor="portrait">
-                Portrait
-              </Typography>
+              <label htmlFor="portrait">Portrait</label>
             </Grid>
             <Grid item xs={8}>
+              <input
+                type="file"
+                id="portrait"
+                hidden
+                onChange={handleFileChange("portrait")}
+              />
               <Button
                 variant="outlined"
-                onClick={() => selectFile("portrait")}
+                onClick={() =>
+                  document.getElementById("portrait")?.click()
+                }
                 sx={{ mt: 1 }}
               >
                 Upload Portrait
@@ -460,14 +464,18 @@ export default function NpcForm({ world }: Props) {
               )}
             </Grid>
             <Grid item xs={4}>
-              <Typography component="label" htmlFor="icon">
-                Icon
-              </Typography>
+              <label htmlFor="icon">Icon</label>
             </Grid>
             <Grid item xs={8}>
+              <input
+                type="file"
+                id="icon"
+                hidden
+                onChange={handleFileChange("icon")}
+              />
               <Button
                 variant="outlined"
-                onClick={() => selectFile("icon")}
+                onClick={() => document.getElementById("icon")?.click()}
                 sx={{ mt: 1 }}
               >
                 Upload Icon
