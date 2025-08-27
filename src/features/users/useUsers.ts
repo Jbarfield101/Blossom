@@ -37,15 +37,23 @@ const defaultModules: ModulesState = {
   construction: true,
 };
 
-  interface User {
-    id: string;
-    name: string;
-    theme: Theme;
-    money: number;
-    modules: ModulesState;
-    cpuLimit: number;
-    memLimit: number;
-  }
+interface RetroTvMedia {
+  data: string;
+  type: 'image' | 'video';
+  width: number;
+  height: number;
+}
+
+interface User {
+  id: string;
+  name: string;
+  theme: Theme;
+  money: number;
+  modules: ModulesState;
+  cpuLimit: number;
+  memLimit: number;
+  retroTvMedia: RetroTvMedia | null;
+}
 
 interface UsersState {
   users: Record<string, User>;
@@ -56,8 +64,10 @@ interface UsersState {
   setTheme: (theme: Theme) => void;
   toggleModule: (key: ModuleKey) => void;
   setCpuLimit: (limit: number) => void;
-    setMemLimit: (limit: number) => void;
-  }
+  setMemLimit: (limit: number) => void;
+  setRetroTvMedia: (media: RetroTvMedia) => void;
+  clearRetroTvMedia: () => void;
+}
 
 export const useUsers = create<UsersState>()(
   persist(
@@ -78,6 +88,7 @@ export const useUsers = create<UsersState>()(
               modules: { ...defaultModules },
               cpuLimit: 90,
               memLimit: 90,
+              retroTvMedia: null,
             },
           },
           currentUserId: id,
@@ -133,9 +144,29 @@ export const useUsers = create<UsersState>()(
             },
           }));
         },
+        setRetroTvMedia: (media) => {
+          const id = get().currentUserId;
+          if (!id) return;
+          set((state) => ({
+            users: {
+              ...state.users,
+              [id]: { ...state.users[id], retroTvMedia: media },
+            },
+          }));
+        },
+        clearRetroTvMedia: () => {
+          const id = get().currentUserId;
+          if (!id) return;
+          set((state) => ({
+            users: {
+              ...state.users,
+              [id]: { ...state.users[id], retroTvMedia: null },
+            },
+          }));
+        },
       }),
       { name: 'user-store' }
     )
   );
 
-export { type ModuleKey, type ModulesState, defaultModules };
+export { type ModuleKey, type ModulesState, defaultModules, type RetroTvMedia };
