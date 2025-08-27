@@ -262,7 +262,7 @@ def extract_npcs(path: str):
             "id": str(uuid.uuid4()),
             "name": data.get("name", "Unknown"),
             "species": data.get("species") or data.get("race") or "Unknown",
-            "role": data.get("role", "Unknown"),
+            "role": data.get("role") or data.get("occupation") or "Unknown",
             "alignment": data.get("alignment", "Neutral"),
             "playerCharacter": data.get("playercharacter", "false").lower()
             == "true",
@@ -323,6 +323,7 @@ def extract_npcs(path: str):
                 "species",
                 "race",
                 "role",
+                "occupation",
                 "alignment",
                 "playercharacter",
                 "backstory",

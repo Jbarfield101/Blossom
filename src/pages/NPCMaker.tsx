@@ -205,7 +205,7 @@ export default function NPCMaker() {
           fullWidth
         />
         <TextField
-          label="Role"
+          label="Role/Occupation"
           value={npc.role}
           onChange={(e) => handleChange('role', e.target.value)}
           fullWidth
