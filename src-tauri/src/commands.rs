@@ -1490,6 +1490,21 @@ pub async fn read_npc_log<R: Runtime>(
     Ok(entries)
 }
 
+#[tauri::command]
+pub async fn clear_npc_log<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|_| "app data dir".to_string())?
+        .join("npc")
+        .join("log");
+    let path = dir.join("npc-import.log");
+    if path.exists() {
+        fs::write(&path, "").map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 /* ==============================
 Ollama general chat
 ============================== */
