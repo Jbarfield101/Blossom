@@ -280,6 +280,7 @@ impl TaskQueue {
                                         })
                                     } else {
                                         let stdout = String::from_utf8_lossy(&output.stdout);
+                                        println!("ParseNpcPdf output: {}", stdout);
                                         serde_json::from_str::<Value>(&stdout).map_err(|e| TaskError {
                                             code: PdfErrorCode::InvalidJson,
                                             message: e.to_string(),
