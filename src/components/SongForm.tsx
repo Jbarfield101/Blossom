@@ -685,8 +685,22 @@ export default function SongForm() {
     setIsPlaying(false);
     setProgress(0);
 
-    if (!titleBase || !outDir || (albumMode && !albumReady)) {
-      setErr("Please set required titles and choose an output folder.");
+    const title = titleBase.trim();
+    const dir = outDir.trim();
+    if (!title && !dir) {
+      setErr("Please set a title and choose an output folder.");
+      return;
+    }
+    if (!title) {
+      setErr("Please set a title.");
+      return;
+    }
+    if (!dir) {
+      setErr("Please choose an output folder.");
+      return;
+    }
+    if (albumMode && !albumReady) {
+      setErr("Please complete album details.");
       return;
     }
     if (numSongs < 1) {
@@ -729,8 +743,22 @@ export default function SongForm() {
     setGlobalStatus("");
     setProgress(0);
 
-    if (!titleBase || !outDir) {
+    const title = titleBase.trim();
+    const dir = outDir.trim();
+    if (!title && !dir) {
       setErr("Please set a title and choose an output folder.");
+      return;
+    }
+    if (!title) {
+      setErr("Please set a title.");
+      return;
+    }
+    if (!dir) {
+      setErr("Please choose an output folder.");
+      return;
+    }
+    if (!albumReady) {
+      setErr("Please complete album details.");
       return;
     }
 
