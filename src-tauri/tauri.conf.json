@@ -37,7 +37,8 @@
     "resources": [
       "../public/sfz_sounds",
       "python/lofi",
-      "python/ambience_generator.py"
+      "python/ambience_generator.py",
+      "python/bark_tts.py"
     ]
 
   }
