@@ -6,7 +6,7 @@ use std::{
     io::{BufRead, BufReader, Read, Write},
     path::{Path, PathBuf},
     process::{Command as PCommand, Stdio},
-    sync::{Mutex, OnceLock},
+    sync::{Arc, Mutex, OnceLock},
     time::{Duration, Instant},
 };
 
@@ -835,7 +835,7 @@ pub async fn run_lofi_song<R: Runtime>(
     let json_str = serde_json::to_string(&spec).map_err(|e| e.to_string())?;
 
     // Launch Python
-    let mut cmd = PCommand::new(&py);
+    let mut cmd = tokio::process::Command::new(&py);
     cmd.current_dir(python_dir)
         .arg("-u")
         .arg("-m")
@@ -854,28 +854,34 @@ pub async fn run_lofi_song<R: Runtime>(
     let mut child = cmd
         .spawn()
         .map_err(|e| format!("Failed to start python: {e}"))?;
-    let mut stdout = BufReader::new(child.stdout.take().unwrap());
-    let mut line = String::new();
 
-    // Forward JSON status lines printed by Python to the UI
-    loop {
-        line.clear();
-        let read = stdout.read_line(&mut line).map_err(|e| e.to_string())?;
-        if read == 0 {
-            break;
+    let stdout = child.stdout.take().unwrap();
+    let stderr = child.stderr.take().unwrap();
+
+    let stderr_buf = Arc::new(AsyncMutex::new(String::new()));
+    let stderr_buf_cl = stderr_buf.clone();
+    let err_window = window.clone();
+    let stderr_task = tokio::spawn(async move {
+        let mut lines = TokioBufReader::new(stderr).lines();
+        while let Ok(Some(line)) = lines.next_line().await {
+            let payload = json!({"stage": "error", "message": line}).to_string();
+            err_window.emit("lofi_progress", payload).ok();
+            let mut buf = stderr_buf_cl.lock().await;
+            buf.push_str(&line);
+            buf.push('\n');
         }
+    });
+
+    let mut stdout_lines = TokioBufReader::new(stdout).lines();
+    while let Ok(Some(line)) = stdout_lines.next_line().await {
         let _ = window.emit("lofi_progress", line.trim().to_string());
     }
 
-    // Gather stderr on failure
-    let mut stderr_s = String::new();
-    if let Some(mut e) = child.stderr.take() {
-        let _ = e.read_to_string(&mut stderr_s);
-    }
-
-    let status = child.wait().map_err(|e| e.to_string())?;
+    let status = child.wait().await.map_err(|e| e.to_string())?;
+    let _ = stderr_task.await;
     if !status.success() {
-        return Err(format!("Python exited with {status}: {stderr_s}"));
+        let err = stderr_buf.lock().await.clone();
+        return Err(format!("Python exited with {status}: {err}"));
     }
 
     window
