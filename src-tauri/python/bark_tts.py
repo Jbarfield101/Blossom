@@ -1,5 +1,4 @@
 import io
-
 import numpy as np
 import torch
 
@@ -20,10 +19,17 @@ def _get_device() -> torch.device:
 
 
 def load_model() -> None:
-    """Load Bark models onto the appropriate device."""
+    """Load Bark models, using the GPU when available."""
     if preload_models is None:
         raise RuntimeError("bark library is not installed") from _import_error
-    preload_models(device=_get_device())
+
+    use_gpu = torch.cuda.is_available()
+    preload_models(
+        text_use_gpu=use_gpu,
+        coarse_use_gpu=use_gpu,
+        fine_use_gpu=use_gpu,
+        codec_use_gpu=use_gpu,
+    )
 
 
 # Load models as soon as the module is imported.
@@ -48,8 +54,7 @@ def speak(text: str, speaker: str) -> bytes:
     if generate_audio is None:
         raise RuntimeError("bark library is not installed") from _import_error
 
-    device = _get_device()
-    audio_array: np.ndarray = generate_audio(text, history_prompt=speaker, device=device)
+    audio_array: np.ndarray = generate_audio(text, history_prompt=speaker)
 
     buffer = io.BytesIO()
     import soundfile as sf  # imported lazily to keep module light
