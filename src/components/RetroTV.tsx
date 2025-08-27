@@ -9,12 +9,18 @@ interface RetroTVProps {
 
 export default function RetroTV({ children }: RetroTVProps) {
   const { theme } = useTheme();
-  const { currentUserId, retroTvMedia, setRetroTvMedia } = useUsers((state) => ({
+  const {
+    currentUserId,
+    retroTvMedia,
+    setRetroTvMedia,
+    clearRetroTvMedia,
+  } = useUsers((state) => ({
     currentUserId: state.currentUserId,
     retroTvMedia: state.currentUserId
       ? state.users[state.currentUserId]?.retroTvMedia
       : null,
     setRetroTvMedia: state.setRetroTvMedia,
+    clearRetroTvMedia: state.clearRetroTvMedia,
   }));
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<"image" | "video" | null>(null);
@@ -33,6 +39,10 @@ export default function RetroTV({ children }: RetroTVProps) {
       const isVideo = file.type.startsWith("video");
 
       const update = (width: number, height: number) => {
+        setMediaUrl(result);
+        setMediaType(isVideo ? "video" : "image");
+        setMediaWidth(width);
+        setMediaHeight(height);
         if (currentUserId) {
           setRetroTvMedia({
             data: result,
@@ -61,14 +71,8 @@ export default function RetroTV({ children }: RetroTVProps) {
   };
 
   useEffect(() => {
-    let objectUrl: string | null = null;
     if (retroTvMedia) {
-      const [header, base64] = retroTvMedia.data.split(",");
-      const mime = header.match(/:(.*?);/)?.[1] ?? "";
-      const binary = atob(base64);
-      const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-      objectUrl = URL.createObjectURL(new Blob([bytes], { type: mime }));
-      setMediaUrl(objectUrl);
+      setMediaUrl(retroTvMedia.data);
       setMediaType(retroTvMedia.type);
       setMediaWidth(retroTvMedia.width);
       setMediaHeight(retroTvMedia.height);
@@ -78,10 +82,13 @@ export default function RetroTV({ children }: RetroTVProps) {
       setMediaWidth(640);
       setMediaHeight(480);
     }
-    return () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
   }, [currentUserId, retroTvMedia]);
+
+  useEffect(() => {
+    return () => {
+      clearRetroTvMedia();
+    };
+  }, [clearRetroTvMedia]);
 
   if (theme !== "retro") return null;
 
