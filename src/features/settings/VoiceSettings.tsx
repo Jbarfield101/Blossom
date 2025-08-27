@@ -6,6 +6,8 @@ import {
   TextField,
   Typography,
   IconButton,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import StarIcon from "@mui/icons-material/Star";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
@@ -14,7 +16,14 @@ import { useVoices } from "../../store/voices";
 export default function VoiceSettings() {
   const allVoices = useVoices((s) => s.voices);
   const voiceFilter = useVoices((s) => s.filter);
-  const voices = useMemo(() => allVoices.filter(voiceFilter), [allVoices, voiceFilter]);
+  const [favoriteOnly, setFavoriteOnly] = useState(false);
+  const voices = useMemo(
+    () =>
+      allVoices
+        .filter(voiceFilter)
+        .filter((v) => !favoriteOnly || v.favorite),
+    [allVoices, voiceFilter, favoriteOnly]
+  );
   const addVoice = useVoices((s) => s.addVoice);
   const removeVoice = useVoices((s) => s.removeVoice);
   const setTags = useVoices((s) => s.setTags);
@@ -61,6 +70,15 @@ export default function VoiceSettings() {
   return (
     <Box id="voice-settings">
       <Typography variant="subtitle1">Bark Voices</Typography>
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={favoriteOnly}
+            onChange={(e) => setFavoriteOnly(e.target.checked)}
+          />
+        }
+        label="Favorites"
+      />
       <Stack spacing={2} sx={{ mt: 2 }}>
         {voices.map((v) => (
           <Stack key={v.id} direction="row" spacing={1} alignItems="center">
