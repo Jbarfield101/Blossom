@@ -22,8 +22,11 @@ import { NpcData } from "./types";
 import NpcPdfUpload from "./NpcPdfUpload";
 import StyledTextField from "./StyledTextField";
 import { useVoices } from "../../store/voices";
+import { useNPCs } from "../../store/npcs";
+import { invoke } from "@tauri-apps/api/core";
 
 interface FormState {
+  id: string;
   name: string;
   species: string;
   role: string;
@@ -41,9 +44,19 @@ interface FormState {
   statblock: string;
   sections: string;
   voiceId: string;
+  level: string;
+  hp: string;
+  strength: string;
+  dexterity: string;
+  constitution: string;
+  intelligence: string;
+  wisdom: string;
+  charisma: string;
+  inventory: string;
 }
 
 const initialState: FormState = {
+  id: "",
   name: "",
   species: "",
   role: "",
@@ -61,6 +74,15 @@ const initialState: FormState = {
   statblock: "{}",
   sections: "{}",
   voiceId: "",
+  level: "",
+  hp: "",
+  strength: "",
+  dexterity: "",
+  constitution: "",
+  intelligence: "",
+  wisdom: "",
+  charisma: "",
+  inventory: "",
 };
 
 type Action = {
@@ -96,6 +118,7 @@ export default function NpcForm({ world }: Props) {
   );
   const toggleFavorite = useVoices((s) => s.toggleFavorite);
   const loadVoices = useVoices((s) => s.load);
+  const loadNPCs = useNPCs((s) => s.loadNPCs);
   useEffect(() => {
     loadVoices();
   }, [loadVoices]);
@@ -113,7 +136,147 @@ export default function NpcForm({ world }: Props) {
       }
     };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleJsonImport = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const npc = zNpc.parse(JSON.parse(text));
+      setImportedName(npc.name);
+      dispatch({ type: "SET_FIELD", field: "id", value: npc.id });
+      dispatch({ type: "SET_FIELD", field: "name", value: npc.name });
+      dispatch({ type: "SET_FIELD", field: "species", value: npc.species });
+      dispatch({ type: "SET_FIELD", field: "role", value: npc.role });
+      dispatch({ type: "SET_FIELD", field: "alignment", value: npc.alignment });
+      dispatch({ type: "SET_FIELD", field: "playerCharacter", value: npc.playerCharacter });
+      dispatch({ type: "SET_FIELD", field: "age", value: npc.age?.toString() || "" });
+      dispatch({ type: "SET_FIELD", field: "backstory", value: npc.backstory || "" });
+      dispatch({ type: "SET_FIELD", field: "location", value: npc.location || "" });
+      dispatch({ type: "SET_FIELD", field: "hooks", value: (npc.hooks || []).join(", ") });
+      dispatch({ type: "SET_FIELD", field: "quirks", value: (npc.quirks || []).join(", ") });
+      dispatch({ type: "SET_FIELD", field: "appearance", value: npc.appearance || "" });
+      dispatch({ type: "SET_FIELD", field: "tags", value: (npc.tags || []).join(", ") });
+      dispatch({ type: "SET_FIELD", field: "portrait", value: npc.portrait || "" });
+      dispatch({ type: "SET_FIELD", field: "icon", value: npc.icon || "" });
+      dispatch({
+        type: "SET_FIELD",
+        field: "statblock",
+        value: JSON.stringify(npc.statblock || {}, null, 2),
+      });
+      dispatch({
+        type: "SET_FIELD",
+        field: "sections",
+        value: JSON.stringify(npc.sections || {}, null, 2),
+      });
+      dispatch({ type: "SET_FIELD", field: "voiceId", value: npc.voiceId || "" });
+      dispatch({ type: "SET_FIELD", field: "level", value: npc.level?.toString() || "" });
+      dispatch({ type: "SET_FIELD", field: "hp", value: npc.hp?.toString() || "" });
+      dispatch({ type: "SET_FIELD", field: "inventory", value: (npc.inventory || []).join(", ") });
+      dispatch({ type: "SET_FIELD", field: "strength", value: npc.abilities?.strength?.toString() || "" });
+      dispatch({ type: "SET_FIELD", field: "dexterity", value: npc.abilities?.dexterity?.toString() || "" });
+      dispatch({ type: "SET_FIELD", field: "constitution", value: npc.abilities?.constitution?.toString() || "" });
+      dispatch({ type: "SET_FIELD", field: "intelligence", value: npc.abilities?.intelligence?.toString() || "" });
+      dispatch({ type: "SET_FIELD", field: "wisdom", value: npc.abilities?.wisdom?.toString() || "" });
+      dispatch({ type: "SET_FIELD", field: "charisma", value: npc.abilities?.charisma?.toString() || "" });
+    } catch {
+      setErrors({ json: "Invalid JSON" });
+      setImportedName(null);
+    }
+  };
+
+  const handleExportJson = () => {
+    setErrors({});
+    let parsedStatblock: Record<string, unknown> = {};
+    try {
+      parsedStatblock = JSON.parse(state.statblock || "{}");
+    } catch {
+      setErrors({ statblock: "Invalid JSON" });
+      return;
+    }
+
+    let parsedSections: Record<string, unknown> = {};
+    try {
+      parsedSections = JSON.parse(state.sections || "{}");
+    } catch {
+      setErrors({ sections: "Invalid JSON" });
+      return;
+    }
+
+    const abilities: Record<string, number> = {};
+    const abilityKeys = [
+      "strength",
+      "dexterity",
+      "constitution",
+      "intelligence",
+      "wisdom",
+      "charisma",
+    ] as const;
+    for (const key of abilityKeys) {
+      const value = (state as any)[key] as string;
+      if (value) {
+        const num = parseInt(value, 10);
+        if (isNaN(num)) {
+          setErrors((prev) => ({ ...prev, [`abilities.${key}`]: "Invalid number" }));
+          return;
+        }
+        abilities[key] = num;
+      }
+    }
+
+    const inventory = state.inventory
+      .split(",")
+      .map((i) => i.trim())
+      .filter(Boolean);
+
+    const data: NpcData = {
+      id: state.id || crypto.randomUUID(),
+      name: state.name,
+      species: state.species,
+      role: state.role,
+      alignment: state.alignment,
+      playerCharacter: state.playerCharacter,
+      age: state.age ? parseInt(state.age, 10) : undefined,
+      backstory: state.backstory || undefined,
+      location: state.location || undefined,
+      hooks: state.hooks.split(",").map((h) => h.trim()).filter(Boolean),
+      quirks: state.quirks
+        ? state.quirks.split(",").map((q) => q.trim()).filter(Boolean)
+        : undefined,
+      appearance: state.appearance || undefined,
+      voiceId: state.voiceId || undefined,
+      portrait: state.portrait || "placeholder.png",
+      icon: state.icon || "placeholder-icon.png",
+      sections: Object.keys(parsedSections).length ? parsedSections : undefined,
+      statblock: parsedStatblock,
+      tags: state.tags.split(",").map((t) => t.trim()).filter(Boolean),
+      level: state.level ? parseInt(state.level, 10) : undefined,
+      hp: state.hp ? parseInt(state.hp, 10) : undefined,
+      abilities: Object.keys(abilities).length ? (abilities as any) : undefined,
+      inventory: inventory.length ? inventory : undefined,
+    };
+
+    const parsed = zNpc.safeParse(data);
+    if (parsed.success) {
+      const blob = new Blob([JSON.stringify(parsed.data, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${parsed.data.name || "npc"}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      const fieldErrors: Record<string, string | null> = {};
+      parsed.error.issues.forEach((issue) => {
+        fieldErrors[issue.path.join(".")] = issue.message;
+      });
+      setErrors(fieldErrors);
+    }
+  };
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
     let parsedStatblock: Record<string, unknown> = {};
@@ -134,8 +297,35 @@ export default function NpcForm({ world }: Props) {
       return;
     }
 
+    const abilities: Record<string, number> = {};
+    const abilityKeys = [
+      "strength",
+      "dexterity",
+      "constitution",
+      "intelligence",
+      "wisdom",
+      "charisma",
+    ] as const;
+    for (const key of abilityKeys) {
+      const value = (state as any)[key] as string;
+      if (value) {
+        const num = parseInt(value, 10);
+        if (isNaN(num)) {
+          setErrors({ [`abilities.${key}`]: "Invalid number" });
+          setResult(null);
+          return;
+        }
+        abilities[key] = num;
+      }
+    }
+
+    const inventory = state.inventory
+      .split(",")
+      .map((i) => i.trim())
+      .filter(Boolean);
+
     const data: NpcData = {
-      id: crypto.randomUUID(),
+      id: state.id || crypto.randomUUID(),
       name: state.name,
       species: state.species,
       role: state.role,
@@ -155,11 +345,22 @@ export default function NpcForm({ world }: Props) {
       sections: Object.keys(parsedSections).length ? parsedSections : undefined,
       statblock: parsedStatblock,
       tags: state.tags.split(",").map((t) => t.trim()).filter(Boolean),
+      level: state.level ? parseInt(state.level, 10) : undefined,
+      hp: state.hp ? parseInt(state.hp, 10) : undefined,
+      abilities: Object.keys(abilities).length ? (abilities as any) : undefined,
+      inventory: inventory.length ? inventory : undefined,
     };
 
     const parsed = zNpc.safeParse(data);
     if (parsed.success) {
-      setResult(parsed.data);
+      try {
+        const saved = await invoke<NpcData>("save_npc", { world, npc: parsed.data });
+        await loadNPCs(world);
+        setResult(saved);
+      } catch (err) {
+        setErrors({ submit: String(err) });
+        setResult(null);
+      }
     } else {
       setResult(null);
       const fieldErrors: Record<string, string | null> = {};
@@ -193,6 +394,7 @@ export default function NpcForm({ world }: Props) {
                   const npc = npcs[0];
                   if (!npc) return;
                   setImportedName(npc.name);
+                  dispatch({ type: "SET_FIELD", field: "id", value: npc.id });
                   dispatch({ type: "SET_FIELD", field: "name", value: npc.name });
                   dispatch({ type: "SET_FIELD", field: "species", value: npc.species });
                   dispatch({ type: "SET_FIELD", field: "role", value: npc.role });
@@ -218,10 +420,49 @@ export default function NpcForm({ world }: Props) {
                     value: JSON.stringify(npc.sections || {}, null, 2),
                   });
                   dispatch({ type: "SET_FIELD", field: "voiceId", value: npc.voiceId || "" });
+                  dispatch({ type: "SET_FIELD", field: "level", value: npc.level?.toString() || "" });
+                  dispatch({ type: "SET_FIELD", field: "hp", value: npc.hp?.toString() || "" });
+                  dispatch({ type: "SET_FIELD", field: "inventory", value: (npc.inventory || []).join(", ") });
+                  dispatch({ type: "SET_FIELD", field: "strength", value: npc.abilities?.strength?.toString() || "" });
+                  dispatch({ type: "SET_FIELD", field: "dexterity", value: npc.abilities?.dexterity?.toString() || "" });
+                  dispatch({ type: "SET_FIELD", field: "constitution", value: npc.abilities?.constitution?.toString() || "" });
+                  dispatch({ type: "SET_FIELD", field: "intelligence", value: npc.abilities?.intelligence?.toString() || "" });
+                  dispatch({ type: "SET_FIELD", field: "wisdom", value: npc.abilities?.wisdom?.toString() || "" });
+                  dispatch({ type: "SET_FIELD", field: "charisma", value: npc.abilities?.charisma?.toString() || "" });
                 }}
               />
               {importedName && (
                 <Typography sx={{ mt: 1 }}>Imported: {importedName}</Typography>
+              )}
+            </Grid>
+            <Grid item xs={4}>
+              <Typography component="label">Import NPC JSON</Typography>
+            </Grid>
+            <Grid item xs={8}>
+              <input
+                type="file"
+                id="npc-json"
+                data-testid="npc-json-input"
+                accept="application/json"
+                hidden
+                onChange={handleJsonImport}
+              />
+              <Button
+                variant="outlined"
+                onClick={() => document.getElementById("npc-json")?.click()}
+                sx={{ mt: 1 }}
+              >
+                Import JSON
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={handleExportJson}
+                sx={{ mt: 1, ml: 1 }}
+              >
+                Export JSON
+              </Button>
+              {errors.json && (
+                <FormErrorText id="json-error">{errors.json}</FormErrorText>
               )}
             </Grid>
             <Grid item xs={12}>
@@ -340,6 +581,102 @@ export default function NpcForm({ world }: Props) {
           </Grid>
         </Grid>
 
+        {/* Stats */}
+        <Grid item xs={12}>
+          <Typography variant="subtitle1" sx={{ mt: 2 }}>
+            Stats
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={6}>
+              <StyledTextField
+                id="level"
+                label="Level"
+                type="number"
+                value={state.level}
+                onChange={(e) => {
+                  dispatch({ type: "SET_FIELD", field: "level", value: e.target.value });
+                  setErrors((prev) => ({ ...prev, level: null }));
+                }}
+                fullWidth
+                margin="normal"
+                error={Boolean(errors.level)}
+                helperText={<FormErrorText id="level-error">{errors.level}</FormErrorText>}
+                aria-describedby={errors.level ? "level-error" : undefined}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <StyledTextField
+                id="hp"
+                label="HP"
+                type="number"
+                value={state.hp}
+                onChange={(e) => {
+                  dispatch({ type: "SET_FIELD", field: "hp", value: e.target.value });
+                  setErrors((prev) => ({ ...prev, hp: null }));
+                }}
+                fullWidth
+                margin="normal"
+                error={Boolean(errors.hp)}
+                helperText={<FormErrorText id="hp-error">{errors.hp}</FormErrorText>}
+                aria-describedby={errors.hp ? "hp-error" : undefined}
+              />
+            </Grid>
+            {[
+              "strength",
+              "dexterity",
+              "constitution",
+              "intelligence",
+              "wisdom",
+              "charisma",
+            ].map((ability) => (
+              <Grid item xs={6} key={ability}>
+                <StyledTextField
+                  id={ability}
+                  label={ability.charAt(0).toUpperCase() + ability.slice(1)}
+                  type="number"
+                  value={(state as any)[ability]}
+                  onChange={(e) => {
+                    dispatch({ type: "SET_FIELD", field: ability as any, value: e.target.value });
+                    setErrors((prev) => ({ ...prev, [`abilities.${ability}`]: null }));
+                  }}
+                  fullWidth
+                  margin="normal"
+                  error={Boolean(errors[`abilities.${ability}`])}
+                  helperText={
+                    <FormErrorText id={`${ability}-error`}>
+                      {errors[`abilities.${ability}`]}
+                    </FormErrorText>
+                  }
+                  aria-describedby={
+                    errors[`abilities.${ability}`] ? `${ability}-error` : undefined
+                  }
+                />
+              </Grid>
+            ))}
+            <Grid item xs={12}>
+              <StyledTextField
+                id="inventory"
+                label="Inventory (comma separated)"
+                value={state.inventory}
+                onChange={(e) => {
+                  dispatch({ type: "SET_FIELD", field: "inventory", value: e.target.value });
+                  setErrors((prev) => ({ ...prev, inventory: null }));
+                }}
+                fullWidth
+                margin="normal"
+                error={Boolean(errors.inventory)}
+                helperText={
+                  <FormErrorText id="inventory-error">{errors.inventory}</FormErrorText>
+                }
+                aria-describedby={
+                  errors.inventory ? "inventory-error" : undefined
+                }
+              />
+            </Grid>
+          </Grid>
+        </Grid>
+
         {/* Details */}
         <Grid item xs={12}>
           <Typography variant="subtitle1" sx={{ mt: 2 }}>
@@ -392,7 +729,7 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={12}>
               <StyledTextField
                 id="quirks"
-                label="Quirks (comma separated)"
+                label="Personality (comma separated)"
                 value={state.quirks}
                 onChange={(e) =>
                   dispatch({ type: "SET_FIELD", field: "quirks", value: e.target.value })
