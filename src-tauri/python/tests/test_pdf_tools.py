@@ -84,6 +84,38 @@ def test_validate_entry(monkeypatch):
     assert not pdf_tools._validate_entry("npc", {"name": "Bob"})
 
 
+def _make_npc_pdf(tmp_path, fields):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Helvetica", "", 12)
+    for k, v in fields.items():
+        pdf.cell(0, 10, f"{k}: {v}", ln=1)
+    path = tmp_path / "npc.pdf"
+    pdf.output(str(path))
+    return str(path)
+
+
+def test_extract_npcs_parses_appearance(tmp_path):
+    path = _make_npc_pdf(
+        tmp_path,
+        {
+            "Name": "Alice",
+            "Species": "Elf",
+            "Role": "Merchant",
+            "Hooks": "Trade",
+            "Tags": "npc",
+            "Appearance": "Tall and slender",
+            "Extra": "Value",
+        },
+    )
+    res = pdf_tools.extract_npcs(path)
+    npc = res["npcs"][0]
+    assert npc["appearance"] == "Tall and slender"
+    sections = npc.get("sections", {})
+    assert "appearance" not in sections
+    assert sections.get("extra") == "Value"
+
+
 def _make_pdf(tmp_path, entries, use_bold=True, use_colon=False):
     """Create a simple PDF file with given entries.
 

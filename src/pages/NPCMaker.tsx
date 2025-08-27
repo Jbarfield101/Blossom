@@ -205,7 +205,7 @@ export default function NPCMaker() {
           fullWidth
         />
         <TextField
-          label="Role"
+          label="Role/Occupation"
           value={npc.role}
           onChange={(e) => handleChange('role', e.target.value)}
           fullWidth
@@ -230,6 +230,12 @@ export default function NPCMaker() {
           multiline
           value={npc.backstory}
           onChange={(e) => handleChange('backstory', e.target.value)}
+          fullWidth
+        />
+        <TextField
+          label="Appearance"
+          value={npc.appearance}
+          onChange={(e) => handleChange('appearance', e.target.value)}
           fullWidth
         />
         <FormControlLabel

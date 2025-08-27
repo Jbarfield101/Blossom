@@ -244,7 +244,13 @@ def extract_npcs(path: str):
                 data[k.strip().lower()] = v.strip()
         if not data:
             continue
-        hooks = [h.strip() for h in (data.get("hooks") or "").split(",") if h.strip()]
+        hooks_raw = (
+            data.get("hooks")
+            or data.get("adventure hooks")
+            or data.get("adventure_hooks")
+            or ""
+        )
+        hooks = [h.strip() for h in hooks_raw.split(",") if h.strip()]
         if not hooks:
             hooks = ["hook"]
             warnings.warn(
@@ -262,14 +268,18 @@ def extract_npcs(path: str):
             "id": str(uuid.uuid4()),
             "name": data.get("name", "Unknown"),
             "species": data.get("species") or data.get("race") or "Unknown",
-            "role": data.get("role", "Unknown"),
+            "role": data.get("role") or data.get("occupation") or "Unknown",
             "alignment": data.get("alignment", "Neutral"),
             "playerCharacter": data.get("playercharacter", "false").lower()
             == "true",
             "backstory": data.get("backstory"),
-            "location": data.get("location"),
+            "location": data.get("location")
+            or data.get("origin")
+            or data.get("domain")
+            or data.get("origin/domain"),
             "hooks": hooks,
             "quirks": [q.strip() for q in data.get("quirks", "").split(",") if q.strip()] or None,
+            "appearance": data.get("appearance"),
             "statblock": {},
             "tags": tags,
         }
@@ -319,21 +329,28 @@ def extract_npcs(path: str):
                 "species",
                 "race",
                 "role",
+                "occupation",
                 "alignment",
                 "playercharacter",
                 "backstory",
                 "location",
+                "origin",
+                "domain",
+                "origin/domain",
                 "hooks",
+                "adventure hooks",
+                "adventure_hooks",
                 "quirks",
+                "appearance",
                 "portrait",
-            "icon",
-            "voice",
-            "voice_style",
-            "voice_provider",
-            "voice_preset",
-            "tags",
-            "age",
-        }
+                "icon",
+                "voice",
+                "voice_style",
+                "voice_provider",
+                "voice_preset",
+                "tags",
+                "age",
+            }
         }
         if sections:
             npc["sections"] = sections
@@ -357,18 +374,33 @@ def extract_lore(path: str):
                 data[k.strip().lower()] = v.strip()
         if not data:
             continue
+        hooks_raw = (
+            data.get("hooks")
+            or data.get("adventure hooks")
+            or data.get("adventure_hooks")
+            or ""
+        )
         lore = {
             "id": str(uuid.uuid4()),
             "name": data.get("name", "Unknown"),
             "summary": data.get("summary", ""),
             "location": data.get("location"),
-            "hooks": [h.strip() for h in data.get("hooks", "").split(",") if h.strip()] or None,
+            "hooks": [h.strip() for h in hooks_raw.split(",") if h.strip()] or None,
             "tags": [t.strip() for t in data.get("tags", "lore").split(",") if t.strip()],
         }
         sections = {
             k: v
             for k, v in data.items()
-            if k not in {"name", "summary", "location", "hooks", "tags"}
+            if k
+            not in {
+                "name",
+                "summary",
+                "location",
+                "hooks",
+                "adventure hooks",
+                "adventure_hooks",
+                "tags",
+            }
         }
         if sections:
             lore["sections"] = sections
