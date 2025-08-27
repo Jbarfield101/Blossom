@@ -9,10 +9,10 @@ import NpcLog from "./NpcLog";
 
 interface Props {
   world: string;
-  onImported?: (npcs: NpcData[]) => void;
+  onParsed?: (npcs: NpcData[]) => void;
 }
 
-export default function NpcPdfUpload({ world, onImported }: Props) {
+export default function NpcPdfUpload({ world, onParsed }: Props) {
   const enqueueTask = useTasks((s) => s.enqueueTask);
   const tasks = useTasks((s) => s.tasks);
   const loadNPCs = useNPCs((s) => s.loadNPCs);
@@ -43,6 +43,7 @@ export default function NpcPdfUpload({ world, onImported }: Props) {
     const task = tasks[taskId];
     if (task && task.status === "completed" && Array.isArray(task.result)) {
       const parsed = task.result as NpcData[];
+      onParsed?.(parsed);
       (async () => {
         const existing = await invoke<NpcData[]>("list_npcs", { world });
         for (const npc of parsed) {
@@ -53,7 +54,7 @@ export default function NpcPdfUpload({ world, onImported }: Props) {
           if (dup) {
             overwrite = window.confirm(`NPC ${npc.name} exists. Overwrite?`);
           }
-            if (overwrite) {
+          if (overwrite) {
             await invoke("save_npc", { world, npc, overwrite });
             await invoke("append_npc_log", {
               world,
@@ -64,7 +65,6 @@ export default function NpcPdfUpload({ world, onImported }: Props) {
         }
         await loadNPCs(world);
         setImported(parsed);
-        onImported?.(parsed);
         setStatus("completed");
         setSnackbarOpen(true);
         setTaskId(null);
@@ -87,7 +87,7 @@ export default function NpcPdfUpload({ world, onImported }: Props) {
       setTaskId(null);
       setShowLog(true);
     }
-  }, [taskId, tasks, world, loadNPCs, onImported]);
+  }, [taskId, tasks, world, loadNPCs, onParsed]);
 
   const task = taskId ? tasks[taskId] : null;
 
