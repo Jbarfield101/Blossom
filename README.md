@@ -118,6 +118,9 @@ When a user uploads a video, it plays automatically on an endless loop.
   clipping intensity (values around `1.0` keep saturation subtle).
 - **Chord span:** Control how long each chord lasts with `chord_span_beats`
   (2 = ½ bar, 4 = 1 bar, 8 = 2 bars).
+- **SFZ instruments:** Supply custom samples in the song JSON with
+  `sfz_instrument` for leads or `sfz_chords`, `sfz_pads`, and `sfz_bass` for
+  chords, pads, and bass lines.
 - **Song form:** Structure songs with through‑composed templates (e.g.
   `Intro–A–B–C–D–E–F–Outro`) and use odd bar lengths like 5 or 7 bars for
   asymmetrical phrases.

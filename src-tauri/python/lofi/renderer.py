@@ -1022,6 +1022,9 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
     keys  = np.zeros(n, dtype=np.float32)
     pads  = np.zeros(n, dtype=np.float32)
     hats  = np.zeros(n, dtype=np.float32)
+    sfz_chords_sampler = motif.get("sfz_chords_sampler")
+    sfz_pads_sampler = motif.get("sfz_pads_sampler")
+    sfz_bass_sampler = motif.get("sfz_bass_sampler")
 
     # --- choose drum pattern
     if is_break_ambient:
@@ -1176,6 +1179,16 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
         chord_roots_hz.append(freqs[0])
         vel = _vel_scale(rng, mean=1.0, std=0.05, lo=0.9, hi=1.1)
 
+        if sfz_chords_sampler is not None:
+            length = min(chord_len, dur_ms - chord_pos)
+            ch = np.zeros(int(length * SR / 1000), dtype=np.float32)
+            for f in freqs:
+                ch += sfz_chords_sampler.render(f, length)
+            ch /= max(len(freqs), 1)
+            ch *= vel
+            i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(ch))
+            keys[i0:i1] += ch[: i1 - i0]
+
         if ("rhodes" in instrs or add_rhodes_default) and ("piano" not in instrs):
             chord = _lofi_rhodes_chord(freqs, min(chord_len, dur_ms - chord_pos), amp=0.12, rng=rng) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(chord))
@@ -1208,6 +1221,15 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
             airy = _airy_pad_chord(freqs, min(chord_len*2, dur_ms - chord_pos), amp=0.12) * vel
             i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(airy))
             pads[i0:i1] += airy[: i1 - i0]
+        if sfz_pads_sampler is not None:
+            pad_len = min(chord_len * 2, dur_ms - chord_pos)
+            pad_audio = np.zeros(int(pad_len * SR / 1000), dtype=np.float32)
+            for f in freqs:
+                pad_audio += sfz_pads_sampler.render(f, pad_len)
+            pad_audio /= max(len(freqs), 1)
+            pad_audio *= vel
+            i0 = int(chord_pos * SR / 1000); i1 = min(n, i0 + len(pad_audio))
+            pads[i0:i1] += pad_audio[: i1 - i0]
 
         chord_pos += chord_len
 
@@ -1239,11 +1261,19 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
                     freq_root = root_hz
                     if rng.random() < 0.25:
                         freq_root *= 2  # octave pop
-                    b = _bass_note(freq_root, int(beat * 3.8), amp=0.16) * _vel_scale(rng, mean=0.95)
+                    if sfz_bass_sampler is not None:
+                        b = sfz_bass_sampler.render(freq_root, int(beat * 3.8)) * 0.16
+                    else:
+                        b = _bass_note(freq_root, int(beat * 3.8), amp=0.16)
+                    b *= _vel_scale(rng, mean=0.95)
                     if pos - sixteenth > 0:
                         step = rng.choice([-2, -1, 1, 2]) / 12.0
                         app_freq = root_hz * (2 ** step)
-                        app = _bass_note(app_freq, int(beat * 0.45), amp=0.12) * _vel_scale(rng, mean=0.9)
+                        if sfz_bass_sampler is not None:
+                            app = sfz_bass_sampler.render(app_freq, int(beat * 0.45)) * 0.12
+                        else:
+                            app = _bass_note(app_freq, int(beat * 0.45), amp=0.12)
+                        app *= _vel_scale(rng, mean=0.9)
                         _place(app, bass, pos - sixteenth)
                     _place(b, bass, pos + _jitter_ms(rng, jitter_std))
                 else:
@@ -1252,16 +1282,28 @@ def _render_section(bars, bpm, section_name, motif, rng, variety=60, chords=None
                         freq_root = root_hz
                         if beat_idx == 0 and rng.random() < 0.25:
                             freq_root *= 2  # octave pop on bar start
-                        root = _bass_note(freq_root, int(beat * 0.9), amp=0.18) * _vel_scale(rng)
+                        if sfz_bass_sampler is not None:
+                            root = sfz_bass_sampler.render(freq_root, int(beat * 0.9)) * 0.18
+                        else:
+                            root = _bass_note(freq_root, int(beat * 0.9), amp=0.18)
+                        root *= _vel_scale(rng)
                         if pos - sixteenth > 0:
                             step = rng.choice([-2, -1, 1, 2]) / 12.0
                             app_freq = root_hz * (2 ** step)
-                            app = _bass_note(app_freq, int(beat * 0.45), amp=0.12) * _vel_scale(rng, mean=0.9)
+                            if sfz_bass_sampler is not None:
+                                app = sfz_bass_sampler.render(app_freq, int(beat * 0.45)) * 0.12
+                            else:
+                                app = _bass_note(app_freq, int(beat * 0.45), amp=0.12)
+                            app *= _vel_scale(rng, mean=0.9)
                             _place(app, bass, pos - sixteenth)
                         _place(root, bass, pos)
                         if bass_pat == "root5_13" and rng.random() < 0.7:
                             pos5 = pos + beat * 0.5 + _jitter_ms(rng, jitter_std * 0.7)
-                            fifth = _bass_note(root_hz * 2 ** (7 / 12), int(beat * 0.45), amp=0.14) * _vel_scale(rng, mean=0.9)
+                            if sfz_bass_sampler is not None:
+                                fifth = sfz_bass_sampler.render(root_hz * 2 ** (7 / 12), int(beat * 0.45)) * 0.14
+                            else:
+                                fifth = _bass_note(root_hz * 2 ** (7 / 12), int(beat * 0.45), amp=0.14)
+                            fifth *= _vel_scale(rng, mean=0.9)
                             _place(fifth, bass, pos5)
 
     melody_active = True
@@ -1652,15 +1694,26 @@ def render_from_spec(spec: Dict[str, Any]) -> Tuple[AudioSegment, int]:
     if lead:
         lead = _normalize_instruments([lead])[0]
 
-    sfz_inst = spec.get("sfz_instrument")
-    sfz_sampler = None
-    if sfz_inst:
+    sfz_loaded: Dict[str, Any] = {}
+    sfz_keys = {
+        "sfz_instrument": "sfz_sampler",
+        "sfz_chords": "sfz_chords_sampler",
+        "sfz_pads": "sfz_pads_sampler",
+        "sfz_bass": "sfz_bass_sampler",
+    }
+    for k, sampler_name in sfz_keys.items():
+        inst_path = spec.get(k)
+        if not inst_path:
+            continue
         try:
-            sfz_path = _resolve_sfz_path(sfz_inst)
-            sfz_sampler = SfzSampler.from_file(sfz_path)
-            lead = None
+            sfz_path = _resolve_sfz_path(inst_path)
+            sampler = SfzSampler.from_file(sfz_path)
+            if k == "sfz_instrument":
+                lead = None
+            sfz_loaded[k] = inst_path
+            sfz_loaded[sampler_name] = sampler
         except Exception as e:
-            logger.warning({"stage": "sfz_load_fail", "error": str(e)})
+            logger.warning({"stage": "sfz_load_fail", "key": k, "error": str(e)})
 
     motif = {
         "mood": spec.get("mood") or [],
@@ -1677,9 +1730,7 @@ def render_from_spec(spec: Dict[str, Any]) -> Tuple[AudioSegment, int]:
         "hq_chorus": spec.get("hq_chorus", True),
         "limiter_drive": limiter_drive,
     }
-    if sfz_sampler is not None:
-        motif["sfz_instrument"] = sfz_inst
-        motif["sfz_sampler"] = sfz_sampler
+    motif.update(sfz_loaded)
 
     try:
         chord_span_beats = int(spec.get("chord_span_beats", 4))
