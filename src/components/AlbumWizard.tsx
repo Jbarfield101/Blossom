@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Step, StepLabel, Stepper } from "@mui/material";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
-import { invoke } from "@tauri-apps/api/core";
 import VibeControls from "./VibeControls";
 import RhythmControls from "./RhythmControls";
 import PolishControls from "./PolishControls";
 import { PRESET_TEMPLATES } from "./songTemplates";
 import styles from "./SongForm.module.css";
 import { MOODS, INSTR } from "../utils/musicData";
+import { useTasks } from "../store/tasks";
 
 export type Section = { name: string; bars: number; chords: string[] };
 
@@ -114,10 +114,24 @@ export default function AlbumWizard() {
   const [dither, setDither] = useState(defaultTpl.dither);
   const [seed, setSeed] = useState(0);
 
-  const [busy, setBusy] = useState(false);
+  const enqueueTask = useTasks((s) => s.enqueueTask);
+  const tasks = useTasks((s) => s.tasks);
+  const [taskId, setTaskId] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   const steps = ["Song Info", "Instruments", "Render Options"];
+
+  useEffect(() => {
+    if (!taskId) return;
+    const t = tasks[taskId];
+    if (!t) return;
+    if (t.status === "failed") {
+      setErr(t.error ?? "Task failed");
+      setTaskId(null);
+    } else if (t.status === "completed") {
+      setTaskId(null);
+    }
+  }, [taskId, tasks]);
 
   async function pickFolder() {
     try {
@@ -162,12 +176,20 @@ export default function AlbumWizard() {
       return;
     }
     try {
-      setBusy(true);
-      await invoke("run_lofi_song", { spec: makeSpec() });
+      const id = await enqueueTask("Music Generation", {
+        GenerateAlbum: {
+          meta: {
+            track_count: 1,
+            title_base: titleBase,
+            track_names: [titleBase],
+            out_dir: outDir,
+            specs: [makeSpec()],
+          },
+        },
+      });
+      setTaskId(id);
     } catch (e: any) {
       setErr(e?.message || String(e));
-    } finally {
-      setBusy(false);
     }
   }
 
@@ -272,7 +294,6 @@ export default function AlbumWizard() {
             <Button
               variant="contained"
               onClick={handleSubmit}
-              disabled={busy}
               className="mt-4"
             >
               Render Song
