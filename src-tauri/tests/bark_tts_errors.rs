@@ -2,6 +2,7 @@ use std::{env, path::PathBuf};
 
 use blossom_lib::commands::{bark_tts, save_paths};
 use tempfile::tempdir;
+use tauri::{test::mock_app, Manager};
 use which::which;
 
 #[tokio::test]
@@ -16,9 +17,11 @@ async fn bark_tts_reports_missing_python_and_script() {
     env::set_current_dir(&repo_root).unwrap();
 
     // case: python missing
+    let app = mock_app();
+    let handle = app.app_handle().clone();
     let missing = temp_home.path().join("no_python_here");
     env::set_var("BLOSSOM_PYTHON_PATH", missing.to_string_lossy().to_string());
-    let err = bark_tts("hi".into(), "spk".into()).await.unwrap_err();
+    let err = bark_tts(handle, "hi".into(), "spk".into()).await.unwrap_err();
     assert!(err.contains("Python not found"));
 
     // case: script missing
@@ -28,6 +31,8 @@ async fn bark_tts_reports_missing_python_and_script() {
         .unwrap();
     let temp_dir = tempdir().unwrap();
     env::set_current_dir(&temp_dir).unwrap();
-    let err = bark_tts("hi".into(), "spk".into()).await.unwrap_err();
+    let app = mock_app();
+    let handle = app.app_handle().clone();
+    let err = bark_tts(handle, "hi".into(), "spk".into()).await.unwrap_err();
     assert!(err.contains("Script not found"));
 }
