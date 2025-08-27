@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { HashRouter } from "react-router-dom";
-import { appWindow } from "@tauri-apps/api/window";
+import { getCurrent } from "@tauri-apps/api/window";
 import App from "./App";
 import "./styles.css";
 import { ThemeProvider } from "./features/theme/ThemeContext";
@@ -20,7 +20,7 @@ function RootContent() {
 
 function Root() {
   useEffect(() => {
-    appWindow.maximize();
+    getCurrent().maximize();
   }, []);
 
   return (
