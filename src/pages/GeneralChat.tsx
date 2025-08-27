@@ -12,6 +12,8 @@ import {
   Typography,
   Autocomplete,
 } from "@mui/material";
+import StarIcon from "@mui/icons-material/Star";
+import StarBorderIcon from "@mui/icons-material/StarBorder";
 import type { Theme } from "@mui/material/styles";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -50,7 +52,8 @@ export default function GeneralChat() {
   const [error, setError] = useState<string>("");
   const [logs, setLogs] = useState<string[]>([]);
   const enqueueTask = useTasks((s) => s.enqueueTask);
-  const voices = useVoices((s) => s.voices);
+  const voices = useVoices((s) => s.voices.filter(s.filter));
+  const toggleFavorite = useVoices((s) => s.toggleFavorite);
   const loadVoices = useVoices((s) => s.load);
   const [voiceId, setVoiceId] = useState<string>("");
 
@@ -341,12 +344,33 @@ export default function GeneralChat() {
         <ImagePromptGenerator onGenerate={(prompt) => send(prompt)} />
         <MusicPromptGenerator onGenerate={(prompt) => send(prompt)} />
         <Autocomplete
-          options={voices.map((v) => v.id)}
-          value={voiceId}
-          onChange={(_e, v) => setVoiceId(v || "")}
-          renderInput={(params) => (
-            <TextField {...params} label="Voice" />
+          options={voices}
+          getOptionLabel={(v) => v.id}
+          value={voices.find((v) => v.id === voiceId) || null}
+          onChange={(_e, v) => setVoiceId(v?.id || "")}
+          renderOption={(props, option) => (
+            <Box
+              component="li"
+              {...props}
+              sx={{ display: "flex", justifyContent: "space-between" }}
+            >
+              {option.id}
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFavorite(option.id);
+                }}
+              >
+                {option.favorite ? (
+                  <StarIcon fontSize="small" />
+                ) : (
+                  <StarBorderIcon fontSize="small" />
+                )}
+              </IconButton>
+            </Box>
           )}
+          renderInput={(params) => <TextField {...params} label="Voice" />}
         />
         <Box sx={{ flexGrow: 1, overflowY: "auto", width: "100%" }}>
           {messages.map((m, i) => (

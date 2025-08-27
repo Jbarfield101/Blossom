@@ -10,8 +10,11 @@ import {
   AccordionSummary,
   AccordionDetails,
   Autocomplete,
+  IconButton,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import StarIcon from "@mui/icons-material/Star";
+import StarBorderIcon from "@mui/icons-material/StarBorder";
 import FormErrorText from "./FormErrorText";
 import { zNpc } from "../../dnd/schemas/npc";
 import { NpcData } from "./types";
@@ -76,12 +79,13 @@ interface Props {
 
 export default function NpcForm({ world }: Props) {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const voices = useVoices((s) => s.voices);
+  const voices = useVoices((s) => s.voices.filter(s.filter));
+  const toggleFavorite = useVoices((s) => s.toggleFavorite);
   const loadVoices = useVoices((s) => s.load);
   useEffect(() => {
     loadVoices();
   }, [loadVoices]);
-  const voiceOptions = voices.map((v) => v.id);
+  const voiceOptions = voices;
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [result, setResult] = useState<NpcData | null>(null);
 
@@ -438,11 +442,38 @@ export default function NpcForm({ world }: Props) {
                 <Grid item xs={8}>
                   <Autocomplete
                     options={voiceOptions}
-                    value={state.voiceId}
+                    getOptionLabel={(v) => v.id}
+                    value={voiceOptions.find((v) => v.id === state.voiceId) || null}
                     onChange={(_e, v) => {
-                      dispatch({ type: "SET_FIELD", field: "voiceId", value: v || "" });
+                      dispatch({
+                        type: "SET_FIELD",
+                        field: "voiceId",
+                        value: v?.id || "",
+                      });
                       setErrors((prev) => ({ ...prev, voiceId: null }));
                     }}
+                    renderOption={(props, option) => (
+                      <Box
+                        component="li"
+                        {...props}
+                        sx={{ display: "flex", justifyContent: "space-between" }}
+                      >
+                        {option.id}
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavorite(option.id);
+                          }}
+                        >
+                          {option.favorite ? (
+                            <StarIcon fontSize="small" />
+                          ) : (
+                            <StarBorderIcon fontSize="small" />
+                          )}
+                        </IconButton>
+                      </Box>
+                    )}
                     renderInput={(params) => (
                       <StyledTextField
                         {...params}
@@ -454,7 +485,9 @@ export default function NpcForm({ world }: Props) {
                             {errors.voiceId}
                           </FormErrorText>
                         }
-                        aria-describedby={errors.voiceId ? "voiceId-error" : undefined}
+                        aria-describedby={
+                          errors.voiceId ? "voiceId-error" : undefined
+                        }
                       />
                     )}
                     fullWidth

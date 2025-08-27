@@ -1,12 +1,22 @@
 import { useState, useEffect } from "react";
-import { Box, Button, Stack, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Stack,
+  TextField,
+  Typography,
+  IconButton,
+} from "@mui/material";
+import StarIcon from "@mui/icons-material/Star";
+import StarBorderIcon from "@mui/icons-material/StarBorder";
 import { useVoices } from "../../store/voices";
 
 export default function VoiceSettings() {
-  const voices = useVoices((s) => s.voices);
+  const voices = useVoices((s) => s.voices.filter(s.filter));
   const addVoice = useVoices((s) => s.addVoice);
   const removeVoice = useVoices((s) => s.removeVoice);
   const setTags = useVoices((s) => s.setTags);
+  const toggleFavorite = useVoices((s) => s.toggleFavorite);
   const load = useVoices((s) => s.load);
 
   useEffect(() => {
@@ -26,7 +36,13 @@ export default function VoiceSettings() {
       .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
-    addVoice({ id: trimmedId, provider: provider.trim(), preset: trimmedPreset, tags });
+    addVoice({
+      id: trimmedId,
+      provider: provider.trim(),
+      preset: trimmedPreset,
+      tags,
+      favorite: false,
+    });
     setId("");
     setPreset("");
     setTagInput("");
@@ -47,6 +63,9 @@ export default function VoiceSettings() {
         {voices.map((v) => (
           <Stack key={v.id} direction="row" spacing={1} alignItems="center">
             <Typography sx={{ flex: 1 }}>{v.id}</Typography>
+            <IconButton onClick={() => toggleFavorite(v.id)} size="small">
+              {v.favorite ? <StarIcon /> : <StarBorderIcon />}
+            </IconButton>
             <TextField
               label="Tags"
               size="small"

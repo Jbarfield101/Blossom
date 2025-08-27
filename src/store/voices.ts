@@ -6,13 +6,17 @@ export interface Voice {
   provider: string;
   preset: string;
   tags: string[];
+  favorite: boolean;
 }
 
 interface VoiceState {
   voices: Voice[];
+  filter: (v: Voice) => boolean;
   addVoice: (voice: Voice) => Promise<void>;
   removeVoice: (id: string) => Promise<void>;
   setTags: (id: string, tags: string[]) => Promise<void>;
+  toggleFavorite: (id: string) => Promise<void>;
+  setFilter: (fn: (v: Voice) => boolean) => void;
   load: () => Promise<void>;
 }
 
@@ -20,9 +24,11 @@ const STORAGE_KEY = "voices";
 
 export const useVoices = create<VoiceState>((set, get) => ({
   voices: [],
+  filter: () => true,
   addVoice: async (voice) => {
-    const existing = get().voices.filter((v) => v.id !== voice.id);
-    const voices = [...existing, voice];
+    const withFavorite: Voice = { favorite: false, ...voice };
+    const existing = get().voices.filter((v) => v.id !== withFavorite.id);
+    const voices = [...existing, withFavorite];
     set({ voices });
     await saveState(STORAGE_KEY, voices);
   },
@@ -36,14 +42,27 @@ export const useVoices = create<VoiceState>((set, get) => ({
     set({ voices });
     await saveState(STORAGE_KEY, voices);
   },
+  toggleFavorite: async (id) => {
+    const voices = get().voices.map((v) =>
+      v.id === id ? { ...v, favorite: !v.favorite } : v
+    );
+    set({ voices });
+    await saveState(STORAGE_KEY, voices);
+  },
+  setFilter: (fn) => set({ filter: fn }),
   load: async () => {
     const voices = await loadState<Voice[]>(STORAGE_KEY);
-    if (voices) set({ voices });
+    if (voices)
+      set({ voices: voices.map((v) => ({ favorite: false, ...v })) });
   },
 }));
 
 loadState<Voice[]>(STORAGE_KEY).then((voices) => {
-  if (voices) useVoices.setState({ voices }, true);
+  if (voices)
+    useVoices.setState(
+      { voices: voices.map((v) => ({ favorite: false, ...v })) },
+      true
+    );
 });
 
 export type { VoiceState };
