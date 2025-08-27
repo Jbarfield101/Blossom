@@ -36,7 +36,7 @@ type Item = {
   color: string;
 };
 
-const ITEMS: Item[] = [
+export const ITEMS: Item[] = [
   { key: "objects", icon: <FaCubes />, label: "3D Object", path: "/objects", color: "rgba(165,216,255,0.55)" },
   { key: "music", icon: <FaMusic />, label: "Music", path: "/music", color: "rgba(245,176,194,0.55)" },
   { key: "calendar", icon: <FaCalendarAlt />, label: "Calendar", path: "/calendar", color: "rgba(211,200,255,0.55)" },
