@@ -38,8 +38,7 @@ const defaultModules: ModulesState = {
 };
 
 interface RetroTvMedia {
-  data: string;
-  type: 'image' | 'video';
+  path: string;
   width: number;
   height: number;
 }

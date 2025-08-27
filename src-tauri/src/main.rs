@@ -148,6 +148,8 @@ fn main() {
             commands::load_shorts,
             commands::save_shorts,
             commands::generate_short,
+            // Retro TV:
+            commands::save_retro_tv_video,
             // Transcription:
             commands::load_transcripts,
             commands::transcribe_audio,

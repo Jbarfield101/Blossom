@@ -31,6 +31,7 @@ use tokio::{
     time::sleep,
 };
 use which::which;
+use base64::{engine::general_purpose, Engine as _};
 
 #[derive(Debug)]
 struct LoggedChild {
@@ -1977,6 +1978,42 @@ pub async fn generate_short(queue: State<'_, TaskQueue>, spec: ShortSpec) -> Res
     let label = format!("generate_short {}", spec.id);
     let cmd = TaskCommand::GenerateShort { spec };
     Ok(queue.enqueue(label, cmd).await)
+}
+
+/* ==============================
+Retro TV
+============================== */
+
+fn retro_tv_dir() -> PathBuf {
+    let mut dir = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+    dir.push(".blossom");
+    let _ = fs::create_dir_all(&dir);
+    dir
+}
+
+#[tauri::command]
+pub async fn save_retro_tv_video(data: String, ext: String) -> Result<String, String> {
+    let dir = retro_tv_dir();
+    // remove existing retro tv files
+    if let Ok(entries) = fs::read_dir(&dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .map_or(false, |n| n.starts_with("retro_tv."))
+            {
+                let _ = fs::remove_file(path);
+            }
+        }
+    }
+    let path = dir.join(format!("retro_tv.{ext}"));
+    let b64 = data.split(',').last().unwrap_or_default();
+    let bytes = general_purpose::STANDARD
+        .decode(b64)
+        .map_err(|e| e.to_string())?;
+    fs::write(&path, bytes).map_err(|e| e.to_string())?;
+    Ok(path.to_string_lossy().to_string())
 }
 
 /* ==============================
