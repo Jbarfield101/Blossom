@@ -4,7 +4,8 @@ use tauri::{test::mock_app, Manager};
 
 #[tokio::test]
 async fn append_npc_log_includes_errors() {
-    let _rt = tauri::test::mock_runtime();
+    let dir = tempfile::tempdir().unwrap();
+    std::env::set_var("HOME", dir.path());
     let app = mock_app();
     let handle = app.app_handle();
 
@@ -30,7 +31,7 @@ async fn append_npc_log_includes_errors() {
     .await
     .unwrap();
 
-    let entries: Vec<Value> = read_npc_log(handle, None).await.unwrap();
+    let entries: Vec<Value> = read_npc_log(handle.clone(), None).await.unwrap();
     assert_eq!(entries.len(), 2);
     assert!(entries[0]["errorCode"].is_null());
     assert_eq!(entries[1]["errorCode"], "E1");

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{env, path::PathBuf};
 
 use blossom_lib::commands::generate_ambience;
 use tauri::{test::mock_app, Listener, Manager, WebviewWindowBuilder};
@@ -9,6 +9,10 @@ async fn generate_ambience_logs_output() {
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let repo_root = manifest_dir.parent().unwrap();
     std::env::set_current_dir(&repo_root).unwrap();
+
+    let home = tempfile::tempdir().unwrap();
+    env::set_var("HOME", home.path());
+    env::set_var("BLOSSOM_PYTHON_PATH", "/root/.pyenv/shims/python3");
 
     let app = mock_app();
     let window = WebviewWindowBuilder::new(&app, "main", Default::default())
