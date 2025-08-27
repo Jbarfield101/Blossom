@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { HashRouter } from "react-router-dom";
+import { appWindow } from "@tauri-apps/api/window";
 import App from "./App";
 import "./styles.css";
 import { ThemeProvider } from "./features/theme/ThemeContext";
@@ -17,12 +18,23 @@ function Root() {
   return ready ? <App /> : <SplashScreen />;
 }
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
+function Root() {
+  useEffect(() => {
+    appWindow.maximize();
+  }, []);
+
+  return (
     <HashRouter>
       <ThemeProvider>
         <Root />
       </ThemeProvider>
     </HashRouter>
-  </React.StrictMode>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <Root />
+  </React.StrictMode>,
 );
+
