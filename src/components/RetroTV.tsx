@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useTheme } from "../features/theme/ThemeContext";
+import { useUsers } from "../features/users/useUsers";
 import BouncingIcons from "./BouncingIcons";
 
 interface RetroTVProps {
@@ -8,6 +9,7 @@ interface RetroTVProps {
 
 export default function RetroTV({ children }: RetroTVProps) {
   const { theme } = useTheme();
+  const { currentUserId, users, setRetroTvMedia } = useUsers();
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<"image" | "video" | null>(null);
   const [mediaWidth, setMediaWidth] = useState(640);
@@ -19,38 +21,53 @@ export default function RetroTV({ children }: RetroTVProps) {
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (mediaUrl) URL.revokeObjectURL(mediaUrl);
-    const url = URL.createObjectURL(file);
-    setMediaUrl(url);
-    const isVideo = file.type.startsWith("video");
-    setMediaType(isVideo ? "video" : "image");
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      setMediaUrl(result);
+      const isVideo = file.type.startsWith("video");
+      setMediaType(isVideo ? "video" : "image");
 
-    if (isVideo) {
-      const video = document.createElement("video");
-      video.src = url;
-      video.addEventListener(
-        "loadedmetadata",
-        () => {
-          setMediaWidth(video.videoWidth);
-          setMediaHeight(video.videoHeight);
-        },
-        { once: true }
-      );
-    } else {
-      const img = new Image();
-      img.src = url;
-      img.onload = () => {
-        setMediaWidth(img.width);
-        setMediaHeight(img.height);
+      const update = (width: number, height: number) => {
+        setMediaWidth(width);
+        setMediaHeight(height);
+        if (currentUserId) {
+          setRetroTvMedia({
+            data: result,
+            type: isVideo ? "video" : "image",
+            width,
+            height,
+          });
+        }
       };
-    }
+
+      if (isVideo) {
+        const video = document.createElement("video");
+        video.src = result;
+        video.addEventListener(
+          "loadedmetadata",
+          () => update(video.videoWidth, video.videoHeight),
+          { once: true }
+        );
+      } else {
+        const img = new Image();
+        img.src = result;
+        img.onload = () => update(img.width, img.height);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   useEffect(() => {
-    return () => {
-      if (mediaUrl) URL.revokeObjectURL(mediaUrl);
-    };
-  }, [mediaUrl]);
+    if (!currentUserId) return;
+    const media = users[currentUserId]?.retroTvMedia;
+    if (media) {
+      setMediaUrl(media.data);
+      setMediaType(media.type);
+      setMediaWidth(media.width);
+      setMediaHeight(media.height);
+    }
+  }, [currentUserId, users]);
 
   if (theme !== "retro") return null;
 
