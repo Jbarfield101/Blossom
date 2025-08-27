@@ -6,6 +6,8 @@ interface ErrorBoundaryProps {
 
 interface ErrorBoundaryState {
   hasError: boolean;
+  errorMessage?: string;
+  componentStack?: string;
 }
 
 export default class ErrorBoundary extends Component<
@@ -24,11 +26,22 @@ export default class ErrorBoundary extends Component<
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // You could log the error to an error reporting service
     console.error("ErrorBoundary caught an error", error, errorInfo);
+    this.setState({
+      errorMessage: error.message,
+      componentStack: errorInfo.componentStack,
+    });
   }
 
   render() {
     if (this.state.hasError) {
-      return <div>Something went wrong.</div>;
+      return (
+        <div>
+          <p>{this.state.errorMessage}</p>
+          {this.state.componentStack && (
+            <pre>{this.state.componentStack}</pre>
+          )}
+        </div>
+      );
     }
 
     return this.props.children;
