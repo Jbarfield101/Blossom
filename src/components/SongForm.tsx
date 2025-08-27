@@ -645,11 +645,13 @@ export default function SongForm() {
   function makeSpecForIndex(i: number): SongSpec {
     const amb = Math.max(0, Math.min(1, ambienceLevel));
     const varPct = Math.max(0, Math.min(100, variety));
-    const instrs = instruments.length
-      ? instruments
-      : leadInstrument
-        ? [leadInstrument]
-        : [];
+    const instrs = sfzInstrument
+      ? []
+      : instruments.length
+        ? instruments
+        : leadInstrument
+          ? [leadInstrument]
+          : [];
 
     return {
       title: buildTitle(i),
@@ -660,7 +662,7 @@ export default function SongForm() {
       structure: structure.map(({ name, bars, chords }) => ({ name, bars, chords })),
       mood,
       instruments: instrs,
-      lead_instrument: leadInstrument,
+      lead_instrument: leadInstrument || undefined,
       sfzInstrument: sfzInstrument ?? undefined,
       ambience,
       ambience_level: amb,

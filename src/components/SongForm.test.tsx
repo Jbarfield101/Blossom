@@ -123,13 +123,13 @@ describe('SongForm', () => {
     expect(spec).toMatchObject({
       ambience: ['rain'],
       ambience_level: 0.5,
-      lead_instrument: 'synth lead',
       hq_stereo: true,
       hq_reverb: true,
       hq_sidechain: true,
       hq_chorus: true,
       limiter_drive: 1.02,
     });
+    expect(spec.lead_instrument).toBe('synth lead');
   });
 
   it('generates a title with ollama', async () => {
@@ -368,9 +368,37 @@ describe('SongForm', () => {
     const [, args] = enqueueTask.mock.calls[0];
     expect(args.id).toBe('GenerateSong');
     expect(args.spec.sfzInstrument).toBe('/tmp/piano file.sfz');
+    expect(args.spec.instruments).toEqual([]);
     expect(setPreviewSfzInstrument).toHaveBeenCalledWith(
       'tauri:///tmp/piano%20file.sfz'
     );
+  });
+
+  it('omits instruments and lead instrument for sfz-only songs', async () => {
+    (openDialog as any).mockResolvedValue('/tmp/out');
+    (invoke as any).mockResolvedValue('');
+
+    render(<SongForm />);
+
+    fireEvent.click(screen.getByText(/choose folder/i));
+    await screen.findByText('/tmp/out');
+
+    openSection('sfz-section');
+    fireEvent.click(screen.getByText('Acoustic Grand Piano'));
+    await waitFor(() => expect(setPreviewSfzInstrument).toHaveBeenCalled());
+
+    fireEvent.change(screen.getByPlaceholderText(/song title base/i), {
+      target: { value: 'Test Song' },
+    });
+
+    fireEvent.click(screen.getByText(/render songs/i));
+
+    await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
+    const [, args] = enqueueTask.mock.calls[0];
+    expect(args.id).toBe('GenerateShort');
+    expect(args.spec.sfzInstrument).toBeDefined();
+    expect(args.spec.instruments).toEqual([]);
+    expect(args.spec.lead_instrument).toBeUndefined();
   });
 
   it('updates lead instrument when adding a lead-capable instrument', () => {
