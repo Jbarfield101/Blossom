@@ -2824,7 +2824,6 @@ exports[`SongForm > renders default form 1`] = `
       >
         <button
           class="_btn_913096"
-          disabled=""
         >
           Render Songs
         </button>

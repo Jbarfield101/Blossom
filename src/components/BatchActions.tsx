@@ -107,12 +107,7 @@ export default function BatchActions({
       <div className={styles.actions}>
         <button
           className={styles.btn}
-          disabled={
-            busy ||
-            !outDir ||
-            !titleBase ||
-            (albumMode && !albumReady)
-          }
+          disabled={busy}
           onClick={onRender}
         >
           {albumMode
