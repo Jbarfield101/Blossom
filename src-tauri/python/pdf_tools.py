@@ -5,6 +5,7 @@ import os
 import sqlite3
 from pathlib import Path
 import uuid
+import re
 
 import numpy as np
 import pdfplumber
@@ -228,22 +229,55 @@ def extract_spells(path: str):
     return {"spells": spells}
 
 
-def extract_npcs(path: str):
+def _persist_npcs(npcs, db_path: Path) -> None:
+    conn = sqlite3.connect(db_path)
+    try:
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS npcs (id TEXT PRIMARY KEY, name TEXT NOT NULL, data TEXT NOT NULL)"
+        )
+        for npc in npcs:
+            conn.execute(
+                "INSERT OR REPLACE INTO npcs (id, name, data) VALUES (?, ?, ?)",
+                (npc["id"], npc["name"], json.dumps(npc)),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def extract_npcs(path: str, db_path: str | Path | None = None):
     pdf_path = Path(path)
     npcs = []
     with pdfplumber.open(pdf_path) as pdf:
         text = "\n".join(page.extract_text() or "" for page in pdf.pages)
     for block in text.split("\n\n"):
-        lines = [ln.strip() for ln in block.splitlines() if ln.strip()]
+        lines = [ln.rstrip() for ln in block.splitlines() if ln.strip()]
         if not lines:
             continue
         data = {}
+        current = None
         for line in lines:
+            bullet = re.match(r"^[\-\*\u2022]\s*(.*)", line)
+            if bullet and current in {"traits", "quirks", "inventory", "equipment", "items"}:
+                data.setdefault(current, []).append(bullet.group(1).strip())
+                continue
             if ":" in line:
                 k, v = line.split(":", 1)
-                data[k.strip().lower()] = v.strip()
+                current = k.strip().lower()
+                v = v.strip()
+                if current in {"traits", "quirks", "inventory", "equipment", "items"}:
+                    data[current] = [v] if v else []
+                else:
+                    data[current] = v
+            else:
+                if current in {"traits", "quirks", "inventory", "equipment", "items"} and data.get(current):
+                    data[current][-1] += " " + line.strip()
+                elif current:
+                    data[current] = f"{data.get(current, '')} {line.strip()}".strip()
         if not data:
             continue
+
+        block_text = "\n".join(lines)
         hooks_raw = (
             data.get("hooks")
             or data.get("adventure hooks")
@@ -264,6 +298,7 @@ def extract_npcs(path: str):
                 "NPC missing tags; using placeholder 'npc'",
                 UserWarning,
             )
+        traits = data.get("traits") or data.get("quirks")
         npc = {
             "id": str(uuid.uuid4()),
             "name": data.get("name", "Unknown"),
@@ -278,7 +313,7 @@ def extract_npcs(path: str):
             or data.get("domain")
             or data.get("origin/domain"),
             "hooks": hooks,
-            "quirks": [q.strip() for q in data.get("quirks", "").split(",") if q.strip()] or None,
+            "quirks": traits or None,
             "appearance": data.get("appearance"),
             "statblock": {},
             "tags": tags,
@@ -320,6 +355,39 @@ def extract_npcs(path: str):
         if icon:
             npc["icon"] = icon
 
+        inventory = data.get("inventory") or data.get("equipment") or data.get("items")
+        if inventory:
+            npc["inventory"] = inventory
+
+        abilities = {}
+        for abbr, name in [
+            ("str", "strength"),
+            ("dex", "dexterity"),
+            ("con", "constitution"),
+            ("int", "intelligence"),
+            ("wis", "wisdom"),
+            ("cha", "charisma"),
+        ]:
+            m = re.search(rf"{abbr}\s*:?\s*(\d+)", block_text, re.IGNORECASE)
+            if m:
+                abilities[name] = int(m.group(1))
+        if abilities:
+            npc["abilities"] = abilities
+
+        m = re.search(r"hp\s*:?\s*(\d+)", block_text, re.IGNORECASE)
+        if m:
+            npc["hp"] = int(m.group(1))
+            npc["statblock"]["hp"] = int(m.group(1))
+        m = re.search(r"level\s*:?\s*(\d+)", block_text, re.IGNORECASE)
+        if m:
+            npc["level"] = int(m.group(1))
+        m = re.search(r"ac\s*:?\s*(\d+)", block_text, re.IGNORECASE)
+        if m:
+            npc["statblock"]["ac"] = int(m.group(1))
+        m = re.search(r"speed\s*:?\s*([\d\w\s/']+)", block_text, re.IGNORECASE)
+        if m:
+            npc["statblock"]["speed"] = m.group(1).strip()
+
         sections = {
             k: v
             for k, v in data.items()
@@ -341,6 +409,7 @@ def extract_npcs(path: str):
                 "adventure hooks",
                 "adventure_hooks",
                 "quirks",
+                "traits",
                 "appearance",
                 "portrait",
                 "icon",
@@ -350,11 +419,20 @@ def extract_npcs(path: str):
                 "voice_preset",
                 "tags",
                 "age",
+                "inventory",
+                "equipment",
+                "items",
             }
         }
         if sections:
             npc["sections"] = sections
         npcs.append(npc)
+
+    if db_path is None:
+        db_path = ROOT_DIR / "blossom.db"
+    else:
+        db_path = Path(db_path)
+    _persist_npcs(npcs, db_path)
     return {"npcs": npcs}
 
 
