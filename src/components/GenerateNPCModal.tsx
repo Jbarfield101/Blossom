@@ -23,6 +23,7 @@ interface Props {
 export default function GenerateNPCModal({ open, onClose }: Props) {
   const [count, setCount] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [tags, setTags] = useState('');
   const addNPC = useNPCs((s) => s.addNPC);
 
   async function generate() {
@@ -50,6 +51,13 @@ export default function GenerateNPCModal({ open, onClose }: Props) {
             icon: 'placeholder-icon.png',
             ...parsed,
           };
+          const manualTags = tags
+            .split(',')
+            .map((t) => t.trim())
+            .filter(Boolean);
+          if (manualTags.length) {
+            data.tags = manualTags;
+          }
           addNPC(data);
         } catch {
           // ignore parse errors for now
@@ -72,6 +80,11 @@ export default function GenerateNPCModal({ open, onClose }: Props) {
             value={count}
             onChange={(e) => setCount(parseInt(e.target.value, 10) || 1)}
             inputProps={{ min: 1 }}
+          />
+          <TextField
+            label="Tags (comma separated)"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
           />
         </Stack>
       </DialogContent>
