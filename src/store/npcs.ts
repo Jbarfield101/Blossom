@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { invoke } from '@tauri-apps/api/core';
 import type { Npc } from '../dnd/schemas/npc';
+import { useInventory } from './inventory';
 
 interface NpcState {
   npcs: Npc[];
@@ -15,14 +16,21 @@ export const useNPCs = create<NpcState>()(
     (set) => ({
       npcs: [],
       addNPC: (npc) =>
-        set((state) => ({
-          npcs: [...state.npcs, { id: crypto.randomUUID(), ...npc }],
-        })),
+        set((state) => {
+          const npcs = [...state.npcs, { id: crypto.randomUUID(), ...npc }];
+          useInventory.getState().scanNPCs(npcs);
+          return { npcs };
+        }),
       removeNPC: (id) =>
-        set((state) => ({ npcs: state.npcs.filter((npc) => npc.id !== id) })),
+        set((state) => {
+          const npcs = state.npcs.filter((npc) => npc.id !== id);
+          useInventory.getState().scanNPCs(npcs);
+          return { npcs };
+        }),
       loadNPCs: async (world: string) => {
         const npcs = await invoke<Npc[]>('list_npcs', { world });
         set({ npcs });
+        useInventory.getState().scanNPCs(npcs);
       },
     }),
     { name: 'npc-store' }
