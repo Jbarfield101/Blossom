@@ -27,6 +27,7 @@ export default function RetroTV({ children }: RetroTVProps) {
   const [mediaWidth, setMediaWidth] = useState(640);
   const [mediaHeight, setMediaHeight] = useState(480);
   const fileInput = useRef<HTMLInputElement>(null);
+  const mounted = useRef(false);
 
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -84,13 +85,15 @@ export default function RetroTV({ children }: RetroTVProps) {
     }
   }, [currentUserId, retroTvMedia]);
 
-  // Clear any stored media when the component unmounts
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     return () => {
-      clearRetroTvMedia();
+      if (mounted.current) {
+        clearRetroTvMedia();
+      } else {
+        mounted.current = true;
+      }
     };
-  }, []);
+  }, [clearRetroTvMedia]);
 
   if (theme !== "retro") return null;
 
