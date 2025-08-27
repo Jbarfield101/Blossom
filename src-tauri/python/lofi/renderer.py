@@ -1732,6 +1732,7 @@ def main():
         INSTRUMENTS_DATA = _load_instruments(args.instruments_file)
 
     spec = json.loads(args.song_json)
+    logger.info({"stage": "spec", "spec": spec})
     album = spec.get("album")
 
     logger.info({"stage": "generate", "message": "building sections"})
