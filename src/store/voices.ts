@@ -13,12 +13,14 @@ export interface Voice {
 interface VoiceState {
   voices: Voice[];
   filter: (v: Voice) => boolean;
+  showFavoritesOnly: boolean;
   fetchVoices: () => Promise<void>;
   addVoice: (voice: Voice) => Promise<void>;
   removeVoice: (id: string) => Promise<void>;
   setTags: (id: string, tags: string[]) => Promise<void>;
   toggleFavorite: (id: string) => Promise<void>;
   setFilter: (fn: (v: Voice) => boolean) => void;
+  toggleFavoritesOnly: () => void;
   load: () => Promise<void>;
 }
 
@@ -27,6 +29,7 @@ const STORAGE_KEY = "voices";
 export const useVoices = create<VoiceState>((set, get) => ({
   voices: [],
   filter: () => true,
+  showFavoritesOnly: false,
   fetchVoices: async () => {
     const presets = await fetchBarkPresets();
     const voices = presets.map((preset) => ({
@@ -64,6 +67,14 @@ export const useVoices = create<VoiceState>((set, get) => ({
     await saveState(STORAGE_KEY, voices);
   },
   setFilter: (fn) => set({ filter: fn }),
+  toggleFavoritesOnly: () =>
+    set((state) => {
+      const showFavoritesOnly = !state.showFavoritesOnly;
+      return {
+        showFavoritesOnly,
+        filter: showFavoritesOnly ? (v: Voice) => v.favorite : () => true,
+      };
+    }),
   load: async () => {
     const voices = await loadState<Voice[]>(STORAGE_KEY);
     if (voices && voices.length) {

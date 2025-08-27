@@ -11,6 +11,7 @@ import {
   TextField,
   Typography,
   Autocomplete,
+  Checkbox,
 } from "@mui/material";
 import StarIcon from "@mui/icons-material/Star";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
@@ -56,6 +57,8 @@ export default function GeneralChat() {
   const voiceFilter = useVoices((s) => s.filter);
   const voices = useMemo(() => allVoices.filter(voiceFilter), [allVoices, voiceFilter]);
   const toggleFavorite = useVoices((s) => s.toggleFavorite);
+  const favoritesOnly = useVoices((s) => s.showFavoritesOnly);
+  const toggleFavoritesOnly = useVoices((s) => s.toggleFavoritesOnly);
   const loadVoices = useVoices((s) => s.load);
   const [voiceId, setVoiceId] = useState<string>("");
 
@@ -345,35 +348,45 @@ export default function GeneralChat() {
       <Stack spacing={2} sx={{ p: 2, flexGrow: 1, width: "100%", maxWidth: 600, mx: "auto" }}>
         <ImagePromptGenerator onGenerate={(prompt) => send(prompt)} />
         <MusicPromptGenerator onGenerate={(prompt) => send(prompt)} />
-        <Autocomplete
-          options={voices}
-          getOptionLabel={(v) => v.id}
-          value={voices.find((v) => v.id === voiceId) || null}
-          onChange={(_e, v) => setVoiceId(v?.id || "")}
-          renderOption={(props, option) => (
-            <Box
-              component="li"
-              {...props}
-              sx={{ display: "flex", justifyContent: "space-between" }}
-            >
-              {option.id}
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleFavorite(option.id);
-                }}
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Autocomplete
+            options={voices}
+            getOptionLabel={(v) => v.id}
+            value={voices.find((v) => v.id === voiceId) || null}
+            onChange={(_e, v) => setVoiceId(v?.id || "")}
+            renderOption={(props, option) => (
+              <Box
+                component="li"
+                {...props}
+                sx={{ display: "flex", justifyContent: "space-between" }}
               >
-                {option.favorite ? (
-                  <StarIcon fontSize="small" />
-                ) : (
-                  <StarBorderIcon fontSize="small" />
-                )}
-              </IconButton>
-            </Box>
-          )}
-          renderInput={(params) => <TextField {...params} label="Voice" />}
-        />
+                {option.id}
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(option.id);
+                  }}
+                >
+                  {option.favorite ? (
+                    <StarIcon fontSize="small" />
+                  ) : (
+                    <StarBorderIcon fontSize="small" />
+                  )}
+                </IconButton>
+              </Box>
+            )}
+            renderInput={(params) => <TextField {...params} label="Voice" />}
+            sx={{ flexGrow: 1 }}
+          />
+          <Checkbox
+            icon={<StarBorderIcon />}
+            checkedIcon={<StarIcon />}
+            checked={favoritesOnly}
+            onChange={toggleFavoritesOnly}
+            sx={{ ml: 1 }}
+          />
+        </Box>
         <Box sx={{ flexGrow: 1, overflowY: "auto", width: "100%" }}>
           {messages.map((m, i) => (
             <Box

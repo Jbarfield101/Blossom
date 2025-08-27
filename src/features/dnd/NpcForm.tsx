@@ -84,6 +84,8 @@ export default function NpcForm({ world }: Props) {
   const voiceFilter = useVoices((s) => s.filter);
   const voices = useMemo(() => allVoices.filter(voiceFilter), [allVoices, voiceFilter]);
   const toggleFavorite = useVoices((s) => s.toggleFavorite);
+  const favoritesOnly = useVoices((s) => s.showFavoritesOnly);
+  const toggleFavoritesOnly = useVoices((s) => s.toggleFavoritesOnly);
   const loadVoices = useVoices((s) => s.load);
   useEffect(() => {
     loadVoices();
@@ -482,58 +484,72 @@ export default function NpcForm({ world }: Props) {
                   </Typography>
                 </Grid>
                 <Grid item xs={8}>
-                  <Autocomplete
-                    options={voiceOptions}
-                    getOptionLabel={(v) => v.id}
-                    value={voiceOptions.find((v) => v.id === state.voiceId) || null}
-                    onChange={(_e, v) => {
-                      dispatch({
-                        type: "SET_FIELD",
-                        field: "voiceId",
-                        value: v?.id || "",
-                      });
-                      setErrors((prev) => ({ ...prev, voiceId: null }));
-                    }}
-                    renderOption={(props, option) => (
-                      <Box
-                        component="li"
-                        {...props}
-                        sx={{ display: "flex", justifyContent: "space-between" }}
-                      >
-                        {option.id}
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleFavorite(option.id);
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <Autocomplete
+                      options={voiceOptions}
+                      getOptionLabel={(v) => v.id}
+                      value={
+                        voiceOptions.find((v) => v.id === state.voiceId) || null
+                      }
+                      onChange={(_e, v) => {
+                        dispatch({
+                          type: "SET_FIELD",
+                          field: "voiceId",
+                          value: v?.id || "",
+                        });
+                        setErrors((prev) => ({ ...prev, voiceId: null }));
+                      }}
+                      renderOption={(props, option) => (
+                        <Box
+                          component="li"
+                          {...props}
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
                           }}
                         >
-                          {option.favorite ? (
-                            <StarIcon fontSize="small" />
-                          ) : (
-                            <StarBorderIcon fontSize="small" />
-                          )}
-                        </IconButton>
-                      </Box>
-                    )}
-                    renderInput={(params) => (
-                      <StyledTextField
-                        {...params}
-                        id="voiceId"
-                        margin="normal"
-                        error={Boolean(errors.voiceId)}
-                        helperText={
-                          <FormErrorText id="voiceId-error">
-                            {errors.voiceId}
-                          </FormErrorText>
-                        }
-                        aria-describedby={
-                          errors.voiceId ? "voiceId-error" : undefined
-                        }
-                      />
-                    )}
-                    fullWidth
-                  />
+                          {option.id}
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite(option.id);
+                            }}
+                          >
+                            {option.favorite ? (
+                              <StarIcon fontSize="small" />
+                            ) : (
+                              <StarBorderIcon fontSize="small" />
+                            )}
+                          </IconButton>
+                        </Box>
+                      )}
+                      renderInput={(params) => (
+                        <StyledTextField
+                          {...params}
+                          id="voiceId"
+                          margin="normal"
+                          error={Boolean(errors.voiceId)}
+                          helperText={
+                            <FormErrorText id="voiceId-error">
+                              {errors.voiceId}
+                            </FormErrorText>
+                          }
+                          aria-describedby={
+                            errors.voiceId ? "voiceId-error" : undefined
+                          }
+                        />
+                      )}
+                      fullWidth
+                    />
+                    <Checkbox
+                      icon={<StarBorderIcon />}
+                      checkedIcon={<StarIcon />}
+                      checked={favoritesOnly}
+                      onChange={toggleFavoritesOnly}
+                      sx={{ ml: 1 }}
+                    />
+                  </Box>
                 </Grid>
               </Grid>
             </AccordionDetails>
