@@ -39,6 +39,12 @@ interface FormState {
   icon: string;
   statblock: string;
   sections: string;
+  strength: string;
+  dexterity: string;
+  constitution: string;
+  intelligence: string;
+  wisdom: string;
+  charisma: string;
   voiceId: string;
 }
 
@@ -58,6 +64,12 @@ const initialState: FormState = {
   icon: "",
   statblock: "{}",
   sections: "{}",
+  strength: "",
+  dexterity: "",
+  constitution: "",
+  intelligence: "",
+  wisdom: "",
+  charisma: "",
   voiceId: "",
 };
 
@@ -101,6 +113,14 @@ export default function NpcForm({ world }: Props) {
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [result, setResult] = useState<NpcData | null>(null);
   const [importedName, setImportedName] = useState<string | null>(null);
+  const abilityKeys = [
+    "strength",
+    "dexterity",
+    "constitution",
+    "intelligence",
+    "wisdom",
+    "charisma",
+  ] as const;
 
   const handleFileChange =
     (field: "portrait" | "icon") =>
@@ -132,6 +152,17 @@ export default function NpcForm({ world }: Props) {
       return;
     }
 
+    const abilities: Record<string, number> = {};
+    abilityKeys.forEach((ab) => {
+      const val = state[ab];
+      if (val) {
+        const num = parseInt(val, 10);
+        if (!Number.isNaN(num)) {
+          abilities[ab] = num;
+        }
+      }
+    });
+
     const data: NpcData = {
       id: crypto.randomUUID(),
       name: state.name,
@@ -152,6 +183,7 @@ export default function NpcForm({ world }: Props) {
       sections: Object.keys(parsedSections).length ? parsedSections : undefined,
       statblock: parsedStatblock,
       tags: state.tags.split(",").map((t) => t.trim()).filter(Boolean),
+      abilities: Object.keys(abilities).length ? (abilities as any) : undefined,
     };
 
     const parsed = zNpc.safeParse(data);
@@ -214,6 +246,17 @@ export default function NpcForm({ world }: Props) {
                     value: JSON.stringify(npc.sections || {}, null, 2),
                   });
                   dispatch({ type: "SET_FIELD", field: "voiceId", value: npc.voiceId || "" });
+                  abilityKeys.forEach((ab) =>
+                    dispatch({
+                      type: "SET_FIELD",
+                      field: ab,
+                      value:
+                        npc.abilities &&
+                        (npc.abilities as Record<string, number>)[ab] !== undefined
+                          ? (npc.abilities as Record<string, number>)[ab].toString()
+                          : "",
+                    })
+                  );
                 }}
               />
               {importedName && (
@@ -415,6 +458,35 @@ export default function NpcForm({ world }: Props) {
                 aria-describedby={errors.tags ? "tags-error" : undefined}
               />
             </Grid>
+        </Grid>
+      </Grid>
+
+        {/* Abilities */}
+        <Grid item xs={12}>
+          <Typography variant="subtitle1" sx={{ mt: 2 }}>
+            Abilities
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+          <Grid container spacing={2}>
+            {abilityKeys.map((ab) => (
+              <Grid item xs={4} key={ab}>
+                <StyledTextField
+                  id={ab}
+                  label={ab.charAt(0).toUpperCase() + ab.slice(1)}
+                  type="number"
+                  value={state[ab]}
+                  onChange={(e) =>
+                    dispatch({
+                      type: "SET_FIELD",
+                      field: ab,
+                      value: e.target.value,
+                    })
+                  }
+                  fullWidth
+                  margin="normal"
+                />
+              </Grid>
+            ))}
           </Grid>
         </Grid>
 

@@ -7,6 +7,7 @@ import ErrorIcon from '@mui/icons-material/Error';
 import Center from './_Center';
 import { useNPCs } from '../store/npcs';
 import type { Npc } from '../dnd/schemas/npc';
+import type { Ability } from '../dnd/characters';
 import { useWorlds } from '../store/worlds';
 
 const systemPrompt =
@@ -29,6 +30,7 @@ export default function NPCMaker() {
     playerCharacter: false,
     statblock: {},
     tags: ['npc'],
+    abilities: {},
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
@@ -37,6 +39,14 @@ export default function NPCMaker() {
 
   const addNPC = useNPCs((s) => s.addNPC);
   const world = useWorlds((s) => s.currentWorld);
+  const abilityKeys: Ability[] = [
+    'strength',
+    'dexterity',
+    'constitution',
+    'intelligence',
+    'wisdom',
+    'charisma',
+  ];
 
   useEffect(() => {
     async function start() {
@@ -113,6 +123,21 @@ export default function NPCMaker() {
     setNpc((prev) => ({ ...prev, [field]: value }));
   }
 
+  function handleAbilityChange(
+    ability: Ability,
+    value: number | undefined
+  ) {
+    setNpc((prev) => {
+      const abilities = { ...(prev.abilities || {}) } as Record<Ability, number>;
+      if (value === undefined) {
+        delete abilities[ability];
+      } else {
+        abilities[ability] = value;
+      }
+      return { ...prev, abilities };
+    });
+  }
+
   async function selectImage(field: 'portrait' | 'icon') {
     const selected = await open({
       multiple: false,
@@ -168,6 +193,7 @@ export default function NPCMaker() {
         playerCharacter: false,
         statblock: {},
         tags: ['npc'],
+        abilities: {},
       });
       setSnackbarOpen(true);
     } catch (e) {
@@ -225,6 +251,23 @@ export default function NPCMaker() {
           }
           fullWidth
         />
+        <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+          {abilityKeys.map((ab) => (
+            <TextField
+              key={ab}
+              label={ab[0].toUpperCase() + ab.slice(1)}
+              type="number"
+              value={npc.abilities?.[ab] ?? ''}
+              onChange={(e) =>
+                handleAbilityChange(
+                  ab,
+                  e.target.value ? Number(e.target.value) : undefined
+                )
+              }
+              sx={{ flex: 1, minWidth: 120 }}
+            />
+          ))}
+        </Stack>
         <TextField
           label="Backstory"
           multiline

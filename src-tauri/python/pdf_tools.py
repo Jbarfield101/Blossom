@@ -244,6 +244,22 @@ def extract_npcs(path: str):
                 data[k.strip().lower()] = v.strip()
         if not data:
             continue
+        ability_map = {
+            "str": "strength",
+            "dex": "dexterity",
+            "con": "constitution",
+            "int": "intelligence",
+            "wis": "wisdom",
+            "cha": "charisma",
+        }
+        abilities = {}
+        for short, full in ability_map.items():
+            val = data.pop(short, None)
+            if val is not None:
+                try:
+                    abilities[full] = int(val)
+                except ValueError:
+                    pass
         hooks = [h.strip() for h in (data.get("hooks") or "").split(",") if h.strip()]
         if not hooks:
             hooks = ["hook"]
@@ -273,6 +289,8 @@ def extract_npcs(path: str):
             "statblock": {},
             "tags": tags,
         }
+        if abilities:
+            npc["abilities"] = abilities
 
         age_raw = data.get("age")
         if age_raw:
@@ -310,22 +328,18 @@ def extract_npcs(path: str):
         if icon:
             npc["icon"] = icon
 
-        sections = {
-            k: v
-            for k, v in data.items()
-            if k
-            not in {
-                "name",
-                "species",
-                "race",
-                "role",
-                "alignment",
-                "playercharacter",
-                "backstory",
-                "location",
-                "hooks",
-                "quirks",
-                "portrait",
+        exclude = {
+            "name",
+            "species",
+            "race",
+            "role",
+            "alignment",
+            "playercharacter",
+            "backstory",
+            "location",
+            "hooks",
+            "quirks",
+            "portrait",
             "icon",
             "voice",
             "voice_style",
@@ -334,7 +348,8 @@ def extract_npcs(path: str):
             "tags",
             "age",
         }
-        }
+        exclude.update(ability_map.keys())
+        sections = {k: v for k, v in data.items() if k not in exclude}
         if sections:
             npc["sections"] = sections
         npcs.append(npc)
