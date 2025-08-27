@@ -218,14 +218,10 @@ export default function NpcForm({ world }: Props) {
                 <Typography sx={{ mt: 1 }}>Imported: {importedName}</Typography>
               )}
             </Grid>
-            <Grid item xs={4}>
-              <Typography component="label" htmlFor="name">
-                Name
-              </Typography>
-            </Grid>
-            <Grid item xs={8}>
+            <Grid item xs={12}>
               <StyledTextField
                 id="name"
+                label="Name"
                 value={state.name}
                 onChange={(e) => {
                   dispatch({ type: "SET_FIELD", field: "name", value: e.target.value });
@@ -240,14 +236,10 @@ export default function NpcForm({ world }: Props) {
                 aria-describedby={errors.name ? "name-error" : undefined}
               />
             </Grid>
-            <Grid item xs={4}>
-              <Typography component="label" htmlFor="species">
-                Species
-              </Typography>
-            </Grid>
-            <Grid item xs={8}>
+            <Grid item xs={12}>
               <StyledTextField
                 id="species"
+                label="Species"
                 value={state.species}
                 onChange={(e) => {
                   dispatch({ type: "SET_FIELD", field: "species", value: e.target.value });
@@ -264,14 +256,10 @@ export default function NpcForm({ world }: Props) {
                 aria-describedby={errors.species ? "species-error" : undefined}
               />
             </Grid>
-            <Grid item xs={4}>
-              <Typography component="label" htmlFor="role">
-                Role
-              </Typography>
-            </Grid>
-            <Grid item xs={8}>
+            <Grid item xs={12}>
               <StyledTextField
                 id="role"
+                label="Role"
                 value={state.role}
                 onChange={(e) => {
                   dispatch({ type: "SET_FIELD", field: "role", value: e.target.value });
@@ -286,14 +274,10 @@ export default function NpcForm({ world }: Props) {
                 aria-describedby={errors.role ? "role-error" : undefined}
               />
             </Grid>
-            <Grid item xs={4}>
-              <Typography component="label" htmlFor="alignment">
-                Alignment
-              </Typography>
-            </Grid>
-            <Grid item xs={8}>
+            <Grid item xs={12}>
               <StyledTextField
                 id="alignment"
+                label="Alignment"
                 value={state.alignment}
                 onChange={(e) => {
                   dispatch({ type: "SET_FIELD", field: "alignment", value: e.target.value });
@@ -340,14 +324,10 @@ export default function NpcForm({ world }: Props) {
           </Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={4}>
-              <Typography component="label" htmlFor="backstory">
-                Backstory
-              </Typography>
-            </Grid>
-            <Grid item xs={8}>
+            <Grid item xs={12}>
               <StyledTextField
                 id="backstory"
+                label="Backstory"
                 value={state.backstory}
                 onChange={(e) =>
                   dispatch({ type: "SET_FIELD", field: "backstory", value: e.target.value })
@@ -356,14 +336,10 @@ export default function NpcForm({ world }: Props) {
                 margin="normal"
               />
             </Grid>
-            <Grid item xs={4}>
-              <Typography component="label" htmlFor="location">
-                Location
-              </Typography>
-            </Grid>
-            <Grid item xs={8}>
+            <Grid item xs={12}>
               <StyledTextField
                 id="location"
+                label="Location"
                 value={state.location}
                 onChange={(e) =>
                   dispatch({ type: "SET_FIELD", field: "location", value: e.target.value })
@@ -372,14 +348,10 @@ export default function NpcForm({ world }: Props) {
                 margin="normal"
               />
             </Grid>
-            <Grid item xs={4}>
-              <Typography component="label" htmlFor="hooks">
-                Hooks (comma separated)
-              </Typography>
-            </Grid>
-            <Grid item xs={8}>
+            <Grid item xs={12}>
               <StyledTextField
                 id="hooks"
+                label="Hooks (comma separated)"
                 value={state.hooks}
                 onChange={(e) => {
                   dispatch({ type: "SET_FIELD", field: "hooks", value: e.target.value });
@@ -394,14 +366,10 @@ export default function NpcForm({ world }: Props) {
                 aria-describedby={errors.hooks ? "hooks-error" : undefined}
               />
             </Grid>
-            <Grid item xs={4}>
-              <Typography component="label" htmlFor="quirks">
-                Quirks (comma separated)
-              </Typography>
-            </Grid>
-            <Grid item xs={8}>
+            <Grid item xs={12}>
               <StyledTextField
                 id="quirks"
+                label="Quirks (comma separated)"
                 value={state.quirks}
                 onChange={(e) =>
                   dispatch({ type: "SET_FIELD", field: "quirks", value: e.target.value })
@@ -410,14 +378,10 @@ export default function NpcForm({ world }: Props) {
                 margin="normal"
               />
             </Grid>
-            <Grid item xs={4}>
-              <Typography component="label" htmlFor="tags">
-                Tags (comma separated)
-              </Typography>
-            </Grid>
-            <Grid item xs={8}>
+            <Grid item xs={12}>
               <StyledTextField
                 id="tags"
+                label="Tags (comma separated)"
                 value={state.tags}
                 onChange={(e) => {
                   dispatch({ type: "SET_FIELD", field: "tags", value: e.target.value });
@@ -489,12 +453,7 @@ export default function NpcForm({ world }: Props) {
             </AccordionSummary>
             <AccordionDetails>
               <Grid container spacing={2} alignItems="center">
-                <Grid item xs={4}>
-                  <Typography component="label" htmlFor="voiceId">
-                    Voice
-                  </Typography>
-                </Grid>
-                <Grid item xs={8}>
+                <Grid item xs={12}>
                   <FormControlLabel
                     control={
                       <Checkbox
@@ -542,6 +501,7 @@ export default function NpcForm({ world }: Props) {
                       <StyledTextField
                         {...params}
                         id="voiceId"
+                        label="Voice"
                         margin="normal"
                         error={Boolean(errors.voiceId)}
                         helperText={
@@ -566,14 +526,10 @@ export default function NpcForm({ world }: Props) {
             </AccordionSummary>
             <AccordionDetails>
               <Grid container spacing={2} alignItems="center">
-                <Grid item xs={4}>
-                  <Typography component="label" htmlFor="statblock">
-                    Statblock JSON
-                  </Typography>
-                </Grid>
-                <Grid item xs={8}>
+                <Grid item xs={12}>
                   <StyledTextField
                     id="statblock"
+                    label="Statblock JSON"
                     value={state.statblock}
                     onChange={(e) => {
                       dispatch({ type: "SET_FIELD", field: "statblock", value: e.target.value });
@@ -582,6 +538,7 @@ export default function NpcForm({ world }: Props) {
                     fullWidth
                     margin="normal"
                     multiline
+                    InputLabelProps={{ shrink: true }}
                     error={Boolean(errors.statblock)}
                     helperText={
                       <FormErrorText id="statblock-error">
@@ -593,14 +550,10 @@ export default function NpcForm({ world }: Props) {
                     }
                   />
                 </Grid>
-                <Grid item xs={4}>
-                  <Typography component="label" htmlFor="sections">
-                    Custom Sections JSON
-                  </Typography>
-                </Grid>
-                <Grid item xs={8}>
+                <Grid item xs={12}>
                   <StyledTextField
                     id="sections"
+                    label="Custom Sections JSON"
                     value={state.sections}
                     onChange={(e) => {
                       dispatch({ type: "SET_FIELD", field: "sections", value: e.target.value });
@@ -609,6 +562,7 @@ export default function NpcForm({ world }: Props) {
                     fullWidth
                     margin="normal"
                     multiline
+                    InputLabelProps={{ shrink: true }}
                     error={Boolean(errors.sections)}
                     helperText={
                       <FormErrorText id="sections-error">

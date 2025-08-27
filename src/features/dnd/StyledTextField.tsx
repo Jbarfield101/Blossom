@@ -1,11 +1,12 @@
 import { TextField, TextFieldProps } from "@mui/material";
 
 export default function StyledTextField(props: TextFieldProps) {
-  const { InputProps, sx, ...rest } = props;
+  const { InputProps, InputLabelProps, label, sx, ...rest } = props;
   return (
     <TextField
       variant="outlined"
-      InputLabelProps={{ shrink: true }}
+      label={label}
+      InputLabelProps={InputLabelProps}
       InputProps={{
         ...InputProps,
         sx: {
