@@ -12,6 +12,7 @@ type ModuleKey =
   | 'fusion'
   | 'simulation'
   | 'dnd'
+  | 'voices'
   | 'stocks'
   | 'shorts'
   | 'chores'
@@ -29,6 +30,7 @@ const defaultModules: ModulesState = {
   fusion: true,
   simulation: true,
   dnd: true,
+  voices: true,
   stocks: true,
   shorts: true,
   chores: true,
