@@ -77,4 +77,23 @@ describe("NpcPdfUpload logging", () => {
       }),
     );
   });
+
+  it("exposes parsed NPC data via callback", async () => {
+    tasksState.tasks = {
+      1: { status: "completed", result: [{ id: "1", name: "Bob" }] },
+    };
+    (invoke as any).mockImplementation((cmd: string) => {
+      if (cmd === "list_npcs") return Promise.resolve([]);
+      if (cmd === "read_npc_log") return Promise.resolve([]);
+      return Promise.resolve();
+    });
+
+    const cb = vi.fn();
+    render(<NpcPdfUpload world="w" onParsed={cb} />);
+    fireEvent.click(screen.getByText(/upload npc pdf/i));
+
+    await waitFor(() =>
+      expect(cb).toHaveBeenCalledWith([{ id: "1", name: "Bob" }])
+    );
+  });
 });

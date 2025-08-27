@@ -91,6 +91,7 @@ export default function NpcForm({ world }: Props) {
   const voiceOptions = voices;
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [result, setResult] = useState<NpcData | null>(null);
+  const [importedName, setImportedName] = useState<string | null>(null);
 
   const selectFile = async (field: "portrait" | "icon") => {
     const selected = await open({
@@ -176,9 +177,10 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={8}>
               <NpcPdfUpload
                 world={world}
-                onImported={(npcs) => {
+                onParsed={(npcs) => {
                   const npc = npcs[0];
                   if (!npc) return;
+                  setImportedName(npc.name);
                   dispatch({ type: "SET_FIELD", field: "name", value: npc.name });
                   dispatch({ type: "SET_FIELD", field: "species", value: npc.species });
                   dispatch({ type: "SET_FIELD", field: "role", value: npc.role });
@@ -204,6 +206,9 @@ export default function NpcForm({ world }: Props) {
                   dispatch({ type: "SET_FIELD", field: "voiceId", value: npc.voiceId || "" });
                 }}
               />
+              {importedName && (
+                <Typography sx={{ mt: 1 }}>Imported: {importedName}</Typography>
+              )}
             </Grid>
             <Grid item xs={4}>
               <Typography component="label" htmlFor="name">
