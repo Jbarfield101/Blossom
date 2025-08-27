@@ -63,6 +63,7 @@ export default function Voices() {
       player.start();
       setStatus("success");
     } catch (e) {
+      console.error("Voice test failed:", e);
       setError(e instanceof Error ? e.message : String(e));
       setStatus("error");
     }
