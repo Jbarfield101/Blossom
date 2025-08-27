@@ -274,6 +274,15 @@ def extract_npcs(path: str):
             "tags": tags,
         }
 
+        age_raw = data.get("age")
+        if age_raw:
+            try:
+                age_val = int(age_raw)
+                if age_val > 0:
+                    npc["age"] = age_val
+            except ValueError:
+                pass
+
         voice_raw = data.get("voice")
         if voice_raw:
             parts = [p.strip() for p in voice_raw.split(",")]
@@ -317,13 +326,14 @@ def extract_npcs(path: str):
                 "hooks",
                 "quirks",
                 "portrait",
-                "icon",
-                "voice",
-                "voice_style",
-                "voice_provider",
-                "voice_preset",
-                "tags",
-            }
+            "icon",
+            "voice",
+            "voice_style",
+            "voice_provider",
+            "voice_preset",
+            "tags",
+            "age",
+        }
         }
         if sections:
             npc["sections"] = sections

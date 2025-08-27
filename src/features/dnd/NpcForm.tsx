@@ -29,6 +29,7 @@ interface FormState {
   role: string;
   alignment: string;
   playerCharacter: boolean;
+  age: string;
   backstory: string;
   location: string;
   hooks: string;
@@ -47,6 +48,7 @@ const initialState: FormState = {
   role: "",
   alignment: "",
   playerCharacter: false,
+  age: "",
   backstory: "",
   location: "",
   hooks: "",
@@ -137,6 +139,7 @@ export default function NpcForm({ world }: Props) {
       role: state.role,
       alignment: state.alignment,
       playerCharacter: state.playerCharacter,
+      age: state.age ? parseInt(state.age, 10) : undefined,
       backstory: state.backstory || undefined,
       location: state.location || undefined,
       hooks: state.hooks.split(",").map((h) => h.trim()).filter(Boolean),
@@ -192,6 +195,7 @@ export default function NpcForm({ world }: Props) {
                   dispatch({ type: "SET_FIELD", field: "role", value: npc.role });
                   dispatch({ type: "SET_FIELD", field: "alignment", value: npc.alignment });
                   dispatch({ type: "SET_FIELD", field: "playerCharacter", value: npc.playerCharacter });
+                  dispatch({ type: "SET_FIELD", field: "age", value: npc.age?.toString() || "" });
                   dispatch({ type: "SET_FIELD", field: "backstory", value: npc.backstory || "" });
                   dispatch({ type: "SET_FIELD", field: "location", value: npc.location || "" });
                   dispatch({ type: "SET_FIELD", field: "hooks", value: (npc.hooks || []).join(", ") });
@@ -292,6 +296,23 @@ export default function NpcForm({ world }: Props) {
                 aria-describedby={
                   errors.alignment ? "alignment-error" : undefined
                 }
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <StyledTextField
+                id="age"
+                label="Age"
+                type="number"
+                value={state.age}
+                onChange={(e) => {
+                  dispatch({ type: "SET_FIELD", field: "age", value: e.target.value });
+                  setErrors((prev) => ({ ...prev, age: null }));
+                }}
+                fullWidth
+                margin="normal"
+                error={Boolean(errors.age)}
+                helperText={<FormErrorText id="age-error">{errors.age}</FormErrorText>}
+                aria-describedby={errors.age ? "age-error" : undefined}
               />
             </Grid>
             <Grid item xs={4}>
