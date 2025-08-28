@@ -12,6 +12,8 @@ import {
   Autocomplete,
   IconButton,
   Tooltip,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import StarIcon from "@mui/icons-material/Star";
@@ -85,16 +87,20 @@ const initialState: FormState = {
   inventory: "",
 };
 
-type Action = {
-  type: "SET_FIELD";
-  field: keyof FormState;
-  value: string | boolean;
-};
+type Action =
+  | {
+      type: "SET_FIELD";
+      field: keyof FormState;
+      value: string | boolean;
+    }
+  | { type: "RESET" };
 
 function reducer(state: FormState, action: Action): FormState {
   switch (action.type) {
     case "SET_FIELD":
       return { ...state, [action.field]: action.value } as FormState;
+    case "RESET":
+      return { ...initialState };
     default:
       return state;
   }
@@ -126,6 +132,10 @@ export default function NpcForm({ world }: Props) {
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [result, setResult] = useState<NpcData | null>(null);
   const [importedName, setImportedName] = useState<string | null>(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+
+  const handleSnackbarClose = () => setSnackbarOpen(false);
 
   const handleFileChange =
     (field: "portrait" | "icon") =>
@@ -357,6 +367,11 @@ export default function NpcForm({ world }: Props) {
         const saved = await invoke<NpcData>("save_npc", { world, npc: parsed.data });
         await loadNPCs(world);
         setResult(saved);
+        dispatch({ type: "RESET" });
+        setImportedName(null);
+        setErrors({});
+        setSnackbarMessage(`NPC ${saved.name} saved successfully`);
+        setSnackbarOpen(true);
       } catch (err) {
         setErrors({ submit: String(err) });
         setResult(null);
@@ -1023,6 +1038,11 @@ export default function NpcForm({ world }: Props) {
           </Grid>
         )}
       </Grid>
+      <Snackbar open={snackbarOpen} autoHideDuration={4000} onClose={handleSnackbarClose}>
+        <Alert onClose={handleSnackbarClose} severity="success" sx={{ width: "100%" }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
