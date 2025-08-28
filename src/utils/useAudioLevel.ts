@@ -31,6 +31,7 @@ export function useAudioLevel(source?: AudioNode): number {
 
     let micStream: MediaStream | undefined;
     let micNode: MediaStreamAudioSourceNode | undefined;
+    let active = true;
     if (source) {
       source.connect(analyser);
     } else if (navigator?.mediaDevices?.getUserMedia) {
@@ -38,7 +39,9 @@ export function useAudioLevel(source?: AudioNode): number {
         .getUserMedia({ audio: true })
         .then((stream) => {
           micStream = stream;
+          if (!active || ctx.state === "closed") return;
           micNode = ctx.createMediaStreamSource(stream);
+          if (!active || ctx.state === "closed") return;
           micNode.connect(analyser);
         })
         .catch(() => {
@@ -59,6 +62,7 @@ export function useAudioLevel(source?: AudioNode): number {
     update();
 
     return () => {
+      active = false;
       if (frame.current) cancelAnimationFrame(frame.current);
       if (source) {
         source.disconnect(analyser);
