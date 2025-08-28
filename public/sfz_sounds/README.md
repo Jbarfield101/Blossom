@@ -58,3 +58,14 @@ Reference SFZ files in the song JSON to swap instruments:
 
 - UprightPianoKW – upright piano sample set by Kurt W., sourced from the
   musical-artifacts archive and released under the CC0 1.0 license.
+
+## Sample formats
+
+Tone.js works best with WAV or OGG samples for web playback. FLAC files are larger and may not decode reliably, even though browsers support them. Convert any FLAC samples to WAV using ffmpeg:
+
+```
+ffmpeg -i sample.flac -c:a pcm_s16le sample.wav
+```
+
+Update the `.sfz` file to reference the `.wav` files after conversion.
+
