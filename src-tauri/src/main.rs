@@ -60,6 +60,15 @@ fn main() {
     let queue = TaskQueue::new(1, 90.0, 90.0);
     tauri::Builder::default()
         .manage(queue)
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { .. } = event {
+                let app = window.app_handle().clone();
+                tauri::async_runtime::spawn(async move {
+                    let _ = crate::commands::comfy_stop().await;
+                    let _ = crate::commands::stop_ollama().await;
+                });
+            }
+        })
         .setup(|app| {
             let handle = app.handle();
             app.state::<TaskQueue>().set_app_handle(handle.clone());
@@ -80,6 +89,10 @@ fn main() {
                         {
                             log::warn!("sfz flac->wav conversion failed: {e}");
                         }
+                    }
+                    // Ensure fresh servers each app launch
+                    if let Err(e) = commands::start_ollama(app.clone()).await {
+                        log::warn!("failed to start Ollama: {e}");
                     }
                     if let Err(e) = commands::comfy_start(app, "".into()).await {
                         log::warn!("failed to start ComfyUI: {e}");
@@ -123,7 +136,9 @@ fn main() {
             commands::generate_album,
             commands::cancel_album,
             commands::dj_mix,
-            commands::generate_ambience,\n            commands::sfz_convert_flac_to_wav,\n            commands::set_sfz_convert_on_start,
+            commands::generate_ambience,
+            commands::sfz_convert_flac_to_wav,
+            commands::set_sfz_convert_on_start,
             commands::bark_tts,
             // ComfyUI:
             commands::comfy_status,

@@ -32,6 +32,7 @@ use tokio::{
     time::sleep,
 };
 use which::which;
+use std::process::Command as StdCommand;
 
 #[derive(Debug)]
 struct LoggedChild {
@@ -99,6 +100,83 @@ pub fn __has_comfy_child() -> bool {
 // Reuse our python path from below
 fn comfy_python() -> PathBuf {
     conda_python()
+}
+
+/// Best-effort: kill any process listening on the given TCP `port`.
+///
+/// This is used to ensure we start with a clean slate for embedded servers
+/// like ComfyUI (8188) and Ollama (11434). It attempts platform-specific
+/// strategies and ignores errors where possible.
+fn kill_port(port: u16) {
+    #[cfg(windows)]
+    {
+        // Try PowerShell Get-NetTCPConnection to get PIDs then taskkill them.
+        let ps_cmd = format!(
+            "Get-NetTCPConnection -LocalPort {} -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess",
+            port
+        );
+        if let Ok(out) = StdCommand::new("powershell")
+            .args(["-NoProfile", "-Command", &ps_cmd])
+            .output()
+        {
+            if out.status.success() {
+                let text = String::from_utf8_lossy(&out.stdout);
+                for line in text.lines() {
+                    if let Ok(pid) = line.trim().parse::<u32>() {
+                        let _ = StdCommand::new("taskkill")
+                            .args(["/PID", &pid.to_string(), "/F", "/T"]) // kill tree
+                            .status();
+                    }
+                }
+            }
+        }
+        // Fallback: netstat parsing in case the above fails.
+        if let Ok(out) = StdCommand::new("cmd")
+            .args(["/C", &format!("netstat -ano | findstr :{}", port)])
+            .output()
+        {
+            if out.status.success() {
+                let text = String::from_utf8_lossy(&out.stdout);
+                for line in text.lines() {
+                    let parts: Vec<&str> = line.split_whitespace().collect();
+                    if parts.len() >= 5 && (parts[3].eq_ignore_ascii_case("LISTENING") || parts[3].eq_ignore_ascii_case("LISTEN")) {
+                        if let Ok(pid) = parts[4].parse::<u32>() {
+                            let _ = StdCommand::new("taskkill")
+                                .args(["/PID", &pid.to_string(), "/F", "/T"]) // kill tree
+                                .status();
+                        }
+                    } else if parts.len() >= 5 {
+                        // Some Windows builds show STATE in column 4 or 5; still try to kill PID.
+                        if let Ok(pid) = parts[parts.len() - 1].parse::<u32>() {
+                            let _ = StdCommand::new("taskkill")
+                                .args(["/PID", &pid.to_string(), "/F", "/T"]) // kill tree
+                                .status();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[cfg(unix)]
+    {
+        // Try lsof to get PIDs bound to the port and kill them.
+        if let Ok(out) = StdCommand::new("sh")
+            .args(["-lc", &format!("lsof -ti :{} || true", port)])
+            .output()
+        {
+            if out.status.success() {
+                let text = String::from_utf8_lossy(&out.stdout);
+                for line in text.lines() {
+                    let _ = StdCommand::new("kill").args(["-9", line.trim()]).status();
+                }
+            }
+        }
+        // Fallback: fuser
+        let _ = StdCommand::new("sh")
+            .args(["-lc", &format!("fuser -k -n tcp {} || true", port)])
+            .status();
+    }
 }
 
 /// Spawn a command and forward its stdout and stderr to the frontend.
@@ -179,10 +257,12 @@ pub async fn comfy_status() -> Result<bool, String> {
 
 #[tauri::command]
 pub async fn comfy_start<R: Runtime>(app: AppHandle<R>, dir: String) -> Result<(), String> {
+    // Always ensure port 8188 is free before starting a fresh server.
+    kill_port(8188);
     {
         let lock = COMFY_CHILD.get_or_init(|| Mutex::new(None)).lock().unwrap();
         if lock.is_some() {
-            return Ok(()); // already running
+            return Ok(()); // already running in this app instance
         }
     }
 
@@ -1608,19 +1688,10 @@ fn models_dir<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
 }
 
 #[tauri::command]
-pub async fn start_ollama<R: Runtime>(app: AppHandle<R>, window: Window<R>) -> Result<(), String> {
+pub async fn start_ollama<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
+    // Always ensure port 11434 is free before starting a fresh server.
+    kill_port(11434);
     let client = reqwest::Client::new();
-    // check if already running
-    if client
-        .get("http://127.0.0.1:11434/")
-        .timeout(std::time::Duration::from_millis(500))
-        .send()
-        .await
-        .is_ok()
-    {
-        return Ok(());
-    }
-
     let dir = models_dir(&app)?;
 
     // spawn serve
@@ -1687,7 +1758,8 @@ pub async fn start_ollama<R: Runtime>(app: AppHandle<R>, window: Window<R>) -> R
         pull.arg("pull")
             .arg("gpt-oss:20b")
             .env("OLLAMA_MODELS", &dir);
-        let child = spawn_with_logging(pull, window, "ollama_log")
+        // Use AppHandle as emitter for logs when pulling the model
+        let child = spawn_with_logging(pull, app.clone(), "ollama_log")
             .map_err(|e| format!("ollama pull failed: {e}"))?;
         let status = child.wait().await.map_err(|e| e.to_string())?;
         if !status.success() {

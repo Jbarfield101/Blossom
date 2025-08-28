@@ -5,6 +5,7 @@
   "identifier": "com.owner.blossom",
   "build": {
     "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
   },
