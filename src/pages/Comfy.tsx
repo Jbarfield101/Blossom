@@ -14,20 +14,30 @@ export default function Comfy() {
     ]);
   }
 
+  const COMFY_API_URL =
+    import.meta.env.VITE_COMFY_API_URL || "http://127.0.0.1:8188";
+
   async function runWorkflow(workflow: unknown) {
     try {
       appendLog("Submitting workflow");
       setStatus("running");
-      await fetch("http://127.0.0.1:8188/prompt", {
+      const res = await fetch(`${COMFY_API_URL}/prompt`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: workflow }),
       });
+
+      if (!res.ok) {
+        throw new Error(`Request failed: ${res.status} ${res.statusText}`);
+      }
+
       appendLog("Workflow submitted");
       setStatus("submitted");
     } catch (err) {
       console.error(err);
-      appendLog(`Error: ${(err as Error).message}`);
+      appendLog(
+        `Error contacting Comfy API at ${COMFY_API_URL}: ${(err as Error).message}`,
+      );
       setStatus("error");
     }
   }
