@@ -6,6 +6,13 @@ import { open as openDialog } from '@tauri-apps/plugin-dialog';
 vi.mock('@tauri-apps/plugin-dialog', () => ({ open: vi.fn() }));
 vi.mock('@tauri-apps/api/path', () => ({ resolveResource: (p: string) => Promise.resolve(p) }));
 
+vi.mock('../utils/sfzLoader', () => ({
+  loadSfz: vi.fn((_path: string, onProgress?: (l: number, t: number) => void) => {
+    onProgress?.(1, 1);
+    return Promise.resolve({ regions: [], sampler: {} } as any);
+  }),
+}));
+
 const enqueueTask = vi.fn();
 vi.mock('../store/tasks', () => ({
   useTasks: () => ({ enqueueTask }),
