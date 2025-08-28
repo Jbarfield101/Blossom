@@ -119,6 +119,29 @@ def test_extract_npcs_parses_appearance(tmp_path):
     assert sections.get("extra") == "Value"
 
 
+def test_extract_npcs_heading_and_inline_fields(tmp_path):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Helvetica", "", 12)
+    pdf.cell(0, 10, "Gorruk", ln=1)
+    pdf.cell(
+        0,
+        10,
+        "Species: Human Age: 27 Class/Role: Beast-Handler Alignment: Neutral",
+        ln=1,
+    )
+    path = tmp_path / "npc.pdf"
+    pdf.output(str(path))
+
+    res = pdf_tools.extract_npcs(str(path))
+    npc = res["npcs"][0]
+    assert npc["name"] == "Gorruk"
+    assert npc["species"] == "Human"
+    assert npc["age"] == 27
+    assert npc["role"] == "Beast-Handler"
+    assert npc["alignment"] == "Neutral"
+
+
 def test_extract_npcs_stats_traits_inventory_persist(tmp_path):
     pdf = FPDF()
     pdf.add_page()

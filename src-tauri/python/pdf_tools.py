@@ -255,6 +255,9 @@ def extract_npcs(path: str, db_path: str | Path | None = None):
         if not lines:
             continue
         data = {}
+        # If the first line doesn't contain a key-value pair, treat it as the NPC's name.
+        if lines and ":" not in lines[0]:
+            data["name"] = lines.pop(0).strip()
         current = None
         list_fields = {"traits", "quirks", "inventory", "equipment", "items"}
         synonym_map = {
