@@ -38,4 +38,13 @@ describe('generateAudio', () => {
       'Bark TTS invocation failed: boom',
     );
   });
+
+  it('calls onStatus callback with progress updates', async () => {
+    (invoke as any).mockResolvedValue(new Uint8Array([1, 2, 3]));
+    const cb = vi.fn();
+    await generateAudio('hello', 'speaker', cb);
+    expect(cb).toHaveBeenNthCalledWith(1, 'Invoking Bark TTS...');
+    expect(cb).toHaveBeenNthCalledWith(2, 'Bark TTS invocation complete.');
+    expect(cb).toHaveBeenNthCalledWith(3, 'Decoding audio...');
+  });
 });
