@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Stack, Button, TextField } from "@mui/material";
+import { Stack, Button, TextField, LinearProgress } from "@mui/material";
 import Center from "./_Center";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
@@ -12,6 +12,7 @@ export default function VideoEditor() {
   const [minutes, setMinutes] = useState(0);
   const [seconds, setSeconds] = useState(0);
   const [status, setStatus] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
 
   const pickInput = async () => {
     const file = await open({ multiple: false });
@@ -33,6 +34,7 @@ export default function VideoEditor() {
       setStatus("Duration must be greater than 0.");
       return;
     }
+    setProcessing(true);
     try {
       setStatus("Processing...");
       const path: string = await invoke("loop_video", {
@@ -46,6 +48,8 @@ export default function VideoEditor() {
       setStatus(`Saved to ${path}`);
     } catch (e: any) {
       setStatus(`Error: ${e?.message || e}`);
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -96,9 +100,10 @@ export default function VideoEditor() {
             inputProps={{ min: 0, max: 59 }}
           />
         </Stack>
-        <Button variant="contained" onClick={handleLoop}>
+        <Button variant="contained" onClick={handleLoop} disabled={processing}>
           Create Loop
         </Button>
+        {processing && <LinearProgress />}
         {status && <div>{status}</div>}
       </Stack>
     </Center>
