@@ -73,7 +73,10 @@ export default function DND() {
   return (
     <ThemeProvider theme={createDndTheme()}>
       <Box sx={{ p: 2 }}>
-      <Box sx={{ my: 2, maxWidth: 200, mx: "auto" }}>
+      <Box
+        data-testid="world-selector"
+        sx={{ mt: 4, mb: 2, ml: 2, maxWidth: 200 }}
+      >
         <TextField
           select
           label="World"
