@@ -64,11 +64,19 @@ Reference SFZ files in the song JSON to swap instruments:
 
 ## Sample formats
 
-Tone.js works best with WAV or OGG samples for web playback. FLAC files are larger and may not decode reliably, even though browsers support them. Convert any FLAC samples to WAV using ffmpeg:
+Tone.js works best with WAV or OGG samples for web playback. Chromium and Firefox can decode FLAC through Web Audio, but Safari support is limited, so converting to WAV or OGG improves compatibility and file size. Use the helper script to convert all FLAC samples to WAV and update `.sfz` references:
 
 ```
-ffmpeg -i sample.flac -c:a pcm_s16le sample.wav
+npm run sfz:flac2wav -- --bits 24
 ```
 
-Update the `.sfz` file to reference the `.wav` files after conversion.
+The `--bits` option accepts `16`, `24`, or `32` (default) to control output depth.
+
+For a smaller footprint, convert FLAC directly to OGG:
+
+```
+ffmpeg -i in.flac -c:a libvorbis out.ogg
+```
+
+After adding or converting samples, run `npm run sfz:verify` to ensure `.sfz` files reference existing samples.
 
