@@ -22,6 +22,7 @@ import QuestForm from "../features/dnd/QuestForm";
 import EncounterForm from "../features/dnd/EncounterForm";
 import RuleForm from "../features/dnd/RuleForm";
 import SpellForm from "../features/dnd/SpellForm";
+import SpellBook from "../features/dnd/SpellBook";
 import DiceRoller from "../features/dnd/DiceRoller";
 import TabletopMap from "../features/dnd/TabletopMap";
 import WarTable from "../features/dnd/WarTable";
@@ -62,7 +63,8 @@ export default function DND() {
     { icon: <TravelExplore />, label: "Quest", component: <QuestForm /> },
     { icon: <SportsKabaddi />, label: "Encounter", component: <EncounterForm /> },
     { icon: <Gavel />, label: "Rulebook", component: <RuleForm /> },
-    { icon: <AutoStories />, label: "Spellbook", component: <SpellForm /> },
+    { icon: <AutoStories />, label: "Spell Form", component: <SpellForm /> },
+    { icon: <AutoStories />, label: "Spell Book", component: <SpellBook /> },
     { icon: <Casino />, label: "Dice", component: <DiceRoller /> },
     { icon: <Map />, label: "Tabletop", component: <TabletopMap /> },
     { icon: <MilitaryTech />, label: "War Table", component: <WarTable /> },

@@ -4,6 +4,8 @@ import StyledTextField from "./StyledTextField";
 import SpellPdfUpload from "./SpellPdfUpload";
 import { zSpell } from "./schemas";
 import type { SpellData } from "./types";
+import SpellBook from "./SpellBook";
+import { useSpells } from "../../store/spells";
 
 export default function SpellForm() {
   const [name, setName] = useState("");
@@ -15,9 +17,9 @@ export default function SpellForm() {
   const [duration, setDuration] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
-  const [result, setResult] = useState<SpellData | null>(null);
+  const addSpell = useSpells((s) => s.addSpell);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const data: SpellData = {
       id: crypto.randomUUID(),
@@ -26,13 +28,16 @@ export default function SpellForm() {
       school,
       castingTime,
       range,
-      components: components.split(",").map((c) => c.trim()).filter(Boolean),
+      components: components
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean),
       duration,
       description,
       tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
     };
     const parsed = zSpell.parse(data);
-    setResult(parsed);
+    await addSpell(parsed);
   };
 
   return (
@@ -131,11 +136,9 @@ export default function SpellForm() {
             Submit
           </Button>
         </Grid>
-        {result && (
-          <Grid item xs={12}>
-            <pre style={{ marginTop: "1rem" }}>{JSON.stringify(result, null, 2)}</pre>
-          </Grid>
-        )}
+        <Grid item xs={12}>
+          <SpellBook />
+        </Grid>
       </Grid>
     </Box>
   );
