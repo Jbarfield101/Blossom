@@ -11,7 +11,7 @@ export default function Music() {
     <div
       style={{
         position: "relative",
-        minHeight: "100vh",
+          minHeight: "calc(100vh - var(--top-bar-height))",
         background: "#0f0f10",
         color: "#fff",
         paddingBottom: 24,

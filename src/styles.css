@@ -4,7 +4,10 @@
 
 /* color-scheme is controlled dynamically via ThemeContext */
 /* default to dark to match existing behavior */
-:root { color-scheme: dark; }
+:root {
+  color-scheme: dark;
+  --top-bar-height: 64px;
+}
 * { box-sizing: border-box; }
 html, body, #root {
   height: 100%;
