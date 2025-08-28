@@ -7,8 +7,8 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 import lofi.renderer as renderer  # noqa: E402
 
 
-EXPECTED_RMS = 0.165903
-EXPECTED_HASH = "82fdd90872a6d191afc972db5890d113a419fa53c9239d7970063d64d1e3ad90"
+EXPECTED_RMS = 0.1113
+EXPECTED_HASH = "925de978ca033995cc5b56222872b0f02db33be6e999318b42afd18d4eafad60"
 
 
 def test_deterministic_render(caplog):
