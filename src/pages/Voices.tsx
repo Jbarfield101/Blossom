@@ -38,6 +38,7 @@ export default function Voices() {
     "idle" | "testing" | "success" | "error"
   >("idle");
   const [error, setError] = useState<string | null>(null);
+  const [log, setLog] = useState<string[]>([]);
 
   useEffect(() => {
     load();
@@ -57,16 +58,28 @@ export default function Voices() {
     if (!selected) return;
     setStatus("testing");
     setError(null);
+    setLog([]);
+    setLog((l) => [...l, "Starting test…"]);
     try {
+      setLog((l) => [...l, "Starting Tone..."]);
       await Tone.start();
-      const buffer = await generateAudio(text, selected.preset);
+      setLog((l) => [...l, "Generating audio..."]);
+      const buffer = await generateAudio(text, selected.preset, (msg) =>
+        setLog((l) => [...l, msg])
+      );
+      setLog((l) => [...l, "Playing audio..."]);
       const player = new Tone.Player(buffer).toDestination();
       player.start();
+      setLog((l) => [...l, "Playback started."]);
       setStatus("success");
     } catch (e) {
       console.error("Voice test failed:", e);
       setError(e instanceof Error ? e.message : String(e));
       setStatus("error");
+      setLog((l) => [
+        ...l,
+        `Error: ${e instanceof Error ? e.message : String(e)}`,
+      ]);
     }
   };
 
@@ -133,6 +146,15 @@ export default function Voices() {
       >
         Test
       </Button>
+      <Box sx={{ maxHeight: 200, overflow: "auto" }}>
+        <List>
+          {log.map((m, i) => (
+            <ListItem key={i}>
+              <ListItemText primary={m} />
+            </ListItem>
+          ))}
+        </List>
+      </Box>
       <Snackbar
         open={status !== "idle"}
         autoHideDuration={status === "testing" ? null : 3000}

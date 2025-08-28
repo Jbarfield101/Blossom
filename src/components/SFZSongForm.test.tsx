@@ -6,8 +6,13 @@ import { convertFileSrc } from '@tauri-apps/api/core';
 import { loadSfz } from '../utils/sfzLoader';
 
 vi.mock('@tauri-apps/plugin-dialog', () => ({ open: vi.fn() }));
-vi.mock('@tauri-apps/api/path', () => ({ resolveResource: (p: string) => Promise.resolve(p) }));
-vi.mock('@tauri-apps/api/core', () => ({ convertFileSrc: vi.fn((p: string) => `converted:${p}`) }));
+vi.mock('@tauri-apps/api/path', () => ({
+  resolveResource: (p: string) =>
+    Promise.resolve(`C:/Blossom/resources/${p}`.replace(/\//g, '\\')),
+}));
+vi.mock('@tauri-apps/api/core', () => ({
+  convertFileSrc: vi.fn((p: string) => `http://asset.localhost/${p}`),
+}));
 
 vi.mock('../utils/sfzLoader', () => ({
   loadSfz: vi.fn((_path: string, onProgress?: (l: number, t: number) => void) => {
@@ -33,7 +38,7 @@ describe('SFZSongForm', () => {
 
   it('renders form with lofi filter off', async () => {
     render(<SFZSongForm />);
-    expect(screen.getByPlaceholderText('Title')).toBeInTheDocument();
+    expect(screen.getByLabelText('Title')).toBeInTheDocument();
     expect(screen.getByText('Choose Output Folder')).toBeInTheDocument();
     await screen.findByText('Change SFZ');
     const lofi = screen.getByLabelText('Lofi Filter');
@@ -44,7 +49,7 @@ describe('SFZSongForm', () => {
     (openDialog as any).mockResolvedValueOnce('/tmp/out');
 
     render(<SFZSongForm />);
-    fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'Test' } });
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Test' } });
     fireEvent.click(screen.getByText('Choose Output Folder'));
     await screen.findByText('Output: /tmp/out');
     await screen.findByText('Change SFZ');
@@ -65,7 +70,7 @@ describe('SFZSongForm', () => {
     (openDialog as any).mockResolvedValueOnce('/tmp/out');
 
     render(<SFZSongForm />);
-    fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'Test' } });
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Test' } });
     fireEvent.click(screen.getByText('Choose Output Folder'));
     await screen.findByText('Output: /tmp/out');
     await screen.findByText('Change SFZ');
@@ -88,7 +93,7 @@ describe('SFZSongForm', () => {
 
     (openDialog as any).mockResolvedValueOnce('/tmp/out');
     render(<SFZSongForm />);
-    fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'Test' } });
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Test' } });
     fireEvent.click(screen.getByText('Choose Output Folder'));
     await screen.findByText('Output: /tmp/out');
     fireEvent.click(screen.getByText('Generate'));
@@ -97,18 +102,20 @@ describe('SFZSongForm', () => {
     expect(args.spec.sfz_instrument).toBe('/tmp/piano.sfz');
   });
 
-  it('converts default piano path before loading', async () => {
+  it('normalizes default piano path before loading', async () => {
     render(<SFZSongForm />);
     await waitFor(() => expect(loadSfz).toHaveBeenCalled());
-    expect(convertFileSrc).toHaveBeenCalledWith('sfz_sounds/UprightPianoKW-20220221.sfz');
+    expect(convertFileSrc).toHaveBeenCalledWith(
+      'C:/Blossom/resources/sfz_sounds/UprightPianoKW-20220221.sfz'
+    );
     expect(loadSfz).toHaveBeenCalledWith(
-      'converted:sfz_sounds/UprightPianoKW-20220221.sfz',
+      'http://asset.localhost/C:/Blossom/resources/sfz_sounds/UprightPianoKW-20220221.sfz',
       expect.any(Function)
     );
   });
 
-  it('converts user selected file before loading', async () => {
-    (openDialog as any).mockResolvedValueOnce('/tmp/piano.sfz');
+  it('normalizes user selected file before loading', async () => {
+    (openDialog as any).mockResolvedValueOnce('C:\\tmp\\piano.sfz');
 
     render(<SFZSongForm />);
     await screen.findByText('Change SFZ');
@@ -118,11 +125,19 @@ describe('SFZSongForm', () => {
     fireEvent.click(screen.getByText('Change SFZ'));
 
     await waitFor(() => expect(loadSfz).toHaveBeenCalled());
-    expect(convertFileSrc).toHaveBeenCalledWith('/tmp/piano.sfz');
+    expect(convertFileSrc).toHaveBeenCalledWith('C:/tmp/piano.sfz');
     expect(loadSfz).toHaveBeenCalledWith(
-      'converted:/tmp/piano.sfz',
+      'http://asset.localhost/C:/tmp/piano.sfz',
       expect.any(Function)
     );
+  });
+
+  it('maps loader errors to friendly message', async () => {
+    vi.mocked(loadSfz).mockRejectedValueOnce(
+      new Error('Unable to load SFZ: piano.sfz (HTTP 404)')
+    );
+    render(<SFZSongForm />);
+    await screen.findByText('SFZ file not found');
   });
 });
 

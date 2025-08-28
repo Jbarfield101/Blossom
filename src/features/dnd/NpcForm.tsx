@@ -666,11 +666,11 @@ export default function NpcForm({ world }: Props) {
               <StyledTextField
                 id="inventory"
                 label={
-                  <Tooltip title="Example: torch, rope">
-                    <span>Inventory (comma separated)</span>
+                  <Tooltip title="Example: torch, rope, shield">
+                    <span>Inventory/Equipment (comma separated)</span>
                   </Tooltip>
                 }
-                placeholder="torch, rope"
+                placeholder="torch, rope, shield"
                 value={state.inventory}
                 onChange={(e) => {
                   dispatch({ type: "SET_FIELD", field: "inventory", value: e.target.value });
@@ -710,6 +710,9 @@ export default function NpcForm({ world }: Props) {
                 }
                 fullWidth
                 margin="normal"
+                multiline
+                minRows={4}
+                maxRows={12}
               />
             </Grid>
             <Grid item xs={12}>

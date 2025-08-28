@@ -14,7 +14,10 @@ export interface SfzInstrument {
   sampler: Tone.Sampler;
 }
 
-export function parseSfz(text: string, basePath = ''): SfzRegion[] {
+export async function parseSfz(
+  text: string,
+  basePath = '',
+): Promise<SfzRegion[]> {
   const lines = text.split(/\r?\n/);
   const regions: SfzRegion[] = [];
   let current: SfzRegion | null = null;
@@ -52,22 +55,43 @@ export function parseSfz(text: string, basePath = ''): SfzRegion[] {
     }
   }
 
-  return regions.filter((r) => r.sample);
+  const filtered = regions.filter((r) => r.sample);
+  const uniqueSamples = Array.from(new Set(filtered.map((r) => r.sample)));
+  const missing: string[] = [];
+  await Promise.all(
+    uniqueSamples.map(async (url) => {
+      try {
+        const res = await fetch(url, { method: 'HEAD' });
+        if (!res.ok) missing.push(url);
+      } catch {
+        missing.push(url);
+      }
+    }),
+  );
+  if (missing.length) {
+    throw new Error(`Missing samples: ${missing.join(', ')}`);
+  }
+  return filtered;
 }
 
 export async function loadSfz(
   path: string,
   onProgress?: (loaded: number, total: number) => void,
 ): Promise<SfzInstrument> {
-  const res = await fetch(path);
+  let res: Response;
+  try {
+    res = await fetch(path);
+  } catch {
+    throw new Error(`Unable to load SFZ: ${path} (file not found)`);
+  }
   if (!res.ok) {
-    throw new Error(`Unable to load SFZ: ${path}`);
+    throw new Error(`Unable to load SFZ: ${path} (HTTP ${res.status})`);
   }
   const text = await res.text();
   const basePath = path.includes('/')
     ? path.substring(0, path.lastIndexOf('/') + 1)
     : '';
-  const regions = parseSfz(text, basePath);
+  const regions = await parseSfz(text, basePath);
 
   const urls: Record<string, string> = {};
   for (const region of regions) {
