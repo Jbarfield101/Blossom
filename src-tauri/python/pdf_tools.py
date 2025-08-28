@@ -255,31 +255,39 @@ def extract_npcs(path: str, db_path: str | Path | None = None):
         if not lines:
             continue
         data = {}
-        # If the first line doesn't contain a key-value pair, treat it as the NPC's name.
-        if lines and ":" not in lines[0]:
-            data["name"] = lines.pop(0).strip()
-        current = None
-        heading = None
-        first_line = lines[0].strip()
-        m = re.search(r"\b([A-Za-z/ ]+):", first_line)
-        if m and m.start() > 0:
-            heading = first_line[: m.start()].strip()
-            rest = first_line[m.start():].strip()
-            if rest:
-                lines[0] = rest
-            else:
-                lines = lines[1:]
-        elif ":" not in first_line:
-            heading = first_line
-            lines = lines[1:]
-        list_fields = {"traits", "quirks", "inventory", "equipment", "items"}
+        list_fields = {"traits", "quirks", "inventory", "equipment", "items", "hooks"}
         synonym_map = {
             "class/role": "role",
             "class role": "role",
             "class": "role",
             "role": "role",
         }
+        heading_fields = {"backstory", "inventory", "hooks"}
+        current = None
+
+        if lines and ":" not in lines[0]:
+            first = lines[0].strip()
+            norm_first = synonym_map.get(first.lower(), first.lower())
+            if norm_first in heading_fields:
+                current = norm_first
+                if current in list_fields:
+                    data.setdefault(current, [])
+                else:
+                    data.setdefault(current, "")
+                lines = lines[1:]
+            else:
+                data["name"] = lines.pop(0).strip()
+
         for line in lines:
+            stripped = line.strip()
+            key_norm = synonym_map.get(stripped.lower(), stripped.lower())
+            if ":" not in line and not re.match(r"^[\-\*\u2022]", stripped) and key_norm in heading_fields:
+                current = key_norm
+                if current in list_fields:
+                    data.setdefault(current, [])
+                else:
+                    data.setdefault(current, "")
+                continue
             bullet = re.match(r"^[\-\*\u2022]\s*(.*)", line)
             if bullet and current in list_fields:
                 data.setdefault(current, []).append(bullet.group(1).strip())
@@ -296,11 +304,9 @@ def extract_npcs(path: str, db_path: str | Path | None = None):
                         data[key] = value
             else:
                 if current in list_fields and data.get(current):
-                    data[current][-1] += " " + line.strip()
+                    data[current][-1] += " " + stripped
                 elif current:
-                    data[current] = f"{data.get(current, '')} {line.strip()}".strip()
-        if "name" not in data and heading:
-            data["name"] = heading.strip()
+                    data[current] = f"{data.get(current, '')} {stripped}".strip()
         if not data:
             continue
 
@@ -311,7 +317,10 @@ def extract_npcs(path: str, db_path: str | Path | None = None):
             or data.get("adventure_hooks")
             or ""
         )
-        hooks = [h.strip() for h in hooks_raw.split(",") if h.strip()]
+        if isinstance(hooks_raw, list):
+            hooks = [h.strip() for h in hooks_raw if h.strip()]
+        else:
+            hooks = [h.strip() for h in hooks_raw.split(",") if h.strip()]
         if not hooks:
             hooks = ["hook"]
             warnings.warn(

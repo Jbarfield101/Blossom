@@ -1,7 +1,16 @@
 import React from "react";
 import HelpIcon from "./HelpIcon";
-import styles from "./SongForm.module.css";
-import clsx from "clsx";
+import {
+  Box,
+  Button,
+  Checkbox,
+  FormControlLabel,
+  MenuItem,
+  Slider,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 
 interface Props {
   numSongs: number;
@@ -45,68 +54,75 @@ export default function BatchActions({
   onPlayLastTrack,
 }: Props) {
   return (
-    <>
-      <div className={styles.grid2}>
+    <Stack spacing={2}>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
         {!albumMode && (
-          <div className={styles.panel}>
-            <label className={styles.label}>
+          <Box>
+            <Typography variant="subtitle1" gutterBottom>
               How many songs?
               <HelpIcon text="Number of songs to render in this batch" />
-            </label>
-            <input
+            </Typography>
+            <TextField
               type="number"
-              min={1}
+              inputProps={{ min: 1 }}
               value={numSongs}
               onChange={(e) =>
                 setNumSongs(Math.max(1, Number(e.target.value || 1)))
               }
-              className={styles.input}
+              size="small"
             />
-            <div className={clsx(styles.small, "mt-2")}>
-              Titles will be suffixed with{" "}
-              <select
+            <Box sx={{ mt: 2, display: "flex", alignItems: "center" }}>
+              <Typography variant="body2" component="span">
+                Titles will be suffixed with
+              </Typography>
+              <TextField
+                select
                 value={titleSuffixMode}
                 onChange={(e) => setTitleSuffixMode(e.target.value)}
-                className={clsx(
-                  styles.input,
-                  "py-1 px-2 inline-block w-[160px] ml-1"
-                )}
+                size="small"
+                sx={{ width: 160, ml: 1 }}
               >
-                <option value="number"># (1, 2, 3…)</option>
-                <option value="timestamp">timestamp</option>
-              </select>
-            </div>
-          </div>
+                <MenuItem value="number"># (1, 2, 3…)</MenuItem>
+                <MenuItem value="timestamp">timestamp</MenuItem>
+              </TextField>
+            </Box>
+          </Box>
         )}
 
-        <div className={styles.panel}>
-          <label className={styles.label}>
+        <Box>
+          <Typography variant="subtitle1" gutterBottom>
             BPM Jitter (0-30%, per song)
             <HelpIcon text="Random tempo variation around base BPM" />
-          </label>
-          <input
-            type="range"
+          </Typography>
+          <Slider
             min={0}
             max={30}
             value={bpmJitterPct}
-            onChange={(e) => setBpmJitterPct(Number(e.target.value))}
-            className={styles.slider}
+            onChange={(_, val) => setBpmJitterPct(val as number)}
           />
-          <div className={styles.small}>±{bpmJitterPct}% around the base BPM</div>
-          <div className={clsx(styles.toggle, "mt-2") }>
-            <input
-              type="checkbox"
-              checked={playLast}
-              onChange={(e) => setPlayLast(e.target.checked)}
-            />
-            <span className={styles.small}>Auto‑play last successful render</span>
-          </div>
-        </div>
-      </div>
+          <Typography variant="body2">
+            ±{bpmJitterPct}% around the base BPM
+          </Typography>
+          <FormControlLabel
+            sx={{ mt: 2 }}
+            control={
+              <Checkbox
+                checked={playLast}
+                onChange={(e) => setPlayLast(e.target.checked)}
+              />
+            }
+            label={
+              <Typography variant="body2">
+                Auto‑play last successful render
+              </Typography>
+            }
+          />
+        </Box>
+      </Stack>
 
-      <div className={styles.actions}>
-        <button
-          className={styles.btn}
+      <Stack direction="row" spacing={2} flexWrap="wrap" alignItems="center">
+        <Button
+          variant="contained"
           disabled={busy}
           onClick={onRender}
         >
@@ -117,19 +133,19 @@ export default function BatchActions({
             : busy
             ? "Rendering batch…"
             : "Render Songs"}
-        </button>
+        </Button>
 
-        <div className={styles.row}>
-          <button className={styles.playBtn} onClick={onPreview}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Button variant="outlined" onClick={onPreview}>
             {previewPlaying ? "Stop preview" : "Preview snippet"}
-          </button>
+          </Button>
           <HelpIcon text="Play a quick 5-second preview" />
-        </div>
+        </Stack>
 
-        <button className={styles.playBtn} onClick={onPlayLastTrack}>
+        <Button variant="outlined" onClick={onPlayLastTrack}>
           {isPlaying ? "Pause" : "Play last track"}
-        </button>
-      </div>
-    </>
+        </Button>
+      </Stack>
+    </Stack>
   );
 }
