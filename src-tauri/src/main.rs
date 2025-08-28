@@ -66,7 +66,7 @@ fn main() {
             if let Err(e) = sync_sfz_assets() {
                 log::warn!("sfz asset sync failed: {e}");
             }
-            if let Some(window) = app.get_window("main") {
+            if let Some(window) = handle.get_webview_window("main") {
                 let win = window.clone();
                 tauri::async_runtime::spawn(async move {
                     if let Err(e) = commands::comfy_start(win, "".into()).await {
