@@ -625,38 +625,49 @@ export default function NpcForm({ world }: Props) {
                 aria-describedby={errors.hp ? "hp-error" : undefined}
               />
             </Grid>
-            {[
-              "strength",
-              "dexterity",
-              "constitution",
-              "intelligence",
-              "wisdom",
-              "charisma",
-            ].map((ability) => (
-              <Grid item xs={6} key={ability}>
-                <StyledTextField
-                  id={ability}
-                  label={ability.charAt(0).toUpperCase() + ability.slice(1)}
-                  type="number"
-                  value={(state as any)[ability]}
-                  onChange={(e) => {
-                    dispatch({ type: "SET_FIELD", field: ability as any, value: e.target.value });
-                    setErrors((prev) => ({ ...prev, [`abilities.${ability}`]: null }));
-                  }}
-                  fullWidth
-                  margin="normal"
-                  error={Boolean(errors[`abilities.${ability}`])}
-                  helperText={
-                    <FormErrorText id={`${ability}-error`}>
-                      {errors[`abilities.${ability}`]}
-                    </FormErrorText>
-                  }
-                  aria-describedby={
-                    errors[`abilities.${ability}`] ? `${ability}-error` : undefined
-                  }
-                />
-              </Grid>
-            ))}
+            <Grid item xs={12}>
+              <Accordion defaultExpanded={false}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography>Ability Scores</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Grid container spacing={2} alignItems="center">
+                    {[
+                      "strength",
+                      "dexterity",
+                      "constitution",
+                      "intelligence",
+                      "wisdom",
+                      "charisma",
+                    ].map((ability) => (
+                      <Grid item xs={6} key={ability}>
+                        <StyledTextField
+                          id={ability}
+                          label={ability.charAt(0).toUpperCase() + ability.slice(1)}
+                          type="number"
+                          value={(state as any)[ability]}
+                          onChange={(e) => {
+                            dispatch({ type: "SET_FIELD", field: ability as any, value: e.target.value });
+                            setErrors((prev) => ({ ...prev, [`abilities.${ability}`]: null }));
+                          }}
+                          fullWidth
+                          margin="normal"
+                          error={Boolean(errors[`abilities.${ability}`])}
+                          helperText={
+                            <FormErrorText id={`${ability}-error`}>
+                              {errors[`abilities.${ability}`]}
+                            </FormErrorText>
+                          }
+                          aria-describedby={
+                            errors[`abilities.${ability}`] ? `${ability}-error` : undefined
+                          }
+                        />
+                      </Grid>
+                    ))}
+                  </Grid>
+                </AccordionDetails>
+              </Accordion>
+            </Grid>
             <Grid item xs={12}>
               <StyledTextField
                 id="inventory"
