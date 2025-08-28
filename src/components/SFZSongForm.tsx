@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { resolveResource } from "@tauri-apps/api/path";
+import { Alert, Snackbar } from "@mui/material";
 import { useTasks } from "../store/tasks";
 
 interface Section {
@@ -24,6 +25,7 @@ export default function SFZSongForm() {
   const [title, setTitle] = useState("");
   const [outDir, setOutDir] = useState("");
   const [sfzInstrument, setSfzInstrument] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const tasks = useTasks();
 
   async function pickFolder() {
@@ -32,6 +34,7 @@ export default function SFZSongForm() {
       if (dir) setOutDir(dir as string);
     } catch (e) {
       console.error(e);
+      setError(String(e));
     }
   }
 
@@ -44,6 +47,7 @@ export default function SFZSongForm() {
       if (file) setSfzInstrument(file as string);
     } catch (e) {
       console.error(e);
+      setError(String(e));
     }
   }
 
@@ -55,6 +59,7 @@ export default function SFZSongForm() {
       setSfzInstrument(path);
     } catch (e) {
       console.error(e);
+      setError(String(e));
     }
   }
 
@@ -93,6 +98,19 @@ export default function SFZSongForm() {
       >
         Generate
       </button>
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={() => setError(null)}
+      >
+        <Alert
+          onClose={() => setError(null)}
+          severity="error"
+          sx={{ width: "100%" }}
+        >
+          {error}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }

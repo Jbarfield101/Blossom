@@ -256,21 +256,30 @@ def extract_npcs(path: str, db_path: str | Path | None = None):
             continue
         data = {}
         current = None
+        list_fields = {"traits", "quirks", "inventory", "equipment", "items"}
+        synonym_map = {
+            "class/role": "role",
+            "class role": "role",
+            "class": "role",
+            "role": "role",
+        }
         for line in lines:
             bullet = re.match(r"^[\-\*\u2022]\s*(.*)", line)
-            if bullet and current in {"traits", "quirks", "inventory", "equipment", "items"}:
+            if bullet and current in list_fields:
                 data.setdefault(current, []).append(bullet.group(1).strip())
                 continue
-            if ":" in line:
-                k, v = line.split(":", 1)
-                current = k.strip().lower()
-                v = v.strip()
-                if current in {"traits", "quirks", "inventory", "equipment", "items"}:
-                    data[current] = [v] if v else []
-                else:
-                    data[current] = v
+            pairs = re.findall(r"([A-Za-z/ ]+):\s*([^:]*?)(?=\s+[A-Za-z/ ]+:|$)", line)
+            if pairs:
+                for k, v in pairs:
+                    key = synonym_map.get(k.strip().lower(), k.strip().lower())
+                    value = v.strip()
+                    current = key
+                    if key in list_fields:
+                        data[key] = [value] if value else []
+                    else:
+                        data[key] = value
             else:
-                if current in {"traits", "quirks", "inventory", "equipment", "items"} and data.get(current):
+                if current in list_fields and data.get(current):
                     data[current][-1] += " " + line.strip()
                 elif current:
                     data[current] = f"{data.get(current, '')} {line.strip()}".strip()

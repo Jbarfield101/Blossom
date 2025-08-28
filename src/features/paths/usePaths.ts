@@ -7,6 +7,8 @@ interface PathsState {
   defaultPythonPath: string;
   comfyPath: string;
   loaded: boolean;
+  error: string | null;
+  clearError: () => void;
   setPythonPath: (p: string) => void;
   setComfyPath: (p: string) => void;
   load: () => Promise<void>;
@@ -17,6 +19,8 @@ export const usePathsStore = create<PathsState>((set, get) => ({
   defaultPythonPath: "",
   comfyPath: "",
   loaded: false,
+  error: null,
+  clearError: () => set({ error: null }),
   setPythonPath: (pythonPath: string) => {
     set({ pythonPath });
     invoke("save_paths", {
@@ -24,6 +28,7 @@ export const usePathsStore = create<PathsState>((set, get) => ({
       comfy_path: get().comfyPath,
     }).catch((err) => {
       console.error("Failed to save paths:", err);
+      set({ error: `Failed to save paths: ${String(err)}` });
     });
   },
   setComfyPath: (comfyPath: string) => {
@@ -33,6 +38,7 @@ export const usePathsStore = create<PathsState>((set, get) => ({
       comfy_path: comfyPath,
     }).catch((err) => {
       console.error("Failed to save paths:", err);
+      set({ error: `Failed to save paths: ${String(err)}` });
     });
   },
   load: async () => {
