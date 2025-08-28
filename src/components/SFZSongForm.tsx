@@ -2,7 +2,18 @@ import { useEffect, useMemo, useState } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { resolveResource } from "@tauri-apps/api/path";
 import { convertFileSrc } from "@tauri-apps/api/core";
-import { Alert, Snackbar, LinearProgress } from "@mui/material";
+import {
+  Alert,
+  Snackbar,
+  LinearProgress,
+  Button,
+  TextField,
+  Stack,
+  FormControl,
+  FormControlLabel,
+  Checkbox,
+  Divider,
+} from "@mui/material";
 import { loadSfz } from "../utils/sfzLoader";
 import { useTasks } from "../store/tasks";
 
@@ -149,43 +160,71 @@ export default function SFZSongForm() {
   }
 
   return (
-    <div>
-      <input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Title"
-      />
-      <button onClick={pickFolder}>
-        {outDir ? `Output: ${outDir}` : "Choose Output Folder"}
-      </button>
-      <button onClick={pickSfzInstrument} disabled={loading}>
-        {sfzInstrument ? "Change SFZ" : "Pick SFZ Instrument"}
-      </button>
-      <button onClick={loadAcousticGrand} disabled={loading}>
-        Load Acoustic Grand
-      </button>
-      {loading && (
-        <LinearProgress
-          variant="determinate"
-          value={progress * 100}
-          sx={{ my: 1 }}
+    <Stack spacing={3} divider={<Divider flexItem />}>
+      <Stack spacing={2}>
+        <FormControl fullWidth>
+          <TextField
+            label="Title"
+            placeholder="Enter song title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            fullWidth
+          />
+        </FormControl>
+        <FormControl>
+          <Button variant="outlined" onClick={pickFolder} fullWidth>
+            {outDir ? `Output: ${outDir}` : "Choose Output Folder"}
+          </Button>
+        </FormControl>
+      </Stack>
+
+      <Stack spacing={2}>
+        <Stack spacing={1} direction={{ xs: "column", sm: "row" }}>
+          <Button
+            variant="outlined"
+            onClick={pickSfzInstrument}
+            disabled={loading}
+            fullWidth
+          >
+            {sfzInstrument ? "Change SFZ" : "Pick SFZ Instrument"}
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={loadAcousticGrand}
+            disabled={loading}
+            fullWidth
+          >
+            Load Acoustic Grand
+          </Button>
+        </Stack>
+        {loading && (
+          <LinearProgress
+            variant="determinate"
+            value={progress * 100}
+            sx={{ my: 1 }}
+          />
+        )}
+        {!loading && status && <div>{status}</div>}
+      </Stack>
+
+      <Stack spacing={2}>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={lofiFilter}
+              onChange={(e) => setLofiFilter(e.target.checked)}
+            />
+          }
+          label="Lofi Filter"
         />
-      )}
-      {!loading && status && <div>{status}</div>}
-      <label>
-        <input
-          type="checkbox"
-          checked={lofiFilter}
-          onChange={(e) => setLofiFilter(e.target.checked)}
-        />
-        Lofi Filter
-      </label>
-      <button
-        onClick={generate}
-        disabled={!title || !outDir || !sfzInstrument || loading}
-      >
-        Generate
-      </button>
+        <Button
+          variant="contained"
+          onClick={generate}
+          disabled={!title || !outDir || !sfzInstrument || loading}
+        >
+          Generate
+        </Button>
+      </Stack>
       <Snackbar
         open={!!error}
         autoHideDuration={6000}
@@ -199,7 +238,7 @@ export default function SFZSongForm() {
           {error}
         </Alert>
       </Snackbar>
-    </div>
+    </Stack>
   );
 }
 
