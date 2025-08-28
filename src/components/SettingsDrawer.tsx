@@ -33,6 +33,21 @@ import VoiceSettings from "../features/settings/VoiceSettings";
 import HelpIcon from "./HelpIcon";
 import CreateUserDialog from "./CreateUserDialog";
 
+function LoadSfzSetting({ onValue }: { onValue: (v: boolean) => void }) {
+  useEffect(() => {
+    (async () => {
+      try {
+        const cfg = (await invoke("load_paths")) as any;
+        const v = cfg?.sfz_convert_on_start;
+        onValue(typeof v === "boolean" ? v : true);
+      } catch {
+        onValue(true);
+      }
+    })();
+  }, []);
+  return null;
+}
+
 const KEY_OPTIONS = [
   "Auto",
   "C",
@@ -497,6 +512,49 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
       >
         {generatingAmbience ? <CircularProgress size={24} /> : "Generate Ambience"}
       </Button>
+      <Box id="sfz-flac-settings" sx={{ mt: 2 }}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={sfzConvertOnStart}
+              onChange={async (e) => {
+                const val = e.target.checked;
+                setSfzConvertOnStart(val);
+                try {
+                  await invoke("set_sfz_convert_on_start", { value: val } as any);
+                } catch (err) {
+                  setAmbienceMessage(
+                    `Failed to save setting: ${err instanceof Error ? err.message : String(err)}`,
+                  );
+                }
+              }}
+            />
+          }
+          label="Convert SFZ FLAC on Startup"
+        />
+      </Box>
+      <Button
+        variant="outlined"
+        sx={{ mt: 2, ml: 2 }}
+        onClick={async () => {
+          setGeneratingAmbience(true);
+          try {
+            const out: string = await invoke("sfz_convert_flac_to_wav", {
+              root: "public/sfz_sounds",
+              deleteFlac: false,
+            } as any);
+            setAmbienceMessage(out.trim() || "Converted FLAC to WAV for SFZ sounds");
+          } catch (e) {
+            setAmbienceMessage(
+              `FLAC→WAV conversion failed: ${e instanceof Error ? e.message : String(e)}`,
+            );
+          } finally {
+            setGeneratingAmbience(false);
+          }
+        }}
+      >
+        Convert SFZ FLAC → WAV
+      </Button>
       <Button variant="contained" sx={{ mt: 2 }} onClick={() => setAudioSaved(true)}>
         Save Audio Defaults
       </Button>
@@ -649,6 +707,8 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
             renderInput={(params) => <TextField {...params} label="Search settings" />}
             sx={{ mb: 2 }}
           />
+          {/* Load SFZ startup setting */}
+          <LoadSfzSetting onValue={(v) => setSfzConvertOnStart(v)} />
           {section === "user" && <UserSection />}
           {section === "environment" && <EnvironmentSection />}
           {section === "editor" && <EditorSection />}

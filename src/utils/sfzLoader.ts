@@ -21,6 +21,7 @@ export async function parseSfz(
   const lines = text.split(/\r?\n/);
   const regions: SfzRegion[] = [];
   let current: SfzRegion | null = null;
+  let defaultPath = '';
 
   for (const raw of lines) {
     const line = raw.trim();
@@ -34,16 +35,24 @@ export async function parseSfz(
       current = null;
       continue;
     }
+    if (line.startsWith('<control')) {
+      // Control header – continue to parse opcodes following it
+      continue;
+    }
     const match = line.match(/^([^=]+)=(.+)$/);
     if (match && current) {
       const key = match[1].trim();
       const value = match[2].trim();
-      if (key === 'sample') {
+      if (key === 'default_path') {
+        defaultPath = value.replace(/\\\\/g, '/');
+        if (defaultPath && !defaultPath.endsWith('/')) defaultPath += '/';
+      } else if (key === 'sample') {
         if (basePath) {
           try {
-            current.sample = new URL(value, basePath).toString();
+            const rel = (defaultPath ? defaultPath : '') + value;
+            current.sample = new URL(rel, basePath).toString();
           } catch {
-            current.sample = basePath + value;
+            current.sample = basePath + (defaultPath ?? '') + value;
           }
         } else {
           current.sample = value;

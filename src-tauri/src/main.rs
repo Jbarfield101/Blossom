@@ -69,6 +69,18 @@ fn main() {
             if let Some(window) = handle.get_webview_window("main") {
                 let app = window.app_handle().clone();
                 tauri::async_runtime::spawn(async move {
+                    // Conditionally convert SFZ FLAC samples to WAV on startup
+                    let cfg = crate::commands::get_config();
+                    if cfg.sfz_convert_on_start.unwrap_or(true) {
+                        if let Err(e) = commands::sfz_convert_flac_to_wav(
+                            Some("public/sfz_sounds".into()),
+                            Some(false),
+                        )
+                        .await
+                        {
+                            log::warn!("sfz flac->wav conversion failed: {e}");
+                        }
+                    }
                     if let Err(e) = commands::comfy_start(app, "".into()).await {
                         log::warn!("failed to start ComfyUI: {e}");
                     }
@@ -111,7 +123,7 @@ fn main() {
             commands::generate_album,
             commands::cancel_album,
             commands::dj_mix,
-            commands::generate_ambience,
+            commands::generate_ambience,\n            commands::sfz_convert_flac_to_wav,\n            commands::set_sfz_convert_on_start,
             commands::bark_tts,
             // ComfyUI:
             commands::comfy_status,
@@ -174,3 +186,4 @@ fn main() {
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
+

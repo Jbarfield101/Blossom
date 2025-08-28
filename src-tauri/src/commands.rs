@@ -239,6 +239,7 @@ pub struct AppConfig {
     pub python_path: Option<String>,
     pub comfy_path: Option<String>,
     pub alphavantage_api_key: Option<String>,
+    pub sfz_convert_on_start: Option<bool>,
 }
 
 fn config_path() -> PathBuf {
@@ -270,6 +271,11 @@ fn save_config(cfg: &AppConfig) -> Result<(), String> {
     fs::write(path, data).map_err(|e| e.to_string())
 }
 
+// Expose reading config to other modules (e.g., main.rs)
+pub fn get_config() -> AppConfig {
+    load_config()
+}
+
 #[tauri::command]
 pub async fn load_paths() -> Result<AppConfig, String> {
     let path = resolve_python_path();
@@ -290,6 +296,13 @@ pub async fn save_paths(
     if comfy_path.is_some() {
         cfg.comfy_path = comfy_path;
     }
+    save_config(&cfg)
+}
+
+#[tauri::command]
+pub async fn set_sfz_convert_on_start(value: bool) -> Result<(), String> {
+    let mut cfg = load_config();
+    cfg.sfz_convert_on_start = Some(value);
     save_config(&cfg)
 }
 
@@ -817,6 +830,34 @@ pub async fn lofi_generate_gpu<R: Runtime>(
         seed,
     };
     Ok(queue.enqueue("lofi_generate_gpu".into(), cmd).await)
+}
+
+/* ==============================
+SFZ tools
+============================== */
+
+#[tauri::command]
+pub async fn sfz_convert_flac_to_wav(
+    root: Option<String>,
+    delete_flac: Option<bool>,
+) -> Result<String, String> {
+    let script = PathBuf::from("scripts").join("sfz-flac-to-wav.ts");
+    let mut cmd = PCommand::new("npx");
+    cmd.arg("tsx").arg(&script);
+    if let Some(r) = root {
+        if !r.trim().is_empty() {
+            cmd.arg("--in").arg(r);
+        }
+    }
+    if delete_flac.unwrap_or(false) {
+        cmd.arg("--delete-flac");
+    }
+    let output = cmd.output().map_err(|e| e.to_string())?;
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    Ok(stdout)
 }
 
 /// Run full-song generation based on a structured spec (typed, camelCase-friendly).

@@ -263,20 +263,74 @@ def _env_ad(decay_ms: float, length_ms: int):
 
 
 class SfzSampler:
-    """Very small SFZ sampler supporting <region> with basic opcodes."""
+    """Very small SFZ sampler supporting <region> with basic opcodes.
+
+    Notes:
+    - Supports `<control> default_path=...` to resolve sample file locations.
+    - If a referenced sample file is missing or cannot be decoded, falls back
+      to a short synthesized decaying sine so that rendering never hard-fails.
+    """
 
     def __init__(self, regions):
         self.regions = regions
 
     @staticmethod
-    def _load_region(opcodes, base_dir):
+    def _synth_fallback_sample(length_ms: int = 800) -> Tuple[np.ndarray, int]:
+        n = max(1, int(length_ms * SR / 1000))
+        t = np.arange(n, dtype=np.float32) / SR
+        # Simple piano-ish: fundamental + faint 2nd/3rd harmonics with decay
+        f0 = 261.6256  # C4
+        env = np.exp(-t * 6.0).astype(np.float32)
+        x = (
+            0.7 * np.sin(2 * np.pi * f0 * t)
+            + 0.2 * np.sin(2 * np.pi * 2 * f0 * t)
+            + 0.1 * np.sin(2 * np.pi * 3 * f0 * t)
+        ).astype(np.float32)
+        x *= env
+        x = np.clip(x, -1.0, 1.0).astype(np.float32)
+        return x, SR
+
+    @staticmethod
+    def _load_region(opcodes, base_dir: Path, default_path: Optional[str]):
         sample_file = opcodes.get("sample")
         if not sample_file:
             return None
-        sample_path = base_dir / sample_file
-        data, sr = sf.read(sample_path, dtype="float32")
-        if data.ndim > 1:
-            data = data.mean(axis=1)
+        # Normalize relative path and apply default_path if present
+        sf_rel = str(sample_file)
+        # Allow SFZs to use either forward or back slashes
+        sf_rel = sf_rel.replace("\\", "/")
+        try:
+            rel_path = Path(unquote(sf_rel))
+        except Exception:
+            rel_path = Path(sf_rel)
+        if not rel_path.is_absolute():
+            if default_path:
+                dp = str(default_path).replace("\\", "/")
+                rel_path = Path(dp) / rel_path
+            sample_path = (base_dir / rel_path).resolve()
+        else:
+            sample_path = rel_path
+
+        data: Optional[np.ndarray] = None
+        sr: int = SR
+        try:
+            data_read, sr_read = sf.read(sample_path, dtype="float32")
+            if isinstance(data_read, np.ndarray):
+                if data_read.ndim > 1:
+                    data_read = data_read.mean(axis=1)
+                data = data_read.astype(np.float32)
+                sr = int(sr_read)
+        except Exception as e:
+            logger.warning({
+                "stage": "sfz_sample_missing",
+                "path": str(sample_path),
+                "error": str(e),
+            })
+            data, sr = SfzSampler._synth_fallback_sample()
+
+        if data is None:
+            data, sr = SfzSampler._synth_fallback_sample()
+
         return {
             "sample": data.astype(np.float32),
             "sr": int(sr),
@@ -291,25 +345,49 @@ class SfzSampler:
         base = path.parent
         regions = []
         current = {}
+        default_path: Optional[str] = None
         with open(path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith("//"):
+            for raw in f:
+                line = raw.strip()
+                if not line or line.startswith("//") or line.startswith("#"):
                     continue
                 if line.startswith("<region>"):
                     if current:
-                        r = cls._load_region(current, base)
+                        r = cls._load_region(current, base, default_path)
                         if r:
                             regions.append(r)
                         current = {}
                 else:
                     if "=" in line:
                         k, v = line.split("=", 1)
-                        current[k.strip()] = v.strip()
+                        k = k.strip()
+                        v = v.strip()
+                        if k == "default_path":
+                            default_path = v
+                            logger.debug({
+                                "stage": "sfz_default_path",
+                                "value": default_path,
+                            })
+                        else:
+                            current[k] = v
         if current:
-            r = cls._load_region(current, base)
+            r = cls._load_region(current, base, default_path)
             if r:
                 regions.append(r)
+
+        # Ensure at least one region to avoid index errors downstream
+        if not regions:
+            fallback, sr = cls._synth_fallback_sample()
+            regions.append(
+                {
+                    "sample": fallback,
+                    "sr": sr,
+                    "lokey": 0,
+                    "hikey": 127,
+                    "pitch_keycenter": 60,
+                }
+            )
+
         return cls(regions)
 
     def render(self, freq_hz, ms):
