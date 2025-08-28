@@ -33,8 +33,11 @@ vi.mock('../store/tasks', () => ({
 }));
 
 function openSection(id: string) {
-  const summary = screen.getByTestId(id).querySelector('summary') as HTMLElement;
-  fireEvent.click(summary);
+  const details = screen.getByTestId(id) as HTMLDetailsElement;
+  if (!details.open) {
+    const summary = details.querySelector('summary') as HTMLElement;
+    fireEvent.click(summary);
+  }
 }
 
 function openDetails(title: string) {

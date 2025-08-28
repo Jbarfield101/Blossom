@@ -179,7 +179,9 @@ export default function SongForm() {
   const [leadInstrument, setLeadInstrument] = useState<string>(() =>
     inferLeadInstrument(defaultInstruments)
   );
-  const [sfzInstrument, setSfzInstrument] = useState<string | null>(null);
+  const [sfzInstrument, setSfzInstrument] = useState<string | null>(() =>
+    localStorage.getItem("sfzInstrument")
+  );
   const [ambience, setAmbience] = useState<string[]>(["rain"]);
   const [ambienceLevel, setAmbienceLevel] = useState(0.5);
   const [templates, setTemplates] = useState<Record<string, TemplateSpec>>(() => {
@@ -342,7 +344,7 @@ export default function SongForm() {
   });
   const [lofiFilter, setLofiFilter] = useState(() => {
     const stored = localStorage.getItem("lofiFilter");
-    return stored === null ? true : stored === "true";
+    return stored === "true";
   });
 
   // UI state
@@ -407,6 +409,16 @@ export default function SongForm() {
   useEffect(() => {
     localStorage.setItem("lofiFilter", String(lofiFilter));
   }, [lofiFilter]);
+
+  useEffect(() => {
+    if (sfzInstrument) {
+      localStorage.setItem("sfzInstrument", sfzInstrument);
+      setPreviewSfzInstrument(convertFileSrc(sfzInstrument));
+    } else {
+      localStorage.removeItem("sfzInstrument");
+      setPreviewSfzInstrument(undefined);
+    }
+  }, [sfzInstrument, setPreviewSfzInstrument]);
 
   const tasks = useTasks((s) => s.tasks);
   const enqueueTask = useTasks((s) => s.enqueueTask);
@@ -474,7 +486,6 @@ export default function SongForm() {
       if (file) {
         const rawPath = file as string;
         setSfzInstrument(rawPath);
-        setPreviewSfzInstrument(convertFileSrc(rawPath));
       }
     } catch (e: any) {
       setErr(e?.message || String(e));
@@ -489,7 +500,6 @@ export default function SongForm() {
         "sfz_sounds/UprightPianoKW-20220221.sfz"
       );
       setSfzInstrument(path);
-      setPreviewSfzInstrument(convertFileSrc(path));
     } catch (e: any) {
       setErr(e?.message || String(e));
     }
@@ -1261,24 +1271,6 @@ export default function SongForm() {
             />
           </div>
         </details>
-        {/* sfz instrument selector */}
-        <details className="mt-3" data-testid="sfz-section">
-          <summary className="cursor-pointer text-xs opacity-80">
-            Select SFZ instrument
-          </summary>
-          <div className="mt-2 flex items-center gap-2">
-            <button className={styles.btn} onClick={pickSfzInstrument}>
-              Choose SFZ
-            </button>
-            <button className={styles.btn} onClick={loadAcousticGrand}>
-              Acoustic Grand Piano
-            </button>
-            <span className={styles.small}>
-              {sfzInstrument ? sfzInstrument.split(/[\\/]/).pop() : "none selected"}
-            </span>
-          </div>
-        </details>
-
         {/* rhythm & feel */}
         <details className="mt-3" data-testid="rhythm-section">
           <summary className="cursor-pointer text-xs opacity-80">Rhythm</summary>
@@ -1311,6 +1303,9 @@ export default function SongForm() {
           setDither={setDither}
           lofiFilter={lofiFilter}
           setLofiFilter={setLofiFilter}
+          sfzInstrument={sfzInstrument}
+          pickSfzInstrument={pickSfzInstrument}
+          loadAcousticGrand={loadAcousticGrand}
         />
         {/* album mode toggle */}
         <div className={styles.panel}>

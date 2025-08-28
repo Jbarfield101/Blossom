@@ -18,6 +18,9 @@ interface Props {
   setDither: (val: boolean) => void;
   lofiFilter: boolean;
   setLofiFilter: (val: boolean) => void;
+  sfzInstrument: string | null;
+  pickSfzInstrument: () => void;
+  loadAcousticGrand: () => void;
 }
 
 export default function PolishControls({
@@ -35,14 +38,30 @@ export default function PolishControls({
   setDither,
   lofiFilter,
   setLofiFilter,
+  sfzInstrument,
+  pickSfzInstrument,
+  loadAcousticGrand,
 }: Props) {
   return (
     <div className={clsx(styles.panel, "mt-3")}>
-      <details open>
+      <details open data-testid="sfz-section">
           <summary className="cursor-pointer text-xs opacity-80">
             Polish <HelpIcon text="Optional mix polish effects" />
           </summary>
         <div className="mt-2">
+          <div className="mt-2 flex items-center gap-2">
+            <button className={styles.btn} onClick={pickSfzInstrument}>
+              Choose SFZ
+            </button>
+            <button className={styles.btn} onClick={loadAcousticGrand}>
+              Acoustic Grand Piano
+            </button>
+            <span className={styles.small}>
+              {sfzInstrument
+                ? sfzInstrument.split(/[\\/]/).pop()
+                : "none selected"}
+            </span>
+          </div>
           <div className={styles.optionGrid}>
             <label className={styles.optionCard}>
               <span>
@@ -91,7 +110,7 @@ export default function PolishControls({
             <label className={styles.optionCard}>
               <span>
                 Lofi Filter
-                <HelpIcon text="Applies lofi low-pass filter (default on)" />
+                <HelpIcon text="Applies lofi low-pass filter (default off)" />
               </span>
               <input
                 type="checkbox"
