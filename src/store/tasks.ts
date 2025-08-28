@@ -13,15 +13,15 @@ export interface SongSpec {
   title: string;
   album?: string;
   bpm: number;
-  key: string;
+  key?: string;
   form?: string;
   structure?: SongSection[];
-  mood: string[];
-  instruments: string[];
+  mood?: string[];
+  instruments?: string[];
   leadInstrument?: string;
-  ambience: string[];
+  ambience?: string[];
   ambienceLevel?: number;
-  seed: number;
+  seed?: number;
   variety?: number;
   chordSpanBeats?: number;
   drumPattern?: string;
@@ -149,16 +149,7 @@ export const useTasks = create<TasksState>((set, get) => ({
       }
       if (cmd.id === 'GenerateSong') {
         const spec = (cmd as Extract<TaskCommand, { id: 'GenerateSong' }>).spec;
-        const required: (keyof SongSpec)[] = [
-          'outDir',
-          'title',
-          'bpm',
-          'key',
-          'mood',
-          'instruments',
-          'ambience',
-          'seed',
-        ];
+        const required: (keyof SongSpec)[] = ['outDir', 'title', 'bpm'];
         const missing = required.filter((field) => {
           const value = spec[field];
           return (
