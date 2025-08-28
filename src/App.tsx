@@ -56,9 +56,10 @@ export default function App() {
   return (
     <ErrorBoundary>
         <TopBar />
-        {pathname !== "/calendar" && pathname !== "/comfy" && (
-          <RetroTV>NO SIGNAL</RetroTV>
-        )}
+        {pathname !== "/calendar" && pathname !== "/comfy" &&
+          pathname !== "/sfz-music" && (
+            <RetroTV>NO SIGNAL</RetroTV>
+          )}
         <CreateUserDialog open={showUserDialog} onClose={() => setShowUserDialog(false)} />
       <Routes>
         <Route path="/" element={<Home />} />

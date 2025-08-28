@@ -8,6 +8,7 @@ vi.mock('./components/TopBar', () => ({ default: () => <div /> }));
 vi.mock('./components/CreateUserDialog', () => ({ default: () => <div /> }));
 vi.mock('./pages/Comfy', () => ({ default: () => <div>Comfy</div> }));
 vi.mock('./pages/Home', () => ({ default: () => <div>Home</div> }));
+vi.mock('./pages/SFZMusic', () => ({ default: () => <div>SFZ</div> }));
 
 // Provide minimal implementations for hooks used by RetroTV/App
 vi.mock('./features/theme/ThemeContext', () => ({
@@ -38,6 +39,15 @@ describe('App RetroTV overlay', () => {
   it('hides RetroTV on the Comfy route', () => {
     render(
       <MemoryRouter initialEntries={[{ pathname: '/comfy' }]}> 
+        <App />
+      </MemoryRouter>
+    );
+    expect(screen.queryByText('NO SIGNAL')).toBeNull();
+  });
+
+  it('hides RetroTV on the SFZ Music route', () => {
+    render(
+      <MemoryRouter initialEntries={[{ pathname: '/sfz-music' }]}> 
         <App />
       </MemoryRouter>
     );
