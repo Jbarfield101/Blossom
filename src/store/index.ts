@@ -7,6 +7,8 @@ import { useWarTableStore } from "./warTable";
 import { useTabletopStore } from "./tabletop";
 import { useVoices } from "./voices";
 import { useInventory } from "./inventory";
+import { useSpells } from "./spells";
+import { useRules } from "./rules";
 
 // Export individual stores for existing imports elsewhere
 export {
@@ -18,6 +20,8 @@ export {
   useTabletopStore,
   useVoices,
   useInventory,
+  useSpells,
+  useRules,
 };
 
 const slices = {
@@ -28,6 +32,8 @@ const slices = {
   warTable: useWarTableStore,
   tabletop: useTabletopStore,
   inventory: useInventory,
+  spells: useSpells,
+  rules: useRules,
 };
 
 type StoreState<T> = {
