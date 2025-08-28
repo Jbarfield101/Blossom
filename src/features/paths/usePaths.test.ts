@@ -7,7 +7,15 @@ vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 describe('setPythonPath', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    usePathsStore.setState({ error: null });
+    usePathsStore.setState({ error: null, pythonPath: '' });
+  });
+
+  it('saves the python path', () => {
+    (invoke as any).mockResolvedValue(undefined);
+    usePathsStore.getState().setPythonPath('py');
+    expect(invoke).toHaveBeenCalledWith('save_paths', { python_path: 'py' });
+    expect(usePathsStore.getState().pythonPath).toBe('py');
+    expect(usePathsStore.getState().error).toBeNull();
   });
 
   it('surfaces save_paths errors', async () => {
