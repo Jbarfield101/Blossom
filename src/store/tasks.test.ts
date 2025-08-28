@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { useTasks } from './tasks';
+import { useTasks, SongSpec } from './tasks';
 import { invoke } from '@tauri-apps/api/core';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
@@ -57,11 +57,21 @@ describe('enqueueTask validation', () => {
 
   it('builds command when label is a valid id and id is missing', async () => {
     (invoke as any).mockResolvedValue(1);
-    const id = await useTasks.getState().enqueueTask('GenerateSong', { spec: {} } as any);
+    const spec: SongSpec = {
+      outDir: '/tmp/out',
+      title: 't',
+      bpm: 120,
+      key: 'C',
+      mood: ['chill'],
+      instruments: ['piano'],
+      ambience: ['rain'],
+      seed: 1,
+    };
+    const id = await useTasks.getState().enqueueTask('GenerateSong', { spec });
     expect(id).toBe(1);
     expect(invoke).toHaveBeenCalledWith('enqueue_task', {
       label: 'GenerateSong',
-      command: { id: 'GenerateSong', spec: {} },
+      command: { id: 'GenerateSong', spec },
     });
   });
 
@@ -71,5 +81,11 @@ describe('enqueueTask validation', () => {
     ).rejects.toThrow(
       'Task command for NotATask is missing id: {}',
     );
+  });
+
+  it('throws when required fields are missing for GenerateSong', async () => {
+    await expect(
+      useTasks.getState().enqueueTask('GenerateSong', { spec: {} as any }),
+    ).rejects.toThrow(/Missing required field\(s\)/);
   });
 });

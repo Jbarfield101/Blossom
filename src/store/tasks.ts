@@ -2,6 +2,38 @@ import { create } from 'zustand';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 
+interface SongSection {
+  name: string;
+  bars: number;
+  chords?: string[];
+}
+
+export interface SongSpec {
+  outDir: string;
+  title: string;
+  album?: string;
+  bpm: number;
+  key: string;
+  form?: string;
+  structure?: SongSection[];
+  mood: string[];
+  instruments: string[];
+  leadInstrument?: string;
+  ambience: string[];
+  ambienceLevel?: number;
+  seed: number;
+  variety?: number;
+  chordSpanBeats?: number;
+  drumPattern?: string;
+  hqStereo?: boolean;
+  hqReverb?: boolean;
+  hqSidechain?: boolean;
+  hqChorus?: boolean;
+  limiterDrive?: number;
+  lofiFilter?: boolean;
+  sfzInstrument?: string;
+}
+
 export type TaskCommand =
   | { id: 'Example' }
   | {
@@ -17,7 +49,7 @@ export type TaskCommand =
   | { id: 'ParseSpellPdf'; py?: string; script?: string; path: string }
   | { id: 'ParseRulePdf'; py?: string; script?: string; path: string }
   | { id: 'ParseLorePdf'; py?: string; script?: string; path: string; world: string }
-  | { id: 'GenerateSong'; spec: any }
+  | { id: 'GenerateSong'; spec: SongSpec }
   | { id: 'GenerateAlbum'; meta: any }
   | { id: 'GenerateShort'; spec: any };
 
@@ -114,6 +146,30 @@ export const useTasks = create<TasksState>((set, get) => ({
         cmd = buildTaskCommand(label as TaskCommand['id'], command as Record<string, unknown>);
       } else {
         throw new Error(`Task command for ${label} is missing id: ${JSON.stringify(command)}`);
+      }
+      if (cmd.id === 'GenerateSong') {
+        const spec = (cmd as Extract<TaskCommand, { id: 'GenerateSong' }>).spec;
+        const required: (keyof SongSpec)[] = [
+          'outDir',
+          'title',
+          'bpm',
+          'key',
+          'mood',
+          'instruments',
+          'ambience',
+          'seed',
+        ];
+        const missing = required.filter((field) => {
+          const value = spec[field];
+          return (
+            value === undefined ||
+            value === null ||
+            (Array.isArray(value) && value.length === 0)
+          );
+        });
+        if (missing.length) {
+          throw new Error(`Missing required field(s): ${missing.join(', ')}`);
+        }
       }
       const id = await invoke<number>('enqueue_task', { label, command: cmd });
       set((state) => ({
