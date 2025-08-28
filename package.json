@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "sfz:flac2wav": "tsx scripts/sfz-flac-to-wav.ts",
+    "sfz:verify": "tsx scripts/verify-sfz-samples.ts",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
