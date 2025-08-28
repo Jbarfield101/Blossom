@@ -1,8 +1,17 @@
 import { useState } from "react";
-import { Stack, Button, TextField, LinearProgress } from "@mui/material";
+import {
+  Stack,
+  Button,
+  TextField,
+  LinearProgress,
+  InputAdornment,
+  IconButton,
+} from "@mui/material";
+import FileOpenIcon from "@mui/icons-material/FileOpen";
+import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import Center from "./_Center";
 import { open } from "@tauri-apps/plugin-dialog";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 
 export default function VideoEditor() {
   const [input, setInput] = useState("");
@@ -13,6 +22,7 @@ export default function VideoEditor() {
   const [seconds, setSeconds] = useState(0);
   const [status, setStatus] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [outputPath, setOutputPath] = useState<string | null>(null);
 
   const pickInput = async () => {
     const file = await open({ multiple: false });
@@ -45,6 +55,7 @@ export default function VideoEditor() {
         minutes,
         seconds,
       });
+      setOutputPath(path);
       setStatus(`Saved to ${path}`);
     } catch (e: any) {
       setStatus(`Error: ${e?.message || e}`);
@@ -59,11 +70,45 @@ export default function VideoEditor() {
         <Button variant="outlined" onClick={pickInput}>
           Select Input Video
         </Button>
-        {input && <div>Input: {input}</div>}
+        {input && (
+          <TextField
+            label="Input"
+            value={input}
+            fullWidth
+            InputProps={{
+              readOnly: true,
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={pickInput} edge="end">
+                    <FileOpenIcon />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            sx={{ textOverflow: "ellipsis" }}
+          />
+        )}
         <Button variant="outlined" onClick={pickOutputDir}>
           Choose Output Folder
         </Button>
-        {outputDir && <div>Output: {outputDir}</div>}
+        {outputDir && (
+          <TextField
+            label="Output"
+            value={outputDir}
+            fullWidth
+            InputProps={{
+              readOnly: true,
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={pickOutputDir} edge="end">
+                    <FolderOpenIcon />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            sx={{ textOverflow: "ellipsis" }}
+          />
+        )}
         <TextField
           label="Output Name"
           value={outputName}
@@ -105,6 +150,13 @@ export default function VideoEditor() {
         </Button>
         {processing && <LinearProgress />}
         {status && <div>{status}</div>}
+        {outputPath && (
+          <video
+            src={convertFileSrc(outputPath)}
+            controls
+            loop
+          />
+        )}
       </Stack>
     </Center>
   );

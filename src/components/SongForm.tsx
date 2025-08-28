@@ -55,7 +55,7 @@ type SongSpec = {
   limiter_drive?: number;
   dither_amount?: number;
   lofi_filter?: boolean;
-  sfzInstrument?: string;
+  sfz_instrument?: string;
 };
 
 export type TemplateSpec = {
@@ -160,7 +160,6 @@ export default function SongForm() {
   const previewTimer = useRef<number | null>(null);
   const theme = useTheme();
   const {
-    bpm: defaultBpm,
     key: defaultKey,
     hqStereo: defaultHqStereo,
     hqReverb: defaultHqReverb,
@@ -171,7 +170,7 @@ export default function SongForm() {
   // THEME (applies to all songs)
   const [titleBase, setTitleBase] = useState("");
   const [outDir, setOutDir] = useState(localStorage.getItem("outDir") ?? "");
-  const [bpm, setBpm] = useState(defaultBpm);
+  const [bpm, setBpm] = useState(100);
   const [key, setKey] = useState<string>(defaultKey);
   const [mood, setMood] = useState<string[]>(["calm", "cozy", "nostalgic"]);
   const defaultInstruments = ["rhodes", "nylon guitar", "upright bass"];
@@ -196,9 +195,10 @@ export default function SongForm() {
   });
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [sectionPreset, setSectionPreset] = useState<string>("");
-  const [structure, setStructure] = useState<Section[]>(() =>
-    PRESET_TEMPLATES["Classic Lofi"].structure.map((s) => ({ ...s, barsStr: String(s.bars) }))
-  );
+  const [structure, setStructure] = useState<Section[]>([
+    { name: "Intro", bars: 2, chords: [], barsStr: "2" },
+    { name: "A", bars: 10, chords: [], barsStr: "10" },
+  ]);
   const [newTemplateName, setNewTemplateName] = useState("");
   const [genTitleLoading, setGenTitleLoading] = useState(false);
   const [creatingTemplate, setCreatingTemplate] = useState(false);
@@ -342,7 +342,7 @@ export default function SongForm() {
   });
   const [lofiFilter, setLofiFilter] = useState(() => {
     const stored = localStorage.getItem("lofiFilter");
-    return stored === null ? true : stored === "true";
+    return stored === null ? false : stored === "true";
   });
 
   // UI state
@@ -494,6 +494,10 @@ export default function SongForm() {
       setErr(e?.message || String(e));
     }
   }
+
+  useEffect(() => {
+    loadAcousticGrand();
+  }, []);
 
   async function generateAlbumArtPrompt(name: string) {
     try {
@@ -663,7 +667,7 @@ export default function SongForm() {
       mood,
       instruments: instrs,
       lead_instrument: leadInstrument || undefined,
-      sfzInstrument: sfzInstrument ?? undefined,
+      sfz_instrument: sfzInstrument ?? undefined,
       ambience,
       ambience_level: amb,
       seed: pickSeed(i),

@@ -53,3 +53,8 @@ Reference SFZ files in the song JSON to swap instruments:
 ```
 
 `sfz_instrument` remains available for lead melodies.
+
+## Instruments
+
+- UprightPianoKW – upright piano sample set by Kurt W., sourced from the
+  musical-artifacts archive and released under the CC0 1.0 license.

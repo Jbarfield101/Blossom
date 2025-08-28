@@ -213,7 +213,7 @@ exports[`SongForm > renders default form 1`] = `
               class="_label_913096"
               for="bpm"
             >
-              BPM: 80
+              BPM: 100
               <button
                 aria-label="help"
                 class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeSmall css-155wbr6-MuiButtonBase-root-MuiIconButton-root"
@@ -243,7 +243,7 @@ exports[`SongForm > renders default form 1`] = `
               max="200"
               min="60"
               type="range"
-              value="80"
+              value="100"
             />
           </div>
           <div
@@ -854,7 +854,7 @@ exports[`SongForm > renders default form 1`] = `
                 class="_input_913096"
                 id="bars-0"
                 type="number"
-                value="4"
+                value="2"
               />
               <label
                 class="_small_913096"
@@ -928,7 +928,7 @@ exports[`SongForm > renders default form 1`] = `
                 class="_input_913096"
                 id="bars-1"
                 type="number"
-                value="8"
+                value="10"
               />
               <label
                 class="_small_913096"
@@ -966,307 +966,11 @@ exports[`SongForm > renders default form 1`] = `
                 value=""
               />
             </div>
-            <div
-              class="p-2 rounded-lg min-w-[120px]"
-              style="background-color: rgba(0, 0, 0, 0.04);"
-            >
-              <label
-                class="_small_913096"
-                for="bars-2"
-              >
-                B Bars
-                <button
-                  aria-label="help"
-                  class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeSmall css-155wbr6-MuiButtonBase-root-MuiIconButton-root"
-                  data-mui-internal-clone-element="true"
-                  style="margin-left: 4px; padding: 2px; cursor: help; opacity: 0.6;"
-                  tabindex="0"
-                  type="button"
-                >
-                  <svg
-                    fill="currentColor"
-                    height="1em"
-                    stroke="currentColor"
-                    stroke-width="0"
-                    viewBox="0 0 512 512"
-                    width="1em"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
-                    />
-                  </svg>
-                </button>
-              </label>
-              <input
-                class="_input_913096"
-                id="bars-2"
-                type="number"
-                value="8"
-              />
-              <label
-                class="_small_913096"
-                for="chords-2"
-              >
-                Chords
-                <button
-                  aria-label="help"
-                  class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeSmall css-155wbr6-MuiButtonBase-root-MuiIconButton-root"
-                  data-mui-internal-clone-element="true"
-                  style="margin-left: 4px; padding: 2px; cursor: help; opacity: 0.6;"
-                  tabindex="0"
-                  type="button"
-                >
-                  <svg
-                    fill="currentColor"
-                    height="1em"
-                    stroke="currentColor"
-                    stroke-width="0"
-                    viewBox="0 0 512 512"
-                    width="1em"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
-                    />
-                  </svg>
-                </button>
-              </label>
-              <input
-                class="_input_913096 mt-1"
-                id="chords-2"
-                placeholder="Chords"
-                type="text"
-                value=""
-              />
-            </div>
-            <div
-              class="p-2 rounded-lg min-w-[120px]"
-              style="background-color: rgba(0, 0, 0, 0.04);"
-            >
-              <label
-                class="_small_913096"
-                for="bars-3"
-              >
-                A Bars
-                <button
-                  aria-label="help"
-                  class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeSmall css-155wbr6-MuiButtonBase-root-MuiIconButton-root"
-                  data-mui-internal-clone-element="true"
-                  style="margin-left: 4px; padding: 2px; cursor: help; opacity: 0.6;"
-                  tabindex="0"
-                  type="button"
-                >
-                  <svg
-                    fill="currentColor"
-                    height="1em"
-                    stroke="currentColor"
-                    stroke-width="0"
-                    viewBox="0 0 512 512"
-                    width="1em"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
-                    />
-                  </svg>
-                </button>
-              </label>
-              <input
-                class="_input_913096"
-                id="bars-3"
-                type="number"
-                value="8"
-              />
-              <label
-                class="_small_913096"
-                for="chords-3"
-              >
-                Chords
-                <button
-                  aria-label="help"
-                  class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeSmall css-155wbr6-MuiButtonBase-root-MuiIconButton-root"
-                  data-mui-internal-clone-element="true"
-                  style="margin-left: 4px; padding: 2px; cursor: help; opacity: 0.6;"
-                  tabindex="0"
-                  type="button"
-                >
-                  <svg
-                    fill="currentColor"
-                    height="1em"
-                    stroke="currentColor"
-                    stroke-width="0"
-                    viewBox="0 0 512 512"
-                    width="1em"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
-                    />
-                  </svg>
-                </button>
-              </label>
-              <input
-                class="_input_913096 mt-1"
-                id="chords-3"
-                placeholder="Chords"
-                type="text"
-                value=""
-              />
-            </div>
-            <div
-              class="p-2 rounded-lg min-w-[120px]"
-              style="background-color: rgba(0, 0, 0, 0.04);"
-            >
-              <label
-                class="_small_913096"
-                for="bars-4"
-              >
-                B Bars
-                <button
-                  aria-label="help"
-                  class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeSmall css-155wbr6-MuiButtonBase-root-MuiIconButton-root"
-                  data-mui-internal-clone-element="true"
-                  style="margin-left: 4px; padding: 2px; cursor: help; opacity: 0.6;"
-                  tabindex="0"
-                  type="button"
-                >
-                  <svg
-                    fill="currentColor"
-                    height="1em"
-                    stroke="currentColor"
-                    stroke-width="0"
-                    viewBox="0 0 512 512"
-                    width="1em"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
-                    />
-                  </svg>
-                </button>
-              </label>
-              <input
-                class="_input_913096"
-                id="bars-4"
-                type="number"
-                value="8"
-              />
-              <label
-                class="_small_913096"
-                for="chords-4"
-              >
-                Chords
-                <button
-                  aria-label="help"
-                  class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeSmall css-155wbr6-MuiButtonBase-root-MuiIconButton-root"
-                  data-mui-internal-clone-element="true"
-                  style="margin-left: 4px; padding: 2px; cursor: help; opacity: 0.6;"
-                  tabindex="0"
-                  type="button"
-                >
-                  <svg
-                    fill="currentColor"
-                    height="1em"
-                    stroke="currentColor"
-                    stroke-width="0"
-                    viewBox="0 0 512 512"
-                    width="1em"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
-                    />
-                  </svg>
-                </button>
-              </label>
-              <input
-                class="_input_913096 mt-1"
-                id="chords-4"
-                placeholder="Chords"
-                type="text"
-                value=""
-              />
-            </div>
-            <div
-              class="p-2 rounded-lg min-w-[120px]"
-              style="background-color: rgba(0, 0, 0, 0.04);"
-            >
-              <label
-                class="_small_913096"
-                for="bars-5"
-              >
-                Outro Bars
-                <button
-                  aria-label="help"
-                  class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeSmall css-155wbr6-MuiButtonBase-root-MuiIconButton-root"
-                  data-mui-internal-clone-element="true"
-                  style="margin-left: 4px; padding: 2px; cursor: help; opacity: 0.6;"
-                  tabindex="0"
-                  type="button"
-                >
-                  <svg
-                    fill="currentColor"
-                    height="1em"
-                    stroke="currentColor"
-                    stroke-width="0"
-                    viewBox="0 0 512 512"
-                    width="1em"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
-                    />
-                  </svg>
-                </button>
-              </label>
-              <input
-                class="_input_913096"
-                id="bars-5"
-                type="number"
-                value="4"
-              />
-              <label
-                class="_small_913096"
-                for="chords-5"
-              >
-                Chords
-                <button
-                  aria-label="help"
-                  class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeSmall css-155wbr6-MuiButtonBase-root-MuiIconButton-root"
-                  data-mui-internal-clone-element="true"
-                  style="margin-left: 4px; padding: 2px; cursor: help; opacity: 0.6;"
-                  tabindex="0"
-                  type="button"
-                >
-                  <svg
-                    fill="currentColor"
-                    height="1em"
-                    stroke="currentColor"
-                    stroke-width="0"
-                    viewBox="0 0 512 512"
-                    width="1em"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-89.255 22.957-116.549 63.758-3.536 5.286-2.353 12.415 2.715 16.258l34.699 26.31c5.205 3.947 12.621 3.008 16.665-2.122 17.864-22.658 30.113-35.797 57.303-35.797 20.429 0 45.698 13.148 45.698 32.958 0 14.976-12.363 22.667-32.534 33.976C247.128 238.528 216 254.941 216 296v4c0 6.627 5.373 12 12 12h56c6.627 0 12-5.373 12-12v-1.333c0-28.462 83.186-29.647 83.186-106.667 0-58.002-60.165-102-116.531-102zM256 338c-25.365 0-46 20.635-46 46 0 25.364 20.635 46 46 46s46-20.636 46-46c0-25.365-20.635-46-46-46z"
-                    />
-                  </svg>
-                </button>
-              </label>
-              <input
-                class="_input_913096 mt-1"
-                id="chords-5"
-                placeholder="Chords"
-                type="text"
-                value=""
-              />
-            </div>
           </div>
           <div
             class="_small_913096"
           >
-            Total Bars: 40 — Est. Time: 2:00
+            Total Bars: 12 — Est. Time: 0:28
           </div>
         </div>
       </details>
@@ -2567,7 +2271,6 @@ exports[`SongForm > renders default form 1`] = `
                   </button>
                 </span>
                 <input
-                  checked=""
                   type="checkbox"
                 />
               </label>

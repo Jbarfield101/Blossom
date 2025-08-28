@@ -118,7 +118,12 @@ describe('SongForm', () => {
     const [, args] = enqueueTask.mock.calls[0];
     const spec = args.spec;
     expect(args.id).toBe('GenerateSong');
-    expect(spec.structure[0]).toHaveProperty('chords');
+    expect(spec.bpm).toBeGreaterThanOrEqual(95);
+    expect(spec.bpm).toBeLessThanOrEqual(105);
+    expect(spec.structure).toEqual([
+      { name: 'Intro', bars: 2, chords: [] },
+      { name: 'A', bars: 10, chords: [] },
+    ]);
     expect(spec.chord_span_beats).toBe(4);
     expect(spec).toMatchObject({
       ambience: ['rain'],
@@ -128,8 +133,10 @@ describe('SongForm', () => {
       hq_sidechain: true,
       hq_chorus: true,
       limiter_drive: 1.02,
+      lofi_filter: false,
+      sfz_instrument: 'sfz_sounds/UprightPianoKW-20220221.sfz',
     });
-    expect(spec.lead_instrument).toBe('synth lead');
+    expect(spec.lead_instrument).toBeUndefined();
   });
 
   it('generates a title with ollama', async () => {
@@ -314,7 +321,7 @@ describe('SongForm', () => {
     fireEvent.keyDown(input, { key: 'Escape' });
   });
 
-  it('passes selected instruments in spec', async () => {
+  it('ignores selected instruments when sfz instrument is set', async () => {
     (openDialog as any).mockResolvedValue('/tmp/out');
     (invoke as any).mockResolvedValue('');
 
@@ -340,7 +347,10 @@ describe('SongForm', () => {
     await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
     const [, args] = enqueueTask.mock.calls[0];
     expect(args.id).toBe('GenerateSong');
-    expect(args.spec.instruments).toEqual(['harp', 'lute', 'pan flute']);
+    expect(args.spec.instruments).toEqual([]);
+    expect(args.spec.sfz_instrument).toBe(
+      'sfz_sounds/UprightPianoKW-20220221.sfz'
+    );
   });
 
   it('uses raw sfz path in render spec', async () => {
@@ -367,7 +377,7 @@ describe('SongForm', () => {
     await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
     const [, args] = enqueueTask.mock.calls[0];
     expect(args.id).toBe('GenerateSong');
-    expect(args.spec.sfzInstrument).toBe('/tmp/piano file.sfz');
+    expect(args.spec.sfz_instrument).toBe('/tmp/piano file.sfz');
     expect(args.spec.instruments).toEqual([]);
     expect(setPreviewSfzInstrument).toHaveBeenCalledWith(
       'tauri:///tmp/piano%20file.sfz'
@@ -396,7 +406,7 @@ describe('SongForm', () => {
     await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
     const [, args] = enqueueTask.mock.calls[0];
     expect(args.id).toBe('GenerateSong');
-    expect(args.spec.sfzInstrument).toBeDefined();
+    expect(args.spec.sfz_instrument).toBeDefined();
     expect(args.spec.instruments).toEqual([]);
     expect(args.spec.lead_instrument).toBeUndefined();
   });
@@ -405,7 +415,7 @@ describe('SongForm', () => {
     render(<SongForm />);
     openSection('vibe-section');
 
-    expect(screen.getByRole('radio', { name: 'synth' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'synth' })).not.toBeChecked();
 
     fireEvent.click(screen.getByRole('checkbox', { name: 'flute' }));
 
@@ -523,7 +533,7 @@ describe('SongForm', () => {
     expect((screen.getByPlaceholderText('Track 2 name') as HTMLInputElement).value).toBe('T2');
     expect((screen.getByPlaceholderText('Track 3 name') as HTMLInputElement).value).toBe('T3');
     expect(gcArgs.messages[1].content).toContain('"mood":["calm","cozy","nostalgic"]');
-    expect(gcArgs.messages[1].content).toContain('"instruments":["rhodes","nylon guitar","upright bass"]');
+    expect(gcArgs.messages[1].content).toContain('"instruments":[]');
 
     await screen.findByText(/album art prompt/i);
     expect(

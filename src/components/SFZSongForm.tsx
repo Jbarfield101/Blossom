@@ -19,6 +19,7 @@ interface SongSpec {
   ambience: string[];
   drum_pattern: string;
   sfz_instrument?: string;
+  lofi_filter: boolean;
   seed?: number;
 }
 
@@ -26,6 +27,10 @@ export default function SFZSongForm() {
   const [title, setTitle] = useState("");
   const [outDir, setOutDir] = useState("");
   const [sfzInstrument, setSfzInstrument] = useState<string | null>(null);
+  const [lofiFilter, setLofiFilter] = useState(() => {
+    const stored = localStorage.getItem("lofiFilter");
+    return stored === null ? false : stored === "true";
+  });
   const [error, setError] = useState<string | null>(null);
   const tasks = useTasks();
 
@@ -45,7 +50,10 @@ export default function SFZSongForm() {
         multiple: false,
         filters: [{ name: "SFZ Instrument", extensions: ["sfz"] }],
       });
-      if (file) setSfzInstrument(file as string);
+      if (file) {
+        setSfzInstrument(file as string);
+        localStorage.setItem("sfzInstrument", file as string);
+      }
     } catch (e) {
       console.error(e);
       setError(String(e));
@@ -58,6 +66,7 @@ export default function SFZSongForm() {
         "sfz_sounds/UprightPianoKW-20220221.sfz"
       );
       setSfzInstrument(path);
+      localStorage.setItem("sfzInstrument", path);
     } catch (e) {
       console.error(e);
       setError(String(e));
@@ -65,8 +74,17 @@ export default function SFZSongForm() {
   }
 
   useEffect(() => {
-    loadAcousticGrand();
+    const stored = localStorage.getItem("sfzInstrument");
+    if (stored) {
+      setSfzInstrument(stored);
+    } else {
+      loadAcousticGrand();
+    }
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("lofiFilter", String(lofiFilter));
+  }, [lofiFilter]);
 
   const spec = useMemo((): SongSpec => ({
     title,
@@ -77,7 +95,8 @@ export default function SFZSongForm() {
     ambience: [],
     drum_pattern: "",
     sfz_instrument: sfzInstrument || undefined,
-  }), [title, outDir, sfzInstrument]);
+    lofi_filter: lofiFilter,
+  }), [title, outDir, sfzInstrument, lofiFilter]);
 
   function generate() {
     const seed = Math.floor(Math.random() * 2 ** 32);
@@ -101,6 +120,14 @@ export default function SFZSongForm() {
         {sfzInstrument ? "Change SFZ" : "Pick SFZ Instrument"}
       </button>
       <button onClick={loadAcousticGrand}>Load Acoustic Grand</button>
+      <label>
+        <input
+          type="checkbox"
+          checked={lofiFilter}
+          onChange={(e) => setLofiFilter(e.target.checked)}
+        />
+        Lofi Filter
+      </label>
       <button
         onClick={generate}
         disabled={!title || !outDir || !sfzInstrument}
