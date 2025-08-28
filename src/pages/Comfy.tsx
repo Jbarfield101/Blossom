@@ -42,10 +42,6 @@ export default function Comfy() {
   }, [running]);
 
   const start = async () => {
-    if (!comfyPath) {
-      setLog((prev) => [...prev, "Set ComfyUI folder in Settings first."]); 
-      return;
-    }
     try {
       await invoke("comfy_start", { dir: comfyPath });
       setRunning(true);
@@ -69,12 +65,11 @@ export default function Comfy() {
     <div style={styles.wrap}>
       {showTutorial && (
         <div style={styles.tut}>
-          <h3 style={{ marginTop: 0 }}>Connect Blossom to ComfyUI</h3>
-          <ol style={{ marginTop: 4 }}>
-            <li>Install ComfyUI; the folder should contain <code>main.py</code>.</li>
-            <li>Open Settings → Paths and set "ComfyUI Folder" to that directory.</li>
-            <li>Return here and click Start to launch ComfyUI.</li>
-          </ol>
+          <h3 style={{ marginTop: 0 }}>ComfyUI</h3>
+          <p style={{ marginTop: 4 }}>
+            Blossom bundles ComfyUI and launches it automatically. Click Start to
+            run the included server.
+          </p>
           <button onClick={() => setShowTutorial(false)} style={styles.tutBtn}>Got it</button>
         </div>
       )}
