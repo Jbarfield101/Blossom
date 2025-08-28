@@ -1,10 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn().mockResolvedValue(undefined) }));
 import RuleForm from '../RuleForm';
 
 describe('RuleForm custom rules', () => {
-  it('copies existing rule and shows original and custom', async () => {
+  it('copies existing rule and previews custom', async () => {
     render(<RuleForm />);
     const user = userEvent.setup();
 
@@ -23,9 +24,9 @@ describe('RuleForm custom rules', () => {
     await user.type(descInput, 'desc');
 
     await user.click(screen.getByRole('button', { name: /submit/i }));
-    const output = await screen.findByText(/Custom:/);
-    expect(output).toHaveTextContent('Original');
-    expect(output).toHaveTextContent('Ability Checks');
-    expect(output).toHaveTextContent('Ability Checks Custom');
+    const preview = await screen.findByTestId('rule-preview');
+    expect(preview).toHaveTextContent('Based on');
+    expect(preview).toHaveTextContent('Ability Checks Custom');
+    expect(screen.getByText(/view rule book/i)).toBeInTheDocument();
   });
 });
