@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Stack, Button, TextField } from "@mui/material";
 import Center from "./_Center";
 import { open } from "@tauri-apps/plugin-dialog";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 
 export default function VideoEditor() {
   const [input, setInput] = useState("");
@@ -12,6 +12,7 @@ export default function VideoEditor() {
   const [minutes, setMinutes] = useState(0);
   const [seconds, setSeconds] = useState(0);
   const [status, setStatus] = useState<string | null>(null);
+  const [outputPath, setOutputPath] = useState<string | null>(null);
 
   const pickInput = async () => {
     const file = await open({ multiple: false });
@@ -43,6 +44,7 @@ export default function VideoEditor() {
         minutes,
         seconds,
       });
+      setOutputPath(path);
       setStatus(`Saved to ${path}`);
     } catch (e: any) {
       setStatus(`Error: ${e?.message || e}`);
@@ -100,6 +102,14 @@ export default function VideoEditor() {
           Create Loop
         </Button>
         {status && <div>{status}</div>}
+        {outputPath && (
+          <video
+            src={convertFileSrc(outputPath)}
+            controls
+            loop
+            style={{ maxWidth: "100%" }}
+          />
+        )}
       </Stack>
     </Center>
   );
