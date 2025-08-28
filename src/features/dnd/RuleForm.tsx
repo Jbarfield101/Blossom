@@ -14,6 +14,7 @@ import { zRule } from "./schemas";
 import type { RuleData } from "./types";
 import rulesIndex from "../../../dnd/rules/index.json";
 import RulePdfUpload from "./RulePdfUpload";
+import { useRules } from "../../store/rules";
 
 const ruleFiles = import.meta.glob("../../../dnd/rules/*.md", {
   query: "?raw",
@@ -35,6 +36,7 @@ export default function RuleForm() {
   const [tags, setTags] = useState("");
   const [result, setResult] = useState<RuleData | null>(null);
   const [originalRule, setOriginalRule] = useState<RuleData | null>(null);
+  const addRule = useRules((s) => s.addRule);
 
   const handleSelect = (e: any) => {
     const id = e.target.value;
@@ -55,7 +57,7 @@ export default function RuleForm() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const data: RuleData = {
       id: crypto.randomUUID(),
@@ -65,6 +67,7 @@ export default function RuleForm() {
       ...(originalRule ? { sourceId: originalRule.id } : {}),
     };
     const parsed = zRule.parse(data);
+    await addRule(parsed);
     setResult(parsed);
   };
 
@@ -130,11 +133,18 @@ export default function RuleForm() {
         </Grid>
         {result && (
           <Grid item xs={12}>
-            <pre style={{ marginTop: "1rem" }}>
-              {originalRule &&
-                `Original:\n${JSON.stringify(originalRule, null, 2)}\n\n`}
-              {`Custom:\n${JSON.stringify(result, null, 2)}`}
-            </pre>
+            <Box data-testid="rule-preview" sx={{ mt: 2 }}>
+              {originalRule && (
+                <Typography variant="subtitle2" color="text.secondary">
+                  Based on: {originalRule.name}
+                </Typography>
+              )}
+              <Typography variant="h6">{result.name}</Typography>
+              <Typography sx={{ whiteSpace: "pre-wrap" }}>{result.description}</Typography>
+              <Button href="#rulebook" sx={{ mt: 1 }}>
+                View Rule Book
+              </Button>
+            </Box>
           </Grid>
         )}
       </Grid>

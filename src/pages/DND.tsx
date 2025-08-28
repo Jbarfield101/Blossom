@@ -12,6 +12,7 @@ import {
   MilitaryTech,
   LibraryBooks,
   Inventory,
+  Rule,
 } from "@mui/icons-material";
 import { useState, ChangeEvent } from "react";
 import { createDndTheme } from "../theme";
@@ -26,6 +27,7 @@ import DiceRoller from "../features/dnd/DiceRoller";
 import TabletopMap from "../features/dnd/TabletopMap";
 import WarTable from "../features/dnd/WarTable";
 import WorldInventory from "./WorldInventory";
+import RuleBook from "../features/dnd/RuleBook";
 import { useWorlds } from "../store/worlds";
 import NewWorldDialog from "../components/NewWorldDialog";
 
@@ -61,7 +63,8 @@ export default function DND() {
     { icon: <MenuBook />, label: "Lore", component: <LoreForm world={world} /> },
     { icon: <TravelExplore />, label: "Quest", component: <QuestForm /> },
     { icon: <SportsKabaddi />, label: "Encounter", component: <EncounterForm /> },
-    { icon: <Gavel />, label: "Rulebook", component: <RuleForm /> },
+    { icon: <Gavel />, label: "Rule Book", component: <RuleBook /> },
+    { icon: <Rule />, label: "Add Rule", component: <RuleForm /> },
     { icon: <AutoStories />, label: "Spellbook", component: <SpellForm /> },
     { icon: <Casino />, label: "Dice", component: <DiceRoller /> },
     { icon: <Map />, label: "Tabletop", component: <TabletopMap /> },
