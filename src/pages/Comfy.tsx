@@ -5,18 +5,29 @@ import dndPortrait from "../comfy/dnd_portrait.json";
 
 export default function Comfy() {
   const [status, setStatus] = useState("ready");
+  const [log, setLog] = useState<string[]>([]);
+
+  function appendLog(message: string) {
+    setLog((prev) => [
+      ...prev,
+      `${new Date().toLocaleTimeString()} ${message}`,
+    ]);
+  }
 
   async function runWorkflow(workflow: unknown) {
     try {
+      appendLog("Submitting workflow");
       setStatus("running");
       await fetch("http://127.0.0.1:8188/prompt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: workflow }),
       });
+      appendLog("Workflow submitted");
       setStatus("submitted");
     } catch (err) {
       console.error(err);
+      appendLog(`Error: ${(err as Error).message}`);
       setStatus("error");
     }
   }
@@ -52,6 +63,11 @@ export default function Comfy() {
       </div>
       <div style={styles.previewWrap}>
         <div style={styles.preview}>Preview</div>
+        <div style={styles.log}>
+          {log.map((line, i) => (
+            <div key={i}>{line}</div>
+          ))}
+        </div>
         <div style={styles.status}>Status: {status}</div>
       </div>
     </div>
@@ -111,6 +127,18 @@ const styles: Record<string, React.CSSProperties> = {
     display: "grid",
     placeItems: "center",
     opacity: 0.7,
+  },
+  log: {
+    flex: 1,
+    overflowY: "auto",
+    background: "#000",
+    color: "#0f0",
+    border: "1px solid #333",
+    borderRadius: 8,
+    padding: 8,
+    marginBottom: 16,
+    fontFamily: "monospace",
+    fontSize: 12,
   },
   status: {
     borderTop: "1px solid #333",
