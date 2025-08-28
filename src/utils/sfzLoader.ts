@@ -59,9 +59,14 @@ export async function loadSfz(
   path: string,
   onProgress?: (loaded: number, total: number) => void,
 ): Promise<SfzInstrument> {
-  const res = await fetch(path);
+  let res: Response;
+  try {
+    res = await fetch(path);
+  } catch {
+    throw new Error(`Unable to load SFZ: ${path} (file not found)`);
+  }
   if (!res.ok) {
-    throw new Error(`Unable to load SFZ: ${path}`);
+    throw new Error(`Unable to load SFZ: ${path} (HTTP ${res.status})`);
   }
   const text = await res.text();
   const basePath = path.includes('/')
