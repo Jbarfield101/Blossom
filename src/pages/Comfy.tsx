@@ -29,13 +29,18 @@ export default function Comfy() {
       try {
         const r = await invoke<boolean>("comfy_status");
         setRunning(r);
+        if (!r) start();
       } catch {}
-      if (running) {
-        try {
-          const ok = await fetch("http://127.0.0.1:8188/").then(r => r.ok).catch(() => false);
-          setPingOk(ok);
-        } catch { setPingOk(false); }
-      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!running) return;
+    (async () => {
+      try {
+        const ok = await fetch("http://127.0.0.1:8188/").then(r => r.ok).catch(() => false);
+        setPingOk(ok);
+      } catch { setPingOk(false); }
     })();
   }, [running]);
 
@@ -65,8 +70,8 @@ export default function Comfy() {
         <div style={styles.tut}>
           <h3 style={{ marginTop: 0 }}>ComfyUI Tutorial</h3>
           <ol style={{ marginTop: 4 }}>
-            <li>ComfyUI is bundled with Blossom; no folder setup is required.</li>
-            <li>Click Start to launch ComfyUI.</li>
+            <li>ComfyUI is bundled with Blossom and starts automatically; no folder setup is required.</li>
+            <li>Use Stop to shut down ComfyUI when you're done.</li>
           </ol>
           <button onClick={() => setShowTutorial(false)} style={styles.tutBtn}>Got it</button>
         </div>
@@ -97,7 +102,7 @@ export default function Comfy() {
             />
           ) : (
             <div style={styles.placeholder}>
-              {running ? "Starting ComfyUI…" : "Click Start to launch ComfyUI"}
+              {running ? "Starting ComfyUI…" : "ComfyUI is stopped"}
             </div>
           )}
         </div>
