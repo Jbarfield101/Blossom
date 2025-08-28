@@ -6,7 +6,6 @@ import {
   FormControlLabel,
   Grid,
   Box,
-  Divider,
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -379,11 +378,12 @@ export default function NpcForm({ world }: Props) {
 
         {/* Identity */}
         <Grid item xs={12}>
-          <Typography variant="subtitle1" sx={{ mt: 2 }}>
-            Identity
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-          <Grid container spacing={2} alignItems="center">
+          <Accordion defaultExpanded>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography>Identity</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Grid container spacing={2} alignItems="center">
             <Grid item xs={4}>
               <Typography component="label">Upload NPC PDF</Typography>
             </Grid>
@@ -579,15 +579,18 @@ export default function NpcForm({ world }: Props) {
               />
             </Grid>
           </Grid>
-        </Grid>
+        </AccordionDetails>
+      </Accordion>
+    </Grid>
 
         {/* Stats */}
         <Grid item xs={12}>
-          <Typography variant="subtitle1" sx={{ mt: 2 }}>
-            Stats
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-          <Grid container spacing={2} alignItems="center">
+          <Accordion>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography>Stats</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Grid container spacing={2} alignItems="center">
             <Grid item xs={6}>
               <StyledTextField
                 id="level"
@@ -675,15 +678,18 @@ export default function NpcForm({ world }: Props) {
               />
             </Grid>
           </Grid>
-        </Grid>
+        </AccordionDetails>
+      </Accordion>
+    </Grid>
 
         {/* Details */}
         <Grid item xs={12}>
-          <Typography variant="subtitle1" sx={{ mt: 2 }}>
-            Details
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-          <Grid container spacing={2} alignItems="center">
+          <Accordion>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography>Details</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Grid container spacing={2} alignItems="center">
             <Grid item xs={12}>
               <StyledTextField
                 id="backstory"
@@ -757,15 +763,18 @@ export default function NpcForm({ world }: Props) {
               />
             </Grid>
           </Grid>
-        </Grid>
+        </AccordionDetails>
+      </Accordion>
+    </Grid>
 
         {/* Media */}
         <Grid item xs={12}>
-          <Typography variant="subtitle1" sx={{ mt: 2 }}>
-            Media
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-          <Grid container spacing={2} alignItems="center">
+          <Accordion>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography>Media</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Grid container spacing={2} alignItems="center">
             <Grid item xs={4}>
               <label htmlFor="portrait">Portrait</label>
             </Grid>
@@ -809,20 +818,23 @@ export default function NpcForm({ world }: Props) {
               {state.icon && <Typography sx={{ mt: 1 }}>{state.icon}</Typography>}
             </Grid>
           </Grid>
-        </Grid>
+        </AccordionDetails>
+      </Accordion>
+    </Grid>
 
-        {/* Settings */}
-        <Grid item xs={12}>
-          <Typography variant="subtitle1" sx={{ mt: 2 }}>
-            Settings
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-          <Accordion defaultExpanded={false}>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography>Voice Settings</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Grid container spacing={2} alignItems="center">
+      {/* Settings */}
+      <Grid item xs={12}>
+        <Accordion>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography>Settings</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Accordion defaultExpanded={false}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography>Voice Settings</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Grid container spacing={2} alignItems="center">
                 <Grid item xs={12}>
                   <FormControlLabel
                     control={
@@ -947,9 +959,11 @@ export default function NpcForm({ world }: Props) {
               </Grid>
             </AccordionDetails>
           </Accordion>
-        </Grid>
+        </AccordionDetails>
+      </Accordion>
+    </Grid>
 
-        <Grid item xs={12}>
+    <Grid item xs={12}>
           <Box sx={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
             <Button
               type="submit"
