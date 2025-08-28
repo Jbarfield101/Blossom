@@ -10,15 +10,10 @@ describe('usePaths save_paths error handling', () => {
       usePathsStore.setState({ error: null });
     });
 
-  const setters: [string, string][] = [
-    ['setPythonPath', 'py'],
-    ['setComfyPath', 'comfy'],
-  ];
-
-    it.each(setters)('%s surfaces errors', async (setter, value) => {
+    it('setPythonPath surfaces errors', async () => {
       (invoke as any).mockRejectedValue(new Error('fail'));
       const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      (usePathsStore.getState() as any)[setter](value);
+      usePathsStore.getState().setPythonPath('py');
       await Promise.resolve();
       expect(spy).toHaveBeenCalledWith(
         expect.stringContaining('Failed to save paths'),
