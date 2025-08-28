@@ -1,7 +1,4 @@
-import { Box, TextField, MenuItem } from "@mui/material";
-import SpeedDial from "@mui/material/SpeedDial";
-import SpeedDialAction from "@mui/material/SpeedDialAction";
-import SpeedDialIcon from "@mui/material/SpeedDialIcon";
+import { Box, TextField, MenuItem, Tabs, Tab } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
 import {
   Person,
@@ -99,21 +96,18 @@ export default function DND() {
       />
       {world && (
         <>
-          {tabs[tab]?.component}
-          <SpeedDial
-            ariaLabel="DND sections"
-            sx={{ position: "fixed", bottom: 16, right: 16 }}
-            icon={<SpeedDialIcon />}
+          <Tabs
+            value={tab}
+            onChange={(_, v) => setTab(v)}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{ mb: 2 }}
           >
             {tabs.map(({ icon, label }, idx) => (
-              <SpeedDialAction
-                key={label}
-                icon={icon}
-                tooltipTitle={label}
-                onClick={() => setTab(idx)}
-              />
+              <Tab key={label} icon={icon} label={label} value={idx} />
             ))}
-          </SpeedDial>
+          </Tabs>
+          {tabs[tab]?.component}
         </>
       )}
       </Box>
