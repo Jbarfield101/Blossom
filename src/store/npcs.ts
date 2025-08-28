@@ -6,7 +6,7 @@ import { useInventory } from './inventory';
 
 interface NpcState {
   npcs: Npc[];
-  addNPC: (npc: Omit<Npc, 'id'>) => void;
+  addNPC: (npc: Omit<Npc, 'id'> & { id?: string }) => void;
   removeNPC: (id: string) => void;
   loadNPCs: (world: string) => Promise<void>;
 }
@@ -17,7 +17,10 @@ export const useNPCs = create<NpcState>()(
       npcs: [],
       addNPC: (npc) =>
         set((state) => {
-          const npcs = [...state.npcs, { id: crypto.randomUUID(), ...npc }];
+          const withId: Npc = { id: npc.id ?? crypto.randomUUID(), ...npc } as Npc;
+          const npcs = state.npcs.some((n) => n.id === withId.id)
+            ? state.npcs.map((n) => (n.id === withId.id ? withId : n))
+            : [...state.npcs, withId];
           useInventory.getState().scanNPCs(npcs);
           return { npcs };
         }),

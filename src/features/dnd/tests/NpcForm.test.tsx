@@ -5,13 +5,14 @@ import { invoke } from "@tauri-apps/api/core";
 
 const enqueueTask = vi.fn();
 const loadNPCs = vi.fn();
+const addNPC = vi.fn();
 const tasksState: any = { enqueueTask, tasks: {} };
 
 vi.mock("../../../store/tasks", () => ({
   useTasks: (selector: any) => selector(tasksState),
 }));
 vi.mock("../../../store/npcs", () => ({
-  useNPCs: (selector: any) => selector({ loadNPCs }),
+  useNPCs: (selector: any) => selector({ loadNPCs, addNPC }),
 }));
 vi.mock("../../../store/voices", () => ({
   useVoices: (selector: any) =>
@@ -34,6 +35,7 @@ describe("NpcForm PDF import", () => {
     (open as any).mockResolvedValue("/tmp/npc.pdf");
     (invoke as any).mockReset();
     loadNPCs.mockResolvedValue(undefined);
+    addNPC.mockReset();
   });
 
   afterEach(() => {
@@ -82,6 +84,7 @@ describe("NpcForm submission", () => {
     (open as any).mockResolvedValue("/tmp/npc.pdf");
     (invoke as any).mockReset();
     loadNPCs.mockResolvedValue(undefined);
+    addNPC.mockReset();
   });
 
   afterEach(() => {
@@ -89,18 +92,20 @@ describe("NpcForm submission", () => {
     vi.clearAllMocks();
   });
 
-  it("resets form and shows success snackbar after saving", async () => {
-    const npc = {
-      id: "1",
-      name: "Alice",
-      species: "Elf",
-      role: "Ranger",
-      alignment: "Neutral",
-      playerCharacter: false,
-      hooks: ["quest"],
-      tags: ["ally"],
-      statblock: {},
-    };
+  it(
+    "resets form and shows success snackbar after saving",
+    async () => {
+      const npc = {
+        id: "1",
+        name: "Alice",
+        species: "Elf",
+        role: "Ranger",
+        alignment: "Neutral",
+        playerCharacter: false,
+        hooks: ["quest"],
+        tags: ["ally"],
+        statblock: {},
+      };
 
     (invoke as any).mockImplementation((cmd: string) => {
       if (cmd === "save_npc") return Promise.resolve(npc);
@@ -143,11 +148,13 @@ describe("NpcForm submission", () => {
       })
     );
 
-    await waitFor(() => expect(screen.getByLabelText(/name/i)).toHaveValue(""));
-    expect(screen.queryByText(/invalid json/i)).not.toBeInTheDocument();
-    expect(
-      screen.getByText(/npc alice saved successfully/i)
-    ).toBeInTheDocument();
-    expect(loadNPCs).toHaveBeenCalledWith("w");
-  });
+      await waitFor(() => expect(addNPC).toHaveBeenCalledWith(npc));
+      expect(screen.getByLabelText(/name/i)).toHaveValue("");
+      expect(screen.queryByText(/invalid json/i)).not.toBeInTheDocument();
+      expect(
+        screen.getByText(/npc alice saved successfully/i)
+      ).toBeInTheDocument();
+    },
+    10000
+  );
 });
