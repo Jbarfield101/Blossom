@@ -17,22 +17,42 @@ import {
 import { loadSfz } from "../utils/sfzLoader";
 import { useTasks } from "../store/tasks";
 
+/**
+ * Describes a logical song section used when generating music.
+ */
 interface Section {
+  /** Label for the section (e.g., "A", "B", "Verse"). */
   name: string;
+  /** Number of bars (measures) this section spans. */
   bars: number;
+  /** Chord symbols for this section in order of progression. */
   chords: string[];
 }
 
+/**
+ * Specification passed to the music generation task.
+ * Contains all configurable properties for rendering a song.
+ */
 interface SongSpec {
+  /** Human‑readable song title (also used in output filenames). */
   title: string;
+  /** Directory path where rendered audio and artifacts are written. */
   outDir: string;
+  /** Tempo in beats per minute. */
   bpm: number;
+  /** Arrangement describing sections and harmony. */
   structure: Section[];
+  /** Optional list of additional instruments to include. */
   instruments: string[];
+  /** Optional list of ambience/texture layers to include. */
   ambience: string[];
+  /** Drum pattern descriptor or preset name. */
   drum_pattern: string;
+  /** Absolute or file URL path to the selected SFZ instrument. */
   sfz_instrument?: string;
+  /** Enable a lofi/low‑pass coloration on the output. */
   lofi_filter: boolean;
+  /** Optional RNG seed for reproducible generation. */
   seed?: number;
 }
 
@@ -139,17 +159,20 @@ export default function SFZSongForm() {
     localStorage.setItem("lofiFilter", String(lofiFilter));
   }, [lofiFilter]);
 
-  const spec = useMemo((): SongSpec => ({
-    title,
-    outDir,
-    bpm: 64,
-    structure: [{ name: "A", bars: 8, chords: ["Cmaj7"] }],
-    instruments: [],
-    ambience: [],
-    drum_pattern: "",
-    sfz_instrument: sfzInstrument || undefined,
-    lofi_filter: lofiFilter,
-  }), [title, outDir, sfzInstrument, lofiFilter]);
+  const spec = useMemo(
+    (): SongSpec => ({
+      title, // Song title
+      outDir, // Output directory for generated files
+      bpm: 64, // Tempo in BPM (fixed for now)
+      structure: [{ name: "A", bars: 8, chords: ["Cmaj7"] }], // Sections + harmony
+      instruments: [], // Additional instrument layers (unused in current UI)
+      ambience: [], // Ambient textures (unused in current UI)
+      drum_pattern: "", // Drum pattern descriptor (unused in current UI)
+      sfz_instrument: sfzInstrument || undefined, // Selected SFZ path
+      lofi_filter: lofiFilter, // Apply lofi coloration
+    }),
+    [title, outDir, sfzInstrument, lofiFilter]
+  );
 
   function generate() {
     const seed = Math.floor(Math.random() * 2 ** 32);
