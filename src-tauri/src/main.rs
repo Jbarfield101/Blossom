@@ -66,6 +66,14 @@ fn main() {
             if let Err(e) = sync_sfz_assets() {
                 log::warn!("sfz asset sync failed: {e}");
             }
+            if let Some(window) = app.get_window("main") {
+                let win = window.clone();
+                tauri::async_runtime::spawn(async move {
+                    if let Err(e) = commands::comfy_start(win, "".into()).await {
+                        log::warn!("failed to start ComfyUI: {e}");
+                    }
+                });
+            }
             Ok(())
         })
         .plugin(tauri_plugin_dialog::init())
