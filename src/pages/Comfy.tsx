@@ -1,7 +1,26 @@
 // src/pages/Comfy.tsx
+import { useState } from "react";
 import { FaDiceD20, FaImage } from "react-icons/fa";
+import dndPortrait from "../comfy/dnd_portrait.json";
 
 export default function Comfy() {
+  const [status, setStatus] = useState("ready");
+
+  async function runWorkflow(workflow: unknown) {
+    try {
+      setStatus("running");
+      await fetch("http://127.0.0.1:8188/prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: workflow }),
+      });
+      setStatus("submitted");
+    } catch (err) {
+      console.error(err);
+      setStatus("error");
+    }
+  }
+
   return (
     <div style={styles.container}>
       <div style={styles.form}>
@@ -11,7 +30,12 @@ export default function Comfy() {
             <FaDiceD20 />
           </button>
           <div style={styles.buttonGroup}>
-            <button style={styles.actionBtn}>Portrait</button>
+            <button
+              style={styles.actionBtn}
+              onClick={() => runWorkflow(dndPortrait)}
+            >
+              Portrait
+            </button>
             <button style={styles.actionBtn}>Icon</button>
             <button style={styles.actionBtn}>Sketches</button>
           </div>
@@ -28,7 +52,7 @@ export default function Comfy() {
       </div>
       <div style={styles.previewWrap}>
         <div style={styles.preview}>Preview</div>
-        <div style={styles.status}>Status: ready</div>
+        <div style={styles.status}>Status: {status}</div>
       </div>
     </div>
   );
