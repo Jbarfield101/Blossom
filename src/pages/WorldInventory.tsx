@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Table,
   TableBody,
@@ -22,18 +22,20 @@ type OrderBy = 'name' | 'value';
 export default function WorldInventory() {
   const items = useInventory((s) => Object.values(s.items));
   const npcs = useNPCs((s) => s.npcs);
-  const loadNPCs = useNPCs((s) => s.loadNPCs);
+  const loadNPCs = useCallback(useNPCs.getState().loadNPCs, []);
   const world = useWorlds((s) => s.currentWorld);
   const { hash } = useLocation();
 
   useEffect(() => {
     if (world) loadNPCs(world);
-  }, [world, loadNPCs]);
+  }, [world]);
 
+  const lastHash = useRef<string>();
   useEffect(() => {
-    if (hash) {
+    if (hash && hash !== lastHash.current) {
       const el = document.getElementById(hash.substring(1));
       if (el) el.scrollIntoView();
+      lastHash.current = hash;
     }
   }, [hash, items]);
 
