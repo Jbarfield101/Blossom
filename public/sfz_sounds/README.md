@@ -21,10 +21,13 @@ public/sfz_sounds/
     └── ...
 ```
 
-Inside the `.sfz`, reference samples using paths relative to the `.sfz` file:
+Inside the `.sfz`, set a `default_path` for the samples and reference each file
+by name:
 
 ```
-<region> sample=piano/C4.wav
+<control> default_path=piano/
+
+<region> sample=C4.wav
 ```
 
 ## Loading
@@ -37,7 +40,7 @@ const path = await resolveResource('sfz_sounds/piano.sfz');
 loadSfz(convertFileSrc(path));
 ```
 
-Because sample paths are relative, the loader automatically locates files inside
+Because `default_path` is used, the loader automatically locates files inside
 the matching sample folder (`piano/` in this example).
 
 ## Using in song specs

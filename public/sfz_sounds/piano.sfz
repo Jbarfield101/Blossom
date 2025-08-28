@@ -1,1 +1,3 @@
-<region> sample=piano/C4.wav key=60
+<control> default_path=piano/
+
+<region> sample=C4.wav key=60 pitch_keycenter=60
