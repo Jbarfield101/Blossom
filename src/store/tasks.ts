@@ -274,3 +274,19 @@ export const useTasks = create<TasksState>((set, get) => ({
 }));
 
 export type { TasksState };
+
+export async function listSpells() {
+  return invoke<any[]>('list_spells');
+}
+
+export async function saveSpell(spell: unknown, overwrite?: boolean) {
+  return invoke<void>('save_spell', { spell, overwrite });
+}
+
+export async function listRules() {
+  return invoke<any[]>('list_rules');
+}
+
+export async function saveRule(rule: unknown, overwrite?: boolean) {
+  return invoke<void>('save_rule', { rule, overwrite });
+}

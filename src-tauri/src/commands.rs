@@ -21,7 +21,6 @@ use rand::{thread_rng, Rng};
 use reqwest::{self, header::RETRY_AFTER, StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use serde_yaml;
 use sysinfo::System;
 use tauri::async_runtime::Mutex as AsyncMutex;
 use tauri::{AppHandle, Emitter, Manager, Runtime, State, Window};
@@ -1099,22 +1098,6 @@ fn validate_rule(rule: &Value) -> Result<Value, String> {
     serde_json::from_str(&stdout).map_err(|e| e.to_string())
 }
 
-fn update_rule_index<R: Runtime>(app: &AppHandle<R>, entry: &Value) -> Result<(), String> {
-    let dir = rule_storage_dir(app)?;
-    let index_path = dir.join("index.json");
-    let mut entries: Vec<Value> = if index_path.exists() {
-        let contents = fs::read_to_string(&index_path).map_err(|e| e.to_string())?;
-        serde_json::from_str(&contents).map_err(|e| e.to_string())?
-    } else {
-        Vec::new()
-    };
-    entries.retain(|e| e["id"] != entry["id"]);
-    entries.push(entry.clone());
-    let json = serde_json::to_string_pretty(&entries).map_err(|e| e.to_string())?;
-    fs::write(index_path, json).map_err(|e| e.to_string())?;
-    Ok(())
-}
-
 #[tauri::command]
 pub async fn save_rule<R: Runtime>(
     app: AppHandle<R>,
@@ -1126,55 +1109,33 @@ pub async fn save_rule<R: Runtime>(
         .as_str()
         .ok_or_else(|| "missing id".to_string())?;
     let dir = rule_storage_dir(&app)?;
-    let path = dir.join(format!("{id}.md"));
+    let path = dir.join(format!("{id}.json"));
     if path.exists() && !overwrite.unwrap_or(false) {
         return Err("exists".into());
     }
-    let mut front = validated.clone();
-    let body = front
-        .get("description")
-        .and_then(|v| v.as_str())
-        .unwrap_or("")
-        .to_string();
-    front.as_object_mut().map(|o| o.remove("description"));
-    if let (Some(orig), Some(valid)) = (rule.as_object(), validated.as_object()) {
-        let mut sections = serde_json::Map::new();
-        for (k, v) in orig {
-            if !valid.contains_key(k) {
-                sections.insert(k.clone(), v.clone());
-            }
-        }
-        if !sections.is_empty() {
-            front
-                .as_object_mut()
-                .map(|o| o.insert("sections".into(), Value::Object(sections)));
-        }
-    }
-    front
-        .as_object_mut()
-        .map(|o| o.insert("type".into(), Value::String("rule".into())));
-    let yaml = serde_yaml::to_string(&front).map_err(|e| e.to_string())?;
-    let md = format!("---\n{yaml}---\n{body}\n");
-    fs::write(&path, md).map_err(|e| e.to_string())?;
-    let index_entry = serde_json::json!({
-        "id": id,
-        "name": validated["name"].clone(),
-        "tags": validated["tags"].clone(),
-        "path": format!("dnd/rules/{id}.md"),
-    });
-    update_rule_index(&app, &index_entry)?;
-    Ok(())
+    let json = serde_json::to_string_pretty(&validated).map_err(|e| e.to_string())?;
+    fs::write(&path, json).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub async fn list_rules<R: Runtime>(app: AppHandle<R>) -> Result<Vec<Value>, String> {
     let dir = rule_storage_dir(&app)?;
-    let index_path = dir.join("index.json");
-    if !index_path.exists() {
-        return Ok(Vec::new());
+    let mut rules = Vec::new();
+    if dir.exists() {
+        let entries = fs::read_dir(&dir).map_err(|e| e.to_string())?;
+        for entry in entries {
+            let entry = entry.map_err(|e| e.to_string())?;
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) == Some("json")
+                && path.file_name().and_then(|s| s.to_str()) != Some("index.json")
+            {
+                let contents = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+                let data: Value = serde_json::from_str(&contents).map_err(|e| e.to_string())?;
+                rules.push(data);
+            }
+        }
     }
-    let contents = fs::read_to_string(index_path).map_err(|e| e.to_string())?;
-    serde_json::from_str(&contents).map_err(|e| e.to_string())
+    Ok(rules)
 }
 
 /* ==============================
@@ -1209,22 +1170,6 @@ fn validate_spell(spell: &Value) -> Result<Value, String> {
     serde_json::from_str(&stdout).map_err(|e| e.to_string())
 }
 
-fn update_spell_index<R: Runtime>(app: &AppHandle<R>, entry: &Value) -> Result<(), String> {
-    let dir = spell_storage_dir(app)?;
-    let index_path = dir.join("index.json");
-    let mut entries: Vec<Value> = if index_path.exists() {
-        let contents = fs::read_to_string(&index_path).map_err(|e| e.to_string())?;
-        serde_json::from_str(&contents).map_err(|e| e.to_string())?
-    } else {
-        Vec::new()
-    };
-    entries.retain(|e| e["id"] != entry["id"]);
-    entries.push(entry.clone());
-    let json = serde_json::to_string_pretty(&entries).map_err(|e| e.to_string())?;
-    fs::write(index_path, json).map_err(|e| e.to_string())?;
-    Ok(())
-}
-
 #[tauri::command]
 pub async fn save_spell<R: Runtime>(
     app: AppHandle<R>,
@@ -1236,43 +1181,33 @@ pub async fn save_spell<R: Runtime>(
         .as_str()
         .ok_or_else(|| "missing id".to_string())?;
     let dir = spell_storage_dir(&app)?;
-    let path = dir.join(format!("{id}.md"));
+    let path = dir.join(format!("{id}.json"));
     if path.exists() && !overwrite.unwrap_or(false) {
         return Err("exists".into());
     }
-    let mut front = validated.clone();
-    let body = front
-        .get("description")
-        .and_then(|v| v.as_str())
-        .unwrap_or("")
-        .to_string();
-    front.as_object_mut().map(|o| o.remove("description"));
-    front
-        .as_object_mut()
-        .map(|o| o.insert("type".into(), Value::String("spell".into())));
-    let yaml = serde_yaml::to_string(&front).map_err(|e| e.to_string())?;
-    let md = format!("---\n{yaml}---\n{body}\n");
-    fs::write(&path, md).map_err(|e| e.to_string())?;
-    let index_entry = serde_json::json!({
-        "id": id,
-        "name": validated["name"].clone(),
-        "level": validated["level"].clone(),
-        "school": validated["school"].clone(),
-        "path": format!("dnd/spells/{id}.md"),
-    });
-    update_spell_index(&app, &index_entry)?;
-    Ok(())
+    let json = serde_json::to_string_pretty(&validated).map_err(|e| e.to_string())?;
+    fs::write(&path, json).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub async fn list_spells<R: Runtime>(app: AppHandle<R>) -> Result<Vec<Value>, String> {
     let dir = spell_storage_dir(&app)?;
-    let index_path = dir.join("index.json");
-    if !index_path.exists() {
-        return Ok(Vec::new());
+    let mut spells = Vec::new();
+    if dir.exists() {
+        let entries = fs::read_dir(&dir).map_err(|e| e.to_string())?;
+        for entry in entries {
+            let entry = entry.map_err(|e| e.to_string())?;
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) == Some("json")
+                && path.file_name().and_then(|s| s.to_str()) != Some("index.json")
+            {
+                let contents = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+                let data: Value = serde_json::from_str(&contents).map_err(|e| e.to_string())?;
+                spells.push(data);
+            }
+        }
     }
-    let contents = fs::read_to_string(index_path).map_err(|e| e.to_string())?;
-    serde_json::from_str(&contents).map_err(|e| e.to_string())
+    Ok(spells)
 }
 
 /* ==============================
