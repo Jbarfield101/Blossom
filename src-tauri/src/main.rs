@@ -67,9 +67,9 @@ fn main() {
                 log::warn!("sfz asset sync failed: {e}");
             }
             if let Some(window) = handle.get_webview_window("main") {
-                let win = window.clone();
+                let app = window.app_handle().clone();
                 tauri::async_runtime::spawn(async move {
-                    if let Err(e) = commands::comfy_start(win, "".into()).await {
+                    if let Err(e) = commands::comfy_start(app, "".into()).await {
                         log::warn!("failed to start ComfyUI: {e}");
                     }
                 });

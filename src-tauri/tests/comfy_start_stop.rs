@@ -1,6 +1,7 @@
 use blossom_lib::commands::{comfy_start, comfy_stop, __has_comfy_child};
 use std::{env, fs};
 use which::which;
+use tauri::Manager;
 
 #[tokio::test]
 async fn start_and_stop_comfy() {
@@ -22,9 +23,12 @@ async fn start_and_stop_comfy() {
     env::set_var("BLOSSOM_PYTHON_PATH", which("python3").unwrap());
 
     assert!(!__has_comfy_child());
-    comfy_start(window, dir.path().to_string_lossy().to_string())
-        .await
-        .unwrap();
+    comfy_start(
+        window.app_handle().clone(),
+        dir.path().to_string_lossy().to_string(),
+    )
+    .await
+    .unwrap();
     assert!(__has_comfy_child());
     comfy_stop().await.unwrap();
     assert!(!__has_comfy_child());
