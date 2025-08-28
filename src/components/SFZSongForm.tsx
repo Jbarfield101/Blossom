@@ -104,15 +104,21 @@ export default function SFZSongForm() {
     setLoading(true);
     setProgress(0);
     setStatus(null);
+    setError(null);
+    // Always remember the chosen instrument so generation can proceed.
+    setSfzInstrument(normalized);
+    localStorage.setItem("sfzInstrument", normalized);
     try {
+      // Best-effort preview load in the UI. If this fails (e.g., samples not bundled),
+      // the Python renderer will still synthesize using a fallback sampler.
       await loadSfz(convertFileSrc(normalized), (loaded, total) => {
         setProgress(total ? loaded / total : 0);
       });
-      setSfzInstrument(normalized);
-      localStorage.setItem("sfzInstrument", normalized);
       setStatus(`Loaded instrument: ${normalized}`);
     } catch (e) {
-      handleError(e);
+      console.warn(e);
+      setStatus("Instrument selected. Preview skipped; renderer will handle loading.");
+      // Do not surface a blocking error here; allow Generate to remain enabled.
     } finally {
       setLoading(false);
     }
@@ -134,9 +140,8 @@ export default function SFZSongForm() {
 
   async function loadAcousticGrand() {
     try {
-      const path = await resolveResource(
-        "sfz_sounds/UprightPianoKW-20220221.sfz"
-      );
+      // Use the bundled minimal example. Full piano sets may be added by users.
+      const path = await resolveResource("sfz_sounds/piano.sfz");
       await loadInstrument(path);
     } catch (e) {
       handleError(e);
