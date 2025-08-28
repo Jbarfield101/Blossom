@@ -37,6 +37,7 @@ import Simulation from "./pages/Simulation";
 import BigBrother from "./pages/BigBrother";
 import Voices from "./pages/Voices";
 import TagManager from "./pages/TagManager";
+import VideoEditor from "./pages/VideoEditor";
 
 export default function App() {
   const { pathname } = useLocation();
@@ -87,6 +88,7 @@ export default function App() {
           <Route path="/tags" element={<TagManager />} />
           <Route path="/stocks" element={<Stocks />} />
           <Route path="/shorts" element={<Shorts />} />
+          <Route path="/video-editor" element={<VideoEditor />} />
           <Route path="/chores" element={<Chores />} />
           <Route path="/system" element={<SystemInfo />} />
           <Route path="/transcription" element={<Transcription />} />

@@ -135,6 +135,7 @@ const MODULE_LABELS: Record<ModuleKey, string> = {
   shorts: "Shorts",
   chores: "Chores",
   construction: "Under Construction",
+  video: "Video Editor",
 };
 
 interface SettingsDrawerProps {
