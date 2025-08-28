@@ -2067,6 +2067,43 @@ pub async fn save_retro_tv_video(data: String, ext: String) -> Result<String, St
 }
 
 /* ==============================
+Video tools
+============================== */
+
+#[tauri::command]
+pub async fn loop_video(
+    input: String,
+    output_dir: String,
+    output_name: String,
+    hours: u64,
+    minutes: u64,
+    seconds: u64,
+) -> Result<String, String> {
+    let duration = hours * 3600 + minutes * 60 + seconds;
+    if duration == 0 {
+        return Err("duration must be greater than zero".into());
+    }
+    let out_path = Path::new(&output_dir).join(format!("{}.mp4", output_name));
+    let status = PCommand::new("ffmpeg")
+        .arg("-y")
+        .arg("-stream_loop")
+        .arg("-1")
+        .arg("-i")
+        .arg(&input)
+        .arg("-c")
+        .arg("copy")
+        .arg("-t")
+        .arg(duration.to_string())
+        .arg(&out_path)
+        .status()
+        .map_err(|e| e.to_string())?;
+    if !status.success() {
+        return Err(format!("ffmpeg exited with status {}", status));
+    }
+    Ok(out_path.to_string_lossy().to_string())
+}
+
+/* ==============================
 Transcription
 ============================== */
 

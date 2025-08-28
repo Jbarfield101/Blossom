@@ -17,6 +17,7 @@ import {
   FaFilm,
   FaBroom,
   FaTools,
+  FaVideo,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useSettings } from "../features/settings/useSettings";
@@ -52,6 +53,7 @@ export const ITEMS: Item[] = [
   { key: "stocks", icon: <FaChartLine />, label: "Stocks", path: "/stocks", color: "rgba(200,255,200,0.55)" },
   { key: "shorts", icon: <FaFilm />, label: "Shorts", path: "/shorts", color: "rgba(200,200,200,0.55)" },
   { key: "chores", icon: <FaBroom />, label: "Chores", path: "/chores", color: "rgba(200,200,255,0.55)" },
+  { key: "video", icon: <FaVideo />, label: "Video Editor", path: "/video-editor", color: "rgba(180,180,255,0.55)" },
   {
     key: "construction",
     icon: <FaTools />,
