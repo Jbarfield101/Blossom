@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { resolveResource } from "@tauri-apps/api/path";
 import { Alert, Snackbar } from "@mui/material";
@@ -19,6 +19,7 @@ interface SongSpec {
   ambience: string[];
   drum_pattern: string;
   sfz_instrument?: string;
+  seed?: number;
 }
 
 export default function SFZSongForm() {
@@ -63,10 +64,14 @@ export default function SFZSongForm() {
     }
   }
 
+  useEffect(() => {
+    loadAcousticGrand();
+  }, []);
+
   const spec = useMemo((): SongSpec => ({
     title,
     outDir,
-    bpm: 60,
+    bpm: 64,
     structure: [{ name: "A", bars: 8, chords: ["Cmaj7"] }],
     instruments: [],
     ambience: [],
@@ -75,7 +80,11 @@ export default function SFZSongForm() {
   }), [title, outDir, sfzInstrument]);
 
   function generate() {
-    tasks.enqueueTask("Music Generation", { id: "GenerateSong", spec });
+    const seed = Math.floor(Math.random() * 2 ** 32);
+    tasks.enqueueTask("Music Generation", {
+      id: "GenerateSong",
+      spec: { ...spec, seed },
+    });
   }
 
   return (
