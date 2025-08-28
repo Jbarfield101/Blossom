@@ -8,7 +8,7 @@ import presets from "./presets.json";
 export async function fetchVoices(): Promise<string[]> {
   try {
     const res = await fetch(
-      "https://huggingface.co/suno/bark/raw/main/assets/presets.json"
+      "https://raw.githubusercontent.com/suno-ai/bark/main/bark/assets/presets.json"
     );
     if (res.ok) {
       const data = (await res.json()) as Record<string, unknown>;
