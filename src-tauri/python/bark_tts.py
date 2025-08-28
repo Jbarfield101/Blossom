@@ -1,4 +1,14 @@
+"""Bark text-to-speech helper.
+
+This module exposes a :func:`speak` function for programmatic use and can also
+be executed as a script. When run directly it accepts ``--text`` and
+``--speaker`` arguments and writes the generated WAV data to ``stdout``.
+"""
+
+import argparse
 import io
+import sys
+
 import numpy as np
 import torch
 
@@ -69,3 +79,24 @@ def speak(text: str, speaker: str) -> bytes:
 
     sf.write(buffer, audio_array, SAMPLE_RATE, format="WAV")
     return buffer.getvalue()
+
+
+def main() -> None:
+    """Command-line interface for Bark TTS.
+
+    Parses arguments and writes generated WAV data to ``stdout``.
+    """
+
+    parser = argparse.ArgumentParser(description="Generate speech with Bark")
+    parser.add_argument("--text", required=True, help="Text to speak")
+    parser.add_argument(
+        "--speaker", required=True, help="Speaker identifier or history prompt"
+    )
+    args = parser.parse_args()
+
+    audio = speak(args.text, args.speaker)
+    sys.stdout.buffer.write(audio)
+
+
+if __name__ == "__main__":  # pragma: no cover - CLI behaviour
+    main()

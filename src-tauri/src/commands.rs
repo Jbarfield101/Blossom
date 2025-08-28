@@ -2312,7 +2312,9 @@ pub async fn bark_tts<R: Runtime>(
     }
     let output = PCommand::new(&py)
         .arg(&script)
+        .arg("--text")
         .arg(&text)
+        .arg("--speaker")
         .arg(&speaker)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
