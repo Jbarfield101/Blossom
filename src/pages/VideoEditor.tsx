@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Stack, Button, TextField, LinearProgress } from "@mui/material";
+import {
+  Stack,
+  Button,
+  TextField,
+  LinearProgress,
+  Snackbar,
+  Alert,
+} from "@mui/material";
 import Center from "./_Center";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke, convertFileSrc } from "@tauri-apps/api/core";
@@ -14,6 +21,12 @@ export default function VideoEditor() {
   const [status, setStatus] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [outputPath, setOutputPath] = useState<string | null>(null);
+
+  const severity = status?.startsWith("Error")
+    ? "error"
+    : status?.startsWith("Saved")
+    ? "success"
+    : "info";
 
   const pickInput = async () => {
     const file = await open({ multiple: false });
@@ -106,7 +119,21 @@ export default function VideoEditor() {
           Create Loop
         </Button>
         {processing && <LinearProgress />}
-        {status && <div>{status}</div>}
+        <Snackbar
+          open={!!status}
+          autoHideDuration={6000}
+          onClose={() => setStatus(null)}
+        >
+          {status && (
+            <Alert
+              onClose={() => setStatus(null)}
+              severity={severity}
+              sx={{ width: "100%" }}
+            >
+              {status}
+            </Alert>
+          )}
+        </Snackbar>
         {outputPath && (
           <video
             src={convertFileSrc(outputPath)}

@@ -1,5 +1,14 @@
 import { useState, useEffect } from "react";
-import { TextField, Button, Stack, MenuItem, Box, Typography } from "@mui/material";
+import {
+  TextField,
+  Button,
+  Stack,
+  MenuItem,
+  Box,
+  Typography,
+  Snackbar,
+  Alert,
+} from "@mui/material";
 import Editor from "@monaco-editor/react";
 import Center from "./_Center";
 import { invoke } from "@tauri-apps/api/core";
@@ -15,6 +24,13 @@ export default function Blender() {
   const [templates, setTemplates] = useState<{ name: string; code: string }[]>([]);
   const [templateName, setTemplateName] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("");
+
+  const severity =
+    status?.startsWith("Error") || status?.startsWith("Failed")
+      ? "error"
+      : status?.startsWith("Blender finished")
+      ? "success"
+      : "info";
 
   useEffect(() => {
     (async () => {
@@ -166,7 +182,21 @@ export default function Blender() {
             Output Folder: {outputDir ?? "Not selected"}
           </div>
         </Stack>
-        {status && <div>{status}</div>}
+        <Snackbar
+          open={!!status}
+          autoHideDuration={6000}
+          onClose={() => setStatus(null)}
+        >
+          {status && (
+            <Alert
+              onClose={() => setStatus(null)}
+              severity={severity}
+              sx={{ width: "100%" }}
+            >
+              {status}
+            </Alert>
+          )}
+        </Snackbar>
         </Stack>
       </Center>
       <Box sx={systemInfoWidgetSx}>
