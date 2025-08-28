@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { resolveResource } from "@tauri-apps/api/path";
+import { convertFileSrc } from "@tauri-apps/api/core";
 import { Alert, Snackbar, LinearProgress } from "@mui/material";
 import { loadSfz } from "../utils/sfzLoader";
 import { useTasks } from "../store/tasks";
@@ -53,7 +54,7 @@ export default function SFZSongForm() {
     setProgress(0);
     setStatus(null);
     try {
-      await loadSfz(path, (loaded, total) => {
+      await loadSfz(convertFileSrc(path), (loaded, total) => {
         setProgress(total ? loaded / total : 0);
       });
       setSfzInstrument(path);
