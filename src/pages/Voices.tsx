@@ -12,6 +12,7 @@ import {
   Checkbox,
   Snackbar,
   Alert,
+  LinearProgress,
 } from "@mui/material";
 import Star from "@mui/icons-material/Star";
 import StarBorder from "@mui/icons-material/StarBorder";
@@ -80,6 +81,7 @@ export default function Voices() {
         gap: 2,
       }}
     >
+      {status === "testing" && <LinearProgress />}
       <TextField
         label="Text to speak"
         value={text}
