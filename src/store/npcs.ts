@@ -18,7 +18,9 @@ export const useNPCs = create<NpcState>()(
       addNPC: (npc) =>
         set((state) => {
           const withId: Npc = { id: npc.id ?? crypto.randomUUID(), ...npc } as Npc;
-          const npcs = [...state.npcs, withId];
+          const npcs = state.npcs.some((n) => n.id === withId.id)
+            ? state.npcs.map((n) => (n.id === withId.id ? withId : n))
+            : [...state.npcs, withId];
           useInventory.getState().scanNPCs(npcs);
           return { npcs };
         }),
