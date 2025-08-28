@@ -16,8 +16,9 @@ import {
   ListItemText,
   Autocomplete,
   Breadcrumbs,
-  CircularProgress,
-} from "@mui/material";
+    CircularProgress,
+    Alert,
+  } from "@mui/material";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { useState, useEffect } from "react";
@@ -203,6 +204,8 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
     setPythonPath,
     comfyPath,
     setComfyPath,
+    error: pathsError,
+    clearError: clearPathsError,
   } = usePaths();
   const { folder, setFolder } = useOutput();
   const {
@@ -676,18 +679,31 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
             onClose={() => setAudioSaved(false)}
             message="Audio defaults saved"
           />
-          <Snackbar
-            open={pathsSaved}
-            autoHideDuration={3000}
-            onClose={() => setPathsSaved(false)}
-            message="Paths saved"
-          />
-          <Snackbar
-            open={appearanceSaved}
-            autoHideDuration={3000}
-            onClose={() => setAppearanceSaved(false)}
-            message="Appearance saved"
-          />
+            <Snackbar
+              open={pathsSaved}
+              autoHideDuration={3000}
+              onClose={() => setPathsSaved(false)}
+              message="Paths saved"
+            />
+            <Snackbar
+              open={!!pathsError}
+              autoHideDuration={6000}
+              onClose={clearPathsError}
+            >
+              <Alert
+                onClose={clearPathsError}
+                severity="error"
+                sx={{ width: "100%" }}
+              >
+                {pathsError}
+              </Alert>
+            </Snackbar>
+            <Snackbar
+              open={appearanceSaved}
+              autoHideDuration={3000}
+              onClose={() => setAppearanceSaved(false)}
+              message="Appearance saved"
+            />
           <Snackbar
             open={outputSaved}
             autoHideDuration={3000}

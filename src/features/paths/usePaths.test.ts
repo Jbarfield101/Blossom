@@ -5,24 +5,27 @@ import { usePathsStore } from './usePaths';
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 
 describe('usePaths save_paths error handling', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+    beforeEach(() => {
+      vi.clearAllMocks();
+      usePathsStore.setState({ error: null });
+    });
 
   const setters: [string, string][] = [
     ['setPythonPath', 'py'],
     ['setComfyPath', 'comfy'],
   ];
 
-  it.each(setters)('%s surfaces errors', async (setter, value) => {
-    (invoke as any).mockRejectedValue(new Error('fail'));
-    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    (usePathsStore.getState() as any)[setter](value);
-    await Promise.resolve();
-    expect(spy).toHaveBeenCalledWith(
-      expect.stringContaining('Failed to save paths'),
-      expect.any(Error)
-    );
-    spy.mockRestore();
-  });
+    it.each(setters)('%s surfaces errors', async (setter, value) => {
+      (invoke as any).mockRejectedValue(new Error('fail'));
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      (usePathsStore.getState() as any)[setter](value);
+      await Promise.resolve();
+      expect(spy).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to save paths'),
+        expect.any(Error)
+      );
+      expect(usePathsStore.getState().error).toContain('Failed to save paths');
+      usePathsStore.setState({ error: null });
+      spy.mockRestore();
+    });
 });

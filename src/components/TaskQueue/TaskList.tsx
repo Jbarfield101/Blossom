@@ -1,11 +1,12 @@
-import { useEffect } from "react";
-import { Box, Button, LinearProgress, Typography } from "@mui/material";
+import { useEffect, useState } from "react";
+import { Box, Button, LinearProgress, Typography, Snackbar, Alert } from "@mui/material";
 import { useTasks } from "../../store/tasks";
 import { useSystemInfo } from "../../features/system/useSystemInfo";
 
 export default function TaskList() {
   const { tasks, cancelTask, subscribe } = useTasks();
   const info = useSystemInfo();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let unlisten: (() => void) | null = null;
@@ -14,6 +15,7 @@ export default function TaskList() {
         unlisten = await subscribe();
       } catch (err) {
         console.error("Failed to subscribe", err);
+        setError("Failed to subscribe to task updates");
         unlisten?.();
       }
     })();
@@ -27,22 +29,35 @@ export default function TaskList() {
   const cpuWarn = info && info.cpu_usage > 80;
   const memWarn = info && info.mem_usage > 80;
 
-  if (entries.length === 0 && !info) return null;
+  const snackbar = (
+    <Snackbar
+      open={!!error}
+      autoHideDuration={6000}
+      onClose={() => setError(null)}
+    >
+      <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
+        {error}
+      </Alert>
+    </Snackbar>
+  );
+
+  if (entries.length === 0 && !info) return snackbar;
 
   return (
-    <Box sx={{ mt: 2, p: 2, border: "1px solid #ccc", borderRadius: 1 }}>
-      {info && (
-        <Typography
-          variant="caption"
-          sx={{
-            display: "block",
-            mb: 1,
-            color: cpuWarn || memWarn ? "error.main" : "text.primary",
-          }}
-        >
-          CPU {Math.round(info.cpu_usage)}% · Mem {Math.round(info.mem_usage)}%
-        </Typography>
-      )}
+    <>
+      <Box sx={{ mt: 2, p: 2, border: "1px solid #ccc", borderRadius: 1 }}>
+        {info && (
+          <Typography
+            variant="caption"
+            sx={{
+              display: "block",
+              mb: 1,
+              color: cpuWarn || memWarn ? "error.main" : "text.primary",
+            }}
+          >
+            CPU {Math.round(info.cpu_usage)}% · Mem {Math.round(info.mem_usage)}%
+          </Typography>
+        )}
       {entries.length === 0 ? (
         <Typography variant="body2">No active tasks</Typography>
       ) : (
@@ -74,7 +89,9 @@ export default function TaskList() {
           </Box>
         ))
       )}
-    </Box>
+      </Box>
+      {snackbar}
+    </>
   );
 }
 
