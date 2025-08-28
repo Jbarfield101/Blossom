@@ -39,13 +39,32 @@ export default function SFZSongForm() {
   const [error, setError] = useState<string | null>(null);
   const tasks = useTasks();
 
+  function mapLoaderError(e: unknown): string {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes("Unable to load SFZ")) {
+      const status = msg.match(/HTTP (\d+)/)?.[1];
+      if (msg.includes("file not found") || status === "404") {
+        return "SFZ file not found";
+      }
+      return status ? `Failed to load SFZ (HTTP ${status})` : "Failed to load SFZ";
+    }
+    if (msg.includes("Failed to load sample")) {
+      return "Failed to load a sample file referenced by the SFZ";
+    }
+    return msg;
+  }
+
+  function handleError(e: unknown) {
+    console.error(e);
+    setError(mapLoaderError(e));
+  }
+
   async function pickFolder() {
     try {
       const dir = await openDialog({ directory: true, multiple: false });
       if (dir) setOutDir(dir as string);
     } catch (e) {
-      console.error(e);
-      setError(String(e));
+      handleError(e);
     }
   }
 
@@ -62,8 +81,7 @@ export default function SFZSongForm() {
       localStorage.setItem("sfzInstrument", normalized);
       setStatus(`Loaded instrument: ${normalized}`);
     } catch (e) {
-      console.error(e);
-      setError(String(e));
+      handleError(e);
     } finally {
       setLoading(false);
     }
@@ -79,8 +97,7 @@ export default function SFZSongForm() {
         await loadInstrument(file as string);
       }
     } catch (e) {
-      console.error(e);
-      setError(String(e));
+      handleError(e);
     }
   }
 
@@ -91,8 +108,7 @@ export default function SFZSongForm() {
       );
       await loadInstrument(path);
     } catch (e) {
-      console.error(e);
-      setError(String(e));
+      handleError(e);
     }
   }
 

@@ -131,5 +131,13 @@ describe('SFZSongForm', () => {
       expect.any(Function)
     );
   });
+
+  it('maps loader errors to friendly message', async () => {
+    vi.mocked(loadSfz).mockRejectedValueOnce(
+      new Error('Unable to load SFZ: piano.sfz (HTTP 404)')
+    );
+    render(<SFZSongForm />);
+    await screen.findByText('SFZ file not found');
+  });
 });
 
