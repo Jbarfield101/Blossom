@@ -50,16 +50,17 @@ export default function SFZSongForm() {
   }
 
   async function loadInstrument(path: string) {
+    const normalized = path.replace(/\\/g, "/");
     setLoading(true);
     setProgress(0);
     setStatus(null);
     try {
-      await loadSfz(convertFileSrc(path), (loaded, total) => {
+      await loadSfz(convertFileSrc(normalized), (loaded, total) => {
         setProgress(total ? loaded / total : 0);
       });
-      setSfzInstrument(path);
-      localStorage.setItem("sfzInstrument", path);
-      setStatus(`Loaded instrument: ${path}`);
+      setSfzInstrument(normalized);
+      localStorage.setItem("sfzInstrument", normalized);
+      setStatus(`Loaded instrument: ${normalized}`);
     } catch (e) {
       console.error(e);
       setError(String(e));
