@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use std::io::{BufRead, BufReader};
-use std::process::{Command as PCommand, Stdio};
+use std::process::{Command as PCommand, Output, Stdio};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex as StdMutex};
 use std::time::Duration;
@@ -115,6 +115,25 @@ pub struct Task {
     pub progress: f32,
     pub result: Option<Value>,
     pub started_at: Option<DateTime<Utc>>,
+}
+
+fn parse_python_json(output: Output) -> Result<Value, TaskError> {
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        Err(TaskError {
+            code: PdfErrorCode::ExecutionFailed,
+            message: format!(
+                "Python exited with status {}:\n{}",
+                output.status, stderr
+            ),
+        })
+    } else {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        serde_json::from_str::<Value>(&stdout).map_err(|e| TaskError {
+            code: PdfErrorCode::InvalidJson,
+            message: e.to_string(),
+        })
+    }
 }
 
 enum Message {
@@ -341,24 +360,7 @@ impl TaskQueue {
                                             code: PdfErrorCode::PythonNotFound,
                                             message: format!("Failed to start python: {e}"),
                                         })?;
-                                    if !output.status.success() {
-                                        let stderr = String::from_utf8_lossy(&output.stderr);
-                                        Err(TaskError {
-                                            code: PdfErrorCode::ExecutionFailed,
-                                            message: format!(
-                                                "Python exited with status {}:\n{}",
-                                                output.status, stderr
-                                            ),
-                                        })
-                                    } else {
-                                        let stdout = String::from_utf8_lossy(&output.stdout);
-                                        serde_json::from_str::<Value>(&stdout).map_err(|e| {
-                                            TaskError {
-                                                code: PdfErrorCode::InvalidJson,
-                                                message: e.to_string(),
-                                            }
-                                        })
-                                    }
+                                    parse_python_json(output)
                                 }
                                 TaskCommand::ParseRulePdf { py, script, path } => {
                                     let output = PCommand::new(&py)
@@ -370,24 +372,7 @@ impl TaskQueue {
                                             code: PdfErrorCode::PythonNotFound,
                                             message: format!("Failed to start python: {e}"),
                                         })?;
-                                    if !output.status.success() {
-                                        let stderr = String::from_utf8_lossy(&output.stderr);
-                                        Err(TaskError {
-                                            code: PdfErrorCode::ExecutionFailed,
-                                            message: format!(
-                                                "Python exited with status {}:\n{}",
-                                                output.status, stderr
-                                            ),
-                                        })
-                                    } else {
-                                        let stdout = String::from_utf8_lossy(&output.stdout);
-                                        serde_json::from_str::<Value>(&stdout).map_err(|e| {
-                                            TaskError {
-                                                code: PdfErrorCode::InvalidJson,
-                                                message: e.to_string(),
-                                            }
-                                        })
-                                    }
+                                    parse_python_json(output)
                                 }
                                 TaskCommand::ParseLorePdf {
                                     py,

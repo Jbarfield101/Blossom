@@ -6,6 +6,7 @@ import sqlite3
 from pathlib import Path
 import uuid
 import re
+import asyncio
 
 import numpy as np
 import pdfplumber
@@ -214,9 +215,9 @@ def reindex():
 
 
 def extract_spells(path: str):
-    """Extract simple spell entries from a PDF file."""
+    """Extract simple spell entries from a PDF file and tag via LLM."""
     pdf_path = Path(path)
-    spells = []
+    spells: list[dict] = []
     with pdfplumber.open(pdf_path) as pdf:
         text = "\n".join(page.extract_text() or "" for page in pdf.pages)
     for block in text.split("\n\n"):
@@ -226,6 +227,41 @@ def extract_spells(path: str):
         name = lines[0]
         desc = " ".join(lines[1:])
         spells.append({"name": name, "description": desc})
+
+    async def _tag_spell(spell: dict) -> dict:
+        prompt = (
+            "Extract tags (school, level, etc.) and optional sections from this D&D spell. "
+            "Respond with JSON {\"tags\": [...], \"sections\": {section: text}}."
+        )
+        text = f"Name: {spell['name']}\n{spell['description']}"
+        try:
+            raw = await asyncio.wait_for(
+                asyncio.to_thread(_llm_extract, text, prompt), timeout=15
+            )
+            if raw:
+                data = json.loads(raw)
+                tags = data.get("tags") or []
+                sections = data.get("sections") or {}
+                if isinstance(tags, list):
+                    spell["tags"] = tags
+                if isinstance(sections, dict) and sections:
+                    spell["sections"] = {k: sections[k] for k in sorted(sections)}
+        except Exception:
+            pass
+        return spell
+    try:
+        async def _run_all():
+            return await asyncio.gather(*(_tag_spell(s) for s in spells))
+        try:
+            spells = asyncio.run(_run_all())
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            try:
+                spells = loop.run_until_complete(_run_all())
+            finally:
+                loop.close()
+    except Exception:
+        pass
     return {"spells": spells}
 
 
@@ -523,9 +559,9 @@ def extract_lore(path: str):
 
 
 def extract_rules(path: str):
-    """Extract rule entries from a PDF file using simple layout heuristics."""
+    """Extract rule entries from a PDF file using layout heuristics and tag via LLM."""
     pdf_path = Path(path)
-    rules = []
+    rules: list[dict] = []
 
     def _group_lines(words):
         """Group extracted words into lines based on their vertical positions."""
@@ -593,6 +629,41 @@ def extract_rules(path: str):
             desc = " ".join(lines[1:])
             rules.append({"name": name, "description": desc})
 
+    async def _tag_rule(rule: dict) -> dict:
+        prompt = (
+            "Extract descriptive tags and optional sections for this game rule. "
+            "Respond with JSON {\"tags\": [...], \"sections\": {section: text}}."
+        )
+        text = f"Name: {rule['name']}\n{rule['description']}"
+        try:
+            raw = await asyncio.wait_for(
+                asyncio.to_thread(_llm_extract, text, prompt), timeout=15
+            )
+            if raw:
+                data = json.loads(raw)
+                tags = data.get("tags") or []
+                sections = data.get("sections") or {}
+                if isinstance(tags, list):
+                    rule["tags"] = tags
+                if isinstance(sections, dict) and sections:
+                    rule["sections"] = {k: sections[k] for k in sorted(sections)}
+        except Exception:
+            pass
+        return rule
+    try:
+        async def _run_all():
+            return await asyncio.gather(*(_tag_rule(r) for r in rules))
+        try:
+            rules = asyncio.run(_run_all())
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            try:
+                rules = loop.run_until_complete(_run_all())
+            finally:
+                loop.close()
+    except Exception:
+        pass
+
     return {"rules": rules}
 
 
@@ -656,15 +727,17 @@ def meta(doc_id: str):
 
 # ---------------- Ingestion helpers -----------------
 
-def _llm_extract(text: str) -> str:
+def _llm_extract(text: str, prompt: str | None = None) -> str:
     """Send text to a local LLM and return raw string response."""
     url = os.environ.get("LOCAL_LLM_URL", "http://localhost:11434/api/generate")
     model = os.environ.get("LOCAL_LLM_MODEL", "llama2")
-    prompt = (
-        "Extract Dungeons & Dragons entities (npc, lore, quest) from the following text. "
-        "Respond with a JSON array of objects {\"type\": \"npc|lore|quest\", \"data\": {...}}.\n\n"
-        + text
-    )
+    if prompt is None:
+        prompt = (
+            "Extract Dungeons & Dragons entities (npc, lore, quest) from the following text. "
+            "Respond with a JSON array of objects {\"type\": \"npc|lore|quest\", \"data\": {...}}.\n\n"
+        ) + text
+    else:
+        prompt = prompt + "\n\n" + text
     try:
         resp = requests.post(
             url,
