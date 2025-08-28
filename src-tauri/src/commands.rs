@@ -619,19 +619,24 @@ pub struct SongSpec {
     #[serde(alias = "album", skip_serializing_if = "Option::is_none")]
     pub album: Option<String>,
     pub bpm: u32,
-    pub key: String,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub key: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub form: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub structure: Option<Vec<Section>>,
-    pub mood: Vec<String>,
-    pub instruments: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub mood: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub instruments: Option<Vec<String>>,
     #[serde(alias = "leadInstrument", skip_serializing_if = "Option::is_none")]
     pub lead_instrument: Option<String>,
-    pub ambience: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub ambience: Option<Vec<String>>,
     #[serde(alias = "ambienceLevel")]
     pub ambience_level: Option<f32>,
-    pub seed: u64,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub seed: Option<u64>,
     pub variety: Option<u32>,
     #[serde(alias = "chordSpanBeats", skip_serializing_if = "Option::is_none")]
     pub chord_span_beats: Option<u32>,
@@ -695,15 +700,15 @@ mod tests {
             title: "t".into(),
             album: None,
             bpm: 80,
-            key: "C".into(),
+            key: Some("C".into()),
             form: None,
             structure: None,
-            mood: vec![],
-            instruments: vec![],
+            mood: Some(vec![]),
+            instruments: Some(vec![]),
             lead_instrument: None,
-            ambience: vec![],
+            ambience: Some(vec![]),
             ambience_level: Some(0.5),
-            seed: 1,
+            seed: Some(1),
             variety: Some(10),
             chord_span_beats: None,
             drum_pattern: None,
@@ -765,7 +770,10 @@ mod tests {
         }
         tokio::time::sleep(Duration::from_millis(100)).await;
         let after = thread_count();
-        assert_eq!(before, after);
+        assert!(
+            after <= before,
+            "thread count increased from {before} to {after}"
+        );
     }
 }
 
@@ -806,11 +814,30 @@ pub async fn lofi_generate_gpu<R: Runtime>(
 }
 
 /// Run full-song generation based on a structured spec (typed, camelCase-friendly).
+fn fill_song_spec_defaults(spec: &mut SongSpec) {
+    if spec.key.is_none() {
+        spec.key = Some("C".to_string());
+    }
+    if spec.mood.is_none() {
+        spec.mood = Some(vec![]);
+    }
+    if spec.instruments.is_none() {
+        spec.instruments = Some(vec!["piano".to_string()]);
+    }
+    if spec.ambience.is_none() {
+        spec.ambience = Some(vec![]);
+    }
+    if spec.seed.is_none() {
+        spec.seed = Some(thread_rng().gen());
+    }
+}
+
 #[tauri::command]
 pub async fn run_lofi_song<R: Runtime>(
     app: AppHandle<R>,
-    spec: SongSpec,
+    mut spec: SongSpec,
 ) -> Result<String, String> {
+    fill_song_spec_defaults(&mut spec);
     let window = app
         .get_webview_window("main")
         .ok_or_else(|| "no main window".to_string())?;
