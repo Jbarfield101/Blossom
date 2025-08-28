@@ -181,12 +181,7 @@ pub async fn comfy_start<R: Runtime>(window: Window<R>, dir: String) -> Result<(
     }
 
     let dir = if dir.trim().is_empty() {
-        let cfg = load_config();
-        if let Some(p) = cfg.comfy_path {
-            PathBuf::from(p)
-        } else {
-            default_comfy_path()
-        }
+        default_comfy_path(&window.app_handle())
     } else {
         PathBuf::from(dir)
     };
@@ -354,9 +349,20 @@ pub fn conda_python_string() -> String {
     conda_python().to_string_lossy().to_string()
 }
 
-fn default_comfy_path() -> PathBuf {
-    dirs::home_dir()
-        .unwrap_or_else(|| PathBuf::from("."))
+fn default_comfy_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
+    if let Ok(cwd) = std::env::current_dir() {
+        let dev = cwd.join("ComfyUI");
+        if dev.exists() {
+            return dev;
+        }
+        let dev = cwd.join("src-tauri").join("ComfyUI");
+        if dev.exists() {
+            return dev;
+        }
+    }
+    app.path()
+        .resource_dir()
+        .expect("resource dir")
         .join("ComfyUI")
 }
 
