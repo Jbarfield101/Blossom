@@ -1,4 +1,7 @@
-import { Box, Tab, Tabs, TextField, MenuItem } from "@mui/material";
+import { Box, TextField, MenuItem } from "@mui/material";
+import SpeedDial from "@mui/material/SpeedDial";
+import SpeedDialAction from "@mui/material/SpeedDialAction";
+import SpeedDialIcon from "@mui/material/SpeedDialIcon";
 import { ThemeProvider } from "@mui/material/styles";
 import {
   Person,
@@ -13,7 +16,7 @@ import {
   LibraryBooks,
   Inventory,
 } from "@mui/icons-material";
-import { SyntheticEvent, useState, ChangeEvent } from "react";
+import { useState, ChangeEvent } from "react";
 import { createDndTheme } from "../theme";
 import NpcForm from "../features/dnd/NpcForm";
 import LoreForm from "../features/dnd/LoreForm";
@@ -42,7 +45,6 @@ export default function DND() {
   const addWorld = useWorlds((s) => s.addWorld);
   const setCurrentWorld = useWorlds((s) => s.setCurrentWorld);
   const [newWorldOpen, setNewWorldOpen] = useState(false);
-  const handleChange = (_e: SyntheticEvent, v: number) => setTab(v);
   const handleWorldChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (value === "__new__") {
@@ -94,17 +96,21 @@ export default function DND() {
       />
       {world && (
         <>
-          <Tabs
-            value={tab}
-            onChange={handleChange}
-            variant="scrollable"
-            scrollButtons="auto"
+          {tabs[tab]?.component}
+          <SpeedDial
+            ariaLabel="DND sections"
+            sx={{ position: "fixed", bottom: 16, right: 16 }}
+            icon={<SpeedDialIcon />}
           >
             {tabs.map(({ icon, label }, idx) => (
-              <Tab key={idx} icon={icon} label={label} />
+              <SpeedDialAction
+                key={label}
+                icon={icon}
+                tooltipTitle={label}
+                onClick={() => setTab(idx)}
+              />
             ))}
-          </Tabs>
-          {tabs[tab]?.component}
+          </SpeedDial>
         </>
       )}
       </Box>
