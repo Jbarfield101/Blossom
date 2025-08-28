@@ -38,6 +38,7 @@ export default function Voices() {
     "idle" | "testing" | "success" | "error"
   >("idle");
   const [error, setError] = useState<string | null>(null);
+  const [log, setLog] = useState<string[]>([]);
 
   useEffect(() => {
     load();
@@ -55,17 +56,31 @@ export default function Voices() {
 
   const handleTest = async () => {
     if (!selected) return;
+    setLog([]);
+    setLog((l) => [...l, "Starting test…"]);
     setStatus("testing");
     setError(null);
     try {
+      setLog((l) => [...l, "Starting Tone.js…"]);
       await Tone.start();
-      const buffer = await generateAudio(text, selected.preset);
+      setLog((l) => [...l, "Tone.js started"]);
+      setLog((l) => [...l, "Invoking generateAudio…"]);
+      const buffer = await generateAudio(text, selected.preset, (msg) =>
+        setLog((l) => [...l, msg])
+      );
+      setLog((l) => [...l, "Decoding complete"]);
+      setLog((l) => [...l, "Playing audio…"]);
       const player = new Tone.Player(buffer).toDestination();
       player.start();
+      setLog((l) => [...l, "Playback started"]);
       setStatus("success");
     } catch (e) {
       console.error("Voice test failed:", e);
       setError(e instanceof Error ? e.message : String(e));
+      setLog((l) => [
+        ...l,
+        "Error: " + (e instanceof Error ? e.message : String(e)),
+      ]);
       setStatus("error");
     }
   };
@@ -133,6 +148,11 @@ export default function Voices() {
       >
         Test
       </Button>
+      <List sx={{ maxHeight: 200, overflow: "auto" }}>
+        {log.map((m, i) => (
+          <ListItem key={i}>{m}</ListItem>
+        ))}
+      </List>
       <Snackbar
         open={status !== "idle"}
         autoHideDuration={status === "testing" ? null : 3000}
