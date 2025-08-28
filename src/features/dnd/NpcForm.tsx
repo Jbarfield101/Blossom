@@ -85,16 +85,20 @@ const initialState: FormState = {
   inventory: "",
 };
 
-type Action = {
-  type: "SET_FIELD";
-  field: keyof FormState;
-  value: string | boolean;
-};
+type Action =
+  | {
+      type: "SET_FIELD";
+      field: keyof FormState;
+      value: string | boolean;
+    }
+  | { type: "RESET" };
 
 function reducer(state: FormState, action: Action): FormState {
   switch (action.type) {
     case "SET_FIELD":
       return { ...state, [action.field]: action.value } as FormState;
+    case "RESET":
+      return initialState;
     default:
       return state;
   }
@@ -118,7 +122,6 @@ export default function NpcForm({ world }: Props) {
   );
   const toggleFavorite = useVoices((s) => s.toggleFavorite);
   const loadVoices = useVoices((s) => s.load);
-  const loadNPCs = useNPCs((s) => s.loadNPCs);
   useEffect(() => {
     loadVoices();
   }, [loadVoices]);
@@ -355,7 +358,8 @@ export default function NpcForm({ world }: Props) {
     if (parsed.success) {
       try {
         const saved = await invoke<NpcData>("save_npc", { world, npc: parsed.data });
-        await loadNPCs(world);
+        dispatch({ type: "RESET" });
+        useNPCs.getState().addNPC(saved);
         setResult(saved);
       } catch (err) {
         setErrors({ submit: String(err) });
