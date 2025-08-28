@@ -55,7 +55,10 @@ export function parseSfz(text: string, basePath = ''): SfzRegion[] {
   return regions.filter((r) => r.sample);
 }
 
-export async function loadSfz(path: string): Promise<SfzInstrument> {
+export async function loadSfz(
+  path: string,
+  onProgress?: (loaded: number, total: number) => void,
+): Promise<SfzInstrument> {
   const res = await fetch(path);
   if (!res.ok) {
     throw new Error(`Unable to load SFZ: ${path}`);
@@ -82,7 +85,24 @@ export async function loadSfz(path: string): Promise<SfzInstrument> {
     }
   }
 
-  const sampler = new Tone.Sampler({ urls });
+  const buffers: Record<string, Tone.ToneAudioBuffer> = {};
+  const entries = Object.entries(urls);
+  const total = entries.length;
+  let loaded = 0;
+  await Promise.all(
+    entries.map(async ([note, url]) => {
+      try {
+        const buffer = await Tone.ToneAudioBuffer.fromUrl(url);
+        buffers[note] = buffer;
+        loaded += 1;
+        onProgress?.(loaded, total);
+      } catch (e) {
+        throw new Error(`Failed to load sample: ${url}`);
+      }
+    }),
+  );
+
+  const sampler = new Tone.Sampler({ urls: buffers });
   await Tone.loaded();
 
   return { regions, sampler };
