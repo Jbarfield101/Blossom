@@ -7,6 +7,7 @@ import {
   SportsKabaddi,
   Gavel,
   AutoStories,
+  LibraryAdd,
   Casino,
   Map,
   MilitaryTech,
@@ -23,6 +24,7 @@ import QuestForm from "../features/dnd/QuestForm";
 import EncounterForm from "../features/dnd/EncounterForm";
 import RuleForm from "../features/dnd/RuleForm";
 import SpellForm from "../features/dnd/SpellForm";
+import SpellBook from "../features/dnd/SpellBook";
 import DiceRoller from "../features/dnd/DiceRoller";
 import TabletopMap from "../features/dnd/TabletopMap";
 import WarTable from "../features/dnd/WarTable";
@@ -65,7 +67,8 @@ export default function DND() {
     { icon: <SportsKabaddi />, label: "Encounter", component: <EncounterForm /> },
     { icon: <Gavel />, label: "Rule Book", component: <RuleBook /> },
     { icon: <Rule />, label: "Add Rule", component: <RuleForm /> },
-    { icon: <AutoStories />, label: "Spellbook", component: <SpellForm /> },
+    { icon: <LibraryAdd />, label: "Add Spell", component: <SpellForm /> },
+    { icon: <AutoStories />, label: "Spellbook", component: <SpellBook /> },
     { icon: <Casino />, label: "Dice", component: <DiceRoller /> },
     { icon: <Map />, label: "Tabletop", component: <TabletopMap /> },
     { icon: <MilitaryTech />, label: "War Table", component: <WarTable /> },

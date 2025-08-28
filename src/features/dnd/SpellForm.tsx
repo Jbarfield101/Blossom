@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { Typography, Button, Grid, Box } from "@mui/material";
+import { useState, useEffect } from "react";
+import { Typography, Button, Grid, Box, List, ListItem, ListItemText } from "@mui/material";
 import StyledTextField from "./StyledTextField";
 import SpellPdfUpload from "./SpellPdfUpload";
 import { zSpell } from "./schemas";
 import type { SpellData } from "./types";
+import { useSpells } from "../../store/spells";
 
 export default function SpellForm() {
   const [name, setName] = useState("");
@@ -16,6 +17,13 @@ export default function SpellForm() {
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [result, setResult] = useState<SpellData | null>(null);
+  const spells = useSpells((s) => s.spells);
+  const addSpell = useSpells((s) => s.addSpell);
+  const loadSpells = useSpells((s) => s.loadSpells);
+
+  useEffect(() => {
+    loadSpells();
+  }, [loadSpells]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +40,7 @@ export default function SpellForm() {
       tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
     };
     const parsed = zSpell.parse(data);
+    addSpell(parsed);
     setResult(parsed);
   };
 
@@ -134,6 +143,20 @@ export default function SpellForm() {
         {result && (
           <Grid item xs={12}>
             <pre style={{ marginTop: "1rem" }}>{JSON.stringify(result, null, 2)}</pre>
+          </Grid>
+        )}
+        {spells.length > 0 && (
+          <Grid item xs={12}>
+            <Typography variant="h6" sx={{ mt: 2 }}>
+              Stored Spells
+            </Typography>
+            <List>
+              {spells.map((s) => (
+                <ListItem key={s.id} disablePadding>
+                  <ListItemText primary={s.name} secondary={s.tags.join(", ")} />
+                </ListItem>
+              ))}
+            </List>
           </Grid>
         )}
       </Grid>
