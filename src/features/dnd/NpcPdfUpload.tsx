@@ -1,9 +1,6 @@
-import { useEffect, useState } from "react";
-import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
-import { Button, Snackbar, Alert, LinearProgress } from "@mui/material";
-import { useTasks } from "../../store/tasks";
 import { useNPCs } from "../../store/npcs";
+import PdfUpload from "./PdfUpload";
 import type { NpcData } from "./types";
 import NpcLog from "./NpcLog";
 
@@ -13,152 +10,50 @@ interface Props {
 }
 
 export default function NpcPdfUpload({ world, onParsed }: Props) {
-  const enqueueTask = useTasks((s) => s.enqueueTask);
-  const tasks = useTasks((s) => s.tasks);
   const loadNPCs = useNPCs((s) => s.loadNPCs);
-  const [taskId, setTaskId] = useState<number | null>(null);
-  const [status, setStatus] = useState<"idle" | "uploading" | "completed" | "failed">(
-    "idle"
-  );
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [errorCode, setErrorCode] = useState<string | null>(null);
-  const [showLog, setShowLog] = useState(false);
-  const [imported, setImported] = useState<NpcData[] | null>(null);
 
-  async function handleUpload() {
-    const selected = await open({ filters: [{ name: "PDF", extensions: ["pdf"] }] });
-    if (typeof selected === "string") {
-      const id = await enqueueTask("Import NPC PDF", {
-        id: "ParseNpcPdf",
-        path: selected,
-        world,
-      });
-      setTaskId(id);
-      setStatus("uploading");
-      setSnackbarOpen(true);
+  async function handleParsed(res: { npcs: NpcData[] }) {
+    const parsed = res.npcs;
+    onParsed?.(parsed);
+    const existing = await invoke<NpcData[]>("list_npcs", { world });
+    for (const npc of parsed) {
+      const dup = existing.find((e) => e.id === npc.id || e.name === npc.name);
+      let overwrite = true;
+      if (dup) {
+        overwrite = window.confirm(`NPC ${npc.name} exists. Overwrite?`);
+      }
+      if (overwrite) {
+        await invoke("save_npc", { world, npc, overwrite });
+        await invoke("append_npc_log", { world, id: npc.id, name: npc.name });
+      }
     }
+    await loadNPCs(world);
   }
 
-  useEffect(() => {
-    if (!taskId) return;
-    const task = tasks[taskId];
-    if (
-      task &&
-      task.status === "completed" &&
-      task.result &&
-      Array.isArray((task.result as { npcs?: NpcData[] }).npcs)
-    ) {
-      const parsed = (task.result as { npcs: NpcData[] }).npcs;
-      onParsed?.(parsed);
-      (async () => {
-        const existing = await invoke<NpcData[]>("list_npcs", { world });
-        for (const npc of parsed) {
-          const dup = existing.find(
-            (e) => e.id === npc.id || e.name === npc.name
-          );
-          let overwrite = true;
-          if (dup) {
-            overwrite = window.confirm(`NPC ${npc.name} exists. Overwrite?`);
-          }
-          if (overwrite) {
-            await invoke("save_npc", { world, npc, overwrite });
-            await invoke("append_npc_log", {
-              world,
-              id: npc.id,
-              name: npc.name,
-            });
-          }
-        }
-        await loadNPCs(world);
-        setImported(parsed);
-        setStatus("completed");
-        setSnackbarOpen(true);
-        setTaskId(null);
-        setShowLog(true);
-      })();
-    } else if (task && task.status === "failed") {
-      (async () => {
-        await invoke("append_npc_log", {
-          world,
-          id: "",
-          name: "",
-          errorCode: task.errorCode ?? null,
-          message: task.error ?? null,
-        });
-      })();
-      setStatus("failed");
-      setError(task.error ?? null);
-      setErrorCode(task.errorCode ?? null);
-      setSnackbarOpen(true);
-      setTaskId(null);
-      setShowLog(true);
-    }
-  }, [taskId, tasks, world, loadNPCs, onParsed]);
-
-  const task = taskId ? tasks[taskId] : null;
-
-  function handleSnackbarClose() {
-    setSnackbarOpen(false);
-    if (status === "completed" || status === "failed") setStatus("idle");
+  async function handleError(errorCode: string | null, error: string | null) {
+    await invoke("append_npc_log", {
+      world,
+      id: "",
+      name: "",
+      errorCode: errorCode ?? null,
+      message: error ?? null,
+    });
   }
+
+  const successMessage = (res: { npcs: NpcData[] }) =>
+    `NPCs imported successfully: ${res.npcs.map((n) => n.name).join(", ")}`;
 
   return (
-    <div>
-      <Button
-        type="button"
-        onClick={handleUpload}
-        disabled={!world || status === "uploading"}
-        variant="contained"
-        size="large"
-        sx={{
-          px: 4,
-          py: 1.5,
-          fontWeight: "bold",
-          "&:hover,&:focus": { boxShadow: "0 0 8px #0f0" },
-        }}
-      >
-        Upload NPC PDF
-      </Button>
-      <Button
-        type="button"
-        onClick={() => setShowLog((s) => !s)}
-        sx={{ ml: 2 }}
-        size="small"
-      >
-        {showLog ? "Hide Log" : "View Log"}
-      </Button>
-      {task && task.status === "running" && (
-        <LinearProgress
-          variant="determinate"
-          value={task.progress * 100}
-          sx={{ mt: 2 }}
-        />
-      )}
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={status === "completed" ? 4000 : undefined}
-        onClose={handleSnackbarClose}
-      >
-        <Alert
-          onClose={handleSnackbarClose}
-          severity={
-            status === "completed" ? "success" : status === "failed" ? "error" : "info"
-          }
-          sx={{ width: "100%" }}
-        >
-          {status === "completed"
-            ? `NPCs imported successfully: ${
-                imported?.map((n) => n.name).join(", ") ?? ""
-              }`
-            : status === "failed"
-            ? `Failed to import NPC PDF (${errorCode ?? "unknown"}): ${
-                error ?? ""
-              }`
-            : "Uploading NPC PDF..."}
-        </Alert>
-      </Snackbar>
-      {showLog && <NpcLog />}
-    </div>
+    <PdfUpload<{ npcs: NpcData[] }>
+      label="Upload NPC PDF"
+      taskLabel="Import NPC PDF"
+      parseTask="ParseNpcPdf"
+      world={world}
+      logComponent={<NpcLog />}
+      onParsed={handleParsed}
+      onError={handleError}
+      getSuccessMessage={successMessage}
+    />
   );
 }
+
