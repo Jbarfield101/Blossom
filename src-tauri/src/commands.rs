@@ -67,6 +67,12 @@ impl<R: Runtime> LogEmitter for Window<R> {
     }
 }
 
+impl<R: Runtime> LogEmitter for AppHandle<R> {
+    fn emit_event(&self, event: &str, payload: String) {
+        let _ = Emitter::emit(self, event, payload);
+    }
+}
+
 /* ==============================
 ComfyUI launcher (no extra crate)
 ============================== */
@@ -172,7 +178,7 @@ pub async fn comfy_status() -> Result<bool, String> {
 }
 
 #[tauri::command]
-pub async fn comfy_start<R: Runtime>(window: Window<R>, dir: String) -> Result<(), String> {
+pub async fn comfy_start<R: Runtime>(app: AppHandle<R>, dir: String) -> Result<(), String> {
     {
         let lock = COMFY_CHILD.get_or_init(|| Mutex::new(None)).lock().unwrap();
         if lock.is_some() {
@@ -181,7 +187,7 @@ pub async fn comfy_start<R: Runtime>(window: Window<R>, dir: String) -> Result<(
     }
 
     let dir = if dir.trim().is_empty() {
-        default_comfy_path(&window.app_handle())
+        default_comfy_path(&app)
     } else {
         PathBuf::from(dir)
     };
@@ -201,7 +207,7 @@ pub async fn comfy_start<R: Runtime>(window: Window<R>, dir: String) -> Result<(
         .arg("8188")
         .arg("--listen"); // remove if you only want localhost
 
-    let child = spawn_with_logging(cmd, window, "comfy_log")
+    let child = spawn_with_logging(cmd, app, "comfy_log")
         .map_err(|e| format!("Failed to start ComfyUI: {e}"))?;
 
     {
