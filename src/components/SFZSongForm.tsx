@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { resolveResource } from "@tauri-apps/api/path";
-import { Alert, Snackbar } from "@mui/material";
+import { Alert, Snackbar, LinearProgress } from "@mui/material";
+import { loadSfz } from "../utils/sfzLoader";
 import { useTasks } from "../store/tasks";
 
 interface Section {
@@ -27,6 +28,9 @@ export default function SFZSongForm() {
   const [title, setTitle] = useState("");
   const [outDir, setOutDir] = useState("");
   const [sfzInstrument, setSfzInstrument] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [status, setStatus] = useState<string | null>(null);
   const [lofiFilter, setLofiFilter] = useState(() => {
     const stored = localStorage.getItem("lofiFilter");
     return stored === null ? false : stored === "true";
@@ -44,6 +48,25 @@ export default function SFZSongForm() {
     }
   }
 
+  async function loadInstrument(path: string) {
+    setLoading(true);
+    setProgress(0);
+    setStatus(null);
+    try {
+      await loadSfz(path, (loaded, total) => {
+        setProgress(total ? loaded / total : 0);
+      });
+      setSfzInstrument(path);
+      localStorage.setItem("sfzInstrument", path);
+      setStatus(`Loaded instrument: ${path}`);
+    } catch (e) {
+      console.error(e);
+      setError(String(e));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function pickSfzInstrument() {
     try {
       const file = await openDialog({
@@ -51,8 +74,7 @@ export default function SFZSongForm() {
         filters: [{ name: "SFZ Instrument", extensions: ["sfz"] }],
       });
       if (file) {
-        setSfzInstrument(file as string);
-        localStorage.setItem("sfzInstrument", file as string);
+        await loadInstrument(file as string);
       }
     } catch (e) {
       console.error(e);
@@ -65,8 +87,7 @@ export default function SFZSongForm() {
       const path = await resolveResource(
         "sfz_sounds/UprightPianoKW-20220221.sfz"
       );
-      setSfzInstrument(path);
-      localStorage.setItem("sfzInstrument", path);
+      await loadInstrument(path);
     } catch (e) {
       console.error(e);
       setError(String(e));
@@ -74,12 +95,15 @@ export default function SFZSongForm() {
   }
 
   useEffect(() => {
-    const stored = localStorage.getItem("sfzInstrument");
-    if (stored) {
-      setSfzInstrument(stored);
-    } else {
-      loadAcousticGrand();
+    async function init() {
+      const stored = localStorage.getItem("sfzInstrument");
+      if (stored) {
+        await loadInstrument(stored);
+      } else {
+        await loadAcousticGrand();
+      }
     }
+    init();
   }, []);
 
   useEffect(() => {
@@ -116,10 +140,20 @@ export default function SFZSongForm() {
       <button onClick={pickFolder}>
         {outDir ? `Output: ${outDir}` : "Choose Output Folder"}
       </button>
-      <button onClick={pickSfzInstrument}>
+      <button onClick={pickSfzInstrument} disabled={loading}>
         {sfzInstrument ? "Change SFZ" : "Pick SFZ Instrument"}
       </button>
-      <button onClick={loadAcousticGrand}>Load Acoustic Grand</button>
+      <button onClick={loadAcousticGrand} disabled={loading}>
+        Load Acoustic Grand
+      </button>
+      {loading && (
+        <LinearProgress
+          variant="determinate"
+          value={progress * 100}
+          sx={{ my: 1 }}
+        />
+      )}
+      {!loading && status && <div>{status}</div>}
       <label>
         <input
           type="checkbox"
@@ -130,7 +164,7 @@ export default function SFZSongForm() {
       </label>
       <button
         onClick={generate}
-        disabled={!title || !outDir || !sfzInstrument}
+        disabled={!title || !outDir || !sfzInstrument || loading}
       >
         Generate
       </button>
