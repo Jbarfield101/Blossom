@@ -255,7 +255,23 @@ def extract_npcs(path: str, db_path: str | Path | None = None):
         if not lines:
             continue
         data = {}
+        # If the first line doesn't contain a key-value pair, treat it as the NPC's name.
+        if lines and ":" not in lines[0]:
+            data["name"] = lines.pop(0).strip()
         current = None
+        heading = None
+        first_line = lines[0].strip()
+        m = re.search(r"\b([A-Za-z/ ]+):", first_line)
+        if m and m.start() > 0:
+            heading = first_line[: m.start()].strip()
+            rest = first_line[m.start():].strip()
+            if rest:
+                lines[0] = rest
+            else:
+                lines = lines[1:]
+        elif ":" not in first_line:
+            heading = first_line
+            lines = lines[1:]
         list_fields = {"traits", "quirks", "inventory", "equipment", "items"}
         synonym_map = {
             "class/role": "role",
@@ -283,6 +299,8 @@ def extract_npcs(path: str, db_path: str | Path | None = None):
                     data[current][-1] += " " + line.strip()
                 elif current:
                     data[current] = f"{data.get(current, '')} {line.strip()}".strip()
+        if "name" not in data and heading:
+            data["name"] = heading.strip()
         if not data:
             continue
 

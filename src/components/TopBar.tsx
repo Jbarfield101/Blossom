@@ -1,15 +1,22 @@
 import { IconButton, Tooltip, Badge } from "@mui/material";
 import type { SxProps } from "@mui/material";
 import { fixedIconButtonSx } from "./sx";
-import { FaHome, FaWrench, FaUser, FaTasks, FaArrowLeft } from "react-icons/fa";
-import MenuBookIcon from "@mui/icons-material/MenuBook";
+import {
+  FaHome,
+  FaWrench,
+  FaTasks,
+  FaArrowLeft,
+  FaDiceD20,
+  FaCameraRetro,
+  FaMusic,
+  FaCalendarAlt,
+} from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import SettingsDrawer from "./SettingsDrawer";
 import ErrorBoundary from "./ErrorBoundary";
 import TaskDrawer from "./TaskDrawer";
 import { useTasks } from "../store/tasks";
-import { useUsers } from "../features/users/useUsers";
 
 export default function TopBar() {
   const nav = useNavigate();
@@ -20,10 +27,7 @@ export default function TopBar() {
     Object.values(s.tasks).filter((t) => t.status === "queued" || t.status === "running").length
   );
   const subscribe = useTasks((s) => s.subscribe);
-  const userName = useUsers((s) => {
-    const id = s.currentUserId;
-    return id ? s.users[id]?.name : null;
-  });
+  const isHome = pathname === "/";
 
   useEffect(() => {
     let unlisten: (() => void) | null = null;
@@ -45,82 +49,116 @@ export default function TopBar() {
 
   return (
     <>
-      <Tooltip title="Back">
-        <IconButton
-          onClick={() => nav(-1)}
-          sx={{
-            ...fixedIconButtonSx,
-            left: { xs: 8, sm: 12 },
-          }}
-          aria-label="Back"
-        >
-          <FaArrowLeft />
-        </IconButton>
-      </Tooltip>
+      {!isHome && (
+        <>
+          <Tooltip title="Back">
+            <IconButton
+              onClick={() => nav(-1)}
+              sx={{
+                ...fixedIconButtonSx,
+                left: { xs: 8, sm: 12 },
+              }}
+              aria-label="Back"
+            >
+              <FaArrowLeft />
+            </IconButton>
+          </Tooltip>
 
-      <Tooltip title="Home">
-        <IconButton
-          onClick={() => nav("/")}
-          sx={{
-            ...fixedIconButtonSx,
-            left: { xs: 44, sm: 60 },
-            ...activeSx("/"),
-          }}
-          aria-label="Home"
-          aria-current={pathname === "/" ? "page" : undefined}
-        >
-          <FaHome />
-        </IconButton>
-      </Tooltip>
+          <Tooltip title="Home">
+            <IconButton
+              onClick={() => nav("/")}
+              sx={{
+                ...fixedIconButtonSx,
+                left: { xs: 44, sm: 60 },
+                ...activeSx("/"),
+              }}
+              aria-label="Home"
+              aria-current={pathname === "/" ? "page" : undefined}
+            >
+              <FaHome />
+            </IconButton>
+          </Tooltip>
 
-      <Tooltip title={userName ? `User: ${userName}` : "User"}>
-        <IconButton
-          onClick={() => nav("/user")}
-          sx={{
-            ...fixedIconButtonSx,
-            left: { xs: 80, sm: 108 },
-            ...activeSx("/user"),
-          }}
-          aria-label="User"
-          aria-current={pathname === "/user" ? "page" : undefined}
-        >
-          <FaUser />
-        </IconButton>
-      </Tooltip>
+          <Tooltip title="D&D">
+            <IconButton
+              onClick={() => nav("/dnd")}
+              sx={{
+                ...fixedIconButtonSx,
+                left: { xs: 80, sm: 108 },
+                ...activeSx("/dnd"),
+              }}
+              aria-label="D&D"
+              aria-current={pathname === "/dnd" ? "page" : undefined}
+            >
+              <FaDiceD20 />
+            </IconButton>
+          </Tooltip>
 
-      <Tooltip title="NPC Library">
-        <IconButton
-          onClick={() => nav("/dnd/npcs-library")}
-          sx={{
-            ...fixedIconButtonSx,
-            left: { xs: 116, sm: 156 },
-            ...activeSx("/dnd/npcs-library"),
-          }}
-          aria-label="NPC Library"
-          aria-current={pathname === "/dnd/npcs-library" ? "page" : undefined}
-        >
-          <MenuBookIcon />
-        </IconButton>
-      </Tooltip>
+          <Tooltip title="ComfyUI">
+            <IconButton
+              onClick={() => nav("/comfy")}
+              sx={{
+                ...fixedIconButtonSx,
+                left: { xs: 116, sm: 156 },
+                ...activeSx("/comfy"),
+              }}
+              aria-label="ComfyUI"
+              aria-current={pathname === "/comfy" ? "page" : undefined}
+            >
+              <FaCameraRetro />
+            </IconButton>
+          </Tooltip>
 
-      <Tooltip title="Tasks">
-        <Badge badgeContent={taskCount} color="secondary" invisible={taskCount === 0}>
-          <IconButton
-            onClick={() => setTaskOpen(true)}
-            sx={{
-              ...fixedIconButtonSx,
-              right: { xs: 44, sm: 60 },
-              color: taskOpen ? "#000" : "white",
-              backgroundColor: taskOpen ? "#fff" : "transparent",
-              borderRadius: 4,
-            }}
-            aria-label="Tasks"
-            aria-expanded={taskOpen}
-          >
-            <FaTasks />
-          </IconButton>
-        </Badge>
-      </Tooltip>
+          <Tooltip title="Music">
+            <IconButton
+              onClick={() => nav("/music")}
+              sx={{
+                ...fixedIconButtonSx,
+                left: { xs: 152, sm: 204 },
+                ...activeSx("/music"),
+              }}
+              aria-label="Music"
+              aria-current={pathname === "/music" ? "page" : undefined}
+            >
+              <FaMusic />
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title="Calendar">
+            <IconButton
+              onClick={() => nav("/calendar")}
+              sx={{
+                ...fixedIconButtonSx,
+                left: { xs: 188, sm: 252 },
+                ...activeSx("/calendar"),
+              }}
+              aria-label="Calendar"
+              aria-current={pathname === "/calendar" ? "page" : undefined}
+            >
+              <FaCalendarAlt />
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title="Tasks">
+            <Badge badgeContent={taskCount} color="secondary" invisible={taskCount === 0}>
+              <IconButton
+                onClick={() => setTaskOpen(true)}
+                sx={{
+                  ...fixedIconButtonSx,
+                  right: { xs: 44, sm: 60 },
+                  color: taskOpen ? "#000" : "white",
+                  backgroundColor: taskOpen ? "#fff" : "transparent",
+                  borderRadius: 4,
+                }}
+                aria-label="Tasks"
+                aria-expanded={taskOpen}
+              >
+                <FaTasks />
+              </IconButton>
+            </Badge>
+          </Tooltip>
+        </>
+      )}
 
       <Tooltip title="Settings">
         <IconButton

@@ -135,6 +135,7 @@ const MODULE_LABELS: Record<ModuleKey, string> = {
   shorts: "Shorts",
   chores: "Chores",
   construction: "Under Construction",
+  video: "Video Editor",
 };
 
 interface SettingsDrawerProps {
@@ -202,8 +203,6 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
     pythonPath,
     defaultPythonPath,
     setPythonPath,
-    comfyPath,
-    setComfyPath,
     error: pathsError,
     clearError: clearPathsError,
   } = usePaths();
@@ -239,13 +238,11 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   const [generatingAmbience, setGeneratingAmbience] = useState(false);
 
   const [pythonDraft, setPythonDraft] = useState(pythonPath);
-  const [comfyDraft, setComfyDraft] = useState(comfyPath);
   const [folderDraft, setFolderDraft] = useState(folder);
   const [themeDraft, setThemeDraft] = useState<Theme>(theme);
   const [editPython, setEditPython] = useState(false);
 
   useEffect(() => setPythonDraft(pythonPath), [pythonPath]);
-  useEffect(() => setComfyDraft(comfyPath), [comfyPath]);
   useEffect(() => setFolderDraft(folder), [folder]);
   useEffect(() => setThemeDraft(theme), [theme]);
   type Section =
@@ -269,7 +266,6 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   const baseIndex = [
     { label: "Current User", section: "user" as Section, elementId: "current-user" },
     { label: "Python Path", section: "environment" as Section, elementId: "python-path" },
-    { label: "ComfyUI Folder", section: "environment" as Section, elementId: "comfy-path" },
     { label: "Default Save Folder", section: "environment" as Section, elementId: "output-folder" },
     { label: "BPM", section: "editor" as Section, elementId: "bpm" },
     { label: "Key", section: "editor" as Section, elementId: "key" },
@@ -372,25 +368,17 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
           )}
         </Box>
       )}
-  <PathField
-    id="comfy-path"
-    label="ComfyUI Folder"
-    value={comfyDraft}
-    onChange={setComfyDraft}
-    directory
-  />
-  <Button
-    variant="contained"
-    sx={{ mt: 2 }}
-    onClick={() => {
-      setPythonPath(pythonDraft);
-      setComfyPath(comfyDraft);
-      setPathsSaved(true);
-      setEditPython(false);
-    }}
-  >
-    Save Paths
-  </Button>
+      <Button
+        variant="contained"
+        sx={{ mt: 2 }}
+        onClick={() => {
+          setPythonPath(pythonDraft);
+          setPathsSaved(true);
+          setEditPython(false);
+        }}
+      >
+        Save Paths
+      </Button>
       <Typography variant="subtitle1" sx={{ mt: 3 }}>
         Output
       </Typography>

@@ -309,7 +309,7 @@ export default function GeneralChat() {
   }
 
   return (
-    <Box sx={{ height: "100vh", display: "flex" }}>
+    <Box sx={{ height: "calc(100vh - var(--top-bar-height))", display: "flex" }}>
       <Box
         sx={{
           width: 200,

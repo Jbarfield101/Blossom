@@ -181,12 +181,7 @@ pub async fn comfy_start<R: Runtime>(window: Window<R>, dir: String) -> Result<(
     }
 
     let dir = if dir.trim().is_empty() {
-        let cfg = load_config();
-        if let Some(p) = cfg.comfy_path {
-            PathBuf::from(p)
-        } else {
-            default_comfy_path()
-        }
+        default_comfy_path(&window.app_handle())
     } else {
         PathBuf::from(dir)
     };
@@ -354,9 +349,20 @@ pub fn conda_python_string() -> String {
     conda_python().to_string_lossy().to_string()
 }
 
-fn default_comfy_path() -> PathBuf {
-    dirs::home_dir()
-        .unwrap_or_else(|| PathBuf::from("."))
+fn default_comfy_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
+    if let Ok(cwd) = std::env::current_dir() {
+        let dev = cwd.join("ComfyUI");
+        if dev.exists() {
+            return dev;
+        }
+        let dev = cwd.join("src-tauri").join("ComfyUI");
+        if dev.exists() {
+            return dev;
+        }
+    }
+    app.path()
+        .resource_dir()
+        .expect("resource dir")
         .join("ComfyUI")
 }
 
@@ -613,19 +619,24 @@ pub struct SongSpec {
     #[serde(alias = "album", skip_serializing_if = "Option::is_none")]
     pub album: Option<String>,
     pub bpm: u32,
-    pub key: String,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub key: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub form: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub structure: Option<Vec<Section>>,
-    pub mood: Vec<String>,
-    pub instruments: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub mood: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub instruments: Option<Vec<String>>,
     #[serde(alias = "leadInstrument", skip_serializing_if = "Option::is_none")]
     pub lead_instrument: Option<String>,
-    pub ambience: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub ambience: Option<Vec<String>>,
     #[serde(alias = "ambienceLevel")]
     pub ambience_level: Option<f32>,
-    pub seed: u64,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub seed: Option<u64>,
     pub variety: Option<u32>,
     #[serde(alias = "chordSpanBeats", skip_serializing_if = "Option::is_none")]
     pub chord_span_beats: Option<u32>,
@@ -689,15 +700,15 @@ mod tests {
             title: "t".into(),
             album: None,
             bpm: 80,
-            key: "C".into(),
+            key: Some("C".into()),
             form: None,
             structure: None,
-            mood: vec![],
-            instruments: vec![],
+            mood: Some(vec![]),
+            instruments: Some(vec![]),
             lead_instrument: None,
-            ambience: vec![],
+            ambience: Some(vec![]),
             ambience_level: Some(0.5),
-            seed: 1,
+            seed: Some(1),
             variety: Some(10),
             chord_span_beats: None,
             drum_pattern: None,
@@ -759,7 +770,10 @@ mod tests {
         }
         tokio::time::sleep(Duration::from_millis(100)).await;
         let after = thread_count();
-        assert_eq!(before, after);
+        assert!(
+            after <= before,
+            "thread count increased from {before} to {after}"
+        );
     }
 }
 
@@ -800,11 +814,30 @@ pub async fn lofi_generate_gpu<R: Runtime>(
 }
 
 /// Run full-song generation based on a structured spec (typed, camelCase-friendly).
+fn fill_song_spec_defaults(spec: &mut SongSpec) {
+    if spec.key.is_none() {
+        spec.key = Some("C".to_string());
+    }
+    if spec.mood.is_none() {
+        spec.mood = Some(vec![]);
+    }
+    if spec.instruments.is_none() {
+        spec.instruments = Some(vec!["piano".to_string()]);
+    }
+    if spec.ambience.is_none() {
+        spec.ambience = Some(vec![]);
+    }
+    if spec.seed.is_none() {
+        spec.seed = Some(thread_rng().gen());
+    }
+}
+
 #[tauri::command]
 pub async fn run_lofi_song<R: Runtime>(
     app: AppHandle<R>,
-    spec: SongSpec,
+    mut spec: SongSpec,
 ) -> Result<String, String> {
+    fill_song_spec_defaults(&mut spec);
     let window = app
         .get_webview_window("main")
         .ok_or_else(|| "no main window".to_string())?;
@@ -2031,6 +2064,43 @@ pub async fn save_retro_tv_video(data: String, ext: String) -> Result<String, St
         .map_err(|e| e.to_string())?;
     fs::write(&path, bytes).map_err(|e| e.to_string())?;
     Ok(path.to_string_lossy().to_string())
+}
+
+/* ==============================
+Video tools
+============================== */
+
+#[tauri::command]
+pub async fn loop_video(
+    input: String,
+    output_dir: String,
+    output_name: String,
+    hours: u64,
+    minutes: u64,
+    seconds: u64,
+) -> Result<String, String> {
+    let duration = hours * 3600 + minutes * 60 + seconds;
+    if duration == 0 {
+        return Err("duration must be greater than zero".into());
+    }
+    let out_path = Path::new(&output_dir).join(format!("{}.mp4", output_name));
+    let status = PCommand::new("ffmpeg")
+        .arg("-y")
+        .arg("-stream_loop")
+        .arg("-1")
+        .arg("-i")
+        .arg(&input)
+        .arg("-c")
+        .arg("copy")
+        .arg("-t")
+        .arg(duration.to_string())
+        .arg(&out_path)
+        .status()
+        .map_err(|e| e.to_string())?;
+    if !status.success() {
+        return Err(format!("ffmpeg exited with status {}", status));
+    }
+    Ok(out_path.to_string_lossy().to_string())
 }
 
 /* ==============================

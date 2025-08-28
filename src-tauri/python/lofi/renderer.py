@@ -1635,7 +1635,9 @@ def render_from_spec(spec: Dict[str, Any]) -> Tuple[AudioSegment, int]:
         except Exception:
             pass
     bpm = int(spec.get("bpm", 80))
-    seed = int(spec.get("seed", 12345))
+    seed = int(spec.get("seed") or random.randrange(2**32))
+    random.seed(seed)
+    np.random.seed(seed)
 
     try:
         v = spec.get("variety", 60)

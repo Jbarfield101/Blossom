@@ -17,6 +17,7 @@ type ModuleKey =
   | 'shorts'
   | 'chores'
   | 'construction'
+  | 'video'
   | 'sfz';
 
 type ModulesState = Record<ModuleKey, boolean>;
@@ -36,6 +37,7 @@ const defaultModules: ModulesState = {
   shorts: true,
   chores: true,
   construction: true,
+  video: true,
   sfz: true,
 };
 

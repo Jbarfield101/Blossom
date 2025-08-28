@@ -34,12 +34,12 @@ pip install -r requirements.txt  # base dependencies including Bark
 `audioop-lts` is included in the requirements and will be installed automatically on
 Python 3.13+ to replace the removed `audioop` module.
 
-`bark` (>=0.1.5) provides text‑to‑speech support and depends on `torch` (>=2.8.0)
+`bark` (>=0.1.6) provides text‑to‑speech support and depends on `torch` (>=2.8.0)
 and `soundfile` (>=0.13.1). These packages are included in `requirements.txt`, or
 install them separately with:
 
 ```bash
-pip install bark>=0.1.5 torch>=2.8.0 soundfile>=0.13.1
+pip install bark>=0.1.6 torch>=2.8.0 soundfile>=0.13.1
 ```
 
 ## Running the Tauri app
@@ -49,9 +49,10 @@ npm run tauri dev    # start the app in development mode
 npm run tauri build  # build a release bundle
 ```
 
-The Rust backend can launch local tools such as ComfyUI and Ollama. Set the
-ComfyUI folder location in the app's Settings page. Python is detected
-automatically, and you can adjust the interpreter path from Settings if needed.
+The Rust backend can launch local tools such as ComfyUI and Ollama. ComfyUI is
+bundled and starts automatically without any folder configuration. Python is
+detected automatically, and you can adjust the interpreter path from Settings if
+needed.
 Install the [`ollama`](https://github.com/ollama/ollama) CLI separately if you
 plan to use the general chat features; the Python package is not required.
 
@@ -133,8 +134,9 @@ When a user uploads a video, it plays automatically on an endless loop.
 - **Stock data provider:** Set `STOCKS_PROVIDER=twelvedata` and provide a
   `TWELVEDATA_API_KEY` to fetch quotes and time series from Twelve Data. The
   free tier allows up to 800 requests per day and 8 per minute.
-- **Paths:** Set the ComfyUI directory in the Settings page. The Python
-  interpreter path is detected automatically but can be changed there if needed.
+- **Paths:** ComfyUI is bundled and starts automatically, so no directory needs
+  to be configured. The Python interpreter path is detected automatically but
+  can be changed there if needed.
 - **Blender path:** If Blender is not on your system `PATH`, set the
   `BLENDER_PATH` environment variable to the Blender executable so `/objects/blender`
   can run scripts.

@@ -22,6 +22,14 @@ def load_model() -> None:
     """Load Bark models, using the GPU when available."""
     if preload_models is None:
         raise RuntimeError("bark library is not installed") from _import_error
+    import numpy
+    import torch.serialization
+
+    torch.serialization.add_safe_globals([
+        (numpy._core.multiarray.scalar, 'numpy.core.multiarray.scalar'),
+        numpy.dtype,
+        numpy.dtypes.Float64DType,
+    ])
 
     use_gpu = torch.cuda.is_available()
     preload_models(

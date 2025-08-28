@@ -6,7 +6,7 @@ export default function Objects() {
   return (
     <div
       style={{
-        height: "100vh",
+        height: "calc(100vh - var(--top-bar-height))",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",

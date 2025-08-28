@@ -28,15 +28,12 @@ describe('SFZSongForm', () => {
   });
 
   it('enqueues GenerateSong with empty arrays', async () => {
-    (openDialog as any)
-      .mockResolvedValueOnce('/tmp/out')
-      .mockResolvedValueOnce('/tmp/piano.sfz');
+    (openDialog as any).mockResolvedValueOnce('/tmp/out');
 
     render(<SFZSongForm />);
     fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'Test' } });
     fireEvent.click(screen.getByText('Choose Output Folder'));
     await screen.findByText('Output: /tmp/out');
-    fireEvent.click(screen.getByText('Pick SFZ Instrument'));
     await screen.findByText('Change SFZ');
 
     fireEvent.click(screen.getByText('Generate'));
@@ -45,6 +42,9 @@ describe('SFZSongForm', () => {
     expect(args.id).toBe('GenerateSong');
     expect(args.spec.instruments).toEqual([]);
     expect(args.spec.ambience).toEqual([]);
+    expect(args.spec.bpm).toBe(64);
+    expect(typeof args.spec.seed).toBe('number');
+    expect(args.spec.seed).toBeLessThan(2 ** 32);
   });
 });
 

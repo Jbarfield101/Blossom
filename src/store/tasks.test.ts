@@ -61,11 +61,6 @@ describe('enqueueTask validation', () => {
       outDir: '/tmp/out',
       title: 't',
       bpm: 120,
-      key: 'C',
-      mood: ['chill'],
-      instruments: ['piano'],
-      ambience: ['rain'],
-      seed: 1,
     };
     const id = await useTasks.getState().enqueueTask('GenerateSong', { spec });
     expect(id).toBe(1);

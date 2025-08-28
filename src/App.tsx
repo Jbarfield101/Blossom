@@ -1,5 +1,6 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { Box } from "@mui/material";
 import TopBar from "./components/TopBar";
 import ErrorBoundary from "./components/ErrorBoundary";
 import CreateUserDialog from "./components/CreateUserDialog";
@@ -36,6 +37,7 @@ import Simulation from "./pages/Simulation";
 import BigBrother from "./pages/BigBrother";
 import Voices from "./pages/Voices";
 import TagManager from "./pages/TagManager";
+import VideoEditor from "./pages/VideoEditor";
 
 export default function App() {
   const { pathname } = useLocation();
@@ -61,39 +63,42 @@ export default function App() {
             <RetroTV>NO SIGNAL</RetroTV>
           )}
         <CreateUserDialog open={showUserDialog} onClose={() => setShowUserDialog(false)} />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/objects" element={<Objects />} />
-        <Route path="/objects/blender" element={<Blender />} />
-        <Route path="/music" element={<Music />} />
-        <Route path="/sfz-music" element={<SFZMusic />} />
-        <Route path="/calendar" element={<Calendar />} />
-        <Route path="/comfy" element={<Comfy />} />
-        <Route path="/assistant" element={<Assistant />} />
-        <Route path="/assistant/general-chat" element={<GeneralChat />} />
-        <Route path="/assistant/seo" element={<Seo />} />
-        <Route path="/dnd/world-builder" element={<WorldBuilder />} />
-        <Route path="/dnd/npcs-maker" element={<NPCMaker />} />
-        <Route path="/dnd/npcs-library" element={<NPCList />} />
-        <Route path="/dnd/npcs/:id" element={<NPCDetail />} />
-        <Route path="/dnd/world-inventory" element={<WorldInventory />} />
-        <Route path="/laser" element={<Laser />} />
-        <Route path="/fusion" element={<Fusion />} />
-        <Route path="/construction" element={<Construction />} />
-        <Route path="/lofi" element={<Lofi />} />
-        <Route path="/voices" element={<Voices />} />
-        <Route path="/tags" element={<TagManager />} />
-        <Route path="/stocks" element={<Stocks />} />
-        <Route path="/shorts" element={<Shorts />} />
-        <Route path="/chores" element={<Chores />} />
-        <Route path="/system" element={<SystemInfo />} />
-        <Route path="/transcription" element={<Transcription />} />
-        <Route path="/simulation" element={<Simulation />} />
-        <Route path="/big-brother" element={<BigBrother />} />
-        <Route path="/dnd" element={<DND />} />
-        <Route path="/user" element={<User />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <Box sx={{ pt: 'var(--top-bar-height)' }}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/objects" element={<Objects />} />
+          <Route path="/objects/blender" element={<Blender />} />
+          <Route path="/music" element={<Music />} />
+          <Route path="/sfz-music" element={<SFZMusic />} />
+          <Route path="/calendar" element={<Calendar />} />
+          <Route path="/comfy" element={<Comfy />} />
+          <Route path="/assistant" element={<Assistant />} />
+          <Route path="/assistant/general-chat" element={<GeneralChat />} />
+          <Route path="/assistant/seo" element={<Seo />} />
+          <Route path="/dnd/world-builder" element={<WorldBuilder />} />
+          <Route path="/dnd/npcs-maker" element={<NPCMaker />} />
+          <Route path="/dnd/npcs-library" element={<NPCList />} />
+          <Route path="/dnd/npcs/:id" element={<NPCDetail />} />
+          <Route path="/dnd/world-inventory" element={<WorldInventory />} />
+          <Route path="/laser" element={<Laser />} />
+          <Route path="/fusion" element={<Fusion />} />
+          <Route path="/construction" element={<Construction />} />
+          <Route path="/lofi" element={<Lofi />} />
+          <Route path="/voices" element={<Voices />} />
+          <Route path="/tags" element={<TagManager />} />
+          <Route path="/stocks" element={<Stocks />} />
+          <Route path="/shorts" element={<Shorts />} />
+          <Route path="/video-editor" element={<VideoEditor />} />
+          <Route path="/chores" element={<Chores />} />
+          <Route path="/system" element={<SystemInfo />} />
+          <Route path="/transcription" element={<Transcription />} />
+          <Route path="/simulation" element={<Simulation />} />
+          <Route path="/big-brother" element={<BigBrother />} />
+          <Route path="/dnd" element={<DND />} />
+          <Route path="/user" element={<User />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Box>
     </ErrorBoundary>
   );
 }
