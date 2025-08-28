@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { usePaths } from "../features/paths/usePaths";
 import PromptManager from "../components/PromptManager";
 import { useComfyTutorial } from "../features/comfyTutorial/useComfyTutorial";
 
@@ -10,7 +9,6 @@ export default function Comfy() {
   const [running, setRunning] = useState(false);
   const [log, setLog] = useState<string[]>([]);
   const [pingOk, setPingOk] = useState(false);
-  const { comfyPath } = usePaths();
   const { showTutorial, setShowTutorial } = useComfyTutorial();
 
   useEffect(() => {
@@ -42,12 +40,8 @@ export default function Comfy() {
   }, [running]);
 
   const start = async () => {
-    if (!comfyPath) {
-      setLog((prev) => [...prev, "Set ComfyUI folder in Settings first."]); 
-      return;
-    }
     try {
-      await invoke("comfy_start", { dir: comfyPath });
+      await invoke("comfy_start", { dir: "" });
       setRunning(true);
       setTimeout(() => setPingOk(true), 2000);
     } catch (e: any) {
@@ -69,11 +63,10 @@ export default function Comfy() {
     <div style={styles.wrap}>
       {showTutorial && (
         <div style={styles.tut}>
-          <h3 style={{ marginTop: 0 }}>Connect Blossom to ComfyUI</h3>
+          <h3 style={{ marginTop: 0 }}>ComfyUI Tutorial</h3>
           <ol style={{ marginTop: 4 }}>
-            <li>Install ComfyUI; the folder should contain <code>main.py</code>.</li>
-            <li>Open Settings → Paths and set "ComfyUI Folder" to that directory.</li>
-            <li>Return here and click Start to launch ComfyUI.</li>
+            <li>ComfyUI is bundled with Blossom; no folder setup is required.</li>
+            <li>Click Start to launch ComfyUI.</li>
           </ol>
           <button onClick={() => setShowTutorial(false)} style={styles.tutBtn}>Got it</button>
         </div>
