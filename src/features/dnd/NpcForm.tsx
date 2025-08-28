@@ -710,6 +710,9 @@ export default function NpcForm({ world }: Props) {
                 }
                 fullWidth
                 margin="normal"
+                multiline
+                minRows={4}
+                maxRows={12}
               />
             </Grid>
             <Grid item xs={12}>
