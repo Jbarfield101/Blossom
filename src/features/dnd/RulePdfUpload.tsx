@@ -7,11 +7,6 @@ interface RuleRecord {
   description: string;
 }
 
-interface RuleIndexEntry {
-  id: string;
-  name: string;
-}
-
 const OFFICIAL_RULES = new Set([
   "Ability Checks",
   "Advantage and Disadvantage",
@@ -28,7 +23,7 @@ export default function RulePdfUpload() {
       description: r.description,
       tags: OFFICIAL_RULES.has(r.name) ? ["core"] : ["custom"],
     }));
-    const existing = await invoke<RuleIndexEntry[]>("list_rules");
+    const existing = await invoke<RuleData[]>("list_rules");
     for (const rule of parsed) {
       const dup = existing.find((e) => e.id === rule.id || e.name === rule.name);
       let overwrite = true;
