@@ -38,7 +38,7 @@ describe('SFZSongForm', () => {
 
   it('renders form with lofi filter off', async () => {
     render(<SFZSongForm />);
-    expect(screen.getByPlaceholderText('Title')).toBeInTheDocument();
+    expect(screen.getByLabelText('Title')).toBeInTheDocument();
     expect(screen.getByText('Choose Output Folder')).toBeInTheDocument();
     await screen.findByText('Change SFZ');
     const lofi = screen.getByLabelText('Lofi Filter');
@@ -49,7 +49,7 @@ describe('SFZSongForm', () => {
     (openDialog as any).mockResolvedValueOnce('/tmp/out');
 
     render(<SFZSongForm />);
-    fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'Test' } });
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Test' } });
     fireEvent.click(screen.getByText('Choose Output Folder'));
     await screen.findByText('Output: /tmp/out');
     await screen.findByText('Change SFZ');
@@ -70,7 +70,7 @@ describe('SFZSongForm', () => {
     (openDialog as any).mockResolvedValueOnce('/tmp/out');
 
     render(<SFZSongForm />);
-    fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'Test' } });
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Test' } });
     fireEvent.click(screen.getByText('Choose Output Folder'));
     await screen.findByText('Output: /tmp/out');
     await screen.findByText('Change SFZ');
@@ -93,7 +93,7 @@ describe('SFZSongForm', () => {
 
     (openDialog as any).mockResolvedValueOnce('/tmp/out');
     render(<SFZSongForm />);
-    fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'Test' } });
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Test' } });
     fireEvent.click(screen.getByText('Choose Output Folder'));
     await screen.findByText('Output: /tmp/out');
     fireEvent.click(screen.getByText('Generate'));
