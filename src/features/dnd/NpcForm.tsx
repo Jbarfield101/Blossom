@@ -11,6 +11,7 @@ import {
   AccordionDetails,
   Autocomplete,
   IconButton,
+  Tooltip,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import StarIcon from "@mui/icons-material/Star";
@@ -494,6 +495,7 @@ export default function NpcForm({ world }: Props) {
                 }}
                 fullWidth
                 margin="normal"
+                placeholder="Elf"
                 error={Boolean(errors.species)}
                 helperText={
                   <FormErrorText id="species-error">
@@ -514,6 +516,7 @@ export default function NpcForm({ world }: Props) {
                 }}
                 fullWidth
                 margin="normal"
+                placeholder="Blacksmith"
                 error={Boolean(errors.role)}
                 helperText={
                   <FormErrorText id="role-error">{errors.role}</FormErrorText>
@@ -532,6 +535,7 @@ export default function NpcForm({ world }: Props) {
                 }}
                 fullWidth
                 margin="normal"
+                placeholder="Chaotic Good"
                 error={Boolean(errors.alignment)}
                 helperText={
                   <FormErrorText id="alignment-error">
@@ -638,6 +642,7 @@ export default function NpcForm({ world }: Props) {
                   id={ability}
                   label={ability.charAt(0).toUpperCase() + ability.slice(1)}
                   type="number"
+                  placeholder="10"
                   value={(state as any)[ability]}
                   onChange={(e) => {
                     dispatch({ type: "SET_FIELD", field: ability as any, value: e.target.value });
@@ -660,7 +665,12 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={12}>
               <StyledTextField
                 id="inventory"
-                label="Inventory (comma separated)"
+                label={
+                  <Tooltip title="Example: torch, rope">
+                    <span>Inventory (comma separated)</span>
+                  </Tooltip>
+                }
+                placeholder="torch, rope"
                 value={state.inventory}
                 onChange={(e) => {
                   dispatch({ type: "SET_FIELD", field: "inventory", value: e.target.value });
@@ -717,7 +727,12 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={12}>
               <StyledTextField
                 id="hooks"
-                label="Hooks (comma separated)"
+                label={
+                  <Tooltip title="Example: owes party a favor">
+                    <span>Hooks (comma separated)</span>
+                  </Tooltip>
+                }
+                placeholder="owes party a favor"
                 value={state.hooks}
                 onChange={(e) => {
                   dispatch({ type: "SET_FIELD", field: "hooks", value: e.target.value });
@@ -911,7 +926,12 @@ export default function NpcForm({ world }: Props) {
                 <Grid item xs={12}>
                   <StyledTextField
                     id="statblock"
-                    label="Statblock JSON"
+                    label={
+                      <Tooltip title="Enter valid JSON; see docs">
+                        <span>Statblock JSON</span>
+                      </Tooltip>
+                    }
+                    placeholder='{"hp": 10}'
                     value={state.statblock}
                     onChange={(e) => {
                       dispatch({ type: "SET_FIELD", field: "statblock", value: e.target.value });
@@ -923,9 +943,13 @@ export default function NpcForm({ world }: Props) {
                     InputLabelProps={{ shrink: true }}
                     error={Boolean(errors.statblock)}
                     helperText={
-                      <FormErrorText id="statblock-error">
-                        {errors.statblock}
-                      </FormErrorText>
+                      errors.statblock ? (
+                        <FormErrorText id="statblock-error">
+                          {errors.statblock}
+                        </FormErrorText>
+                      ) : (
+                        "Enter valid JSON; see docs"
+                      )
                     }
                     aria-describedby={
                       errors.statblock ? "statblock-error" : undefined
@@ -935,7 +959,12 @@ export default function NpcForm({ world }: Props) {
                 <Grid item xs={12}>
                   <StyledTextField
                     id="sections"
-                    label="Custom Sections JSON"
+                    label={
+                      <Tooltip title="Enter valid JSON; see docs">
+                        <span>Custom Sections JSON</span>
+                      </Tooltip>
+                    }
+                    placeholder='{"notes": "Allies"}'
                     value={state.sections}
                     onChange={(e) => {
                       dispatch({ type: "SET_FIELD", field: "sections", value: e.target.value });
@@ -947,9 +976,13 @@ export default function NpcForm({ world }: Props) {
                     InputLabelProps={{ shrink: true }}
                     error={Boolean(errors.sections)}
                     helperText={
-                      <FormErrorText id="sections-error">
-                        {errors.sections}
-                      </FormErrorText>
+                      errors.sections ? (
+                        <FormErrorText id="sections-error">
+                          {errors.sections}
+                        </FormErrorText>
+                      ) : (
+                        "Enter valid JSON; see docs"
+                      )
                     }
                     aria-describedby={
                       errors.sections ? "sections-error" : undefined
