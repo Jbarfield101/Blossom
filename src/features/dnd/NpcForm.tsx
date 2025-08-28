@@ -124,7 +124,7 @@ export default function NpcForm({ world }: Props) {
   );
   const toggleFavorite = useVoices((s) => s.toggleFavorite);
   const loadVoices = useVoices((s) => s.load);
-  const loadNPCs = useNPCs((s) => s.loadNPCs);
+  const addNPC = useNPCs((s) => s.addNPC);
   useEffect(() => {
     loadVoices();
   }, [loadVoices]);
@@ -365,7 +365,7 @@ export default function NpcForm({ world }: Props) {
     if (parsed.success) {
       try {
         const saved = await invoke<NpcData>("save_npc", { world, npc: parsed.data });
-        await loadNPCs(world);
+        addNPC(saved);
         setResult(saved);
         dispatch({ type: "RESET" });
         setImportedName(null);
