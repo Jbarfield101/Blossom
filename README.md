@@ -49,8 +49,8 @@ npm run tauri dev    # start the app in development mode
 npm run tauri build  # build a release bundle
 ```
 
-The Rust backend can launch local tools such as ComfyUI and Ollama. Set the
-ComfyUI folder location in the app's Settings page. Python is detected
+The Rust backend can launch local tools such as ComfyUI and Ollama. ComfyUI is
+bundled and starts without any folder configuration. Python is detected
 automatically, and you can adjust the interpreter path from Settings if needed.
 Install the [`ollama`](https://github.com/ollama/ollama) CLI separately if you
 plan to use the general chat features; the Python package is not required.
@@ -133,8 +133,9 @@ When a user uploads a video, it plays automatically on an endless loop.
 - **Stock data provider:** Set `STOCKS_PROVIDER=twelvedata` and provide a
   `TWELVEDATA_API_KEY` to fetch quotes and time series from Twelve Data. The
   free tier allows up to 800 requests per day and 8 per minute.
-- **Paths:** Set the ComfyUI directory in the Settings page. The Python
-  interpreter path is detected automatically but can be changed there if needed.
+- **Paths:** ComfyUI is bundled, so no directory needs to be configured. The
+  Python interpreter path is detected automatically but can be changed there if
+  needed.
 - **Blender path:** If Blender is not on your system `PATH`, set the
   `BLENDER_PATH` environment variable to the Blender executable so `/objects/blender`
   can run scripts.
