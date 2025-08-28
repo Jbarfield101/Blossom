@@ -199,17 +199,33 @@ def _make_pdf(tmp_path, entries, use_bold=True, use_colon=False):
 
 def test_extract_rules_with_bold_headings(tmp_path):
     path = _make_pdf(tmp_path, [("Rule One", "Desc one"), ("Rule Two", "Desc two")], use_bold=True)
+
+    def fake_llm(text, prompt=None):
+        return json.dumps({"tags": ["test"], "sections": {"a": "b"}})
+
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(pdf_tools, "_llm_extract", fake_llm)
     res = pdf_tools.extract_rules(path)
+    monkeypatch.undo()
     names = [r["name"] for r in res["rules"]]
     assert names == ["Rule One", "Rule Two"]
+    assert res["rules"][0]["tags"] == ["test"]
 
 
 def test_extract_rules_with_colon_headings(tmp_path):
     entries = [("RULE THREE", "Third desc"), ("RULE FOUR", "Fourth desc")]
     path = _make_pdf(tmp_path, entries, use_bold=False, use_colon=True)
+
+    def fake_llm(text, prompt=None):
+        return json.dumps({"tags": ["test"], "sections": {"c": "d"}})
+
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(pdf_tools, "_llm_extract", fake_llm)
     res = pdf_tools.extract_rules(path)
+    monkeypatch.undo()
     names = [r["name"] for r in res["rules"]]
     assert names == ["RULE THREE", "RULE FOUR"]
+    assert res["rules"][0]["tags"] == ["test"]
 
 
 def test_extract_spells(tmp_path):
@@ -220,9 +236,17 @@ def test_extract_spells(tmp_path):
     path = tmp_path / "spells.pdf"
     pdf.output(str(path))
 
+    def fake_llm(text, prompt=None):
+        return json.dumps({"tags": ["evocation"], "sections": {"level": "1"}})
+
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(pdf_tools, "_llm_extract", fake_llm)
     res = pdf_tools.extract_spells(str(path))
+    monkeypatch.undo()
     spells = res["spells"]
-    assert spells == [{"name": "Magic Missile", "description": "A bolt of force."}]
+    assert spells[0]["name"] == "Magic Missile"
+    assert spells[0]["tags"] == ["evocation"]
+    assert spells[0]["sections"] == {"level": "1"}
 
 
 def test_extract_lore(tmp_path):
