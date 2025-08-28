@@ -32,8 +32,8 @@ export default function SystemInfo() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
-        height: "100vh",
+          justifyContent: "center",
+          height: "calc(100vh - var(--top-bar-height))",
         color: "#fff",
         backgroundColor:
           theme === "retro"

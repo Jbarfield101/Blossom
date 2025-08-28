@@ -35,14 +35,14 @@ export default function Comfy() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    height: "100vh",
-    padding: 16,
-    gap: 12,
-    color: "#eee",
-  },
+    container: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      height: "calc(100vh - var(--top-bar-height))",
+      padding: 16,
+      gap: 12,
+      color: "#eee",
+    },
   form: {
     background: "#121214",
     borderRadius: 10,
