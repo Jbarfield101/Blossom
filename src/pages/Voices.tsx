@@ -1,23 +1,18 @@
 import { useEffect, useState } from "react";
 import {
   Box,
-  Button,
   List,
   ListItem,
-  ListItemButton,
   ListItemText,
   IconButton,
   TextField,
   FormControlLabel,
   Checkbox,
-  Snackbar,
-  Alert,
-  LinearProgress,
 } from "@mui/material";
 import Star from "@mui/icons-material/Star";
 import StarBorder from "@mui/icons-material/StarBorder";
 import { useShallow } from "zustand/react/shallow";
-import { useVoices, Voice } from "../store/voices";
+import { useVoices } from "../store/voices";
 
 export default function Voices() {
   const { voices, load, toggleFavorite } = useVoices(
@@ -28,15 +23,8 @@ export default function Voices() {
     }))
   );
 
-  const [text, setText] = useState("");
-  const [selected, setSelected] = useState<Voice | null>(null);
   const [favoriteOnly, setFavoriteOnly] = useState(false);
   const [tagFilter, setTagFilter] = useState("");
-  const [status, setStatus] = useState<
-    "idle" | "testing" | "success" | "error"
-  >("idle");
-  const [error, setError] = useState<string | null>(null);
-  const [log, setLog] = useState<string[]>([]);
 
   useEffect(() => {
     load();
@@ -52,13 +40,6 @@ export default function Voices() {
     return true;
   });
 
-  const handleTest = () => {
-    if (!selected) return;
-    setLog(["Audio generation is unavailable"]);
-    setStatus("error");
-    setError("Audio generation is unavailable");
-  };
-
   return (
     <Box
       sx={{
@@ -70,14 +51,6 @@ export default function Voices() {
         gap: 2,
       }}
     >
-      {status === "testing" && <LinearProgress />}
-      <TextField
-        label="Text to speak"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        fullWidth
-        sx={{ input: { color: "#fff" }, label: { color: "#fff" } }}
-      />
       <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
         <TextField
           label="Filter by tag"
@@ -99,64 +72,16 @@ export default function Voices() {
         {filteredVoices.map((v) => (
           <ListItem
             key={v.id}
-            disablePadding
             secondaryAction={
               <IconButton edge="end" onClick={() => toggleFavorite(v.id)}>
                 {v.favorite ? <Star /> : <StarBorder />}
               </IconButton>
             }
           >
-            <ListItemButton
-              selected={selected?.id === v.id}
-              onClick={() => setSelected(v)}
-            >
-              <ListItemText primary={v.id} secondary={v.tags.join(", ")} />
-            </ListItemButton>
+            <ListItemText primary={v.name ?? v.id} secondary={v.tags.join(", ")} />
           </ListItem>
         ))}
       </List>
-      <Button
-        variant="contained"
-        onClick={handleTest}
-        disabled={!selected || !text.trim()}
-      >
-        Test
-      </Button>
-      <Box sx={{ maxHeight: 200, overflow: "auto" }}>
-        <List>
-          {log.map((m, i) => (
-            <ListItem key={i}>
-              <ListItemText primary={m} />
-            </ListItem>
-          ))}
-        </List>
-      </Box>
-      <Snackbar
-        open={status !== "idle"}
-        autoHideDuration={status === "testing" ? null : 3000}
-        onClose={() => {
-          setStatus("idle");
-          setError(null);
-        }}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          severity={
-            status === "testing"
-              ? "info"
-              : status === "success"
-                ? "success"
-                : "error"
-          }
-          sx={{ width: "100%" }}
-        >
-          {status === "testing"
-            ? "Testing voice..."
-            : status === "success"
-              ? "Voice playback started."
-              : error}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }
