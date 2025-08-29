@@ -8,6 +8,4 @@ fpdf2>=2.7
 requests>=2.32.0
 vosk>=0.3.45
 audioop-lts ; python_version >= "3.13"  # audioop module for Python 3.13+
-bark>=0.1.6
-torch>=2.8.0
 soundfile>=0.13.1
