@@ -20,6 +20,7 @@ AUDIO_TOKENIZER_PATH = os.environ.get("HIGGS_AUDIO_TOKENIZER_PATH", "HIGGS_AUDIO
 # distributed separately. Users can supply a path directly via --ref_audio.
 EXAMPLE_VOICES: Dict[str, str] = {
     "belinda": os.path.join(os.path.dirname(__file__), "samples", "belinda.wav"),
+    "goblin": os.path.join(os.path.dirname(__file__), "samples", "goblin.wav"),
 }
 
 
