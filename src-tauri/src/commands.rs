@@ -21,6 +21,7 @@ use rand::{thread_rng, Rng};
 use reqwest::{self, header::RETRY_AFTER, StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use std::process::Command as StdCommand;
 use sysinfo::System;
 use tauri::async_runtime::Mutex as AsyncMutex;
 use tauri::{AppHandle, Emitter, Manager, Runtime, State, Window};
@@ -31,7 +32,6 @@ use tokio::{
     time::sleep,
 };
 use which::which;
-use std::process::Command as StdCommand;
 
 #[derive(Debug)]
 struct LoggedChild {
@@ -138,7 +138,10 @@ fn kill_port(port: u16) {
                 let text = String::from_utf8_lossy(&out.stdout);
                 for line in text.lines() {
                     let parts: Vec<&str> = line.split_whitespace().collect();
-                    if parts.len() >= 5 && (parts[3].eq_ignore_ascii_case("LISTENING") || parts[3].eq_ignore_ascii_case("LISTEN")) {
+                    if parts.len() >= 5
+                        && (parts[3].eq_ignore_ascii_case("LISTENING")
+                            || parts[3].eq_ignore_ascii_case("LISTEN"))
+                    {
                         if let Ok(pid) = parts[4].parse::<u32>() {
                             let _ = StdCommand::new("taskkill")
                                 .args(["/PID", &pid.to_string(), "/F", "/T"]) // kill tree
@@ -482,6 +485,23 @@ fn script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
         .join("python")
         .join("lofi")
         .join("renderer.py")
+}
+
+fn basic_sfz_script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
+    if let Ok(cwd) = std::env::current_dir() {
+        let dev = cwd
+            .join("src-tauri")
+            .join("python")
+            .join("basic_sfz_generator.py");
+        if dev.exists() {
+            return dev;
+        }
+    }
+    app.path()
+        .resource_dir()
+        .expect("resource dir")
+        .join("python")
+        .join("basic_sfz_generator.py")
 }
 
 fn pdf_tools_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
@@ -956,6 +976,112 @@ fn fill_song_spec_defaults(spec: &mut SongSpec) {
     if spec.seed.is_none() {
         spec.seed = Some(thread_rng().gen());
     }
+}
+
+#[tauri::command]
+pub async fn run_basic_sfz<R: Runtime>(
+    app: AppHandle<R>,
+    mut spec: SongSpec,
+) -> Result<String, String> {
+    fill_song_spec_defaults(&mut spec);
+    let window = app
+        .get_webview_window("main")
+        .ok_or_else(|| "no main window".to_string())?;
+    let py = conda_python();
+    if !py.exists() {
+        return Err(format!("Python not found at {}", py.display()));
+    }
+
+    let script = basic_sfz_script_path(&app);
+    if !script.exists() {
+        return Err(format!("Script not found at {}", script.display()));
+    }
+    let python_dir = script
+        .parent()
+        .map(|p| p.to_path_buf())
+        .ok_or_else(|| "invalid script path".to_string())?;
+
+    let sfz = spec
+        .sfz_instrument
+        .clone()
+        .ok_or_else(|| "missing sfz_instrument".to_string())?;
+
+    // Ensure the output directory exists
+    let out_dir = PathBuf::from(&spec.out_dir);
+    fs::create_dir_all(&out_dir).map_err(|e| e.to_string())?;
+
+    // Build outfile name
+    let stamp = Local::now().format("%Y%m%d_%H%M%S").to_string();
+    let file_name = format!("{} - {stamp}.wav", spec.title);
+    let out_path = out_dir.join(file_name);
+
+    // Serialize spec to JSON for Python
+    let json_spec = json!({
+        "sfz_path": sfz,
+        "key": spec.key.clone().unwrap_or_else(|| "C".to_string()),
+        "bpm": spec.bpm,
+    });
+    let json_str = serde_json::to_string(&json_spec).map_err(|e| e.to_string())?;
+
+    // Launch Python
+    let mut cmd = tokio::process::Command::new(&py);
+    cmd.current_dir(python_dir)
+        .arg("-u")
+        .arg(&script)
+        .arg("--spec-json")
+        .arg(json_str)
+        .arg("--out")
+        .arg(&out_path)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+
+    window
+        .emit(
+            "basic_sfz_progress",
+            r#"{"stage":"start","message":"starting"}"#,
+        )
+        .ok();
+
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| format!("Failed to start python: {e}"))?;
+
+    let stdout = child.stdout.take().unwrap();
+    let stderr = child.stderr.take().unwrap();
+
+    let stderr_buf = Arc::new(AsyncMutex::new(String::new()));
+    let stderr_buf_cl = stderr_buf.clone();
+    let err_window = window.clone();
+    let stderr_task = tokio::spawn(async move {
+        let mut lines = TokioBufReader::new(stderr).lines();
+        while let Ok(Some(line)) = lines.next_line().await {
+            let payload = json!({"stage": "error", "message": line}).to_string();
+            err_window.emit("basic_sfz_progress", payload).ok();
+            let mut buf = stderr_buf_cl.lock().await;
+            buf.push_str(&line);
+            buf.push('\n');
+        }
+    });
+
+    let mut stdout_lines = TokioBufReader::new(stdout).lines();
+    while let Ok(Some(line)) = stdout_lines.next_line().await {
+        let _ = window.emit("basic_sfz_progress", line.trim().to_string());
+    }
+
+    let status = child.wait().await.map_err(|e| e.to_string())?;
+    let _ = stderr_task.await;
+    if !status.success() {
+        let err = stderr_buf.lock().await.clone();
+        return Err(format!("Python exited with {status}: {err}"));
+    }
+
+    window
+        .emit(
+            "basic_sfz_progress",
+            r#"{"stage":"done","message":"saved"}"#,
+        )
+        .ok();
+    Ok(out_path.to_string_lossy().to_string())
 }
 
 #[tauri::command]
