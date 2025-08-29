@@ -75,7 +75,6 @@ const displayKey = (k: string) => k.replace("#", "♯").replace("b", "♭");
 
 const THEME_PREVIEWS: Record<Theme, string> = {
   default: "#3d0a0a",
-  ocean: "#0a3d5e",
   forest: "#0a3d1a",
   sunset: "#5e2a0a",
   sakura: "#5e0a3d",
@@ -92,7 +91,6 @@ const THEME_PREVIEWS: Record<Theme, string> = {
 
 const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: "default", label: "Default" },
-  { value: "ocean", label: "Ocean" },
   { value: "forest", label: "Forest" },
   { value: "sunset", label: "Sunset" },
   { value: "sakura", label: "Sakura" },
@@ -117,7 +115,6 @@ const THEME_GROUPS: { label: string; options: { value: Theme; label: string }[] 
     options: THEME_OPTIONS.filter((o) =>
       [
         "default",
-        "ocean",
         "forest",
         "sunset",
         "sakura",
