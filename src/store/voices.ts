@@ -3,8 +3,6 @@ import { saveState, loadState } from "../utils/persist";
 
 export interface Voice {
   id: string;
-  provider: string;
-  preset: string;
   tags: string[];
   favorite: boolean;
 }
@@ -12,7 +10,7 @@ export interface Voice {
 interface VoiceState {
   voices: Voice[];
   filter: (v: Voice) => boolean;
-  addVoice: (voice: Voice) => Promise<void>;
+  addVoice: (voice: Omit<Voice, "favorite">) => Promise<void>;
   removeVoice: (id: string) => Promise<void>;
   setTags: (id: string, tags: string[]) => Promise<void>;
   toggleFavorite: (id: string) => Promise<void>;
@@ -25,9 +23,9 @@ const STORAGE_KEY = "voices";
 export const useVoices = create<VoiceState>((set, get) => ({
   voices: [],
   filter: () => true,
-  addVoice: async (voice) => {
-    const withFavorite: Voice = { favorite: false, ...voice };
-    const existing = get().voices.filter((v) => v.id !== withFavorite.id);
+  addVoice: async ({ id, tags }) => {
+    const withFavorite: Voice = { id, tags, favorite: false };
+    const existing = get().voices.filter((v) => v.id !== id);
     const voices = [...existing, withFavorite];
     set({ voices });
     await saveState(STORAGE_KEY, voices);
@@ -53,7 +51,13 @@ export const useVoices = create<VoiceState>((set, get) => ({
   load: async () => {
     const voices = await loadState<Voice[]>(STORAGE_KEY);
     if (voices && voices.length) {
-      set({ voices: voices.map((v) => ({ favorite: false, ...v })) });
+      set({
+        voices: voices.map(({ id, tags = [], favorite = false }) => ({
+          id,
+          tags,
+          favorite,
+        })),
+      });
     }
   },
 }));

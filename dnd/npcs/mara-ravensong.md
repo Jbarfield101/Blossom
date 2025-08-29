@@ -12,10 +12,6 @@ traits: ["soft-spoken", "curious", "won’t hurt innocents"]
 goals: ["protect hidden archive", "repay old debt"]
 secrets: ["keeps a cursed ledger", "knows a guard captain’s vice"]
 hooks: ["needs a crew to lift a crate at midnight", "offers intel for a price"]
-voice:
-  style: "melancholy"
-  provider: "acme"
-  preset: "bard"
 statblock:
   ac: 14
   hp: 22

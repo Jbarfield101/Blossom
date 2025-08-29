@@ -35,27 +35,17 @@ export default function VoiceSettings() {
   }, [load]);
 
   const [id, setId] = useState("");
-  const [provider, setProvider] = useState("bark");
-  const [preset, setPreset] = useState("");
   const [tagInput, setTagInput] = useState("");
 
   const handleAdd = () => {
     const trimmedId = id.trim();
-    const trimmedPreset = preset.trim();
-    if (!trimmedId || !trimmedPreset) return;
+    if (!trimmedId) return;
     const tags = tagInput
       .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
-    addVoice({
-      id: trimmedId,
-      provider: provider.trim(),
-      preset: trimmedPreset,
-      tags,
-      favorite: false,
-    });
+    addVoice({ id: trimmedId, tags });
     setId("");
-    setPreset("");
     setTagInput("");
   };
 
@@ -112,18 +102,6 @@ export default function VoiceSettings() {
           size="small"
           value={id}
           onChange={(e) => setId(e.target.value)}
-        />
-        <TextField
-          label="Provider"
-          size="small"
-          value={provider}
-          onChange={(e) => setProvider(e.target.value)}
-        />
-        <TextField
-          label="Preset"
-          size="small"
-          value={preset}
-          onChange={(e) => setPreset(e.target.value)}
         />
         <TextField
           label="Tags"

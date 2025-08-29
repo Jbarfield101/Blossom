@@ -1,12 +1,6 @@
 import { z } from "zod";
 import type { Ability } from "../characters";
 
-export const zVoice = z.object({
-  style: z.string().min(1),
-  provider: z.string().min(1),
-  preset: z.string().min(1),
-});
-
 const abilities: [
   Ability,
   Ability,
@@ -36,7 +30,6 @@ export const zNpc = z.object({
   hooks: z.array(z.string()).nonempty(),
   quirks: z.array(z.string()).optional(),
   appearance: z.string().min(1).optional(),
-  voice: zVoice.optional(),
   voiceId: z.string().min(1).optional(),
   portrait: z.string().min(1).optional(),
   icon: z.string().min(1).optional(),
