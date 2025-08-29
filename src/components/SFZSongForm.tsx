@@ -240,11 +240,11 @@ export default function SFZSongForm() {
             const data = JSON.parse(e.payload);
             const { stage, message } = data;
             if (stage === "done") {
+              setStatus(null);
               setToast({ message, severity: "success" });
-              setStatus(null);
             } else if (stage === "error") {
-              setToast({ message, severity: "error" });
               setStatus(null);
+              setToast({ message, severity: "error" });
             } else {
               setStatus(message);
             }

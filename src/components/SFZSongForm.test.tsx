@@ -229,7 +229,9 @@ describe('SFZSongForm', () => {
     listeners['basic_sfz_progress']?.({
       payload: '{"stage":"done","message":"saved"}',
     });
-    await screen.findByText('saved');
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('saved');
+    expect(alert).toHaveClass('MuiAlert-standardSuccess');
     await waitFor(() => expect(screen.queryByText('working')).toBeNull());
   });
 
@@ -243,7 +245,9 @@ describe('SFZSongForm', () => {
     listeners['basic_sfz_progress']?.({
       payload: '{"stage":"error","message":"oops"}',
     });
-    await screen.findByText('oops');
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('oops');
+    expect(alert).toHaveClass('MuiAlert-standardError');
     await waitFor(() => expect(screen.queryByText('working')).toBeNull());
   });
 });
