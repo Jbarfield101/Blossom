@@ -3,8 +3,6 @@ import { saveState, loadState } from "../utils/persist";
 
 export interface Voice {
   id: string;
-  provider: string;
-  preset: string;
   tags: string[];
   favorite: boolean;
 }
@@ -12,7 +10,7 @@ export interface Voice {
 interface VoiceState {
   voices: Voice[];
   filter: (v: Voice) => boolean;
-  addVoice: (voice: Voice) => Promise<void>;
+  addVoice: (voice: Omit<Voice, "favorite">) => Promise<void>;
   removeVoice: (id: string) => Promise<void>;
   setTags: (id: string, tags: string[]) => Promise<void>;
   toggleFavorite: (id: string) => Promise<void>;

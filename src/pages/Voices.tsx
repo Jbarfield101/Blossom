@@ -110,7 +110,7 @@ export default function Voices() {
               selected={selected?.id === v.id}
               onClick={() => setSelected(v)}
             >
-              <ListItemText primary={v.preset} secondary={v.tags.join(", ")} />
+              <ListItemText primary={v.id} secondary={v.tags.join(", ")} />
             </ListItemButton>
           </ListItem>
         ))}
