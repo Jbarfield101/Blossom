@@ -38,7 +38,7 @@ interface Section {
 
 export default function SFZSongForm() {
   const [title, setTitle] = useState("");
-  const [outDir, setOutDir] = useState("");
+  const [outDir, setOutDir] = useState(() => localStorage.getItem("sfzOutDir") || "");
   const [bpm, setBpm] = useState(100);
   const [key, setKey] = useState("C");
   const [sfzInstrument, setSfzInstrument] = useState<string | null>(null);
@@ -88,10 +88,6 @@ export default function SFZSongForm() {
       if (dir) {
         const chosen = dir as string;
         setOutDir(chosen);
-        localStorage.setItem("sfzOutDir", chosen);
-        invoke("save_paths", { sfz_out_dir: chosen }).catch((e) =>
-          console.error(e)
-        );
       }
     } catch (e) {
       handleError(e);
@@ -184,21 +180,23 @@ export default function SFZSongForm() {
   }, [reverb]);
 
   useEffect(() => {
+    if (outDir) {
+      localStorage.setItem("sfzOutDir", outDir);
+      invoke("save_paths", { sfz_out_dir: outDir }).catch((e) =>
+        console.error(e)
+      );
+    }
+  }, [outDir]);
+
+  useEffect(() => {
     async function initOutDir() {
       try {
-        const cfg = (await invoke("load_paths")) as {
-          sfz_out_dir?: string;
-        };
+        const cfg = (await invoke("load_paths")) as { sfz_out_dir?: string };
         if (cfg.sfz_out_dir) {
           setOutDir(cfg.sfz_out_dir);
-          localStorage.setItem("sfzOutDir", cfg.sfz_out_dir);
-        } else {
-          const stored = localStorage.getItem("sfzOutDir");
-          if (stored) setOutDir(stored);
         }
-      } catch {
-        const stored = localStorage.getItem("sfzOutDir");
-        if (stored) setOutDir(stored);
+      } catch (e) {
+        console.error(e);
       }
     }
     initOutDir();
