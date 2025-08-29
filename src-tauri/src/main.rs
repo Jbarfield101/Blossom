@@ -139,7 +139,6 @@ fn main() {
             commands::generate_ambience,
             commands::sfz_convert_flac_to_wav,
             commands::set_sfz_convert_on_start,
-            commands::bark_tts,
             // ComfyUI:
             commands::comfy_status,
             commands::comfy_start,
@@ -201,4 +200,3 @@ fn main() {
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
-
