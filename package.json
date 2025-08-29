@@ -17,8 +17,7 @@
     "schemas:generate": "tsx scripts/gen-schemas.ts",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed:tags": "tsx scripts/seed_tags.ts",
-    "items:enrich": "tsx scripts/enrich_items.ts",
-    "voices:refresh": "tsx scripts/refresh-bark-presets.ts"
+    "items:enrich": "tsx scripts/enrich_items.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
