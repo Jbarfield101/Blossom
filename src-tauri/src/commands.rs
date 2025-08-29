@@ -322,6 +322,7 @@ pub struct AppConfig {
     pub comfy_path: Option<String>,
     pub alphavantage_api_key: Option<String>,
     pub sfz_convert_on_start: Option<bool>,
+    pub sfz_out_dir: Option<String>,
 }
 
 fn config_path() -> PathBuf {
@@ -370,6 +371,7 @@ pub async fn load_paths() -> Result<AppConfig, String> {
 pub async fn save_paths(
     python_path: Option<String>,
     comfy_path: Option<String>,
+    sfz_out_dir: Option<String>,
 ) -> Result<(), String> {
     let mut cfg = load_config();
     if python_path.is_some() {
@@ -377,6 +379,9 @@ pub async fn save_paths(
     }
     if comfy_path.is_some() {
         cfg.comfy_path = comfy_path;
+    }
+    if sfz_out_dir.is_some() {
+        cfg.sfz_out_dir = sfz_out_dir;
     }
     save_config(&cfg)
 }

@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/re
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import SFZSongForm from './SFZSongForm';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
-import { convertFileSrc } from '@tauri-apps/api/core';
+import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 import { loadSfz } from '../utils/sfzLoader';
 
 vi.mock('@tauri-apps/plugin-dialog', () => ({ open: vi.fn() }));
@@ -12,6 +12,7 @@ vi.mock('@tauri-apps/api/path', () => ({
 }));
 vi.mock('@tauri-apps/api/core', () => ({
   convertFileSrc: vi.fn((p: string) => `http://asset.localhost/${p}`),
+  invoke: vi.fn(),
 }));
 
 vi.mock('../utils/sfzLoader', () => ({
@@ -30,6 +31,7 @@ describe('SFZSongForm', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     localStorage.clear();
+    vi.mocked(invoke).mockResolvedValue({});
   });
 
   afterEach(() => {
@@ -80,6 +82,33 @@ describe('SFZSongForm', () => {
     await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
     const [, args] = enqueueTask.mock.calls[0];
     expect(args.spec.lofi_filter).toBe(true);
+  });
+
+  it('prefills output directory from config', async () => {
+    vi.mocked(invoke).mockResolvedValueOnce({ sfz_out_dir: '/saved/out' });
+    render(<SFZSongForm />);
+    await screen.findByText('Change SFZ');
+    expect(screen.getByText('Output: /saved/out')).toBeInTheDocument();
+  });
+
+  it('prefills output directory from localStorage when config missing', async () => {
+    localStorage.setItem('sfzOutDir', '/stored/out');
+    render(<SFZSongForm />);
+    await screen.findByText('Change SFZ');
+    expect(screen.getByText('Output: /stored/out')).toBeInTheDocument();
+  });
+
+  it('persists chosen folder', async () => {
+    (openDialog as any).mockResolvedValueOnce('/tmp/out');
+    render(<SFZSongForm />);
+    await screen.findByText('Change SFZ');
+    fireEvent.click(screen.getByText('Choose Output Folder'));
+    await screen.findByText('Output: /tmp/out');
+    expect(localStorage.getItem('sfzOutDir')).toBe('/tmp/out');
+    expect(vi.mocked(invoke).mock.calls).toContainEqual([
+      'save_paths',
+      { sfz_out_dir: '/tmp/out' },
+    ]);
   });
 
   it('remembers chosen SFZ instrument', async () => {

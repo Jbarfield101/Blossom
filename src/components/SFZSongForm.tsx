@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { resolveResource } from "@tauri-apps/api/path";
-import { convertFileSrc } from "@tauri-apps/api/core";
+import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import {
   Alert,
   Snackbar,
@@ -93,7 +93,14 @@ export default function SFZSongForm() {
   async function pickFolder() {
     try {
       const dir = await openDialog({ directory: true, multiple: false });
-      if (dir) setOutDir(dir as string);
+      if (dir) {
+        const chosen = dir as string;
+        setOutDir(chosen);
+        localStorage.setItem("sfzOutDir", chosen);
+        invoke("save_paths", { sfz_out_dir: chosen }).catch((e) =>
+          console.error(e)
+        );
+      }
     } catch (e) {
       handleError(e);
     }
@@ -163,6 +170,27 @@ export default function SFZSongForm() {
   useEffect(() => {
     localStorage.setItem("lofiFilter", String(lofiFilter));
   }, [lofiFilter]);
+
+  useEffect(() => {
+    async function initOutDir() {
+      try {
+        const cfg = (await invoke("load_paths")) as {
+          sfz_out_dir?: string;
+        };
+        if (cfg.sfz_out_dir) {
+          setOutDir(cfg.sfz_out_dir);
+          localStorage.setItem("sfzOutDir", cfg.sfz_out_dir);
+        } else {
+          const stored = localStorage.getItem("sfzOutDir");
+          if (stored) setOutDir(stored);
+        }
+      } catch {
+        const stored = localStorage.getItem("sfzOutDir");
+        if (stored) setOutDir(stored);
+      }
+    }
+    initOutDir();
+  }, []);
 
   const spec = useMemo(
     (): SongSpec => ({
