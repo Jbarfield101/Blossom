@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { resolveResource } from "@tauri-apps/api/path";
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import {
   Alert,
   Snackbar,
@@ -68,6 +69,9 @@ export default function SFZSongForm() {
     return stored === null ? false : stored === "true";
   });
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<
+    { message: string; severity: "success" | "error" } | null
+  >(null);
   const tasks = useTasks();
 
   function mapLoaderError(e: unknown): string {
@@ -192,6 +196,36 @@ export default function SFZSongForm() {
     initOutDir();
   }, []);
 
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    (async () => {
+      try {
+        unlisten = await listen<string>("basic_sfz_progress", (e) => {
+          try {
+            const data = JSON.parse(e.payload);
+            const { stage, message } = data;
+            if (stage === "done") {
+              setToast({ message, severity: "success" });
+              setStatus(null);
+            } else if (stage === "error") {
+              setToast({ message, severity: "error" });
+              setStatus(null);
+            } else {
+              setStatus(message);
+            }
+          } catch {
+            setStatus(e.payload);
+          }
+        });
+      } catch (e) {
+        console.error("Failed to subscribe to progress events", e);
+      }
+    })();
+    return () => {
+      unlisten?.();
+    };
+  }, []);
+
   const spec = useMemo(
     (): SongSpec => ({
       title, // Song title
@@ -292,6 +326,19 @@ export default function SFZSongForm() {
           sx={{ width: "100%" }}
         >
           {error}
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        open={!!toast}
+        autoHideDuration={6000}
+        onClose={() => setToast(null)}
+      >
+        <Alert
+          onClose={() => setToast(null)}
+          severity={toast?.severity || "success"}
+          sx={{ width: "100%" }}
+        >
+          {toast?.message}
         </Alert>
       </Snackbar>
     </Stack>
