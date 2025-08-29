@@ -1,12 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Box, Button, LinearProgress, Typography, Snackbar, Alert } from "@mui/material";
-import { useTasks } from "../../store/tasks";
+import { useTasks, TaskStatus } from "../../store/tasks";
 import { useSystemInfo } from "../../features/system/useSystemInfo";
 
 export default function TaskList() {
   const { tasks, cancelTask, subscribe } = useTasks();
   const info = useSystemInfo();
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<
+    { message: string; severity: "success" | "error" } | null
+  >(null);
+  const seen = useRef<Record<number, TaskStatus>>({});
 
   useEffect(() => {
     let unlisten: (() => void) | null = null;
@@ -26,10 +30,31 @@ export default function TaskList() {
 
   const entries = Object.values(tasks);
 
+  useEffect(() => {
+    entries.forEach((task) => {
+      const prev = seen.current[task.id];
+      if (task.status !== prev && (task.status === "completed" || task.status === "failed")) {
+        if (task.status === "completed") {
+          const path = (task.result as any)?.path;
+          setToast({
+            message: path ? `Saved to ${path}` : `${task.label} completed`,
+            severity: "success",
+          });
+        } else {
+          setToast({
+            message: task.error || `${task.label} failed`,
+            severity: "error",
+          });
+        }
+      }
+      seen.current[task.id] = task.status;
+    });
+  }, [entries]);
+
   const cpuWarn = info && info.cpu_usage > 80;
   const memWarn = info && info.mem_usage > 80;
 
-  const snackbar = (
+  const subscribeError = (
     <Snackbar
       open={!!error}
       autoHideDuration={6000}
@@ -41,7 +66,29 @@ export default function TaskList() {
     </Snackbar>
   );
 
-  if (entries.length === 0 && !info) return snackbar;
+  const taskSnackbar = (
+    <Snackbar
+      open={!!toast}
+      autoHideDuration={6000}
+      onClose={() => setToast(null)}
+    >
+      <Alert
+        onClose={() => setToast(null)}
+        severity={toast?.severity || "success"}
+        sx={{ width: "100%" }}
+      >
+        {toast?.message}
+      </Alert>
+    </Snackbar>
+  );
+
+  if (entries.length === 0 && !info)
+    return (
+      <>
+        {subscribeError}
+        {taskSnackbar}
+      </>
+    );
 
   return (
     <>
@@ -90,7 +137,8 @@ export default function TaskList() {
         ))
       )}
       </Box>
-      {snackbar}
+      {subscribeError}
+      {taskSnackbar}
     </>
   );
 }

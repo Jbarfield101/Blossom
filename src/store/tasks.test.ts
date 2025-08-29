@@ -83,4 +83,12 @@ describe('enqueueTask validation', () => {
       useTasks.getState().enqueueTask('GenerateSong', { spec: {} as any }),
     ).rejects.toThrow(/Missing required field\(s\)/);
   });
+
+  it('throws when required fields are missing for GenerateBasicSfz', async () => {
+    await expect(
+      useTasks
+        .getState()
+        .enqueueTask('GenerateBasicSfz', { spec: {} as any }),
+    ).rejects.toThrow(/Missing required field\(s\)/);
+  });
 });

@@ -51,6 +51,7 @@ export type TaskCommand =
   | { id: 'ParseRulePdf'; py?: string; script?: string; path: string }
   | { id: 'ParseLorePdf'; py?: string; script?: string; path: string; world: string }
   | { id: 'GenerateSong'; spec: SongSpec }
+  | { id: 'GenerateBasicSfz'; spec: SongSpec }
   | { id: 'GenerateAlbum'; meta: any }
   | { id: 'GenerateShort'; spec: any };
 
@@ -63,6 +64,7 @@ const TASK_IDS: TaskCommand['id'][] = [
   'ParseRulePdf',
   'ParseLorePdf',
   'GenerateSong',
+  'GenerateBasicSfz',
   'GenerateAlbum',
   'GenerateShort',
 ];
@@ -148,18 +150,15 @@ export const useTasks = create<TasksState>((set, get) => ({
       } else {
         throw new Error(`Task command for ${label} is missing id: ${JSON.stringify(command)}`);
       }
-      if (cmd.id === 'GenerateSong') {
-        const spec = (cmd as Extract<TaskCommand, { id: 'GenerateSong' }>).spec;
-        const required: (keyof SongSpec)[] = [
-          'outDir',
-          'title',
-          'bpm',
-          // 'key',
-          // 'mood',
-          // 'instruments',
-          // 'ambience',
-          // 'seed',
-        ];
+      if (cmd.id === 'GenerateSong' || cmd.id === 'GenerateBasicSfz') {
+        const spec = (cmd as Extract<
+          TaskCommand,
+          { id: 'GenerateSong' | 'GenerateBasicSfz' }
+        >).spec;
+        const required: (keyof SongSpec)[] = ['outDir', 'title', 'bpm'];
+        if (cmd.id === 'GenerateBasicSfz') {
+          required.push('sfzInstrument');
+        }
         const missing = required.filter((field) => {
           const value = spec[field];
           return (
