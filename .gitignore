@@ -23,5 +23,5 @@ dist-ssr
 *.sln
 *.sw?
 
-# Ignore generated ambience audio
-src-tauri/python/samples/ambience/*.wav
+# Ignore example voice and ambience audio files
+src-tauri/python/samples/**/*.wav
