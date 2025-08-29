@@ -1,29 +1,23 @@
-import { useReducer, useState, useEffect, useMemo } from "react";
+import { useReducer, useState } from "react";
 import {
   Typography,
   Button,
   Checkbox,
-  FormControlLabel,
   Grid,
   Box,
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Autocomplete,
-  IconButton,
   Tooltip,
   Snackbar,
   Alert,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import StarIcon from "@mui/icons-material/Star";
-import StarBorderIcon from "@mui/icons-material/StarBorder";
 import FormErrorText from "./FormErrorText";
 import { zNpc } from "../../dnd/schemas/npc";
 import { NpcData } from "./types";
 import NpcPdfUpload from "./NpcPdfUpload";
 import StyledTextField from "./StyledTextField";
-import { useVoices } from "../../store/voices";
 import { useNPCs } from "../../store/npcs";
 import { invoke } from "@tauri-apps/api/core";
 
@@ -45,7 +39,6 @@ interface FormState {
   icon: string;
   statblock: string;
   sections: string;
-  voiceId: string;
   level: string;
   hp: string;
   strength: string;
@@ -75,7 +68,6 @@ const initialState: FormState = {
   icon: "",
   statblock: "{}",
   sections: "{}",
-  voiceId: "",
   level: "",
   hp: "",
   strength: "",
@@ -112,23 +104,7 @@ interface Props {
 
 export default function NpcForm({ world }: Props) {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const allVoices = useVoices((s) => s.voices);
-  const voiceFilter = useVoices((s) => s.filter);
-  const [favoriteOnly, setFavoriteOnly] = useState(false);
-  const voices = useMemo(
-    () =>
-      allVoices
-        .filter(voiceFilter)
-        .filter((v) => !favoriteOnly || v.favorite),
-    [allVoices, voiceFilter, favoriteOnly]
-  );
-  const toggleFavorite = useVoices((s) => s.toggleFavorite);
-  const loadVoices = useVoices((s) => s.load);
   const addNPC = useNPCs((s) => s.addNPC);
-  useEffect(() => {
-    loadVoices();
-  }, [loadVoices]);
-  const voiceOptions = voices;
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [result, setResult] = useState<NpcData | null>(null);
   const [importedName, setImportedName] = useState<string | null>(null);
@@ -180,7 +156,6 @@ export default function NpcForm({ world }: Props) {
         field: "sections",
         value: JSON.stringify(npc.sections || {}, null, 2),
       });
-      dispatch({ type: "SET_FIELD", field: "voiceId", value: npc.voiceId || "" });
       dispatch({ type: "SET_FIELD", field: "level", value: npc.level?.toString() || "" });
       dispatch({ type: "SET_FIELD", field: "hp", value: npc.hp?.toString() || "" });
       dispatch({ type: "SET_FIELD", field: "inventory", value: (npc.inventory || []).join(", ") });
@@ -255,7 +230,6 @@ export default function NpcForm({ world }: Props) {
         ? state.quirks.split(",").map((q) => q.trim()).filter(Boolean)
         : undefined,
       appearance: state.appearance || undefined,
-      voiceId: state.voiceId || undefined,
       portrait: state.portrait || "placeholder.png",
       icon: state.icon || "placeholder-icon.png",
       sections: Object.keys(parsedSections).length ? parsedSections : undefined,
@@ -349,7 +323,6 @@ export default function NpcForm({ world }: Props) {
         ? state.quirks.split(",").map((q) => q.trim()).filter(Boolean)
         : undefined,
       appearance: state.appearance || undefined,
-      voiceId: state.voiceId || undefined,
       portrait: state.portrait || "placeholder.png",
       icon: state.icon || "placeholder-icon.png",
       sections: Object.keys(parsedSections).length ? parsedSections : undefined,
@@ -435,7 +408,6 @@ export default function NpcForm({ world }: Props) {
                     field: "sections",
                     value: JSON.stringify(npc.sections || {}, null, 2),
                   });
-                  dispatch({ type: "SET_FIELD", field: "voiceId", value: npc.voiceId || "" });
                   dispatch({ type: "SET_FIELD", field: "level", value: npc.level?.toString() || "" });
                   dispatch({ type: "SET_FIELD", field: "hp", value: npc.hp?.toString() || "" });
                   dispatch({ type: "SET_FIELD", field: "inventory", value: (npc.inventory || []).join(", ") });
@@ -862,79 +834,6 @@ export default function NpcForm({ world }: Props) {
             <Typography>Settings</Typography>
           </AccordionSummary>
           <AccordionDetails>
-            <Accordion defaultExpanded={false}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>Voice Settings</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={favoriteOnly}
-                        onChange={(e) => setFavoriteOnly(e.target.checked)}
-                      />
-                    }
-                    label="Favorites"
-                  />
-                  <Autocomplete
-                    options={voiceOptions}
-                    getOptionLabel={(v) => v.id}
-                    value={voiceOptions.find((v) => v.id === state.voiceId) || null}
-                    onChange={(_e, v) => {
-                      dispatch({
-                        type: "SET_FIELD",
-                        field: "voiceId",
-                        value: v?.id || "",
-                      });
-                      setErrors((prev) => ({ ...prev, voiceId: null }));
-                    }}
-                    renderOption={(props, option) => (
-                      <Box
-                        component="li"
-                        {...props}
-                        sx={{ display: "flex", justifyContent: "space-between" }}
-                      >
-                        {option.id}
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleFavorite(option.id);
-                          }}
-                        >
-                          {option.favorite ? (
-                            <StarIcon fontSize="small" />
-                          ) : (
-                            <StarBorderIcon fontSize="small" />
-                          )}
-                        </IconButton>
-                      </Box>
-                    )}
-                    renderInput={(params) => (
-                      <StyledTextField
-                        {...params}
-                        id="voiceId"
-                        label="Voice"
-                        margin="normal"
-                        error={Boolean(errors.voiceId)}
-                        helperText={
-                          <FormErrorText id="voiceId-error">
-                            {errors.voiceId}
-                          </FormErrorText>
-                        }
-                        aria-describedby={
-                          errors.voiceId ? "voiceId-error" : undefined
-                        }
-                      />
-                    )}
-                    fullWidth
-                  />
-                </Grid>
-              </Grid>
-            </AccordionDetails>
-          </Accordion>
           <Accordion defaultExpanded={false} sx={{ mt: 2 }}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography>Advanced JSON</Typography>

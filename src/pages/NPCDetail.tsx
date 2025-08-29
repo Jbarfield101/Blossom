@@ -42,7 +42,6 @@ export default function NPCDetail() {
         <Typography variant="subtitle1">
           {npc.species} {npc.role}
         </Typography>
-        {/* voice playback removed */}
         {npc.portrait && (
           <img
             src={npc.portrait}
