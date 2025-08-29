@@ -35,9 +35,14 @@ export default function TaskList() {
       const prev = seen.current[task.id];
       if (task.status !== prev && (task.status === "completed" || task.status === "failed")) {
         if (task.status === "completed") {
-          const path = (task.result as any)?.path;
+          const result = task.result as any;
+          const message =
+            result?.message ||
+            (typeof result === "string" ? result : null) ||
+            (result?.path ? `Saved to ${result.path}` : null) ||
+            `${task.label} completed`;
           setToast({
-            message: path ? `Saved to ${path}` : `${task.label} completed`,
+            message,
             severity: "success",
           });
         } else {
