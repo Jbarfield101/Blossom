@@ -142,6 +142,9 @@ When a user uploads a video, it plays automatically on an endless loop.
 - **SFZ instruments:** Supply custom samples in the song JSON with
   `sfz_instrument` for leads or `sfz_chords`, `sfz_pads`, and `sfz_bass` for
   chords, pads, and bass lines.
+- **MIDI seeding:** Choose a MIDI file in the SFZ Music form to seed note data.
+  The selection is persisted, included in the song spec, and its name and
+  length are shown for confirmation.
 - **Song form:** Structure songs with through‑composed templates (e.g.
   `Intro–A–B–C–D–E–F–Outro`) and use odd bar lengths like 5 or 7 bars for
   asymmetrical phrases.

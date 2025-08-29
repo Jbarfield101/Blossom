@@ -1,9 +1,13 @@
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import SFZSongForm from './SFZSongForm';
-import { open as openDialog } from '@tauri-apps/plugin-dialog';
-import { convertFileSrc, invoke } from '@tauri-apps/api/core';
-import { loadSfz } from '../utils/sfzLoader';
+
+vi.mock('@tauri-apps/api/fs', () => ({
+  readBinaryFile: vi.fn().mockResolvedValue(new Uint8Array()),
+}));
+
+vi.mock('@tonejs/midi', () => ({
+  Midi: vi.fn().mockImplementation(() => ({ duration: 1.23 })),
+}));
 
 const listeners: Record<string, (e: any) => void> = {};
 vi.mock('@tauri-apps/api/event', () => ({
@@ -30,10 +34,15 @@ vi.mock('../utils/sfzLoader', () => ({
   }),
 }));
 
-const generateBasicSong = vi.fn();
 vi.mock('../store/tasks', () => ({
-  generateBasicSong,
+  generateBasicSong: vi.fn(),
 }));
+
+import SFZSongForm from './SFZSongForm';
+import { open as openDialog } from '@tauri-apps/plugin-dialog';
+import { convertFileSrc, invoke } from '@tauri-apps/api/core';
+import { loadSfz } from '../utils/sfzLoader';
+import { generateBasicSong } from '../store/tasks';
 
 describe('SFZSongForm', () => {
   beforeEach(() => {
@@ -178,7 +187,7 @@ describe('SFZSongForm', () => {
     await screen.findByText('Output: /tmp/out');
     await screen.findByText('Change SFZ');
     fireEvent.click(screen.getByText('Choose MIDI File'));
-    await screen.findByText('MIDI: /tmp/song.mid');
+    await screen.findByText('MIDI: song.mid (0:00)');
 
     fireEvent.click(screen.getByText('Generate'));
     await waitFor(() => expect(generateBasicSong).toHaveBeenCalled());

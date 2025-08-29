@@ -32,6 +32,7 @@
     "@tauri-apps/plugin-dialog": "^2",
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-sql": "^2",
+    "@tonejs/midi": "^2.0.28",
     "better-sqlite3": "^12.2.0",
     "monaco-editor": "^0.52.2",
     "nanoid": "^5.1.5",
@@ -69,4 +70,3 @@
     "zod-to-json-schema": "^3.23.5"
   }
 }
-
