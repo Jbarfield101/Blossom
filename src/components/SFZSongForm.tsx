@@ -53,6 +53,8 @@ interface SongSpec {
   sfz_instrument?: string;
   /** Enable a lofi/low‑pass coloration on the output. */
   lofi_filter: boolean;
+  /** Optional path to a MIDI file guiding the generation. */
+  midi_file?: string;
   /** Optional RNG seed for reproducible generation. */
   seed?: number;
 }
@@ -61,6 +63,9 @@ export default function SFZSongForm() {
   const [title, setTitle] = useState("");
   const [outDir, setOutDir] = useState("");
   const [sfzInstrument, setSfzInstrument] = useState<string | null>(null);
+  const [midiFile, setMidiFile] = useState<string | null>(
+    () => localStorage.getItem("midiFile")
+  );
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<string | null>(null);
@@ -104,6 +109,22 @@ export default function SFZSongForm() {
         invoke("save_paths", { sfz_out_dir: chosen }).catch((e) =>
           console.error(e)
         );
+      }
+    } catch (e) {
+      handleError(e);
+    }
+  }
+
+  async function pickMidiFile() {
+    try {
+      const file = await openDialog({
+        multiple: false,
+        filters: [{ name: "MIDI File", extensions: ["mid", "midi"] }],
+      });
+      if (file) {
+        const chosen = file as string;
+        setMidiFile(chosen);
+        localStorage.setItem("midiFile", chosen);
       }
     } catch (e) {
       handleError(e);
@@ -237,8 +258,9 @@ export default function SFZSongForm() {
       drum_pattern: "", // Drum pattern descriptor (unused in current UI)
       sfz_instrument: sfzInstrument || undefined, // Selected SFZ path
       lofi_filter: lofiFilter, // Apply lofi coloration
+      midi_file: midiFile || undefined, // Optional MIDI file path
     }),
-    [title, outDir, sfzInstrument, lofiFilter]
+    [title, outDir, sfzInstrument, lofiFilter, midiFile]
   );
 
   function generate() {
@@ -264,6 +286,11 @@ export default function SFZSongForm() {
         <FormControl>
           <Button variant="outlined" onClick={pickFolder} fullWidth>
             {outDir ? `Output: ${outDir}` : "Choose Output Folder"}
+          </Button>
+        </FormControl>
+        <FormControl>
+          <Button variant="outlined" onClick={pickMidiFile} fullWidth>
+            {midiFile ? `MIDI: ${midiFile}` : "Choose MIDI File"}
           </Button>
         </FormControl>
       </Stack>

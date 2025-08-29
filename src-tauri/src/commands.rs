@@ -777,6 +777,8 @@ pub struct SongSpec {
     pub limiter_drive: Option<f32>,
     #[serde(alias = "lofiFilter", skip_serializing_if = "Option::is_none")]
     pub lofi_filter: Option<bool>,
+    #[serde(alias = "midiFile", skip_serializing_if = "Option::is_none")]
+    pub midi_file: Option<String>,
     #[serde(alias = "sfzInstrument", skip_serializing_if = "Option::is_none")]
     pub sfz_instrument: Option<String>,
 }
@@ -843,6 +845,7 @@ mod tests {
             hq_chorus: None,
             limiter_drive: None,
             lofi_filter: None,
+            midi_file: None,
             sfz_instrument: None,
         };
         let v = serde_json::to_value(&spec).unwrap();
@@ -1023,11 +1026,14 @@ pub async fn run_basic_sfz<R: Runtime>(
     let out_path = out_dir.join(file_name);
 
     // Serialize spec to JSON for Python
-    let json_spec = json!({
+    let mut json_spec = json!({
         "sfz_path": sfz,
         "key": spec.key.clone().unwrap_or_else(|| "C".to_string()),
         "bpm": spec.bpm,
     });
+    if let Some(midi_file) = spec.midi_file.clone() {
+        json_spec["midi_file"] = json!(midi_file);
+    }
     let json_str = serde_json::to_string(&json_spec).map_err(|e| e.to_string())?;
 
     // Launch Python

@@ -140,6 +140,28 @@ describe('SFZSongForm', () => {
     expect(args.spec.sfz_instrument).toBe('/tmp/piano.sfz');
   });
 
+  it('persists chosen MIDI file and sends in spec', async () => {
+    (openDialog as any)
+      .mockResolvedValueOnce('/tmp/out')
+      .mockResolvedValueOnce('/tmp/song.mid');
+
+    render(<SFZSongForm />);
+    fireEvent.change(screen.getByLabelText('Title'), {
+      target: { value: 'Test' },
+    });
+    fireEvent.click(screen.getByText('Choose Output Folder'));
+    await screen.findByText('Output: /tmp/out');
+    await screen.findByText('Change SFZ');
+    fireEvent.click(screen.getByText('Choose MIDI File'));
+    await screen.findByText('MIDI: /tmp/song.mid');
+
+    fireEvent.click(screen.getByText('Generate'));
+    await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
+    const [, args] = enqueueTask.mock.calls[0];
+    expect(args.spec.midi_file).toBe('/tmp/song.mid');
+    expect(localStorage.getItem('midiFile')).toBe('/tmp/song.mid');
+  });
+
   it('normalizes default piano path before loading', async () => {
     render(<SFZSongForm />);
     await waitFor(() => expect(loadSfz).toHaveBeenCalled());
