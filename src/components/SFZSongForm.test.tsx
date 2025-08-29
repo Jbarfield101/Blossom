@@ -30,9 +30,9 @@ vi.mock('../utils/sfzLoader', () => ({
   }),
 }));
 
-const enqueueTask = vi.fn();
+const generateBasicSong = vi.fn();
 vi.mock('../store/tasks', () => ({
-  useTasks: () => ({ enqueueTask }),
+  generateBasicSong,
 }));
 
 describe('SFZSongForm', () => {
@@ -58,7 +58,7 @@ describe('SFZSongForm', () => {
     expect(lofi).not.toBeChecked();
   });
 
-  it('enqueues GenerateSong with default lofi filter', async () => {
+  it('calls generateBasicSong with default lofi filter', async () => {
     (openDialog as any).mockResolvedValueOnce('/tmp/out');
 
     render(<SFZSongForm />);
@@ -68,16 +68,15 @@ describe('SFZSongForm', () => {
     await screen.findByText('Change SFZ');
 
     fireEvent.click(screen.getByText('Generate'));
-    await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
-    const [, args] = enqueueTask.mock.calls[0];
-    expect(args.id).toBe('GenerateSong');
-    expect(args.spec.instruments).toEqual([]);
-    expect(args.spec.ambience).toEqual([]);
-    expect(args.spec.bpm).toBe(100);
-    expect(args.spec.key).toBe('C');
-    expect(args.spec.lofi_filter).toBe(false);
-    expect(typeof args.spec.seed).toBe('number');
-    expect(args.spec.seed).toBeLessThan(2 ** 32);
+    await waitFor(() => expect(generateBasicSong).toHaveBeenCalled());
+    const spec = generateBasicSong.mock.calls[0][0];
+    expect(spec.instruments).toEqual([]);
+    expect(spec.ambience).toEqual([]);
+    expect(spec.bpm).toBe(100);
+    expect(spec.key).toBe('C');
+    expect(spec.lofiFilter).toBe(false);
+    expect(typeof spec.seed).toBe('number');
+    expect(spec.seed).toBeLessThan(2 ** 32);
   });
 
   it('includes lofi filter when toggled', async () => {
@@ -91,9 +90,9 @@ describe('SFZSongForm', () => {
     fireEvent.click(screen.getByLabelText('Lofi Filter'));
 
     fireEvent.click(screen.getByText('Generate'));
-    await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
-    const [, args] = enqueueTask.mock.calls[0];
-    expect(args.spec.lofi_filter).toBe(true);
+    await waitFor(() => expect(generateBasicSong).toHaveBeenCalled());
+    const spec = generateBasicSong.mock.calls[0][0];
+    expect(spec.lofiFilter).toBe(true);
   });
 
   it('includes custom tempo and key in spec', async () => {
@@ -113,10 +112,10 @@ describe('SFZSongForm', () => {
       target: { value: 'Dm' },
     });
     fireEvent.click(screen.getByText('Generate'));
-    await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
-    const [, args] = enqueueTask.mock.calls[0];
-    expect(args.spec.bpm).toBe(90);
-    expect(args.spec.key).toBe('Dm');
+    await waitFor(() => expect(generateBasicSong).toHaveBeenCalled());
+    const spec = generateBasicSong.mock.calls[0][0];
+    expect(spec.bpm).toBe(90);
+    expect(spec.key).toBe('Dm');
   });
 
   it('prefills output directory from config', async () => {
@@ -161,9 +160,9 @@ describe('SFZSongForm', () => {
     fireEvent.click(screen.getByText('Choose Output Folder'));
     await screen.findByText('Output: /tmp/out');
     fireEvent.click(screen.getByText('Generate'));
-    await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
-    const [, args] = enqueueTask.mock.calls[0];
-    expect(args.spec.sfz_instrument).toBe('/tmp/piano.sfz');
+    await waitFor(() => expect(generateBasicSong).toHaveBeenCalled());
+    const spec = generateBasicSong.mock.calls[0][0];
+    expect(spec.sfzInstrument).toBe('/tmp/piano.sfz');
   });
 
   it('persists chosen MIDI file and sends in spec', async () => {
@@ -182,9 +181,9 @@ describe('SFZSongForm', () => {
     await screen.findByText('MIDI: /tmp/song.mid');
 
     fireEvent.click(screen.getByText('Generate'));
-    await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
-    const [, args] = enqueueTask.mock.calls[0];
-    expect(args.spec.midi_file).toBe('/tmp/song.mid');
+    await waitFor(() => expect(generateBasicSong).toHaveBeenCalled());
+    const spec = generateBasicSong.mock.calls[0][0];
+    expect(spec.midiFile).toBe('/tmp/song.mid');
     expect(localStorage.getItem('midiFile')).toBe('/tmp/song.mid');
   });
 
@@ -200,9 +199,9 @@ describe('SFZSongForm', () => {
     const slider = screen.getByLabelText('Gain');
     fireEvent.change(slider, { target: { value: '0.5' } });
     fireEvent.click(screen.getByText('Generate'));
-    await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
-    const [, args] = enqueueTask.mock.calls[0];
-    expect(args.spec.gain).toBeCloseTo(0.5, 2);
+    await waitFor(() => expect(generateBasicSong).toHaveBeenCalled());
+    const spec = generateBasicSong.mock.calls[0][0];
+    expect(spec.gain).toBeCloseTo(0.5, 2);
   });
 
   it('normalizes default piano path before loading', async () => {
