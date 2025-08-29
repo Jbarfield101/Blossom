@@ -1,9 +1,17 @@
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  cleanup,
+  act,
+} from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import SFZSongForm from './SFZSongForm';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { loadSfz } from '../utils/sfzLoader';
+import { listen } from '@tauri-apps/api/event';
 
 vi.mock('@tauri-apps/plugin-dialog', () => ({ open: vi.fn() }));
 vi.mock('@tauri-apps/api/path', () => ({
@@ -21,6 +29,8 @@ vi.mock('../utils/sfzLoader', () => ({
   }),
 }));
 
+vi.mock('@tauri-apps/api/event', () => ({ listen: vi.fn() }));
+
 const enqueueTask = vi.fn();
 vi.mock('../store/tasks', () => ({
   useTasks: () => ({ enqueueTask }),
@@ -30,6 +40,7 @@ describe('SFZSongForm', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     localStorage.clear();
+    (listen as any).mockImplementation(() => Promise.resolve(() => {}));
   });
 
   afterEach(() => {
@@ -140,6 +151,38 @@ describe('SFZSongForm', () => {
     await screen.findByText(
       'Instrument selected. Preview skipped; renderer will handle loading.'
     );
+  });
+
+  it('shows success snackbar and clears status on done event', async () => {
+    let handler: any;
+    (listen as any).mockImplementation((_evt: string, cb: any) => {
+      handler = cb;
+      return Promise.resolve(() => {});
+    });
+    render(<SFZSongForm />);
+    await screen.findByText('Change SFZ');
+    await screen.findByText(/Loaded instrument/);
+    act(() => {
+      handler({ payload: '{"stage":"done","message":"saved"}' });
+    });
+    await screen.findByText('saved');
+    expect(screen.queryByText(/Loaded instrument/)).not.toBeInTheDocument();
+  });
+
+  it('shows error snackbar and clears status on error event', async () => {
+    let handler: any;
+    (listen as any).mockImplementation((_evt: string, cb: any) => {
+      handler = cb;
+      return Promise.resolve(() => {});
+    });
+    render(<SFZSongForm />);
+    await screen.findByText('Change SFZ');
+    await screen.findByText(/Loaded instrument/);
+    act(() => {
+      handler({ payload: '{"stage":"error","message":"fail"}' });
+    });
+    await screen.findByText('fail');
+    expect(screen.queryByText(/Loaded instrument/)).not.toBeInTheDocument();
   });
 });
 

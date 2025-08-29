@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { resolveResource } from "@tauri-apps/api/path";
 import { convertFileSrc } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import {
   Alert,
   Snackbar,
@@ -68,6 +69,7 @@ export default function SFZSongForm() {
     return stored === null ? false : stored === "true";
   });
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const tasks = useTasks();
 
   function mapLoaderError(e: unknown): string {
@@ -164,6 +166,33 @@ export default function SFZSongForm() {
     localStorage.setItem("lofiFilter", String(lofiFilter));
   }, [lofiFilter]);
 
+  useEffect(() => {
+    let unlisten: (() => void) | null = null;
+    listen<string>("basic_sfz_progress", (e) => {
+      try {
+        const data = JSON.parse(e.payload);
+        if (data.stage === "done") {
+          setStatus(null);
+          setSuccess(data.message || "Done");
+        } else if (data.stage === "error") {
+          setStatus(null);
+          setError(data.message || "Unknown error");
+        } else if (data.message) {
+          setStatus(data.message);
+        } else {
+          setStatus(e.payload);
+        }
+      } catch {
+        setStatus(e.payload);
+      }
+    }).then((f) => {
+      unlisten = f;
+    });
+    return () => {
+      unlisten?.();
+    };
+  }, []);
+
   const spec = useMemo(
     (): SongSpec => ({
       title, // Song title
@@ -253,6 +282,19 @@ export default function SFZSongForm() {
           Generate
         </Button>
       </Stack>
+      <Snackbar
+        open={!!success}
+        autoHideDuration={6000}
+        onClose={() => setSuccess(null)}
+      >
+        <Alert
+          onClose={() => setSuccess(null)}
+          severity="success"
+          sx={{ width: "100%" }}
+        >
+          {success}
+        </Alert>
+      </Snackbar>
       <Snackbar
         open={!!error}
         autoHideDuration={6000}
