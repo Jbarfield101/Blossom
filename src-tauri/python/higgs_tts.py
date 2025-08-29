@@ -17,7 +17,8 @@ MODEL_PATH = os.environ.get("HIGGS_MODEL_PATH", "HIGGS_MODEL_PATH")
 AUDIO_TOKENIZER_PATH = os.environ.get("HIGGS_AUDIO_TOKENIZER_PATH", "HIGGS_AUDIO_TOKENIZER_PATH")
 
 # Example built-in voices. These point to example audio files that may be
-# distributed separately. Users can supply a path directly via --ref_audio.
+# distributed separately. Users can supply a path directly via --speaker (or
+# --ref_audio for backwards compatibility).
 EXAMPLE_VOICES: Dict[str, str] = {
     "belinda": os.path.join(os.path.dirname(__file__), "samples", "belinda.wav"),
 }
@@ -45,7 +46,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Generate speech with Higgs TTS")
     parser.add_argument("--text", required=True, help="Text to synthesize")
     parser.add_argument(
+        "--speaker",
         "--ref_audio",
+        dest="speaker",
         help="Voice name (e.g. 'belinda') or path to reference audio",
     )
     args = parser.parse_args(argv)
@@ -58,7 +61,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     engine = HiggsAudioServeEngine(MODEL_PATH, AUDIO_TOKENIZER_PATH, device=device)
 
-    ref_audio_path = resolve_ref_audio(args.ref_audio)
+    ref_audio_path = resolve_ref_audio(args.speaker)
     contents = []
     if ref_audio_path is not None:
         contents.append(AudioContent(audio_url=ref_audio_path))
