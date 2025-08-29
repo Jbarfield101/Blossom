@@ -77,13 +77,13 @@ export default function BasicSfzGenerator() {
   function generate() {
     if (!instrument || !outDir) return;
     tasks.enqueueTask("Music Generation", {
-      id: "GenerateSong",
+      id: "GenerateBasicSfz",
       spec: {
         title: "Basic",
         outDir,
         bpm: tempo,
         key,
-        sfz_instrument: instrument,
+        sfzInstrument: instrument,
       },
     });
   }

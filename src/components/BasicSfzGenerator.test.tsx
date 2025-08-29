@@ -82,13 +82,13 @@ describe('BasicSfzGenerator', () => {
 
     await waitFor(() => {
       expect(enqueueTask).toHaveBeenCalledWith('Music Generation', {
-        id: 'GenerateSong',
+        id: 'GenerateBasicSfz',
         spec: {
           title: 'Basic',
           outDir: '/tmp/output',
           bpm: 150,
           key: 'D#',
-          sfz_instrument: '/sfz_sounds/guitar.sfz',
+          sfzInstrument: '/sfz_sounds/guitar.sfz',
         },
       });
     });
