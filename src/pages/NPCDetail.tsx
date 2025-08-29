@@ -7,14 +7,11 @@ import {
   ListItem,
   ListItemText,
   Chip,
-  Button,
 } from '@mui/material';
 import Center from './_Center';
 import { useNPCs } from '../store/npcs';
 import { useWorlds } from '../store/worlds';
 import { useInventory } from '../store/inventory';
-import { generateAudio } from '../features/voice/bark';
-import * as Tone from 'tone';
 
 export default function NPCDetail() {
   const { id } = useParams<{ id: string }>();
@@ -44,21 +41,6 @@ export default function NPCDetail() {
         <Typography variant="subtitle1">
           {npc.species} {npc.role}
         </Typography>
-        {npc.voiceId && (
-          <Button
-            variant="outlined"
-            onClick={() => {
-              generateAudio(npc.backstory || npc.name, npc.voiceId as string)
-                .then((buf) => {
-                  const player = new Tone.Player(buf).toDestination();
-                  player.start();
-                })
-                .catch(() => {});
-            }}
-          >
-            Play Voice
-          </Button>
-        )}
         {npc.portrait && (
           <img
             src={npc.portrait}

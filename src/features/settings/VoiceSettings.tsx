@@ -35,7 +35,7 @@ export default function VoiceSettings() {
   }, [load]);
 
   const [id, setId] = useState("");
-  const [provider, setProvider] = useState("bark");
+  const [provider, setProvider] = useState("");
   const [preset, setPreset] = useState("");
   const [tagInput, setTagInput] = useState("");
 
@@ -69,7 +69,7 @@ export default function VoiceSettings() {
 
   return (
     <Box id="voice-settings">
-      <Typography variant="subtitle1">Bark Voices</Typography>
+      <Typography variant="subtitle1">Voices</Typography>
       <FormControlLabel
         control={
           <Checkbox
