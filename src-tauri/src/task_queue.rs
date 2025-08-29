@@ -527,13 +527,13 @@ impl TaskQueue {
                                                 message: "no app handle".into(),
                                             },
                                         )?;
-                                        let path = run_basic_sfz(app.clone(), spec.into())
-                                            .await
-                                            .map_err(|e| TaskError {
+                                        let path = run_basic_sfz(app.clone(), spec).await.map_err(
+                                            |e| TaskError {
                                                 code: PdfErrorCode::ExecutionFailed,
                                                 message: e,
-                                            })?;
-                                        Ok(serde_json::json!({ "path": path }))
+                                            },
+                                        )?;
+                                        Ok(Value::String(path))
                                     }
                                     TaskCommand::GenerateShort { spec } => {
                                         println!("Generating short: {:?}", spec);
