@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { resolveResource } from "@tauri-apps/api/path";
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
@@ -62,6 +62,17 @@ interface SongSpec {
   gain?: number;
   /** Optional RNG seed for reproducible generation. */
   seed?: number;
+}
+
+export function generateBasicSong(
+  tasks: ReturnType<typeof useTasks>,
+  spec: SongSpec,
+) {
+  const seed = Math.floor(Math.random() * 2 ** 32);
+  tasks.enqueueTask("Music Generation", {
+    id: "GenerateBasicSfz",
+    spec: { ...spec, seed },
+  });
 }
 
 export default function SFZSongForm() {
@@ -261,29 +272,20 @@ export default function SFZSongForm() {
     };
   }, []);
 
-  const spec = useMemo(
-      (): SongSpec => ({
-        title, // Song title
-        outDir, // Output directory for generated files
-        bpm: 64, // Tempo in BPM (fixed for now)
-        structure: [{ name: "A", bars: 8, chords: ["Cmaj7"] }], // Sections + harmony
-        instruments: [], // Additional instrument layers (unused in current UI)
-        ambience: [], // Ambient textures (unused in current UI)
-        drum_pattern: "", // Drum pattern descriptor (unused in current UI)
-        sfz_instrument: sfzInstrument || undefined, // Selected SFZ path
-        lofi_filter: lofiFilter, // Apply lofi coloration
-        reverb, // Apply simple reverb
-        midi_file: midiFile || undefined, // Optional MIDI file path
-        gain, // Output gain multiplier
-      }),
-      [title, outDir, sfzInstrument, lofiFilter, reverb, midiFile, gain]
-    );
-
   function generate() {
-    const seed = Math.floor(Math.random() * 2 ** 32);
-    tasks.enqueueTask("Music Generation", {
-      id: "GenerateSong",
-      spec: { ...spec, seed },
+    generateBasicSong(tasks, {
+      title,
+      outDir,
+      bpm: 64,
+      structure: [{ name: "A", bars: 8, chords: ["Cmaj7"] }],
+      instruments: [],
+      ambience: [],
+      drum_pattern: "",
+      sfz_instrument: sfzInstrument || undefined,
+      lofi_filter: lofiFilter,
+      reverb,
+      midi_file: midiFile || undefined,
+      gain,
     });
   }
 

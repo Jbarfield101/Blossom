@@ -56,7 +56,7 @@ describe('SFZSongForm', () => {
     expect(lofi).not.toBeChecked();
   });
 
-  it('enqueues GenerateSong with default lofi filter', async () => {
+  it('enqueues GenerateBasicSfz with default lofi filter', async () => {
     (openDialog as any).mockResolvedValueOnce('/tmp/out');
 
     render(<SFZSongForm />);
@@ -68,7 +68,7 @@ describe('SFZSongForm', () => {
     fireEvent.click(screen.getByText('Generate'));
     await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
     const [, args] = enqueueTask.mock.calls[0];
-    expect(args.id).toBe('GenerateSong');
+    expect(args.id).toBe('GenerateBasicSfz');
     expect(args.spec.instruments).toEqual([]);
     expect(args.spec.ambience).toEqual([]);
     expect(args.spec.bpm).toBe(64);
