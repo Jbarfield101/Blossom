@@ -27,19 +27,7 @@ body.theme-ocean {
   background: radial-gradient(circle at center, #0a3d5e, #082938);
 }
 body.theme-forest {
-  background: #000;
-}
-body.theme-forest::before {
-  content: "";
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: 100vmin;
-  height: 100vmin;
-  transform: translate(-50%, -50%);
-  background: url("/forest.svg") center/cover no-repeat;
-  pointer-events: none;
-  animation: forestFloat 60s linear infinite;
+  background: #228B22;
 }
 body.theme-sunset {
   background: radial-gradient(circle at center, #5e2a0a, #381a08);
@@ -248,18 +236,6 @@ body.theme-studio input[type="range"]::-moz-range-thumb {
   border-color: #0ff;
   box-shadow: 0 0 4px #0ff, 0 0 8px #0ff;
   animation: neonFlicker 1.5s infinite alternate;
-}
-
-@keyframes forestFloat {
-  0% {
-    transform: translate(-50%, -50%) scale(1) rotate(0deg);
-  }
-  50% {
-    transform: translate(-50%, -50%) scale(1.05) rotate(2deg);
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1) rotate(0deg);
-  }
 }
 .retro-tv-container {
   position: fixed;

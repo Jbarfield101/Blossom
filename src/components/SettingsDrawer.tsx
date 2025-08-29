@@ -76,7 +76,7 @@ const displayKey = (k: string) => k.replace("#", "♯").replace("b", "♭");
 const THEME_PREVIEWS: Record<Theme, string> = {
   default: "#3d0a0a",
   ocean: "#0a3d5e",
-  forest: "#0a3d1a",
+  forest: "#228B22",
   sunset: "#5e2a0a",
   sakura: "#5e0a3d",
   studio: "#000",
