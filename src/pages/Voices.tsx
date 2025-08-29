@@ -18,8 +18,6 @@ import Star from "@mui/icons-material/Star";
 import StarBorder from "@mui/icons-material/StarBorder";
 import { useShallow } from "zustand/react/shallow";
 import { useVoices, Voice } from "../store/voices";
-import { generateAudio } from "../features/voice/bark";
-import * as Tone from "tone";
 
 export default function Voices() {
   const { voices, load, toggleFavorite } = useVoices(
@@ -54,33 +52,11 @@ export default function Voices() {
     return true;
   });
 
-  const handleTest = async () => {
+  const handleTest = () => {
     if (!selected) return;
-    setStatus("testing");
-    setError(null);
-    setLog([]);
-    setLog((l) => [...l, "Starting test…"]);
-    try {
-      setLog((l) => [...l, "Starting Tone..."]);
-      await Tone.start();
-      setLog((l) => [...l, "Generating audio..."]);
-      const buffer = await generateAudio(text, selected.preset, (msg) =>
-        setLog((l) => [...l, msg])
-      );
-      setLog((l) => [...l, "Playing audio..."]);
-      const player = new Tone.Player(buffer).toDestination();
-      player.start();
-      setLog((l) => [...l, "Playback started."]);
-      setStatus("success");
-    } catch (e) {
-      console.error("Voice test failed:", e);
-      setError(e instanceof Error ? e.message : String(e));
-      setStatus("error");
-      setLog((l) => [
-        ...l,
-        `Error: ${e instanceof Error ? e.message : String(e)}`,
-      ]);
-    }
+    setLog(["Audio generation is unavailable"]);
+    setStatus("error");
+    setError("Audio generation is unavailable");
   };
 
   return (
