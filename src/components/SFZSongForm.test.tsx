@@ -30,10 +30,10 @@ vi.mock('../utils/sfzLoader', () => ({
   }),
 }));
 
-const generateBasicSong = vi.fn();
 vi.mock('../store/tasks', () => ({
-  generateBasicSong,
+  generateBasicSong: vi.fn(),
 }));
+import { generateBasicSong } from '../store/tasks';
 
 describe('SFZSongForm', () => {
   beforeEach(() => {
@@ -123,6 +123,15 @@ describe('SFZSongForm', () => {
     render(<SFZSongForm />);
     await screen.findByText('Change SFZ');
     expect(screen.getByText('Output: /saved/out')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(localStorage.getItem('sfzOutDir')).toBe('/saved/out')
+    );
+    await waitFor(() =>
+      expect(vi.mocked(invoke).mock.calls).toContainEqual([
+        'save_paths',
+        { sfz_out_dir: '/saved/out' },
+      ])
+    );
   });
 
   it('prefills output directory from localStorage when config missing', async () => {
@@ -130,6 +139,12 @@ describe('SFZSongForm', () => {
     render(<SFZSongForm />);
     await screen.findByText('Change SFZ');
     expect(screen.getByText('Output: /stored/out')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(vi.mocked(invoke).mock.calls).toContainEqual([
+        'save_paths',
+        { sfz_out_dir: '/stored/out' },
+      ])
+    );
   });
 
   it('persists chosen folder', async () => {
@@ -138,11 +153,15 @@ describe('SFZSongForm', () => {
     await screen.findByText('Change SFZ');
     fireEvent.click(screen.getByText('Choose Output Folder'));
     await screen.findByText('Output: /tmp/out');
-    expect(localStorage.getItem('sfzOutDir')).toBe('/tmp/out');
-    expect(vi.mocked(invoke).mock.calls).toContainEqual([
-      'save_paths',
-      { sfz_out_dir: '/tmp/out' },
-    ]);
+    await waitFor(() =>
+      expect(localStorage.getItem('sfzOutDir')).toBe('/tmp/out')
+    );
+    await waitFor(() =>
+      expect(vi.mocked(invoke).mock.calls).toContainEqual([
+        'save_paths',
+        { sfz_out_dir: '/tmp/out' },
+      ])
+    );
   });
 
   it('remembers chosen SFZ instrument', async () => {
