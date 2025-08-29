@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { resolveResource } from "@tauri-apps/api/path";
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
+import { readBinaryFile } from "@tauri-apps/api/fs";
 import { listen } from "@tauri-apps/api/event";
+import { Midi } from "@tonejs/midi";
 import {
   Alert,
   Snackbar,
@@ -36,6 +38,15 @@ interface Section {
  * Contains all configurable properties for rendering a song.
  */
 
+function formatDuration(seconds: number): string {
+  if (!isFinite(seconds)) return "0:00";
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.round(seconds % 60)
+    .toString()
+    .padStart(2, "0");
+  return `${mins}:${secs}`;
+}
+
 export default function SFZSongForm() {
   const [title, setTitle] = useState("");
   const [outDir, setOutDir] = useState(() => localStorage.getItem("sfzOutDir") || "");
@@ -45,9 +56,10 @@ export default function SFZSongForm() {
   const [midiFile, setMidiFile] = useState<string | null>(
       () => localStorage.getItem("midiFile")
     );
-    const [loading, setLoading] = useState(false);
-    const [progress, setProgress] = useState(0);
-    const [status, setStatus] = useState<string | null>(null);
+  const [midiMeta, setMidiMeta] = useState<{ name: string; duration: number } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [status, setStatus] = useState<string | null>(null);
   const [lofiFilter, setLofiFilter] = useState(() => {
     const stored = localStorage.getItem("lofiFilter");
     return stored === null ? false : stored === "true";
@@ -61,6 +73,26 @@ export default function SFZSongForm() {
   const [toast, setToast] = useState<
     { message: string; severity: "success" | "error" } | null
   >(null);
+
+  useEffect(() => {
+    if (midiFile) {
+      (async () => {
+        try {
+          const data = await readBinaryFile(midiFile);
+          const midi = new Midi(data);
+          setMidiMeta({
+            name: midiFile.split(/[/\\]/).pop() || midiFile,
+            duration: midi.duration,
+          });
+        } catch (e) {
+          console.warn(e);
+          setMidiMeta(null);
+        }
+      })();
+    } else {
+      setMidiMeta(null);
+    }
+  }, [midiFile]);
 
   function mapLoaderError(e: unknown): string {
     const msg = e instanceof Error ? e.message : String(e);
@@ -275,7 +307,11 @@ export default function SFZSongForm() {
         </FormControl>
         <FormControl>
           <Button variant="outlined" onClick={pickMidiFile} fullWidth>
-            {midiFile ? `MIDI: ${midiFile}` : "Choose MIDI File"}
+            {midiMeta
+              ? `MIDI: ${midiMeta.name} (${formatDuration(midiMeta.duration)})`
+              : midiFile
+              ? `MIDI: ${midiFile}`
+              : "Choose MIDI File"}
           </Button>
         </FormControl>
         <FormControl fullWidth>
