@@ -776,6 +776,8 @@ pub struct SongSpec {
     pub sfz_instrument: Option<String>,
 }
 
+pub type BasicSfzSpec = SongSpec;
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct AlbumRequest {
