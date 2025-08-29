@@ -5,6 +5,14 @@ import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 import { loadSfz } from '../utils/sfzLoader';
 
+const listeners: Record<string, (e: any) => void> = {};
+vi.mock('@tauri-apps/api/event', () => ({
+  listen: vi.fn((event: string, cb: (e: any) => void) => {
+    listeners[event] = cb;
+    return Promise.resolve(() => delete listeners[event]);
+  }),
+}));
+
 vi.mock('@tauri-apps/plugin-dialog', () => ({ open: vi.fn() }));
 vi.mock('@tauri-apps/api/path', () => ({
   resolveResource: (p: string) =>
@@ -32,6 +40,7 @@ describe('SFZSongForm', () => {
     vi.resetAllMocks();
     localStorage.clear();
     vi.mocked(invoke).mockResolvedValue({});
+    for (const k of Object.keys(listeners)) delete listeners[k];
   });
 
   afterEach(() => {
@@ -169,6 +178,34 @@ describe('SFZSongForm', () => {
     await screen.findByText(
       'Instrument selected. Preview skipped; renderer will handle loading.'
     );
+  });
+
+  it('shows success snackbar and clears status on completion', async () => {
+    render(<SFZSongForm />);
+    await screen.findByText('Change SFZ');
+    listeners['basic_sfz_progress']?.({
+      payload: '{"stage":"start","message":"working"}',
+    });
+    await screen.findByText('working');
+    listeners['basic_sfz_progress']?.({
+      payload: '{"stage":"done","message":"saved"}',
+    });
+    await screen.findByText('saved');
+    await waitFor(() => expect(screen.queryByText('working')).toBeNull());
+  });
+
+  it('shows error snackbar and clears status on failure', async () => {
+    render(<SFZSongForm />);
+    await screen.findByText('Change SFZ');
+    listeners['basic_sfz_progress']?.({
+      payload: '{"stage":"start","message":"working"}',
+    });
+    await screen.findByText('working');
+    listeners['basic_sfz_progress']?.({
+      payload: '{"stage":"error","message":"oops"}',
+    });
+    await screen.findByText('oops');
+    await waitFor(() => expect(screen.queryByText('working')).toBeNull());
   });
 });
 
