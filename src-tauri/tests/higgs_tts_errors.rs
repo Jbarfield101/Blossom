@@ -28,7 +28,7 @@ async fn higgs_tts_reports_missing_python_and_script() {
 
     // case: script missing
     let py = which("python3").unwrap();
-    save_paths(Some(py.to_string_lossy().to_string()), None)
+    save_paths(Some(py.to_string_lossy().to_string()), None, None)
         .await
         .unwrap();
     let temp_dir = tempdir().unwrap();
