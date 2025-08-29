@@ -1,4 +1,17 @@
-"""Generate audio from an SFZ instrument given a JSON spec."""
+"""Generate audio from an SFZ instrument given a JSON spec.
+
+The expected spec structure is:
+
+```
+{
+    "sfz_path": "instrument.sfz",  # path to the SFZ definition
+    "key": "C",                    # musical key used for default notes
+    "bpm": 120,                     # tempo for note durations
+    "midi_file": "phrase.mid",     # optional MIDI file with note data
+    "out": "render.wav"            # output WAV file path
+}
+```
+"""
 from __future__ import annotations
 
 import argparse
