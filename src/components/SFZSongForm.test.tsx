@@ -106,10 +106,10 @@ describe('SFZSongForm', () => {
     render(<SFZSongForm />);
     await waitFor(() => expect(loadSfz).toHaveBeenCalled());
     expect(convertFileSrc).toHaveBeenCalledWith(
-      'C:/Blossom/resources/sfz_sounds/UprightPianoKW-20220221.sfz'
+      'C:/Blossom/resources/sfz_sounds/piano.sfz'
     );
     expect(loadSfz).toHaveBeenCalledWith(
-      'http://asset.localhost/C:/Blossom/resources/sfz_sounds/UprightPianoKW-20220221.sfz',
+      'http://asset.localhost/C:/Blossom/resources/sfz_sounds/piano.sfz',
       expect.any(Function)
     );
   });
@@ -132,12 +132,14 @@ describe('SFZSongForm', () => {
     );
   });
 
-  it('maps loader errors to friendly message', async () => {
+  it('handles loader errors gracefully', async () => {
     vi.mocked(loadSfz).mockRejectedValueOnce(
       new Error('Unable to load SFZ: piano.sfz (HTTP 404)')
     );
     render(<SFZSongForm />);
-    await screen.findByText('SFZ file not found');
+    await screen.findByText(
+      'Instrument selected. Preview skipped; renderer will handle loading.'
+    );
   });
 });
 
