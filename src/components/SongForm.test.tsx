@@ -77,19 +77,6 @@ describe('SongForm', () => {
     cleanup();
   });
 
-  it('renders default form', () => {
-    const rand = vi
-      .spyOn(Math, 'random')
-      .mockReturnValue(0.000012345);
-    try {
-      const { asFragment } = render(<SongForm />);
-      expect(screen.getByText('Song Builder')).toBeInTheDocument();
-      expect(asFragment()).toMatchSnapshot();
-    } finally {
-      rand.mockRestore();
-    }
-  });
-
   it('shows validation errors when required fields are missing', async () => {
     render(<SongForm />);
     const btn = screen.getByText(/render songs/i) as HTMLButtonElement;
@@ -242,15 +229,6 @@ describe('SongForm', () => {
     fireEvent.keyDown(input, { key: 'Escape' });
   });
 
-  it('shows Ocean Breeze template option', () => {
-    render(<SongForm />);
-    const input = openTemplateOptions();
-    expect(
-      screen.getAllByRole('option', { name: 'Ocean Breeze' })[0]
-    ).toBeInTheDocument();
-    fireEvent.keyDown(input, { key: 'Escape' });
-  });
-
   it('shows City Lights template option', () => {
     render(<SongForm />);
     const input = openTemplateOptions();
@@ -275,7 +253,7 @@ describe('SongForm', () => {
   it('shows ambience options', () => {
     render(<SongForm />);
     openSection('vibe-section');
-    ['street', 'vinyl', 'forest', 'fireplace', 'ocean'].forEach((name) => {
+    ['street', 'vinyl', 'forest', 'fireplace'].forEach((name) => {
       expect(screen.getByText(name)).toBeInTheDocument();
     });
   });

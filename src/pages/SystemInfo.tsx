@@ -5,7 +5,6 @@ import { useAudioLevel } from "../utils/useAudioLevel";
 
 const themeColors: Record<Theme, string> = {
   default: "rgba(255,255,255,0.22)",
-  ocean: "rgba(0,150,255,0.22)",
   forest: "rgba(0,255,150,0.22)",
   sunset: "rgba(255,150,0,0.22)",
   sakura: "rgba(255,150,200,0.22)",

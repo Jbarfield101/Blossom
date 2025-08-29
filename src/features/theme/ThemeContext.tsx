@@ -10,7 +10,6 @@ import { useUsers } from "../users/useUsers";
 
 export type Theme =
   | "default"
-  | "ocean"
   | "forest"
   | "sunset"
   | "sakura"
@@ -42,7 +41,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const classes = [
       "theme-default",
-      "theme-ocean",
       "theme-forest",
       "theme-sunset",
       "theme-sakura",
