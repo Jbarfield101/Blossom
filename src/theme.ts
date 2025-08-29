@@ -15,19 +15,6 @@ export const colors = {
 
 export const spacing = 8;
 
-export const dndColors = {
-  primary: '#8b0000',
-  secondary: '#d4af37',
-  background: '#2a1a1f',
-  surface: '#3e2723',
-};
-
-export const dndTypography = {
-  fontFamily: `'Cinzel', serif`,
-  h1: { fontFamily: `'Cinzel', serif` },
-  h2: { fontFamily: `'Cinzel', serif` },
-};
-
 export const createAppTheme = () =>
   createTheme({
     palette: {
@@ -36,20 +23,5 @@ export const createAppTheme = () =>
       secondary: { main: colors.secondary },
       background: { default: colors.background, paper: colors.surface },
     },
-    spacing,
-  });
-
-export const createDndTheme = () =>
-  createTheme({
-    palette: {
-      mode: 'dark',
-      primary: { main: dndColors.primary },
-      secondary: { main: dndColors.secondary },
-      background: {
-        default: dndColors.background,
-        paper: dndColors.surface,
-      },
-    },
-    typography: dndTypography,
     spacing,
   });
