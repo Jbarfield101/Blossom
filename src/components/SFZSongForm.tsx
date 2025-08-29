@@ -42,6 +42,8 @@ interface SongSpec {
   outDir: string;
   /** Tempo in beats per minute. */
   bpm: number;
+  /** Musical key of the song (e.g., "C", "Am"). */
+  key: string;
   /** Arrangement describing sections and harmony. */
   structure: Section[];
   /** Optional list of additional instruments to include. */
@@ -67,6 +69,8 @@ interface SongSpec {
 export default function SFZSongForm() {
   const [title, setTitle] = useState("");
   const [outDir, setOutDir] = useState("");
+  const [bpm, setBpm] = useState(100);
+  const [key, setKey] = useState("C");
   const [sfzInstrument, setSfzInstrument] = useState<string | null>(null);
   const [midiFile, setMidiFile] = useState<string | null>(
       () => localStorage.getItem("midiFile")
@@ -265,7 +269,8 @@ export default function SFZSongForm() {
       (): SongSpec => ({
         title, // Song title
         outDir, // Output directory for generated files
-        bpm: 64, // Tempo in BPM (fixed for now)
+        bpm, // Tempo in BPM
+        key, // Musical key
         structure: [{ name: "A", bars: 8, chords: ["Cmaj7"] }], // Sections + harmony
         instruments: [], // Additional instrument layers (unused in current UI)
         ambience: [], // Ambient textures (unused in current UI)
@@ -276,7 +281,7 @@ export default function SFZSongForm() {
         midi_file: midiFile || undefined, // Optional MIDI file path
         gain, // Output gain multiplier
       }),
-      [title, outDir, sfzInstrument, lofiFilter, reverb, midiFile, gain]
+      [title, outDir, bpm, key, sfzInstrument, lofiFilter, reverb, midiFile, gain]
     );
 
   function generate() {
@@ -308,6 +313,23 @@ export default function SFZSongForm() {
           <Button variant="outlined" onClick={pickMidiFile} fullWidth>
             {midiFile ? `MIDI: ${midiFile}` : "Choose MIDI File"}
           </Button>
+        </FormControl>
+        <FormControl fullWidth>
+          <TextField
+            label="Tempo"
+            type="number"
+            value={bpm}
+            onChange={(e) => setBpm(Number(e.target.value))}
+            fullWidth
+          />
+        </FormControl>
+        <FormControl fullWidth>
+          <TextField
+            label="Key"
+            value={key}
+            onChange={(e) => setKey(e.target.value)}
+            fullWidth
+          />
         </FormControl>
       </Stack>
 
