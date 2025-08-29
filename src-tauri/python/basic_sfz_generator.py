@@ -67,15 +67,12 @@ def notes_from_midi(midi_path: str) -> List[float]:
     return notes
 
 
-def render_from_spec(spec_path: str) -> None:
-    with open(spec_path) as f:
-        spec = json.load(f)
-
+def render_spec(spec: dict, out_override: str | Path | None = None) -> None:
     try:
         sfz_path = spec["sfz_path"]
         key = spec["key"]
         bpm = float(spec["bpm"])
-        out_path = Path(spec["out"])
+        out_path = Path(out_override) if out_override else Path(spec["out"])
         midi_file = spec.get("midi_file")
     except KeyError as e:
         raise ValueError(f"missing field: {e}") from e
@@ -97,14 +94,34 @@ def render_from_spec(spec_path: str) -> None:
     sf.write(out_path, audio, SR)
 
 
+def render_from_spec(spec_path: str, out_override: str | Path | None = None) -> None:
+    with open(spec_path) as f:
+        spec = json.load(f)
+    render_spec(spec, out_override)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Render a basic SFZ instrument performance from JSON spec"
     )
-    parser.add_argument("spec", help="Path to JSON spec file")
+    parser.add_argument("spec", nargs="?", help="Path to JSON spec file")
+    parser.add_argument(
+        "--spec-json", help="JSON string with spec; overrides file input"
+    )
+    parser.add_argument(
+        "--out", help="Output WAV path; overrides the spec's 'out' field"
+    )
     args = parser.parse_args()
     try:
-        render_from_spec(args.spec)
+        if args.spec_json:
+            spec = json.loads(args.spec_json)
+            render_spec(spec, args.out)
+        else:
+            if not args.spec:
+                parser.error(
+                    "spec file path required when --spec-json is not provided"
+                )
+            render_from_spec(args.spec, args.out)
     except Exception as e:  # pragma: no cover - CLI guard
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
