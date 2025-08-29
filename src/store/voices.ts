@@ -3,6 +3,7 @@ import { saveState, loadState } from "../utils/persist";
 
 export interface Voice {
   id: string;
+  name?: string;
   tags: string[];
   favorite: boolean;
 }
@@ -23,8 +24,8 @@ const STORAGE_KEY = "voices";
 export const useVoices = create<VoiceState>((set, get) => ({
   voices: [],
   filter: () => true,
-  addVoice: async ({ id, tags }) => {
-    const withFavorite: Voice = { id, tags, favorite: false };
+  addVoice: async ({ id, name, tags }) => {
+    const withFavorite: Voice = { id, name, tags, favorite: false };
     const existing = get().voices.filter((v) => v.id !== id);
     const voices = [...existing, withFavorite];
     set({ voices });
@@ -52,8 +53,9 @@ export const useVoices = create<VoiceState>((set, get) => ({
     const voices = await loadState<Voice[]>(STORAGE_KEY);
     if (voices && voices.length) {
       set({
-        voices: voices.map(({ id, tags = [], favorite = false }) => ({
+        voices: voices.map(({ id, name, tags = [], favorite = false }) => ({
           id,
+          name,
           tags,
           favorite,
         })),
