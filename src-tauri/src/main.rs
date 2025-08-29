@@ -131,6 +131,7 @@ fn main() {
         )
         .invoke_handler(tauri::generate_handler![
             commands::lofi_generate_gpu,
+            commands::run_basic_sfz,
             commands::run_lofi_song,
             commands::generate_song,
             commands::generate_album,
@@ -201,4 +202,3 @@ fn main() {
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
-
