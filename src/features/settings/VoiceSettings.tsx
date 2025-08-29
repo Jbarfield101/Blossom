@@ -59,7 +59,7 @@ export default function VoiceSettings() {
 
   return (
     <Box id="voice-settings">
-      <Typography variant="subtitle1">Bark Voices</Typography>
+      <Typography variant="subtitle1">Higgs Voices</Typography>
       <FormControlLabel
         control={
           <Checkbox

@@ -2341,9 +2341,9 @@ fn dj_mix_script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
         .join("dj_mix.py")
 }
 
-fn bark_tts_script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
+fn higgs_tts_script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
     if let Ok(cwd) = std::env::current_dir() {
-        let dev = cwd.join("src-tauri").join("python").join("bark_tts.py");
+        let dev = cwd.join("src-tauri").join("python").join("higgs_tts.py");
         if dev.exists() {
             return dev;
         }
@@ -2352,7 +2352,7 @@ fn bark_tts_script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
         .resource_dir()
         .expect("resource dir")
         .join("python")
-        .join("bark_tts.py")
+        .join("higgs_tts.py")
 }
 
 fn run_transcribe_script<R: Runtime>(app: &AppHandle<R>, audio: &Path) -> Result<String, String> {
@@ -2425,7 +2425,7 @@ pub async fn transcribe_audio<R: Runtime>(
 }
 
 #[tauri::command]
-pub async fn bark_tts<R: Runtime>(
+pub async fn higgs_tts<R: Runtime>(
     app: AppHandle<R>,
     text: String,
     speaker: String,
@@ -2434,7 +2434,7 @@ pub async fn bark_tts<R: Runtime>(
     if !py.exists() {
         return Err(format!("Python not found at {}", py.display()));
     }
-    let script = bark_tts_script_path(&app);
+    let script = higgs_tts_script_path(&app);
     if !script.exists() {
         return Err(format!("Script not found at {}", script.display()));
     }
