@@ -54,6 +54,8 @@ interface SongSpec {
   sfz_instrument?: string;
   /** Enable a lofi/low‑pass coloration on the output. */
   lofi_filter: boolean;
+  /** Apply a simple reverb effect after rendering. */
+  reverb: boolean;
   /** Optional path to a MIDI file guiding the generation. */
   midi_file?: string;
   /** Overall output gain multiplier (0–1). */
@@ -74,6 +76,10 @@ export default function SFZSongForm() {
     const [status, setStatus] = useState<string | null>(null);
   const [lofiFilter, setLofiFilter] = useState(() => {
     const stored = localStorage.getItem("lofiFilter");
+    return stored === null ? false : stored === "true";
+  });
+  const [reverb, setReverb] = useState(() => {
+    const stored = localStorage.getItem("reverb");
     return stored === null ? false : stored === "true";
   });
   const [error, setError] = useState<string | null>(null);
@@ -201,6 +207,10 @@ export default function SFZSongForm() {
   }, [lofiFilter]);
 
   useEffect(() => {
+    localStorage.setItem("reverb", String(reverb));
+  }, [reverb]);
+
+  useEffect(() => {
     async function initOutDir() {
       try {
         const cfg = (await invoke("load_paths")) as {
@@ -262,10 +272,11 @@ export default function SFZSongForm() {
         drum_pattern: "", // Drum pattern descriptor (unused in current UI)
         sfz_instrument: sfzInstrument || undefined, // Selected SFZ path
         lofi_filter: lofiFilter, // Apply lofi coloration
+        reverb, // Apply simple reverb
         midi_file: midiFile || undefined, // Optional MIDI file path
         gain, // Output gain multiplier
       }),
-      [title, outDir, sfzInstrument, lofiFilter, midiFile, gain]
+      [title, outDir, sfzInstrument, lofiFilter, reverb, midiFile, gain]
     );
 
   function generate() {
@@ -343,6 +354,15 @@ export default function SFZSongForm() {
             />
           </Stack>
         </FormControl>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={reverb}
+              onChange={(e) => setReverb(e.target.checked)}
+            />
+          }
+          label="Reverb"
+        />
         <FormControlLabel
           control={
             <Checkbox

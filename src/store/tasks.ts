@@ -32,6 +32,7 @@ export interface SongSpec {
   hqChorus?: boolean;
   limiterDrive?: number;
   lofiFilter?: boolean;
+  reverb?: boolean;
   sfzInstrument?: string;
   midiFile?: string;
   gain?: number;
