@@ -1,4 +1,4 @@
-use std::{env, path::PathBuf};
+use std::{env, fs};
 
 use blossom_lib::commands::{bark_tts, save_paths};
 use tempfile::tempdir;
@@ -11,10 +11,12 @@ async fn bark_tts_reports_missing_python_and_script() {
     let temp_home = tempdir().unwrap();
     env::set_var("HOME", temp_home.path());
 
-    // ensure script exists for first check
-    let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let repo_root = manifest_dir.parent().unwrap();
-    env::set_current_dir(&repo_root).unwrap();
+    // create temporary repo with script for first check
+    let temp_repo = tempdir().unwrap();
+    let script_dir = temp_repo.path().join("src-tauri").join("python");
+    fs::create_dir_all(&script_dir).unwrap();
+    fs::write(script_dir.join("bark_tts.py"), "").unwrap();
+    env::set_current_dir(temp_repo.path()).unwrap();
 
     // case: python missing
     let app = mock_app();
