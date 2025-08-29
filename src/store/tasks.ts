@@ -33,6 +33,7 @@ export interface SongSpec {
   limiterDrive?: number;
   lofiFilter?: boolean;
   sfzInstrument?: string;
+  midiFile?: string;
 }
 
 export type TaskCommand =
