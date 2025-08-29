@@ -51,6 +51,8 @@ describe('SFZSongForm', () => {
     render(<SFZSongForm />);
     expect(screen.getByLabelText('Title')).toBeInTheDocument();
     expect(screen.getByText('Choose Output Folder')).toBeInTheDocument();
+    expect(screen.getByLabelText('Tempo')).toBeInTheDocument();
+    expect(screen.getByLabelText('Key')).toBeInTheDocument();
     await screen.findByText('Change SFZ');
     const lofi = screen.getByLabelText('Lofi Filter');
     expect(lofi).not.toBeChecked();
@@ -71,7 +73,8 @@ describe('SFZSongForm', () => {
     expect(args.id).toBe('GenerateSong');
     expect(args.spec.instruments).toEqual([]);
     expect(args.spec.ambience).toEqual([]);
-    expect(args.spec.bpm).toBe(64);
+    expect(args.spec.bpm).toBe(100);
+    expect(args.spec.key).toBe('C');
     expect(args.spec.lofi_filter).toBe(false);
     expect(typeof args.spec.seed).toBe('number');
     expect(args.spec.seed).toBeLessThan(2 ** 32);
@@ -91,6 +94,29 @@ describe('SFZSongForm', () => {
     await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
     const [, args] = enqueueTask.mock.calls[0];
     expect(args.spec.lofi_filter).toBe(true);
+  });
+
+  it('includes custom tempo and key in spec', async () => {
+    (openDialog as any).mockResolvedValueOnce('/tmp/out');
+
+    render(<SFZSongForm />);
+    fireEvent.change(screen.getByLabelText('Title'), {
+      target: { value: 'Test' },
+    });
+    fireEvent.click(screen.getByText('Choose Output Folder'));
+    await screen.findByText('Output: /tmp/out');
+    await screen.findByText('Change SFZ');
+    fireEvent.change(screen.getByLabelText('Tempo'), {
+      target: { value: '90' },
+    });
+    fireEvent.change(screen.getByLabelText('Key'), {
+      target: { value: 'Dm' },
+    });
+    fireEvent.click(screen.getByText('Generate'));
+    await waitFor(() => expect(enqueueTask).toHaveBeenCalled());
+    const [, args] = enqueueTask.mock.calls[0];
+    expect(args.spec.bpm).toBe(90);
+    expect(args.spec.key).toBe('Dm');
   });
 
   it('prefills output directory from config', async () => {
