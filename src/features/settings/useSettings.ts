@@ -1,6 +1,12 @@
 import { useEffect, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { useUsers, defaultModules, type ModuleKey } from "../users/useUsers";
+import {
+  useUsers,
+  defaultModules,
+  type ModuleKey,
+  defaultWidgets,
+  type WidgetKey,
+} from "../users/useUsers";
 import { shallow } from "zustand/shallow";
 
 export function useSettings() {
@@ -13,6 +19,15 @@ export function useSettings() {
     [currentModules]
   );
   const toggleModule = useUsers((state) => state.toggleModule);
+  const currentWidgets = useUsers(
+    (s) => (s.currentUserId ? s.users[s.currentUserId].widgets : defaultWidgets),
+    shallow
+  );
+  const widgets = useMemo(
+    () => ({ ...defaultWidgets, ...currentWidgets }),
+    [currentWidgets]
+  );
+  const toggleWidget = useUsers((state) => state.toggleWidget);
   const cpuLimit = useUsers((state) => {
     const id = state.currentUserId;
     return id ? state.users[id].cpuLimit : 90;
@@ -28,7 +43,16 @@ export function useSettings() {
     invoke("set_task_limits", { cpu: cpuLimit, memory: memLimit }).catch(() => {});
   }, [cpuLimit, memLimit]);
 
-  return { modules, toggleModule, cpuLimit, memLimit, setCpuLimit, setMemLimit };
+  return {
+    modules,
+    toggleModule,
+    widgets,
+    toggleWidget,
+    cpuLimit,
+    memLimit,
+    setCpuLimit,
+    setMemLimit,
+  };
 }
 
-export type { ModuleKey };
+export type { ModuleKey, WidgetKey };

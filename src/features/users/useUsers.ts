@@ -41,6 +41,15 @@ const defaultModules: ModulesState = {
   sfz: true,
 };
 
+type WidgetKey = 'homeChat' | 'systemInfo' | 'tasks';
+type WidgetsState = Record<WidgetKey, boolean>;
+
+const defaultWidgets: WidgetsState = {
+  homeChat: false,
+  systemInfo: false,
+  tasks: false,
+};
+
 interface RetroTvMedia {
   path: string;
   width: number;
@@ -53,6 +62,7 @@ interface User {
   theme: Theme;
   money: number;
   modules: ModulesState;
+  widgets: WidgetsState;
   cpuLimit: number;
   memLimit: number;
   retroTvMedia: RetroTvMedia | null;
@@ -66,6 +76,7 @@ interface UsersState {
   switchUser: (id: string) => void;
   setTheme: (theme: Theme) => void;
   toggleModule: (key: ModuleKey) => void;
+  toggleWidget: (key: WidgetKey) => void;
   setCpuLimit: (limit: number) => void;
   setMemLimit: (limit: number) => void;
   setRetroTvMedia: (media: RetroTvMedia) => void;
@@ -89,6 +100,7 @@ export const useUsers = create<UsersState>()(
               theme: state.globalTheme,
               money: 5000,
               modules: { ...defaultModules },
+              widgets: { ...defaultWidgets },
               cpuLimit: 90,
               memLimit: 90,
               retroTvMedia: null,
@@ -122,6 +134,22 @@ export const useUsers = create<UsersState>()(
                 [id]: {
                   ...user,
                   modules: { ...user.modules, [key]: !user.modules[key] },
+                },
+              },
+            };
+          });
+        },
+        toggleWidget: (key) => {
+          const id = get().currentUserId;
+          if (!id) return;
+          set((state) => {
+            const user = state.users[id];
+            return {
+              users: {
+                ...state.users,
+                [id]: {
+                  ...user,
+                  widgets: { ...user.widgets, [key]: !user.widgets[key] },
                 },
               },
             };
@@ -179,4 +207,12 @@ useUsers.persist.onFinishHydration((state) => {
   }
 });
 
-export { type ModuleKey, type ModulesState, defaultModules, type RetroTvMedia };
+export {
+  type ModuleKey,
+  type ModulesState,
+  defaultModules,
+  type WidgetKey,
+  type WidgetsState,
+  defaultWidgets,
+  type RetroTvMedia,
+};
