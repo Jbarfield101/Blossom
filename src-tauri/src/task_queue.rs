@@ -14,7 +14,9 @@ use tauri::{AppHandle, Emitter, Wry};
 use tokio::sync::{mpsc, Mutex, Semaphore};
 use tokio::time::sleep;
 
-use crate::commands::{run_lofi_song, AlbumRequest, ShortSpec, SongSpec};
+use crate::commands::{
+    run_basic_sfz, run_lofi_song, AlbumRequest, BasicSfzSpec, ShortSpec, SongSpec,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "id")]
@@ -69,6 +71,9 @@ pub enum TaskCommand {
     GenerateAlbum {
         meta: AlbumRequest,
     },
+    GenerateBasicSfz {
+        spec: BasicSfzSpec,
+    },
     GenerateShort {
         spec: ShortSpec,
     },
@@ -122,10 +127,7 @@ fn parse_python_json(output: Output) -> Result<Value, TaskError> {
         let stderr = String::from_utf8_lossy(&output.stderr);
         Err(TaskError {
             code: PdfErrorCode::ExecutionFailed,
-            message: format!(
-                "Python exited with status {}:\n{}",
-                output.status, stderr
-            ),
+            message: format!("Python exited with status {}:\n{}", output.status, stderr),
         })
     } else {
         let stdout = String::from_utf8_lossy(&output.stdout);
@@ -232,297 +234,312 @@ impl TaskQueue {
                                     let _ = app.emit("task_updated", task);
                                 }
                             }
-                            let res: Result<Value, TaskError> = match command {
-                                TaskCommand::Example => Ok(Value::Null),
-                                TaskCommand::LofiGenerateGpu {
-                                    py,
-                                    script,
-                                    prompt,
-                                    duration,
-                                    seed,
-                                } => {
-                                    let python_dir = std::path::Path::new(&script)
-                                        .parent()
-                                        .and_then(|p| p.parent())
-                                        .map(|p| p.to_path_buf())
-                                        .ok_or_else(|| "invalid script path".to_string())?;
-                                    let output = PCommand::new(&py)
-                                        .current_dir(python_dir)
-                                        .arg("-u")
-                                        .arg("-m")
-                                        .arg("lofi.renderer")
-                                        .arg("--prompt")
-                                        .arg(&prompt)
-                                        .arg("--duration")
-                                        .arg(duration.to_string())
-                                        .arg("--seed")
-                                        .arg(seed.to_string())
-                                        .output()
-                                        .map_err(|e| TaskError {
-                                            code: PdfErrorCode::PythonNotFound,
-                                            message: format!("Failed to start python: {e}"),
-                                        })?;
-                                    if !output.status.success() {
-                                        let stderr = String::from_utf8_lossy(&output.stderr);
-                                        Err(TaskError {
-                                            code: PdfErrorCode::ExecutionFailed,
-                                            message: format!(
-                                                "Python exited with status {}:\n{}",
-                                                output.status, stderr
-                                            ),
-                                        })
-                                    } else {
-                                        let stdout = String::from_utf8_lossy(&output.stdout)
-                                            .trim()
-                                            .to_string();
-                                        if stdout.is_empty() {
+                            let res: Result<Value, TaskError> =
+                                match command {
+                                    TaskCommand::Example => Ok(Value::Null),
+                                    TaskCommand::LofiGenerateGpu {
+                                        py,
+                                        script,
+                                        prompt,
+                                        duration,
+                                        seed,
+                                    } => {
+                                        let python_dir = std::path::Path::new(&script)
+                                            .parent()
+                                            .and_then(|p| p.parent())
+                                            .map(|p| p.to_path_buf())
+                                            .ok_or_else(|| "invalid script path".to_string())?;
+                                        let output = PCommand::new(&py)
+                                            .current_dir(python_dir)
+                                            .arg("-u")
+                                            .arg("-m")
+                                            .arg("lofi.renderer")
+                                            .arg("--prompt")
+                                            .arg(&prompt)
+                                            .arg("--duration")
+                                            .arg(duration.to_string())
+                                            .arg("--seed")
+                                            .arg(seed.to_string())
+                                            .output()
+                                            .map_err(|e| TaskError {
+                                                code: PdfErrorCode::PythonNotFound,
+                                                message: format!("Failed to start python: {e}"),
+                                            })?;
+                                        if !output.status.success() {
+                                            let stderr = String::from_utf8_lossy(&output.stderr);
                                             Err(TaskError {
-                                                code: PdfErrorCode::Unknown,
-                                                message: "Python returned no path".into(),
+                                                code: PdfErrorCode::ExecutionFailed,
+                                                message: format!(
+                                                    "Python exited with status {}:\n{}",
+                                                    output.status, stderr
+                                                ),
                                             })
                                         } else {
-                                            Ok(Value::String(stdout))
+                                            let stdout = String::from_utf8_lossy(&output.stdout)
+                                                .trim()
+                                                .to_string();
+                                            if stdout.is_empty() {
+                                                Err(TaskError {
+                                                    code: PdfErrorCode::Unknown,
+                                                    message: "Python returned no path".into(),
+                                                })
+                                            } else {
+                                                Ok(Value::String(stdout))
+                                            }
                                         }
                                     }
-                                }
-                                TaskCommand::PdfIngest { py, script, doc_id } => {
-                                    let output = PCommand::new(&py)
-                                        .arg(&script)
-                                        .arg("ingest")
-                                        .arg(&doc_id)
-                                        .output()
-                                        .map_err(|e| TaskError {
-                                            code: PdfErrorCode::PythonNotFound,
-                                            message: format!("Failed to start python: {e}"),
-                                        })?;
-                                    if !output.status.success() {
-                                        let stderr = String::from_utf8_lossy(&output.stderr);
-                                        Err(TaskError {
-                                            code: PdfErrorCode::ExecutionFailed,
-                                            message: format!(
-                                                "Python exited with status {}:\n{}",
-                                                output.status, stderr
-                                            ),
-                                        })
-                                    } else {
-                                        let stdout =
-                                            String::from_utf8_lossy(&output.stdout).to_string();
-                                        log::info!("ParseNpcPdf stdout: {}", stdout.trim());
-                                        serde_json::from_str::<Value>(&stdout).map_err(|e| {
-                                            TaskError {
-                                                code: PdfErrorCode::InvalidJson,
-                                                message: e.to_string(),
-                                            }
-                                        })
-                                    }
-                                }
-                                TaskCommand::ParseNpcPdf {
-                                    py,
-                                    script,
-                                    path,
-                                    world: _,
-                                } => {
-                                    let output = PCommand::new(&py)
-                                        .arg(&script)
-                                        .arg("npcs")
-                                        .arg(&path)
-                                        .output()
-                                        .map_err(|e| TaskError {
-                                            code: PdfErrorCode::PythonNotFound,
-                                            message: format!("Failed to start python: {e}"),
-                                        })?;
-                                    if !output.status.success() {
-                                        let stderr = String::from_utf8_lossy(&output.stderr);
-                                        Err(TaskError {
-                                            code: PdfErrorCode::ExecutionFailed,
-                                            message: format!(
-                                                "Python exited with status {}:\n{}",
-                                                output.status, stderr
-                                            ),
-                                        })
-                                    } else {
-                                        let stdout = String::from_utf8_lossy(&output.stdout);
-                                        serde_json::from_str::<Value>(&stdout).map_err(|e| {
-                                            TaskError {
-                                                code: PdfErrorCode::InvalidJson,
-                                                message: e.to_string(),
-                                            }
-                                        })
-                                    }
-                                }
-                                TaskCommand::ParseSpellPdf { py, script, path } => {
-                                    let output = PCommand::new(&py)
-                                        .arg(&script)
-                                        .arg("spells")
-                                        .arg(&path)
-                                        .output()
-                                        .map_err(|e| TaskError {
-                                            code: PdfErrorCode::PythonNotFound,
-                                            message: format!("Failed to start python: {e}"),
-                                        })?;
-                                    parse_python_json(output)
-                                }
-                                TaskCommand::ParseRulePdf { py, script, path } => {
-                                    let output = PCommand::new(&py)
-                                        .arg(&script)
-                                        .arg("rules")
-                                        .arg(&path)
-                                        .output()
-                                        .map_err(|e| TaskError {
-                                            code: PdfErrorCode::PythonNotFound,
-                                            message: format!("Failed to start python: {e}"),
-                                        })?;
-                                    parse_python_json(output)
-                                }
-                                TaskCommand::ParseLorePdf {
-                                    py,
-                                    script,
-                                    path,
-                                    world: _,
-                                } => {
-                                    let mut cmd = PCommand::new(&py);
-                                    cmd.arg(&script)
-                                        .arg("lore")
-                                        .arg(&path)
-                                        .stdout(Stdio::piped())
-                                        .stderr(Stdio::piped());
-                                    let mut child = cmd.spawn().map_err(|e| TaskError {
-                                        code: PdfErrorCode::PythonNotFound,
-                                        message: format!("Failed to start python: {e}"),
-                                    })?;
-                                    let stdout = child.stdout.take().ok_or_else(|| TaskError {
-                                        code: PdfErrorCode::ExecutionFailed,
-                                        message: "no stdout".to_string(),
-                                    })?;
-                                    let mut reader = BufReader::new(stdout);
-                                    let mut output = String::new();
-                                    loop {
-                                        let mut line = String::new();
-                                        let n =
-                                            reader.read_line(&mut line).map_err(|e| TaskError {
-                                                code: PdfErrorCode::Unknown,
-                                                message: e.to_string(),
+                                    TaskCommand::PdfIngest { py, script, doc_id } => {
+                                        let output = PCommand::new(&py)
+                                            .arg(&script)
+                                            .arg("ingest")
+                                            .arg(&doc_id)
+                                            .output()
+                                            .map_err(|e| TaskError {
+                                                code: PdfErrorCode::PythonNotFound,
+                                                message: format!("Failed to start python: {e}"),
                                             })?;
-                                        if n == 0 {
-                                            break;
-                                        }
-                                        if let Ok(p) = line.trim().parse::<f32>() {
-                                            let mut map = tasks_clone.lock().await;
-                                            if let Some(t) = map.get_mut(&id) {
-                                                t.progress = p;
-                                            }
+                                        if !output.status.success() {
+                                            let stderr = String::from_utf8_lossy(&output.stderr);
+                                            Err(TaskError {
+                                                code: PdfErrorCode::ExecutionFailed,
+                                                message: format!(
+                                                    "Python exited with status {}:\n{}",
+                                                    output.status, stderr
+                                                ),
+                                            })
                                         } else {
-                                            output.push_str(&line);
-                                        }
-                                        if _cancelled_clone.lock().await.contains(&id) {
-                                            let _ = child.kill();
-                                            return Err(TaskError {
-                                                code: PdfErrorCode::Unknown,
-                                                message: "cancelled".into(),
-                                            });
+                                            let stdout =
+                                                String::from_utf8_lossy(&output.stdout).to_string();
+                                            log::info!("ParseNpcPdf stdout: {}", stdout.trim());
+                                            serde_json::from_str::<Value>(&stdout).map_err(|e| {
+                                                TaskError {
+                                                    code: PdfErrorCode::InvalidJson,
+                                                    message: e.to_string(),
+                                                }
+                                            })
                                         }
                                     }
-                                    let status = child.wait().map_err(|e| TaskError {
-                                        code: PdfErrorCode::Unknown,
-                                        message: e.to_string(),
-                                    })?;
-                                    if !status.success() {
-                                        let mut err = String::new();
-                                        if let Some(mut e) = child.stderr.take() {
-                                            use std::io::Read;
-                                            let _ = e.read_to_string(&mut err);
+                                    TaskCommand::ParseNpcPdf {
+                                        py,
+                                        script,
+                                        path,
+                                        world: _,
+                                    } => {
+                                        let output = PCommand::new(&py)
+                                            .arg(&script)
+                                            .arg("npcs")
+                                            .arg(&path)
+                                            .output()
+                                            .map_err(|e| TaskError {
+                                                code: PdfErrorCode::PythonNotFound,
+                                                message: format!("Failed to start python: {e}"),
+                                            })?;
+                                        if !output.status.success() {
+                                            let stderr = String::from_utf8_lossy(&output.stderr);
+                                            Err(TaskError {
+                                                code: PdfErrorCode::ExecutionFailed,
+                                                message: format!(
+                                                    "Python exited with status {}:\n{}",
+                                                    output.status, stderr
+                                                ),
+                                            })
+                                        } else {
+                                            let stdout = String::from_utf8_lossy(&output.stdout);
+                                            serde_json::from_str::<Value>(&stdout).map_err(|e| {
+                                                TaskError {
+                                                    code: PdfErrorCode::InvalidJson,
+                                                    message: e.to_string(),
+                                                }
+                                            })
                                         }
-                                        Err(TaskError {
-                                            code: PdfErrorCode::ExecutionFailed,
-                                            message: format!(
-                                                "Python exited with status {}:\n{}",
-                                                status, err
-                                            ),
-                                        })
-                                    } else {
-                                        serde_json::from_str::<Value>(&output).map_err(|e| {
-                                            TaskError {
-                                                code: PdfErrorCode::InvalidJson,
-                                                message: e.to_string(),
+                                    }
+                                    TaskCommand::ParseSpellPdf { py, script, path } => {
+                                        let output = PCommand::new(&py)
+                                            .arg(&script)
+                                            .arg("spells")
+                                            .arg(&path)
+                                            .output()
+                                            .map_err(|e| TaskError {
+                                                code: PdfErrorCode::PythonNotFound,
+                                                message: format!("Failed to start python: {e}"),
+                                            })?;
+                                        parse_python_json(output)
+                                    }
+                                    TaskCommand::ParseRulePdf { py, script, path } => {
+                                        let output = PCommand::new(&py)
+                                            .arg(&script)
+                                            .arg("rules")
+                                            .arg(&path)
+                                            .output()
+                                            .map_err(|e| TaskError {
+                                                code: PdfErrorCode::PythonNotFound,
+                                                message: format!("Failed to start python: {e}"),
+                                            })?;
+                                        parse_python_json(output)
+                                    }
+                                    TaskCommand::ParseLorePdf {
+                                        py,
+                                        script,
+                                        path,
+                                        world: _,
+                                    } => {
+                                        let mut cmd = PCommand::new(&py);
+                                        cmd.arg(&script)
+                                            .arg("lore")
+                                            .arg(&path)
+                                            .stdout(Stdio::piped())
+                                            .stderr(Stdio::piped());
+                                        let mut child = cmd.spawn().map_err(|e| TaskError {
+                                            code: PdfErrorCode::PythonNotFound,
+                                            message: format!("Failed to start python: {e}"),
+                                        })?;
+                                        let stdout =
+                                            child.stdout.take().ok_or_else(|| TaskError {
+                                                code: PdfErrorCode::ExecutionFailed,
+                                                message: "no stdout".to_string(),
+                                            })?;
+                                        let mut reader = BufReader::new(stdout);
+                                        let mut output = String::new();
+                                        loop {
+                                            let mut line = String::new();
+                                            let n = reader.read_line(&mut line).map_err(|e| {
+                                                TaskError {
+                                                    code: PdfErrorCode::Unknown,
+                                                    message: e.to_string(),
+                                                }
+                                            })?;
+                                            if n == 0 {
+                                                break;
                                             }
-                                        })
+                                            if let Ok(p) = line.trim().parse::<f32>() {
+                                                let mut map = tasks_clone.lock().await;
+                                                if let Some(t) = map.get_mut(&id) {
+                                                    t.progress = p;
+                                                }
+                                            } else {
+                                                output.push_str(&line);
+                                            }
+                                            if _cancelled_clone.lock().await.contains(&id) {
+                                                let _ = child.kill();
+                                                return Err(TaskError {
+                                                    code: PdfErrorCode::Unknown,
+                                                    message: "cancelled".into(),
+                                                });
+                                            }
+                                        }
+                                        let status = child.wait().map_err(|e| TaskError {
+                                            code: PdfErrorCode::Unknown,
+                                            message: e.to_string(),
+                                        })?;
+                                        if !status.success() {
+                                            let mut err = String::new();
+                                            if let Some(mut e) = child.stderr.take() {
+                                                use std::io::Read;
+                                                let _ = e.read_to_string(&mut err);
+                                            }
+                                            Err(TaskError {
+                                                code: PdfErrorCode::ExecutionFailed,
+                                                message: format!(
+                                                    "Python exited with status {}:\n{}",
+                                                    status, err
+                                                ),
+                                            })
+                                        } else {
+                                            serde_json::from_str::<Value>(&output).map_err(|e| {
+                                                TaskError {
+                                                    code: PdfErrorCode::InvalidJson,
+                                                    message: e.to_string(),
+                                                }
+                                            })
+                                        }
                                     }
-                                }
-                                TaskCommand::GenerateAlbum { meta } => {
-                                    let app =
-                                        app_handle.lock().unwrap().clone().ok_or_else(|| {
-                                            TaskError {
+                                    TaskCommand::GenerateAlbum { meta } => {
+                                        let app = app_handle.lock().unwrap().clone().ok_or_else(
+                                            || TaskError {
                                                 code: PdfErrorCode::Unknown,
                                                 message: "no app handle".into(),
-                                            }
+                                            },
+                                        )?;
+                                        let specs = meta.specs.ok_or_else(|| TaskError {
+                                            code: PdfErrorCode::Unknown,
+                                            message: "missing specs".into(),
                                         })?;
-                                    let specs = meta.specs.ok_or_else(|| TaskError {
-                                        code: PdfErrorCode::Unknown,
-                                        message: "missing specs".into(),
-                                    })?;
-                                    let track_total = specs.len() as f32;
-                                    let mut tracks = Vec::new();
-                                    for (i, mut spec) in specs.into_iter().enumerate() {
-                                        if let Some(names) = &meta.track_names {
-                                            if let Some(n) = names.get(i) {
-                                                spec.title = n.clone();
+                                        let track_total = specs.len() as f32;
+                                        let mut tracks = Vec::new();
+                                        for (i, mut spec) in specs.into_iter().enumerate() {
+                                            if let Some(names) = &meta.track_names {
+                                                if let Some(n) = names.get(i) {
+                                                    spec.title = n.clone();
+                                                }
+                                            }
+                                            if let Some(album) = &meta.album_name {
+                                                spec.album = Some(album.clone());
+                                            }
+                                            if let Some(dir) = &meta.out_dir {
+                                                spec.out_dir = dir.clone();
+                                            }
+                                            let path = run_lofi_song(app.clone(), spec)
+                                                .await
+                                                .map_err(|e| TaskError {
+                                                    code: PdfErrorCode::ExecutionFailed,
+                                                    message: e,
+                                                })?;
+                                            tracks.push(path);
+                                            let mut snapshot = None;
+                                            {
+                                                let mut map = tasks_clone.lock().await;
+                                                if let Some(t) = map.get_mut(&id) {
+                                                    t.progress = (i as f32 + 1.0) / track_total;
+                                                    snapshot = Some(t.clone());
+                                                }
+                                            }
+                                            if let Some(task) = snapshot {
+                                                let _ = app.emit("task_updated", task);
+                                            }
+                                            if _cancelled_clone.lock().await.contains(&id) {
+                                                return Err(TaskError {
+                                                    code: PdfErrorCode::Unknown,
+                                                    message: "cancelled".into(),
+                                                });
                                             }
                                         }
-                                        if let Some(album) = &meta.album_name {
-                                            spec.album = Some(album.clone());
-                                        }
-                                        if let Some(dir) = &meta.out_dir {
-                                            spec.out_dir = dir.clone();
-                                        }
+                                        Ok(serde_json::json!({ "tracks": tracks }))
+                                    }
+                                    TaskCommand::GenerateSong { spec } => {
+                                        let app = app_handle.lock().unwrap().clone().ok_or_else(
+                                            || TaskError {
+                                                code: PdfErrorCode::Unknown,
+                                                message: "no app handle".into(),
+                                            },
+                                        )?;
                                         let path = run_lofi_song(app.clone(), spec).await.map_err(
                                             |e| TaskError {
                                                 code: PdfErrorCode::ExecutionFailed,
                                                 message: e,
                                             },
                                         )?;
-                                        tracks.push(path);
-                                        let mut snapshot = None;
-                                        {
-                                            let mut map = tasks_clone.lock().await;
-                                            if let Some(t) = map.get_mut(&id) {
-                                                t.progress = (i as f32 + 1.0) / track_total;
-                                                snapshot = Some(t.clone());
-                                            }
-                                        }
-                                        if let Some(task) = snapshot {
-                                            let _ = app.emit("task_updated", task);
-                                        }
-                                        if _cancelled_clone.lock().await.contains(&id) {
-                                            return Err(TaskError {
-                                                code: PdfErrorCode::Unknown,
-                                                message: "cancelled".into(),
-                                            });
-                                        }
+                                        Ok(serde_json::json!({ "path": path }))
                                     }
-                                    Ok(serde_json::json!({ "tracks": tracks }))
-                                }
-                                TaskCommand::GenerateSong { spec } => {
-                                    let app = app_handle
-                                        .lock()
-                                        .unwrap()
-                                        .clone()
-                                        .ok_or_else(|| TaskError {
-                                            code: PdfErrorCode::Unknown,
-                                            message: "no app handle".into(),
-                                        })?;
-                                    let path = run_lofi_song(app.clone(), spec).await.map_err(|e| {
-                                        TaskError {
-                                            code: PdfErrorCode::ExecutionFailed,
-                                            message: e,
-                                        }
-                                    })?;
-                                    Ok(serde_json::json!({ "path": path }))
-                                }
-                                TaskCommand::GenerateShort { spec } => {
-                                    println!("Generating short: {:?}", spec);
-                                    Ok(Value::String("ok".into()))
-                                }
-                            };
+                                    TaskCommand::GenerateBasicSfz { spec } => {
+                                        let app = app_handle.lock().unwrap().clone().ok_or_else(
+                                            || TaskError {
+                                                code: PdfErrorCode::Unknown,
+                                                message: "no app handle".into(),
+                                            },
+                                        )?;
+                                        let path = run_basic_sfz(app.clone(), spec.into())
+                                            .await
+                                            .map_err(|e| TaskError {
+                                                code: PdfErrorCode::ExecutionFailed,
+                                                message: e,
+                                            })?;
+                                        Ok(serde_json::json!({ "path": path }))
+                                    }
+                                    TaskCommand::GenerateShort { spec } => {
+                                        println!("Generating short: {:?}", spec);
+                                        Ok(Value::String("ok".into()))
+                                    }
+                                };
                             let snapshot = {
                                 let mut map = tasks_clone.lock().await;
                                 if let Some(t) = map.get_mut(&id) {
