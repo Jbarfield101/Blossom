@@ -17,7 +17,7 @@ import {
   Divider,
 } from "@mui/material";
 import { loadSfz } from "../utils/sfzLoader";
-import { useTasks } from "../store/tasks";
+import { generateBasicSong, type SongSpec } from "../store/tasks";
 
 /**
  * Describes a logical song section used when generating music.
@@ -35,36 +35,6 @@ interface Section {
  * Specification passed to the music generation task.
  * Contains all configurable properties for rendering a song.
  */
-interface SongSpec {
-  /** Human‑readable song title (also used in output filenames). */
-  title: string;
-  /** Directory path where rendered audio and artifacts are written. */
-  outDir: string;
-  /** Tempo in beats per minute. */
-  bpm: number;
-  /** Musical key of the song (e.g., "C", "Am"). */
-  key: string;
-  /** Arrangement describing sections and harmony. */
-  structure: Section[];
-  /** Optional list of additional instruments to include. */
-  instruments: string[];
-  /** Optional list of ambience/texture layers to include. */
-  ambience: string[];
-  /** Drum pattern descriptor or preset name. */
-  drum_pattern: string;
-  /** Absolute or file URL path to the selected SFZ instrument. */
-  sfz_instrument?: string;
-  /** Enable a lofi/low‑pass coloration on the output. */
-  lofi_filter: boolean;
-  /** Apply a simple reverb effect after rendering. */
-  reverb: boolean;
-  /** Optional path to a MIDI file guiding the generation. */
-  midi_file?: string;
-  /** Overall output gain multiplier (0–1). */
-  gain?: number;
-  /** Optional RNG seed for reproducible generation. */
-  seed?: number;
-}
 
 export default function SFZSongForm() {
   const [title, setTitle] = useState("");
@@ -91,7 +61,6 @@ export default function SFZSongForm() {
   const [toast, setToast] = useState<
     { message: string; severity: "success" | "error" } | null
   >(null);
-  const tasks = useTasks();
 
   function mapLoaderError(e: unknown): string {
     const msg = e instanceof Error ? e.message : String(e);
@@ -266,30 +235,27 @@ export default function SFZSongForm() {
   }, []);
 
   const spec = useMemo(
-      (): SongSpec => ({
-        title, // Song title
-        outDir, // Output directory for generated files
-        bpm, // Tempo in BPM
-        key, // Musical key
-        structure: [{ name: "A", bars: 8, chords: ["Cmaj7"] }], // Sections + harmony
-        instruments: [], // Additional instrument layers (unused in current UI)
-        ambience: [], // Ambient textures (unused in current UI)
-        drum_pattern: "", // Drum pattern descriptor (unused in current UI)
-        sfz_instrument: sfzInstrument || undefined, // Selected SFZ path
-        lofi_filter: lofiFilter, // Apply lofi coloration
-        reverb, // Apply simple reverb
-        midi_file: midiFile || undefined, // Optional MIDI file path
-        gain, // Output gain multiplier
-      }),
-      [title, outDir, bpm, key, sfzInstrument, lofiFilter, reverb, midiFile, gain]
-    );
+    (): SongSpec => ({
+      title, // Song title
+      outDir, // Output directory for generated files
+      bpm, // Tempo in BPM
+      key, // Musical key
+      structure: [{ name: "A", bars: 8, chords: ["Cmaj7"] }], // Sections + harmony
+      instruments: [], // Additional instrument layers (unused in current UI)
+      ambience: [], // Ambient textures (unused in current UI)
+      drumPattern: "", // Drum pattern descriptor (unused in current UI)
+      sfzInstrument: sfzInstrument || undefined, // Selected SFZ path
+      lofiFilter, // Apply lofi coloration
+      reverb, // Apply simple reverb
+      midiFile: midiFile || undefined, // Optional MIDI file path
+      gain, // Output gain multiplier
+    }),
+    [title, outDir, bpm, key, sfzInstrument, lofiFilter, reverb, midiFile, gain],
+  );
 
   function generate() {
     const seed = Math.floor(Math.random() * 2 ** 32);
-    tasks.enqueueTask("Music Generation", {
-      id: "GenerateSong",
-      spec: { ...spec, seed },
-    });
+    generateBasicSong({ ...spec, seed });
   }
 
   return (

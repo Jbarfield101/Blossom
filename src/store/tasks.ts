@@ -277,6 +277,13 @@ export const useTasks = create<TasksState>((set, get) => ({
 
 export type { TasksState };
 
+export async function generateBasicSong(spec: SongSpec) {
+  return useTasks.getState().enqueueTask('Music Generation', {
+    id: 'GenerateBasicSfz',
+    spec,
+  });
+}
+
 export async function listSpells() {
   return invoke<any[]>('list_spells');
 }
