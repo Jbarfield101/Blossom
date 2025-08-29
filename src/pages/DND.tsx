@@ -1,5 +1,4 @@
 import { Box, TextField, MenuItem, Tabs, Tab } from "@mui/material";
-import { ThemeProvider } from "@mui/material/styles";
 import {
   Person,
   MenuBook,
@@ -16,7 +15,6 @@ import {
   Rule,
 } from "@mui/icons-material";
 import { useState, ChangeEvent } from "react";
-import { createDndTheme } from "../theme";
 import NpcForm from "../features/dnd/NpcForm";
 import LoreForm from "../features/dnd/LoreForm";
 import NPCList from "./NPCList";
@@ -74,8 +72,7 @@ export default function DND() {
     { icon: <MilitaryTech />, label: "War Table", component: <WarTable /> },
   ];
   return (
-    <ThemeProvider theme={createDndTheme()}>
-      <Box sx={{ p: 2 }}>
+    <Box sx={{ p: 2 }}>
       <Box
         data-testid="world-selector"
         sx={{ mt: 4, mb: 2, ml: 2, maxWidth: 200 }}
@@ -117,6 +114,5 @@ export default function DND() {
         </>
       )}
       </Box>
-    </ThemeProvider>
   );
 }
