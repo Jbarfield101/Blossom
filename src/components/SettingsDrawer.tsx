@@ -22,7 +22,7 @@ import {
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { useState, useEffect } from "react";
-import { useSettings, type ModuleKey } from "../features/settings/useSettings";
+import { useSettings, type ModuleKey, type WidgetKey } from "../features/settings/useSettings";
 import { usePaths } from "../features/paths/usePaths";
 import { useOutput } from "../features/output/useOutput";
 import { useAudioDefaults } from "../features/audioDefaults/useAudioDefaults";
@@ -149,6 +149,12 @@ const MODULE_LABELS: Record<ModuleKey, string> = {
   video: "Video Editor",
 };
 
+const WIDGET_LABELS: Record<WidgetKey, string> = {
+  homeChat: "Home Chat",
+  systemInfo: "System Info",
+  tasks: "Tasks",
+};
+
 interface SettingsDrawerProps {
   open: boolean;
   onClose: () => void;
@@ -240,13 +246,14 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   const hasUser = currentUserId !== null;
   const [createUserOpen, setCreateUserOpen] = useState(false);
   const { showTutorial, setShowTutorial } = useComfyTutorial();
-  const { modules, toggleModule } = useSettings();
+  const { modules, toggleModule, widgets, toggleWidget } = useSettings();
   const [audioSaved, setAudioSaved] = useState(false);
   const [pathsSaved, setPathsSaved] = useState(false);
   const [appearanceSaved, setAppearanceSaved] = useState(false);
   const [outputSaved, setOutputSaved] = useState(false);
   const [ambienceMessage, setAmbienceMessage] = useState<string | null>(null);
   const [generatingAmbience, setGeneratingAmbience] = useState(false);
+  const [sfzConvertOnStart, setSfzConvertOnStart] = useState(true);
 
   const [pythonDraft, setPythonDraft] = useState(pythonPath);
   const [folderDraft, setFolderDraft] = useState(folder);
@@ -301,7 +308,10 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   const moduleIndex = (Object.entries(MODULE_LABELS) as [ModuleKey, string][]) .map(
     ([key, label]) => ({ label, section: "integrations" as Section, elementId: `module-${key}` })
   );
-  const searchIndex = [...baseIndex, ...moduleIndex];
+  const widgetIndex = (Object.entries(WIDGET_LABELS) as [WidgetKey, string][]).map(
+    ([key, label]) => ({ label, section: "integrations" as Section, elementId: `widget-${key}` })
+  );
+  const searchIndex = [...baseIndex, ...moduleIndex, ...widgetIndex];
 
   const handleSearchSelect = (value: string | null) => {
     if (!value) return;
@@ -671,6 +681,17 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
           <FormControlLabel
             control={<Switch checked={modules[key]} onChange={() => toggleModule(key)} />}
             label={MODULE_LABELS[key]}
+          />
+        </Box>
+      ))}
+      <Typography variant="subtitle1" sx={{ mt: 3 }}>
+        Widgets
+      </Typography>
+      {(Object.keys(WIDGET_LABELS) as WidgetKey[]).map((key) => (
+        <Box id={`widget-${key}`} key={key}>
+          <FormControlLabel
+            control={<Switch checked={widgets[key]} onChange={() => toggleWidget(key)} />}
+            label={WIDGET_LABELS[key]}
           />
         </Box>
       ))}
