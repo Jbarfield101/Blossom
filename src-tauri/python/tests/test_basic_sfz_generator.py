@@ -92,3 +92,25 @@ def test_render_spec_applies_gain(monkeypatch, tmp_path):
     data = recorded["data"]
     assert np.isclose(np.max(np.abs(data)), 0.35)
 
+
+def test_render_spec_reverb_alters_waveform(monkeypatch, tmp_path):
+    base = {
+        "sfz_path": "dummy.sfz",
+        "key": "C",
+        "bpm": 120,
+        "out": str(tmp_path / "dry.wav"),
+    }
+    dry_rec: dict[str, object] = {}
+    _patch_sampler_and_writer(monkeypatch, dry_rec)
+    basic_sfz_generator.render_spec(base)
+    dry = dry_rec["data"]
+
+    wet_rec: dict[str, object] = {}
+    _patch_sampler_and_writer(monkeypatch, wet_rec)
+    wet_spec = dict(base)
+    wet_spec.update({"out": str(tmp_path / "wet.wav"), "reverb": True})
+    basic_sfz_generator.render_spec(wet_spec)
+    wet = wet_rec["data"]
+
+    assert not np.allclose(dry, wet)
+
