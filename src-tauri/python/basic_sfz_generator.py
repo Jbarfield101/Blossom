@@ -8,7 +8,8 @@ The expected spec structure is:
     "key": "C",                    # musical key used for default notes
     "bpm": 120,                     # tempo for note durations
     "midi_file": "phrase.mid",     # optional MIDI file with note data
-    "out": "render.wav"            # output WAV file path
+    "out": "render.wav",           # output WAV file path
+    "gain": 1.0                     # optional overall gain (1 = no change)
 }
 ```
 """
@@ -87,6 +88,7 @@ def render_spec(spec: dict, out_override: str | Path | None = None) -> None:
         bpm = float(spec["bpm"])
         out_path = Path(out_override) if out_override else Path(spec["out"])
         midi_file = spec.get("midi_file")
+        gain = float(spec.get("gain", 1.0))
     except KeyError as e:
         raise ValueError(f"missing field: {e}") from e
 
@@ -102,6 +104,11 @@ def render_spec(spec: dict, out_override: str | Path | None = None) -> None:
 
     buffers = [sampler.render(freq, ms_per_note) for freq in notes]
     audio = np.concatenate(buffers) if buffers else np.array([], dtype=np.float32)
+    if audio.size:
+        peak = float(np.max(np.abs(audio)))
+        if peak > 0:
+            audio *= 0.7 / peak
+        audio *= gain
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     sf.write(out_path, audio, SR)

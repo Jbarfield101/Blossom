@@ -781,6 +781,8 @@ pub struct SongSpec {
     pub midi_file: Option<String>,
     #[serde(alias = "sfzInstrument", skip_serializing_if = "Option::is_none")]
     pub sfz_instrument: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gain: Option<f32>,
 }
 
 pub type BasicSfzSpec = SongSpec;
@@ -847,6 +849,7 @@ mod tests {
             lofi_filter: None,
             midi_file: None,
             sfz_instrument: None,
+            gain: None,
         };
         let v = serde_json::to_value(&spec).unwrap();
         assert!(v.get("ambience_level").is_some());

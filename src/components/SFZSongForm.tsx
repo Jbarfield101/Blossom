@@ -13,6 +13,7 @@ import {
   FormControl,
   FormControlLabel,
   Checkbox,
+  Slider,
   Divider,
 } from "@mui/material";
 import { loadSfz } from "../utils/sfzLoader";
@@ -55,6 +56,8 @@ interface SongSpec {
   lofi_filter: boolean;
   /** Optional path to a MIDI file guiding the generation. */
   midi_file?: string;
+  /** Overall output gain multiplier (0–1). */
+  gain?: number;
   /** Optional RNG seed for reproducible generation. */
   seed?: number;
 }
@@ -64,16 +67,17 @@ export default function SFZSongForm() {
   const [outDir, setOutDir] = useState("");
   const [sfzInstrument, setSfzInstrument] = useState<string | null>(null);
   const [midiFile, setMidiFile] = useState<string | null>(
-    () => localStorage.getItem("midiFile")
-  );
-  const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState<string | null>(null);
+      () => localStorage.getItem("midiFile")
+    );
+    const [loading, setLoading] = useState(false);
+    const [progress, setProgress] = useState(0);
+    const [status, setStatus] = useState<string | null>(null);
   const [lofiFilter, setLofiFilter] = useState(() => {
     const stored = localStorage.getItem("lofiFilter");
     return stored === null ? false : stored === "true";
   });
   const [error, setError] = useState<string | null>(null);
+  const [gain, setGain] = useState(1);
   const [toast, setToast] = useState<
     { message: string; severity: "success" | "error" } | null
   >(null);
@@ -248,20 +252,21 @@ export default function SFZSongForm() {
   }, []);
 
   const spec = useMemo(
-    (): SongSpec => ({
-      title, // Song title
-      outDir, // Output directory for generated files
-      bpm: 64, // Tempo in BPM (fixed for now)
-      structure: [{ name: "A", bars: 8, chords: ["Cmaj7"] }], // Sections + harmony
-      instruments: [], // Additional instrument layers (unused in current UI)
-      ambience: [], // Ambient textures (unused in current UI)
-      drum_pattern: "", // Drum pattern descriptor (unused in current UI)
-      sfz_instrument: sfzInstrument || undefined, // Selected SFZ path
-      lofi_filter: lofiFilter, // Apply lofi coloration
-      midi_file: midiFile || undefined, // Optional MIDI file path
-    }),
-    [title, outDir, sfzInstrument, lofiFilter, midiFile]
-  );
+      (): SongSpec => ({
+        title, // Song title
+        outDir, // Output directory for generated files
+        bpm: 64, // Tempo in BPM (fixed for now)
+        structure: [{ name: "A", bars: 8, chords: ["Cmaj7"] }], // Sections + harmony
+        instruments: [], // Additional instrument layers (unused in current UI)
+        ambience: [], // Ambient textures (unused in current UI)
+        drum_pattern: "", // Drum pattern descriptor (unused in current UI)
+        sfz_instrument: sfzInstrument || undefined, // Selected SFZ path
+        lofi_filter: lofiFilter, // Apply lofi coloration
+        midi_file: midiFile || undefined, // Optional MIDI file path
+        gain, // Output gain multiplier
+      }),
+      [title, outDir, sfzInstrument, lofiFilter, midiFile, gain]
+    );
 
   function generate() {
     const seed = Math.floor(Math.random() * 2 ** 32);
@@ -325,6 +330,19 @@ export default function SFZSongForm() {
       </Stack>
 
       <Stack spacing={2}>
+        <FormControl>
+          <Stack spacing={1}>
+            <div>Gain</div>
+            <Slider
+              value={gain}
+              onChange={(_, v) => setGain(v as number)}
+              min={0}
+              max={1}
+              step={0.01}
+              aria-label="Gain"
+            />
+          </Stack>
+        </FormControl>
         <FormControlLabel
           control={
             <Checkbox

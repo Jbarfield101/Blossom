@@ -34,6 +34,7 @@ export interface SongSpec {
   lofiFilter?: boolean;
   sfzInstrument?: string;
   midiFile?: string;
+  gain?: number;
 }
 
 export type TaskCommand =
