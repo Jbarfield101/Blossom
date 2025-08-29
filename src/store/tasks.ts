@@ -157,10 +157,10 @@ export const useTasks = create<TasksState>((set, get) => ({
           TaskCommand,
           { id: 'GenerateSong' | 'GenerateBasicSfz' }
         >).spec;
-        const required: (keyof SongSpec)[] = ['outDir', 'title', 'bpm'];
-        if (cmd.id === 'GenerateBasicSfz') {
-          required.push('sfzInstrument');
-        }
+        const required: (keyof SongSpec)[] =
+          cmd.id === 'GenerateBasicSfz'
+            ? ['outDir', 'title', 'bpm', 'sfzInstrument']
+            : ['outDir', 'title', 'bpm'];
         const missing = required.filter((field) => {
           const value = spec[field];
           return (

@@ -39,7 +39,7 @@ export default function BasicSfzGenerator() {
   const [tempo, setTempo] = useState(120);
   const [key, setKey] = useState("C");
   const [outDir, setOutDir] = useState("");
-  const tasks = useTasks();
+  const { enqueueTask } = useTasks();
 
   useEffect(() => {
     async function init() {
@@ -76,7 +76,7 @@ export default function BasicSfzGenerator() {
 
   function generate() {
     if (!instrument || !outDir) return;
-    tasks.enqueueTask("Music Generation", {
+    enqueueTask("Music Generation", {
       id: "GenerateBasicSfz",
       spec: {
         title: "Basic",
