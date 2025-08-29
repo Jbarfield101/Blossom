@@ -140,7 +140,7 @@ fn main() {
             commands::generate_ambience,
             commands::sfz_convert_flac_to_wav,
             commands::set_sfz_convert_on_start,
-            commands::bark_tts,
+            commands::higgs_tts,
             // ComfyUI:
             commands::comfy_status,
             commands::comfy_start,

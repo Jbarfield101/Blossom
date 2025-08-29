@@ -1,12 +1,12 @@
 use std::{env, fs};
 
-use blossom_lib::commands::{bark_tts, save_paths};
+use blossom_lib::commands::{higgs_tts, save_paths};
 use tempfile::tempdir;
 use tauri::{test::mock_app, Manager};
 use which::which;
 
 #[tokio::test]
-async fn bark_tts_reports_missing_python_and_script() {
+async fn higgs_tts_reports_missing_python_and_script() {
     // isolate configuration
     let temp_home = tempdir().unwrap();
     env::set_var("HOME", temp_home.path());
@@ -15,7 +15,7 @@ async fn bark_tts_reports_missing_python_and_script() {
     let temp_repo = tempdir().unwrap();
     let script_dir = temp_repo.path().join("src-tauri").join("python");
     fs::create_dir_all(&script_dir).unwrap();
-    fs::write(script_dir.join("bark_tts.py"), "").unwrap();
+    fs::write(script_dir.join("higgs_tts.py"), "").unwrap();
     env::set_current_dir(temp_repo.path()).unwrap();
 
     // case: python missing
@@ -23,7 +23,7 @@ async fn bark_tts_reports_missing_python_and_script() {
     let handle = app.app_handle().clone();
     let missing = temp_home.path().join("no_python_here");
     env::set_var("BLOSSOM_PYTHON_PATH", missing.to_string_lossy().to_string());
-    let err = bark_tts(handle, "hi".into(), "spk".into()).await.unwrap_err();
+    let err = higgs_tts(handle, "hi".into(), "spk".into()).await.unwrap_err();
     assert!(err.contains("Python not found"));
 
     // case: script missing
@@ -35,6 +35,6 @@ async fn bark_tts_reports_missing_python_and_script() {
     env::set_current_dir(&temp_dir).unwrap();
     let app = mock_app();
     let handle = app.app_handle().clone();
-    let err = bark_tts(handle, "hi".into(), "spk".into()).await.unwrap_err();
+    let err = higgs_tts(handle, "hi".into(), "spk".into()).await.unwrap_err();
     assert!(err.contains("Script not found"));
 }
