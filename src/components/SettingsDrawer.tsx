@@ -135,6 +135,7 @@ const THEME_GROUPS: { label: string; options: { value: Theme; label: string }[] 
 const MODULE_LABELS: Record<ModuleKey, string> = {
   objects: "3D Object",
   music: "Lo‑Fi Music",
+  aimusic: "AI Music",
   calendar: "Calendar",
   comfy: "ComfyUI",
   assistant: "AI Assistant",
