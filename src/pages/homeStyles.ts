@@ -30,3 +30,10 @@ export const systemInfoWidgetSx: SxProps<Theme> = {
   left: { xs: "1rem", sm: "1.5rem" },
   zIndex: 50,
 };
+
+export const tasksWidgetSx: SxProps<Theme> = {
+  position: "absolute",
+  bottom: { xs: "1rem", sm: "1.5rem" },
+  right: { xs: "1rem", sm: "1.5rem" },
+  zIndex: 50,
+};
