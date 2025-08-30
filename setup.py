@@ -10,7 +10,6 @@ setup(
         'pyloudnorm>=0.1.0',
         'numpy>=1.21.0',
         'pydub>=0.25.0',
-        'audioop-lts; python_version >= "3.13"',
         'pdfplumber>=0.10.3',
     ],
     python_requires='>=3.10',
