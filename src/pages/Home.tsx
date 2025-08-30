@@ -9,15 +9,19 @@ import VersionBadge from "../components/VersionBadge";
 import { Theme, useTheme } from "../features/theme/ThemeContext";
 import HomeChat from "../components/HomeChat";
 import SystemInfoWidget from "../components/SystemInfoWidget";
+import TasksWidget from "../components/TasksWidget";
+import { useSettings } from "../features/settings/useSettings";
 import {
   countdownContainerSx,
   countdownTextSx,
   versionBadgeContainerSx,
   systemInfoWidgetSx,
+  tasksWidgetSx,
 } from "./homeStyles";
 
 export default function Home() {
   const { theme } = useTheme();
+  const { widgets } = useSettings();
   const themeColors: Record<Theme, string> = {
     default: "rgba(255,255,255,0.22)",
     forest: "rgba(0,255,150,0.22)",
@@ -69,12 +73,21 @@ export default function Home() {
       <FeatureNav onHoverColor={setHoverColor} />
 
       {/* Floating chat box */}
-      <HomeChat />
+      {widgets.homeChat && <HomeChat />}
 
       {/* System info widget */}
-      <Box sx={systemInfoWidgetSx}>
-        <SystemInfoWidget />
-      </Box>
+      {widgets.systemInfo && (
+        <Box sx={systemInfoWidgetSx}>
+          <SystemInfoWidget />
+        </Box>
+      )}
+
+      {/* Tasks widget */}
+      {widgets.tasks && (
+        <Box sx={tasksWidgetSx}>
+          <TasksWidget />
+        </Box>
+      )}
     </>
   );
 }
