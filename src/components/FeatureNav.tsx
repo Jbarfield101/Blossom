@@ -41,6 +41,7 @@ type Item = {
 export const ITEMS: Item[] = [
   { key: "objects", icon: <FaCubes />, label: "3D Object", path: "/objects", color: "rgba(165,216,255,0.55)" },
   { key: "music", icon: <FaMusic />, label: "Music", path: "/music", color: "rgba(245,176,194,0.55)" },
+  { key: "aimusic", icon: <FaRobot />, label: "AI Music", path: "/ai-music", color: "rgba(200,180,255,0.55)" },
   { key: "sfz", icon: <FaMusic />, label: "SFZ Music", path: "/sfz-music", color: "rgba(200,150,200,0.55)" },
   { key: "calendar", icon: <FaCalendarAlt />, label: "Calendar", path: "/calendar", color: "rgba(211,200,255,0.55)" },
   { key: "comfy", icon: <FaCameraRetro />, label: "ComfyUI", path: "/comfy", color: "rgba(255,213,165,0.55)" },

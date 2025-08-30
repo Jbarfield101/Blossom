@@ -5,6 +5,7 @@ import type { Theme } from '../theme/ThemeContext';
 type ModuleKey =
   | 'objects'
   | 'music'
+  | 'aimusic'
   | 'calendar'
   | 'comfy'
   | 'assistant'
@@ -25,6 +26,7 @@ type ModulesState = Record<ModuleKey, boolean>;
 const defaultModules: ModulesState = {
   objects: true,
   music: true,
+  aimusic: true,
   calendar: true,
   comfy: true,
   assistant: true,

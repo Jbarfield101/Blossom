@@ -11,6 +11,7 @@ import Objects from "./pages/Objects";
 import Blender from "./pages/Blender";
 import Music from "./pages/Music";
 import SFZMusic from "./pages/SFZMusic";
+import AIMusic from "./pages/AIMusic";
 import Calendar from "./pages/Calendar";
 import Comfy from "./pages/Comfy";
 import Assistant from "./pages/Assistant";
@@ -69,6 +70,7 @@ export default function App() {
           <Route path="/objects" element={<Objects />} />
           <Route path="/objects/blender" element={<Blender />} />
           <Route path="/music" element={<Music />} />
+          <Route path="/ai-music" element={<AIMusic />} />
           <Route path="/sfz-music" element={<SFZMusic />} />
           <Route path="/calendar" element={<Calendar />} />
           <Route path="/comfy" element={<Comfy />} />
