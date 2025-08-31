@@ -59,7 +59,7 @@ export default function TabletopMap() {
           height: 500,
           width: "100%",
           backgroundImage: image ? `url(${image})` : "none",
-          backgroundSize: "contain",
+          backgroundSize: "cover",
           backgroundRepeat: "no-repeat",
           backgroundPosition: "center",
         }}

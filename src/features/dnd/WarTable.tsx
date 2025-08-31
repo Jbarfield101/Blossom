@@ -84,7 +84,7 @@ export default function WarTable() {
           height: 500,
           width: "100%",
           backgroundImage: mapImage ? `url(${mapImage})` : "none",
-          backgroundSize: "contain",
+          backgroundSize: "cover",
           backgroundRepeat: "no-repeat",
           backgroundPosition: "center",
           overflow: "hidden",
