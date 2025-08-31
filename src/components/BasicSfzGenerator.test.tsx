@@ -14,6 +14,7 @@ describe('BasicSfzGenerator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    (window as any).__TAURI__ = {};
     vi.mocked(resolveResource).mockResolvedValue('/sfz_sounds');
     vi.mocked(readDir).mockResolvedValue([
       { name: 'piano.sfz', path: '/sfz_sounds/piano.sfz' },

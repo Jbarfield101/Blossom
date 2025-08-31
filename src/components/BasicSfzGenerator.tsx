@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
-import { readDir } from "@tauri-apps/plugin-fs";
 import { resolveResource } from "@tauri-apps/api/path";
 import {
   Button,
@@ -43,6 +42,8 @@ export default function BasicSfzGenerator() {
 
   useEffect(() => {
     async function init() {
+      if (!window.__TAURI__) return;
+      const { readDir } = await import("@tauri-apps/plugin-fs");
       const base = await resolveResource("sfz_sounds");
       const entries = await readDir(base);
       const files = entries
@@ -70,6 +71,7 @@ export default function BasicSfzGenerator() {
   }, [outDir]);
 
   async function pickFolder() {
+    if (!window.__TAURI__) return;
     const dir = await openDialog({ directory: true, multiple: false });
     if (dir) setOutDir(dir as string);
   }
