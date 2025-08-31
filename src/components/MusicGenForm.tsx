@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Box, Button, Grid, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import { useMusicJobs } from '../stores/musicJobs';
-import { cancelMusicJob, startMusicGenMelody, startMusicGenText } from '../utils/musicGen';
+import { startMusicGenMelody, startMusicGenText, jsonlHandlers } from '../utils/musicGen';
 import { saveTempFile } from '../utils/files';
 
 const GENRES = ['Lo-fi', 'Hip-hop', 'Ambient', 'Cinematic', 'Rock', 'Pop'];
