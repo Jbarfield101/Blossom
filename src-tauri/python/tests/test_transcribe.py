@@ -10,7 +10,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 import transcribe
 
 
-def _setup_mocks(monkeypatch, segments, assigned):
+def _setup_mocks(monkeypatch, segments, diarized):
     """Patch heavy models with light-weight dummies."""
 
     class DummyModel:
@@ -20,20 +20,25 @@ def _setup_mocks(monkeypatch, segments, assigned):
         def transcribe(self, *_args, **_kwargs):
             return segments, None
 
-    class DummyDiarizer:
+    class DummyPipeline:
         def __init__(self, *_, **__):
             pass
 
-        def __call__(self, *_args, **_kwargs):
-            return ["ignored"]
+        @classmethod
+        def from_pretrained(cls, *_args, **_kwargs):  # noqa: D401 - simple dummy
+            return cls()
 
-    dummy_whisperx = types.SimpleNamespace(
-        DiarizationPipeline=DummyDiarizer,
-        assign_word_speakers=lambda _d, _s: assigned,
-    )
+        def __call__(self, *_args, **_kwargs):
+            class DummyAnnotation:
+                def itertracks(self, yield_label=True):
+                    for start, end, speaker in diarized:
+                        segment = types.SimpleNamespace(start=start, end=end)
+                        yield segment, None, speaker
+
+            return DummyAnnotation()
 
     monkeypatch.setattr(transcribe, "WhisperModel", DummyModel)
-    monkeypatch.setattr(transcribe, "whisperx", dummy_whisperx)
+    monkeypatch.setattr(transcribe, "Pipeline", DummyPipeline)
 
 
 def test_transcribe_basic(monkeypatch, tmp_path):
@@ -41,13 +46,13 @@ def test_transcribe_basic(monkeypatch, tmp_path):
     audio.write_bytes(b"fake")
 
     segments = [{"start": 0.0, "end": 1.0, "text": "hello world"}]
-    assigned = [
-        {"start": 0.0, "end": 1.0, "text": "hello world", "speaker": "SPEAKER_00"}
-    ]
-    _setup_mocks(monkeypatch, segments, assigned)
+    diarized = [(0.0, 1.0, "SPEAKER_00")]
+    _setup_mocks(monkeypatch, segments, diarized)
 
     res = transcribe.transcribe(str(audio))
-    assert res == assigned
+    assert res == [
+        {"start": 0.0, "end": 1.0, "text": "hello world", "speaker": "SPEAKER_00"}
+    ]
 
 
 def test_transcribe_diarization(monkeypatch, tmp_path):
@@ -58,11 +63,8 @@ def test_transcribe_diarization(monkeypatch, tmp_path):
         {"start": 0.0, "end": 1.0, "text": "hello"},
         {"start": 1.0, "end": 2.0, "text": "world"},
     ]
-    assigned = [
-        {"start": 0.0, "end": 1.0, "text": "hello", "speaker": "A"},
-        {"start": 1.0, "end": 2.0, "text": "world", "speaker": "B"},
-    ]
-    _setup_mocks(monkeypatch, segments, assigned)
+    diarized = [(0.0, 1.0, "A"), (1.0, 2.0, "B")]
+    _setup_mocks(monkeypatch, segments, diarized)
 
     res = transcribe.transcribe(str(audio))
     speakers = {s["speaker"] for s in res}
