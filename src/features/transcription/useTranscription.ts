@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { useAudioDefaults } from "../audioDefaults/useAudioDefaults";
 
 export function useTranscription() {
   const [recording, setRecording] = useState(false);
@@ -7,8 +8,13 @@ export function useTranscription() {
   const media = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
   const stream = useRef<MediaStream | null>(null);
+  const micEnabled = useAudioDefaults((s) => s.micEnabled);
 
   async function start() {
+    if (!micEnabled) {
+      setTranscript("Microphone is disabled in settings.");
+      return;
+    }
     try {
       stream.current = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch (err: any) {

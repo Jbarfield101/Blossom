@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useAudioDefaults } from "../features/audioDefaults/useAudioDefaults";
 
 /**
  * React hook that reports the current audio output level.
@@ -18,7 +19,7 @@ import { useEffect, useRef, useState } from "react";
 export function useAudioLevel(source?: AudioNode): number {
   const [level, setLevel] = useState(0);
   const frame = useRef<number>();
-
+  const micEnabled = useAudioDefaults((s) => s.micEnabled);
   useEffect(() => {
     const AudioCtx =
       (window as any).AudioContext || (window as any).webkitAudioContext;
@@ -34,7 +35,7 @@ export function useAudioLevel(source?: AudioNode): number {
     let active = true;
     if (source) {
       source.connect(analyser);
-    } else if (navigator?.mediaDevices) {
+    } else if (navigator?.mediaDevices && micEnabled) {
       (async () => {
         try {
           stream = await navigator.mediaDevices.getDisplayMedia({
@@ -79,7 +80,7 @@ export function useAudioLevel(source?: AudioNode): number {
         ctx.close();
       }
     };
-  }, [source]);
+  }, [source, micEnabled]);
 
   return level;
 }
