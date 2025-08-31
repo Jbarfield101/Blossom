@@ -23,6 +23,7 @@
 ## Testing Guidelines
 - Frontend: Vitest with React Testing Library; test user-visible behavior and store logic. Name tests after the unit (`ComponentName.test.tsx`, `utilName.test.ts`).
 - Backend: add Rust tests near modules or under `src-tauri/tests` for integration. Python tests cover renderers, parsers, and tools.
+- Accessibility: run `npm run a11y` to verify each theme meets contrast guidelines.
 
 ## Commit & Pull Request Guidelines
 - Messages: Prefer Conventional Commits (e.g., `feat:`, `fix:`, `refactor:`, optional scope like `feat(voices):`). Keep the first line under 72 chars; add context in the body when needed.

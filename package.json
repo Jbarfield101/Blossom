@@ -17,7 +17,8 @@
     "schemas:generate": "tsx scripts/gen-schemas.ts",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed:tags": "tsx scripts/seed_tags.ts",
-    "items:enrich": "tsx scripts/enrich_items.ts"
+    "items:enrich": "tsx scripts/enrich_items.ts",
+    "a11y": "tsx scripts/a11y.ts"
   },
   "dependencies": {
     "@discordjs/voice": "^0.19.0",
@@ -63,6 +64,7 @@
     "autoprefixer": "^10.4.20",
     "handlebars": "^4.7.8",
     "jsdom": "^26.1.0",
+    "pa11y": "^9.0.0",
     "postcss": "^8.4.47",
     "puppeteer": "^23.4.1",
     "tailwindcss": "^3.4.13",
