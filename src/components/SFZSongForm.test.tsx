@@ -47,6 +47,7 @@ describe('SFZSongForm', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     localStorage.clear();
+    (window as any).__TAURI__ = {};
     vi.mocked(invoke).mockResolvedValue({});
     for (const k of Object.keys(listeners)) delete listeners[k];
   });
