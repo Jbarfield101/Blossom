@@ -102,6 +102,7 @@ fn main() {
             Ok(())
         })
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .plugin(
             SqlBuilder::default()
                 .add_migrations(
