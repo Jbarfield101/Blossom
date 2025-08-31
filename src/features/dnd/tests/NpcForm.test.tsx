@@ -102,8 +102,10 @@ describe("NpcForm submission", () => {
         role: "Ranger",
         alignment: "Neutral",
         playerCharacter: false,
-        hooks: ["quest"],
-        tags: ["ally"],
+        hooks: ["quest", "hire"],
+        tags: ["ally", "friend"],
+        inventory: ["Torch", "Rope"],
+        equipment: ["Sword"],
         statblock: {},
       };
 
@@ -147,8 +149,12 @@ describe("NpcForm submission", () => {
     fireEvent.change(screen.getByLabelText(/languages/i), {
       target: { value: "Common" },
     });
-    fireEvent.change(screen.getByLabelText(/^Traits \(comma separated\)/i), {
+    fireEvent.change(screen.getByLabelText(/^Traits/i), {
       target: { value: "Brave" },
+    });
+    fireEvent.change(screen.getByLabelText(/inventory/i), {
+      target: { value: '-Torch
+-Rope' },
     });
     fireEvent.change(screen.getByLabelText(/equipment/i), {
       target: { value: "Sword" },
@@ -169,10 +175,10 @@ describe("NpcForm submission", () => {
       target: { value: "Gruff" },
     });
     fireEvent.change(screen.getByLabelText(/hooks/i), {
-      target: { value: npc.hooks.join(",") },
+      target: { value: npc.hooks.join("\n") },
     });
     fireEvent.change(screen.getByLabelText(/tags/i), {
-      target: { value: npc.tags.join(",") },
+      target: { value: npc.tags.join('•') },
     });
 
     const statblockInput = screen.getByLabelText(/statblock json/i);
@@ -182,7 +188,13 @@ describe("NpcForm submission", () => {
     await waitFor(() =>
       expect(invoke).toHaveBeenCalledWith("save_npc", {
         world: "w",
-        npc: expect.objectContaining({ name: "Alice", armorClass: 15 }),
+        npc: expect.objectContaining({
+          name: "Alice",
+          armorClass: 15,
+          hooks: ['quest', 'hire'],
+          tags: ['ally', 'friend'],
+          inventory: ['Torch', 'Rope'],
+        }),
       })
     );
 
