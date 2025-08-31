@@ -107,6 +107,13 @@ const initialState: FormState = {
   personalityVoice: "",
 };
 
+const splitList = (value: string) =>
+  value
+    .split(/[\n,•-]+/)
+    .map((v) => v.trim())
+    .filter(Boolean);
+
+
 type Action =
   | {
       type: "SET_FIELD";
@@ -262,40 +269,23 @@ export default function NpcForm({ world }: Props) {
       armorClassNum = num;
     }
 
-    const inventory = state.inventory
-      .split(",")
-      .map((i) => i.trim())
-      .filter(Boolean);
+    const inventory = splitList(state.inventory);
 
-    const savingThrows = state.savingThrows
-      .split(",")
-      .map((i) => i.trim())
-      .filter(Boolean);
+    const savingThrows = splitList(state.savingThrows);
 
-    const skills = state.skills
-      .split(",")
-      .map((i) => i.trim())
-      .filter(Boolean);
+    const skills = splitList(state.skills);
 
-    const senses = state.senses
-      .split(",")
-      .map((i) => i.trim())
-      .filter(Boolean);
+    const senses = splitList(state.senses);
 
-    const languages = state.languages
-      .split(",")
-      .map((i) => i.trim())
-      .filter(Boolean);
+    const languages = splitList(state.languages);
 
-    const traits = state.traits
-      .split(",")
-      .map((i) => i.trim())
-      .filter(Boolean);
+    const traits = splitList(state.traits);
 
-    const equipment = state.equipment
-      .split(",")
-      .map((i) => i.trim())
-      .filter(Boolean);
+    const equipment = splitList(state.equipment);
+
+    const hooks = splitList(state.hooks);
+    const quirks = splitList(state.quirks);
+    const tags = splitList(state.tags);
 
     const personality = {
       traits: state.personalityTraits || undefined,
@@ -318,16 +308,14 @@ export default function NpcForm({ world }: Props) {
       age: state.age ? parseInt(state.age, 10) : undefined,
       backstory: state.backstory || undefined,
       location: state.location || undefined,
-      hooks: state.hooks.split(",").map((h) => h.trim()).filter(Boolean),
-      quirks: state.quirks
-        ? state.quirks.split(",").map((q) => q.trim()).filter(Boolean)
-        : undefined,
+      hooks,
+      quirks: quirks.length ? quirks : undefined,
       appearance: state.appearance || undefined,
       portrait: state.portrait || "placeholder.png",
       icon: state.icon || "placeholder-icon.png",
       sections: Object.keys(parsedSections).length ? parsedSections : undefined,
       statblock: parsedStatblock,
-      tags: state.tags.split(",").map((t) => t.trim()).filter(Boolean),
+      tags,
       level: state.level ? parseInt(state.level, 10) : undefined,
       hp: state.hp ? parseInt(state.hp, 10) : undefined,
       abilities: Object.keys(abilities).length ? (abilities as any) : undefined,
@@ -417,40 +405,23 @@ export default function NpcForm({ world }: Props) {
       armorClassNum = num;
     }
 
-    const inventory = state.inventory
-      .split(",")
-      .map((i) => i.trim())
-      .filter(Boolean);
+    const inventory = splitList(state.inventory);
 
-    const savingThrows = state.savingThrows
-      .split(",")
-      .map((i) => i.trim())
-      .filter(Boolean);
+    const savingThrows = splitList(state.savingThrows);
 
-    const skills = state.skills
-      .split(",")
-      .map((i) => i.trim())
-      .filter(Boolean);
+    const skills = splitList(state.skills);
 
-    const senses = state.senses
-      .split(",")
-      .map((i) => i.trim())
-      .filter(Boolean);
+    const senses = splitList(state.senses);
 
-    const languages = state.languages
-      .split(",")
-      .map((i) => i.trim())
-      .filter(Boolean);
+    const languages = splitList(state.languages);
 
-    const traits = state.traits
-      .split(",")
-      .map((i) => i.trim())
-      .filter(Boolean);
+    const traits = splitList(state.traits);
 
-    const equipment = state.equipment
-      .split(",")
-      .map((i) => i.trim())
-      .filter(Boolean);
+    const equipment = splitList(state.equipment);
+
+    const hooks = splitList(state.hooks);
+    const quirks = splitList(state.quirks);
+    const tags = splitList(state.tags);
 
     const personality = {
       traits: state.personalityTraits || undefined,
@@ -473,16 +444,14 @@ export default function NpcForm({ world }: Props) {
       age: state.age ? parseInt(state.age, 10) : undefined,
       backstory: state.backstory || undefined,
       location: state.location || undefined,
-      hooks: state.hooks.split(",").map((h) => h.trim()).filter(Boolean),
-      quirks: state.quirks
-        ? state.quirks.split(",").map((q) => q.trim()).filter(Boolean)
-        : undefined,
+      hooks,
+      quirks: quirks.length ? quirks : undefined,
       appearance: state.appearance || undefined,
       portrait: state.portrait || "placeholder.png",
       icon: state.icon || "placeholder-icon.png",
       sections: Object.keys(parsedSections).length ? parsedSections : undefined,
       statblock: parsedStatblock,
-      tags: state.tags.split(",").map((t) => t.trim()).filter(Boolean),
+      tags,
       level: state.level ? parseInt(state.level, 10) : undefined,
       hp: state.hp ? parseInt(state.hp, 10) : undefined,
       abilities: Object.keys(abilities).length ? (abilities as any) : undefined,
@@ -843,8 +812,9 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={12}>
               <StyledTextField
                 id="savingThrows"
-                label="Saving Throws (comma separated)"
-                placeholder="Dex +3, Wis +2"
+                label="Saving Throws (comma, newline, or bullet separated)"
+                placeholder="Dex +3
+Wis +2"
                 value={state.savingThrows}
                 onChange={(e) =>
                   dispatch({ type: "SET_FIELD", field: "savingThrows", value: e.target.value })
@@ -856,8 +826,9 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={12}>
               <StyledTextField
                 id="skills"
-                label="Skills (comma separated)"
-                placeholder="Stealth +5"
+                label="Skills (comma, newline, or bullet separated)"
+                placeholder="Stealth +5
+Perception +2"
                 value={state.skills}
                 onChange={(e) =>
                   dispatch({ type: "SET_FIELD", field: "skills", value: e.target.value })
@@ -869,8 +840,9 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={12}>
               <StyledTextField
                 id="senses"
-                label="Senses (comma separated)"
-                placeholder="darkvision 60 ft"
+                label="Senses (comma, newline, or bullet separated)"
+                placeholder="darkvision 60 ft
+passive Perception 12"
                 value={state.senses}
                 onChange={(e) =>
                   dispatch({ type: "SET_FIELD", field: "senses", value: e.target.value })
@@ -882,8 +854,9 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={12}>
               <StyledTextField
                 id="languages"
-                label="Languages (comma separated)"
-                placeholder="Common, Elvish"
+                label="Languages (comma, newline, or bullet separated)"
+                placeholder="Common
+Elvish"
                 value={state.languages}
                 onChange={(e) =>
                   dispatch({ type: "SET_FIELD", field: "languages", value: e.target.value })
@@ -895,8 +868,9 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={12}>
               <StyledTextField
                 id="traits"
-                label="Traits (comma separated)"
-                placeholder="Brave, Cunning"
+                label="Traits (comma, newline, or bullet separated)"
+                placeholder="Brave
+Cunning"
                 value={state.traits}
                 onChange={(e) =>
                   dispatch({ type: "SET_FIELD", field: "traits", value: e.target.value })
@@ -942,11 +916,13 @@ export default function NpcForm({ world }: Props) {
               <StyledTextField
                 id="inventory"
                 label={
-                  <Tooltip title="Example: torch, rope, shield">
-                    <span>Inventory (comma separated)</span>
+                  <Tooltip title="Example: torch, rope, shield. Separate with commas, newlines, or bullets.">
+                    <span>Inventory (comma, newline, or bullet separated)</span>
                   </Tooltip>
                 }
-                placeholder="torch, rope, shield"
+                placeholder="torch
+rope
+shield"
                 value={state.inventory}
                 onChange={(e) => {
                   dispatch({ type: "SET_FIELD", field: "inventory", value: e.target.value });
@@ -967,11 +943,12 @@ export default function NpcForm({ world }: Props) {
               <StyledTextField
                 id="equipment"
                 label={
-                  <Tooltip title="Example: chain mail, shield">
-                    <span>Equipment (comma separated)</span>
+                  <Tooltip title="Example: chain mail, shield. Separate with commas, newlines, or bullets.">
+                    <span>Equipment (comma, newline, or bullet separated)</span>
                   </Tooltip>
                 }
-                placeholder="chain mail, shield"
+                placeholder="chain mail
+shield"
                 value={state.equipment}
                 onChange={(e) =>
                   dispatch({ type: "SET_FIELD", field: "equipment", value: e.target.value })
@@ -1024,11 +1001,12 @@ export default function NpcForm({ world }: Props) {
               <StyledTextField
                 id="hooks"
                 label={
-                  <Tooltip title="Example: owes party a favor">
-                    <span>Hooks (comma separated)</span>
+                  <Tooltip title="Example: owes party a favor. Separate with commas, newlines, or bullets.">
+                    <span>Hooks (comma, newline, or bullet separated)</span>
                   </Tooltip>
                 }
-                placeholder="owes party a favor"
+                placeholder="owes party a favor
+needs gold"
                 value={state.hooks}
                 onChange={(e) => {
                   dispatch({ type: "SET_FIELD", field: "hooks", value: e.target.value });
@@ -1046,7 +1024,9 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={12}>
               <StyledTextField
                 id="quirks"
-                label="Personality (comma separated)"
+                label="Personality (comma, newline, or bullet separated)"
+                placeholder="stutters
+always late"
                 value={state.quirks}
                 onChange={(e) =>
                   dispatch({ type: "SET_FIELD", field: "quirks", value: e.target.value })
@@ -1058,7 +1038,9 @@ export default function NpcForm({ world }: Props) {
             <Grid item xs={12}>
               <StyledTextField
                 id="tags"
-                label="Tags (comma separated)"
+                label="Tags (comma, newline, or bullet separated)"
+                placeholder="merchant
+ally"
                 value={state.tags}
                 onChange={(e) => {
                   dispatch({ type: "SET_FIELD", field: "tags", value: e.target.value });
