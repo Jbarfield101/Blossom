@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Box, Button, IconButton, LinearProgress, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import CancelIcon from '@mui/icons-material/Cancel';
 import ReplayIcon from '@mui/icons-material/Replay';
@@ -5,9 +6,12 @@ import { useMusicJobs } from '../stores/musicJobs';
 import { cancelMusicJob } from '../utils/musicGen';
 
 export default function MusicQueue() {
-  const listAll = useMusicJobs((s) => s.list)();
+  const listAll = useMusicJobs((s) => s.list());
   const update = useMusicJobs((s) => s.update);
-  const queue = listAll.filter((j) => j.status === 'pending' || j.status === 'in_progress');
+  const queue = useMemo(
+    () => listAll.filter((j) => j.status === 'pending' || j.status === 'in_progress'),
+    [listAll]
+  );
 
   const onCancel = async (id: string) => {
     await cancelMusicJob(id);

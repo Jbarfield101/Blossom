@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Box, Button, IconButton, LinearProgress, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -8,9 +9,14 @@ import AudioPlayer from './AudioPlayer';
 import { convertFileSrc } from '@tauri-apps/api/core';
 
 export default function MusicDashboard() {
-  const list = useMusicJobs((s) => s.list)();
+  const list = useMusicJobs((s) => s.list());
   const remove = useMusicJobs((s) => s.remove);
   const update = useMusicJobs((s) => s.update);
+
+  const latestCompleted = useMemo(
+    () => list.find((j) => j.status === 'completed' && j.wavPath),
+    [list]
+  );
 
   const onRegenerate = (id: string) => {
     // Simple regeneration: reset status to pending (actual re-run can be added to re-use prompts)
@@ -69,10 +75,10 @@ export default function MusicDashboard() {
       )}
 
       {/* Quick preview for the most recent completed */}
-      {list.find((j) => j.status === 'completed' && j.wavPath) && (
+      {latestCompleted && (
         <Box sx={{ mt: 3 }}>
           <Typography variant="subtitle1">Latest Preview</Typography>
-          <AudioPlayer src={list.find((j) => j.status === 'completed' && j.wavPath)!.wavPath!} />
+          <AudioPlayer src={latestCompleted.wavPath!} />
         </Box>
       )}
     </Box>
