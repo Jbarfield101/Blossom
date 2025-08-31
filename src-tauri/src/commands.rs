@@ -2371,6 +2371,23 @@ fn higgs_tts_script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
         .join("higgs_tts.py")
 }
 
+fn summarize_session_script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
+    if let Ok(cwd) = std::env::current_dir() {
+        let dev = cwd
+            .join("src-tauri")
+            .join("python")
+            .join("summarize_session.py");
+        if dev.exists() {
+            return dev;
+        }
+    }
+    app.path()
+        .resource_dir()
+        .expect("resource dir")
+        .join("python")
+        .join("summarize_session.py")
+}
+
 fn run_transcribe_script<R: Runtime>(app: &AppHandle<R>, audio: &Path) -> Result<String, String> {
     let py = conda_python();
     if !py.exists() {
@@ -2383,6 +2400,35 @@ fn run_transcribe_script<R: Runtime>(app: &AppHandle<R>, audio: &Path) -> Result
     let output = PCommand::new(&py)
         .arg(&script)
         .arg(audio)
+        .output()
+        .map_err(|e| format!("Failed to start python: {e}"))?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!(
+            "Python exited with status {}:\n{}",
+            output.status, stderr
+        ));
+    }
+    Ok(String::from_utf8_lossy(&output.stdout).to_string())
+}
+
+fn run_summarize_session_script<R: Runtime>(
+    app: &AppHandle<R>,
+    transcripts: &Path,
+    session_id: &str,
+) -> Result<String, String> {
+    let py = conda_python();
+    if !py.exists() {
+        return Err(format!("Python not found at {}", py.display()));
+    }
+    let script = summarize_session_script_path(app);
+    if !script.exists() {
+        return Err(format!("Script not found at {}", script.display()));
+    }
+    let output = PCommand::new(&py)
+        .arg(&script)
+        .arg(transcripts)
+        .arg(session_id)
         .output()
         .map_err(|e| format!("Failed to start python: {e}"))?;
     if !output.status.success() {
@@ -2456,6 +2502,15 @@ pub async fn transcribe_audio<R: Runtime>(
     save_transcripts(&entry)?;
 
     Ok(text)
+}
+
+#[tauri::command]
+pub async fn summarize_session<R: Runtime>(
+    app: AppHandle<R>,
+    session_id: String,
+) -> Result<String, String> {
+    let transcripts = transcripts_path();
+    run_summarize_session_script(&app, &transcripts, &session_id)
 }
 
 #[tauri::command]
