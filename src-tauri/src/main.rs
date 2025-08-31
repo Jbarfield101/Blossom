@@ -60,9 +60,8 @@ fn main() {
     let queue = TaskQueue::new(1, 90.0, 90.0);
     tauri::Builder::default()
         .manage(queue)
-        .on_window_event(|window, event| {
+        .on_window_event(|_window, event| {
             if let tauri::WindowEvent::CloseRequested { .. } = event {
-                let app = window.app_handle().clone();
                 tauri::async_runtime::spawn(async move {
                     let _ = crate::commands::comfy_stop().await;
                     let _ = crate::commands::stop_ollama().await;
