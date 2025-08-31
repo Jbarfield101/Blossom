@@ -192,6 +192,7 @@ fn main() {
             // Transcription:
             commands::load_transcripts,
             commands::transcribe_audio,
+            commands::summarize_session,
             commands::system_info,
             commands::enqueue_task,
             commands::task_status,
