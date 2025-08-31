@@ -14,7 +14,7 @@ export default function MusicDashboard() {
 
   const onRegenerate = (id: string) => {
     // Simple regeneration: reset status to pending (actual re-run can be added to re-use prompts)
-    update(id, { status: 'pending', progress: 0 });
+    update(id, { status: 'pending', progress: 0, startAt: Date.now() });
   };
 
   return (

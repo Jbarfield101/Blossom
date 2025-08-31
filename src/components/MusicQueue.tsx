@@ -1,4 +1,4 @@
-import { Box, Button, IconButton, LinearProgress, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
+import { Box, IconButton, LinearProgress, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import CancelIcon from '@mui/icons-material/Cancel';
 import ReplayIcon from '@mui/icons-material/Replay';
 import { useMusicJobs } from '../stores/musicJobs';
@@ -13,7 +13,8 @@ export default function MusicQueue() {
     await cancelMusicJob(id);
     update(id, { status: 'canceled' });
   };
-  const onRetry = (id: string) => update(id, { status: 'pending', progress: 0, error: undefined });
+  const onRetry = (id: string) =>
+    update(id, { status: 'pending', progress: 0, error: undefined, startAt: Date.now() });
 
   return (
     <Box>
@@ -31,28 +32,36 @@ export default function MusicQueue() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {queue.map((j) => (
-              <TableRow key={j.id} hover>
-                <TableCell>{j.title}</TableCell>
-                <TableCell>{j.status}</TableCell>
-                <TableCell style={{ width: 200 }}>
-                  {typeof j.progress === 'number' ? (
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <LinearProgress variant="determinate" value={j.progress} sx={{ flex: 1 }} />
-                      <Typography variant="caption">{j.progress}%</Typography>
+            {queue.map((j) => {
+              const progress = j.progress ?? 0;
+              const elapsed = j.startAt ? Date.now() - j.startAt : 0;
+              const eta = progress > 0 ? (elapsed * (100 - progress)) / progress : null;
+              return (
+                <TableRow key={j.id} hover>
+                  <TableCell>{j.title}</TableCell>
+                  <TableCell>{j.status}</TableCell>
+                  <TableCell style={{ width: 200 }}>
+                    {typeof j.progress === 'number' ? (
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <LinearProgress variant="determinate" value={j.progress} sx={{ flex: 1 }} />
+                        <Typography variant="caption">{j.progress}%</Typography>
+                        {eta !== null && isFinite(eta) && (
+                          <Typography variant="caption">{`${Math.round(eta / 1000)}s`}</Typography>
+                        )}
+                      </Stack>
+                    ) : (
+                      <LinearProgress />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Stack direction="row" spacing={1}>
+                      <IconButton aria-label="cancel" onClick={() => onCancel(j.id)}><CancelIcon /></IconButton>
+                      <IconButton aria-label="retry" onClick={() => onRetry(j.id)}><ReplayIcon /></IconButton>
                     </Stack>
-                  ) : (
-                    <LinearProgress />
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Stack direction="row" spacing={1}>
-                    <IconButton aria-label="cancel" onClick={() => onCancel(j.id)}><CancelIcon /></IconButton>
-                    <IconButton aria-label="retry" onClick={() => onRetry(j.id)}><ReplayIcon /></IconButton>
-                  </Stack>
-                </TableCell>
-              </TableRow>
-            ))}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       )}

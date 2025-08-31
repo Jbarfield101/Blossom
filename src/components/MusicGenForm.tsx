@@ -53,7 +53,8 @@ export default function MusicGenForm() {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
     const prompt = buildPrompt();
     const createdAt = Date.now();
-    addJob({ id, title, prompt, createdAt, status: 'in_progress', progress: 1 });
+    const startAt = createdAt;
+    addJob({ id, title, prompt, createdAt, startAt, status: 'in_progress', progress: 1 });
 
     try {
       let latestPath = '';

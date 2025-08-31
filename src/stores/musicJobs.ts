@@ -8,6 +8,7 @@ export interface MusicJob {
   title: string;
   prompt: string;
   createdAt: number;
+  startAt: number;
   status: JobStatus;
   progress?: number; // 0-100
   wavPath?: string; // final output from python
