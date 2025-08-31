@@ -2709,3 +2709,21 @@ pub async fn set_task_limits(
     queue.set_limits(cpu, memory).await;
     Ok(())
 }
+
+// Save a blob to a temp file and return the absolute path.
+#[tauri::command]
+pub async fn save_temp_file(file_name: String, data: Vec<u8>) -> Result<String, String> {
+    let mut dir = std::env::temp_dir();
+    dir.push("blossom");
+    if let Err(e) = fs::create_dir_all(&dir) {
+        return Err(format!("failed to create temp dir: {e}"));
+    }
+    let safe_name = file_name
+        .chars()
+        .map(|c| if c.is_ascii_alphanumeric() || c == '.' || c == '-' || c == '_' { c } else { '_' })
+        .collect::<String>();
+    let ts = chrono::Utc::now().timestamp_millis();
+    let path = dir.join(format!("{}-{}", ts, safe_name));
+    fs::write(&path, &data).map_err(|e| e.to_string())?;
+    Ok(path.to_string_lossy().to_string())
+}

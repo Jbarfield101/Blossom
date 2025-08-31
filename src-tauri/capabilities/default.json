@@ -7,6 +7,35 @@
     "core:default",
     "dialog:default",
     "dialog:allow-open",
-    "core:window:allow-maximize"
+    "core:window:allow-maximize",
+    {
+      "identifier": "shell:allow-execute",
+      "commands": { "allow": ["execute", "spawn", "kill"] },
+      "scope": {
+        "allow": [
+          {
+            "name": "musicgen-text",
+            "cmd": "python",
+            "args": [
+              { "validator": "src-tauri/python/musicgen_engine\\.py", "raw": true },
+              { "validator": "text" },
+              { "validator": ".+", "raw": true },
+              { "validator": "[0-9]{1,3}" }
+            ]
+          },
+          {
+            "name": "musicgen-melody",
+            "cmd": "python",
+            "args": [
+              { "validator": "src-tauri/python/musicgen_engine\\.py", "raw": true },
+              { "validator": "melody" },
+              { "validator": ".+", "raw": true },
+              { "validator": ".+", "raw": true },
+              { "validator": "[0-9]{1,3}" }
+            ]
+          }
+        ]
+      }
+    }
   ]
 }

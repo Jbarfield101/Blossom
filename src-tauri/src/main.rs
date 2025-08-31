@@ -103,6 +103,7 @@ fn main() {
         })
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_shell::init())
         .plugin(
             SqlBuilder::default()
                 .add_migrations(
@@ -200,6 +201,7 @@ fn main() {
             commands::cancel_task,
             commands::list_tasks,
             commands::set_task_limits,
+            commands::save_temp_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
