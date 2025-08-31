@@ -110,6 +110,63 @@
           "items": {
             "type": "string"
           }
+        },
+        "cr": {
+          "type": "string"
+        },
+        "armorClass": {
+          "type": "integer",
+          "exclusiveMinimum": 0
+        },
+        "speed": {
+          "type": "string"
+        },
+        "savingThrows": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "senses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "traits": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "equipment": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "personality": {
+          "type": "object",
+          "properties": {
+            "traits": { "type": "string" },
+            "ideals": { "type": "string" },
+            "bonds": { "type": "string" },
+            "flaws": { "type": "string" },
+            "voice": { "type": "string" }
+          },
+          "additionalProperties": false
         }
       },
       "required": [

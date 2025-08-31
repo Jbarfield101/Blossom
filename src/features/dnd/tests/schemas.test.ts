@@ -19,6 +19,22 @@ describe("dnd schemas", () => {
       sections: { bio: "Lives in cave" },
       statblock: {},
       tags: ["monster"],
+      cr: "1/2",
+      armorClass: 13,
+      speed: "30 ft.",
+      savingThrows: ["Dex +2"],
+      skills: ["Stealth +6"],
+      senses: ["darkvision 60 ft."],
+      languages: ["Common"],
+      traits: ["Aggressive"],
+      equipment: ["Scimitar"],
+      personality: {
+        traits: "Brave",
+        ideals: "Freedom",
+        bonds: "Clan",
+        flaws: "Greedy",
+        voice: "raspy",
+      },
     };
     expect(zNpc.parse(npc)).toEqual(npc);
   });
@@ -39,6 +55,22 @@ describe("dnd schemas", () => {
       statblock: {},
       tags: ["monster"],
     };
+    expect(() => zNpc.parse(npc)).toThrowError();
+  });
+
+  it("rejects NPCs with invalid armor class", () => {
+    const npc = {
+      id: "1",
+      name: "Goblin Scout",
+      species: "Goblinoid",
+      role: "Scout",
+      alignment: "CE",
+      playerCharacter: false,
+      hooks: ["steal"],
+      statblock: {},
+      tags: ["monster"],
+      armorClass: -1,
+    } as any;
     expect(() => zNpc.parse(npc)).toThrowError();
   });
 

@@ -48,6 +48,20 @@ interface FormState {
   wisdom: string;
   charisma: string;
   inventory: string;
+  cr: string;
+  armorClass: string;
+  speed: string;
+  savingThrows: string;
+  skills: string;
+  senses: string;
+  languages: string;
+  traits: string;
+  equipment: string;
+  personalityTraits: string;
+  personalityIdeals: string;
+  personalityBonds: string;
+  personalityFlaws: string;
+  personalityVoice: string;
 }
 
 const initialState: FormState = {
@@ -77,6 +91,20 @@ const initialState: FormState = {
   wisdom: "",
   charisma: "",
   inventory: "",
+  cr: "",
+  armorClass: "",
+  speed: "",
+  savingThrows: "",
+  skills: "",
+  senses: "",
+  languages: "",
+  traits: "",
+  equipment: "",
+  personalityTraits: "",
+  personalityIdeals: "",
+  personalityBonds: "",
+  personalityFlaws: "",
+  personalityVoice: "",
 };
 
 type Action =
@@ -159,6 +187,20 @@ export default function NpcForm({ world }: Props) {
       dispatch({ type: "SET_FIELD", field: "level", value: npc.level?.toString() || "" });
       dispatch({ type: "SET_FIELD", field: "hp", value: npc.hp?.toString() || "" });
       dispatch({ type: "SET_FIELD", field: "inventory", value: (npc.inventory || []).join(", ") });
+      dispatch({ type: "SET_FIELD", field: "cr", value: npc.cr || "" });
+      dispatch({ type: "SET_FIELD", field: "armorClass", value: npc.armorClass?.toString() || "" });
+      dispatch({ type: "SET_FIELD", field: "speed", value: npc.speed || "" });
+      dispatch({ type: "SET_FIELD", field: "savingThrows", value: (npc.savingThrows || []).join(", ") });
+      dispatch({ type: "SET_FIELD", field: "skills", value: (npc.skills || []).join(", ") });
+      dispatch({ type: "SET_FIELD", field: "senses", value: (npc.senses || []).join(", ") });
+      dispatch({ type: "SET_FIELD", field: "languages", value: (npc.languages || []).join(", ") });
+      dispatch({ type: "SET_FIELD", field: "traits", value: (npc.traits || []).join(", ") });
+      dispatch({ type: "SET_FIELD", field: "equipment", value: (npc.equipment || []).join(", ") });
+      dispatch({ type: "SET_FIELD", field: "personalityTraits", value: npc.personality?.traits || "" });
+      dispatch({ type: "SET_FIELD", field: "personalityIdeals", value: npc.personality?.ideals || "" });
+      dispatch({ type: "SET_FIELD", field: "personalityBonds", value: npc.personality?.bonds || "" });
+      dispatch({ type: "SET_FIELD", field: "personalityFlaws", value: npc.personality?.flaws || "" });
+      dispatch({ type: "SET_FIELD", field: "personalityVoice", value: npc.personality?.voice || "" });
       dispatch({ type: "SET_FIELD", field: "strength", value: npc.abilities?.strength?.toString() || "" });
       dispatch({ type: "SET_FIELD", field: "dexterity", value: npc.abilities?.dexterity?.toString() || "" });
       dispatch({ type: "SET_FIELD", field: "constitution", value: npc.abilities?.constitution?.toString() || "" });
@@ -210,10 +252,61 @@ export default function NpcForm({ world }: Props) {
       }
     }
 
+    let armorClassNum: number | undefined;
+    if (state.armorClass) {
+      const num = parseInt(state.armorClass, 10);
+      if (isNaN(num)) {
+        setErrors((prev) => ({ ...prev, armorClass: "Invalid number" }));
+        return;
+      }
+      armorClassNum = num;
+    }
+
     const inventory = state.inventory
       .split(",")
       .map((i) => i.trim())
       .filter(Boolean);
+
+    const savingThrows = state.savingThrows
+      .split(",")
+      .map((i) => i.trim())
+      .filter(Boolean);
+
+    const skills = state.skills
+      .split(",")
+      .map((i) => i.trim())
+      .filter(Boolean);
+
+    const senses = state.senses
+      .split(",")
+      .map((i) => i.trim())
+      .filter(Boolean);
+
+    const languages = state.languages
+      .split(",")
+      .map((i) => i.trim())
+      .filter(Boolean);
+
+    const traits = state.traits
+      .split(",")
+      .map((i) => i.trim())
+      .filter(Boolean);
+
+    const equipment = state.equipment
+      .split(",")
+      .map((i) => i.trim())
+      .filter(Boolean);
+
+    const personality = {
+      traits: state.personalityTraits || undefined,
+      ideals: state.personalityIdeals || undefined,
+      bonds: state.personalityBonds || undefined,
+      flaws: state.personalityFlaws || undefined,
+      voice: state.personalityVoice || undefined,
+    };
+    const personalityObj = Object.values(personality).some(Boolean)
+      ? personality
+      : undefined;
 
     const data: NpcData = {
       id: state.id || crypto.randomUUID(),
@@ -239,6 +332,16 @@ export default function NpcForm({ world }: Props) {
       hp: state.hp ? parseInt(state.hp, 10) : undefined,
       abilities: Object.keys(abilities).length ? (abilities as any) : undefined,
       inventory: inventory.length ? inventory : undefined,
+      cr: state.cr || undefined,
+      armorClass: armorClassNum,
+      speed: state.speed || undefined,
+      savingThrows: savingThrows.length ? savingThrows : undefined,
+      skills: skills.length ? skills : undefined,
+      senses: senses.length ? senses : undefined,
+      languages: languages.length ? languages : undefined,
+      traits: traits.length ? traits : undefined,
+      equipment: equipment.length ? equipment : undefined,
+      personality: personalityObj,
     };
 
     const parsed = zNpc.safeParse(data);
@@ -303,10 +406,62 @@ export default function NpcForm({ world }: Props) {
       }
     }
 
+    let armorClassNum: number | undefined;
+    if (state.armorClass) {
+      const num = parseInt(state.armorClass, 10);
+      if (isNaN(num)) {
+        setErrors({ armorClass: "Invalid number" });
+        setResult(null);
+        return;
+      }
+      armorClassNum = num;
+    }
+
     const inventory = state.inventory
       .split(",")
       .map((i) => i.trim())
       .filter(Boolean);
+
+    const savingThrows = state.savingThrows
+      .split(",")
+      .map((i) => i.trim())
+      .filter(Boolean);
+
+    const skills = state.skills
+      .split(",")
+      .map((i) => i.trim())
+      .filter(Boolean);
+
+    const senses = state.senses
+      .split(",")
+      .map((i) => i.trim())
+      .filter(Boolean);
+
+    const languages = state.languages
+      .split(",")
+      .map((i) => i.trim())
+      .filter(Boolean);
+
+    const traits = state.traits
+      .split(",")
+      .map((i) => i.trim())
+      .filter(Boolean);
+
+    const equipment = state.equipment
+      .split(",")
+      .map((i) => i.trim())
+      .filter(Boolean);
+
+    const personality = {
+      traits: state.personalityTraits || undefined,
+      ideals: state.personalityIdeals || undefined,
+      bonds: state.personalityBonds || undefined,
+      flaws: state.personalityFlaws || undefined,
+      voice: state.personalityVoice || undefined,
+    };
+    const personalityObj = Object.values(personality).some(Boolean)
+      ? personality
+      : undefined;
 
     const data: NpcData = {
       id: state.id || crypto.randomUUID(),
@@ -332,6 +487,16 @@ export default function NpcForm({ world }: Props) {
       hp: state.hp ? parseInt(state.hp, 10) : undefined,
       abilities: Object.keys(abilities).length ? (abilities as any) : undefined,
       inventory: inventory.length ? inventory : undefined,
+      cr: state.cr || undefined,
+      armorClass: armorClassNum,
+      speed: state.speed || undefined,
+      savingThrows: savingThrows.length ? savingThrows : undefined,
+      skills: skills.length ? skills : undefined,
+      senses: senses.length ? senses : undefined,
+      languages: languages.length ? languages : undefined,
+      traits: traits.length ? traits : undefined,
+      equipment: equipment.length ? equipment : undefined,
+      personality: personalityObj,
     };
 
     const parsed = zNpc.safeParse(data);
@@ -411,6 +576,20 @@ export default function NpcForm({ world }: Props) {
                   dispatch({ type: "SET_FIELD", field: "level", value: npc.level?.toString() || "" });
                   dispatch({ type: "SET_FIELD", field: "hp", value: npc.hp?.toString() || "" });
                   dispatch({ type: "SET_FIELD", field: "inventory", value: (npc.inventory || []).join(", ") });
+                  dispatch({ type: "SET_FIELD", field: "cr", value: npc.cr || "" });
+                  dispatch({ type: "SET_FIELD", field: "armorClass", value: npc.armorClass?.toString() || "" });
+                  dispatch({ type: "SET_FIELD", field: "speed", value: npc.speed || "" });
+                  dispatch({ type: "SET_FIELD", field: "savingThrows", value: (npc.savingThrows || []).join(", ") });
+                  dispatch({ type: "SET_FIELD", field: "skills", value: (npc.skills || []).join(", ") });
+                  dispatch({ type: "SET_FIELD", field: "senses", value: (npc.senses || []).join(", ") });
+                  dispatch({ type: "SET_FIELD", field: "languages", value: (npc.languages || []).join(", ") });
+                  dispatch({ type: "SET_FIELD", field: "traits", value: (npc.traits || []).join(", ") });
+                  dispatch({ type: "SET_FIELD", field: "equipment", value: (npc.equipment || []).join(", ") });
+                  dispatch({ type: "SET_FIELD", field: "personalityTraits", value: npc.personality?.traits || "" });
+                  dispatch({ type: "SET_FIELD", field: "personalityIdeals", value: npc.personality?.ideals || "" });
+                  dispatch({ type: "SET_FIELD", field: "personalityBonds", value: npc.personality?.bonds || "" });
+                  dispatch({ type: "SET_FIELD", field: "personalityFlaws", value: npc.personality?.flaws || "" });
+                  dispatch({ type: "SET_FIELD", field: "personalityVoice", value: npc.personality?.voice || "" });
                   dispatch({ type: "SET_FIELD", field: "strength", value: npc.abilities?.strength?.toString() || "" });
                   dispatch({ type: "SET_FIELD", field: "dexterity", value: npc.abilities?.dexterity?.toString() || "" });
                   dispatch({ type: "SET_FIELD", field: "constitution", value: npc.abilities?.constitution?.toString() || "" });
@@ -616,6 +795,116 @@ export default function NpcForm({ world }: Props) {
                 aria-describedby={errors.hp ? "hp-error" : undefined}
               />
             </Grid>
+            <Grid item xs={6}>
+              <StyledTextField
+                id="cr"
+                label="CR"
+                value={state.cr}
+                onChange={(e) =>
+                  dispatch({ type: "SET_FIELD", field: "cr", value: e.target.value })
+                }
+                fullWidth
+                margin="normal"
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <StyledTextField
+                id="armorClass"
+                label="Armor Class"
+                type="number"
+                value={state.armorClass}
+                onChange={(e) => {
+                  dispatch({ type: "SET_FIELD", field: "armorClass", value: e.target.value });
+                  setErrors((prev) => ({ ...prev, armorClass: null }));
+                }}
+                fullWidth
+                margin="normal"
+                error={Boolean(errors.armorClass)}
+                helperText={
+                  <FormErrorText id="armorClass-error">{errors.armorClass}</FormErrorText>
+                }
+                aria-describedby={
+                  errors.armorClass ? "armorClass-error" : undefined
+                }
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <StyledTextField
+                id="speed"
+                label="Speed"
+                value={state.speed}
+                onChange={(e) =>
+                  dispatch({ type: "SET_FIELD", field: "speed", value: e.target.value })
+                }
+                fullWidth
+                margin="normal"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <StyledTextField
+                id="savingThrows"
+                label="Saving Throws (comma separated)"
+                placeholder="Dex +3, Wis +2"
+                value={state.savingThrows}
+                onChange={(e) =>
+                  dispatch({ type: "SET_FIELD", field: "savingThrows", value: e.target.value })
+                }
+                fullWidth
+                margin="normal"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <StyledTextField
+                id="skills"
+                label="Skills (comma separated)"
+                placeholder="Stealth +5"
+                value={state.skills}
+                onChange={(e) =>
+                  dispatch({ type: "SET_FIELD", field: "skills", value: e.target.value })
+                }
+                fullWidth
+                margin="normal"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <StyledTextField
+                id="senses"
+                label="Senses (comma separated)"
+                placeholder="darkvision 60 ft"
+                value={state.senses}
+                onChange={(e) =>
+                  dispatch({ type: "SET_FIELD", field: "senses", value: e.target.value })
+                }
+                fullWidth
+                margin="normal"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <StyledTextField
+                id="languages"
+                label="Languages (comma separated)"
+                placeholder="Common, Elvish"
+                value={state.languages}
+                onChange={(e) =>
+                  dispatch({ type: "SET_FIELD", field: "languages", value: e.target.value })
+                }
+                fullWidth
+                margin="normal"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <StyledTextField
+                id="traits"
+                label="Traits (comma separated)"
+                placeholder="Brave, Cunning"
+                value={state.traits}
+                onChange={(e) =>
+                  dispatch({ type: "SET_FIELD", field: "traits", value: e.target.value })
+                }
+                fullWidth
+                margin="normal"
+              />
+            </Grid>
             {[
               "strength",
               "dexterity",
@@ -654,7 +943,7 @@ export default function NpcForm({ world }: Props) {
                 id="inventory"
                 label={
                   <Tooltip title="Example: torch, rope, shield">
-                    <span>Inventory/Equipment (comma separated)</span>
+                    <span>Inventory (comma separated)</span>
                   </Tooltip>
                 }
                 placeholder="torch, rope, shield"
@@ -672,6 +961,23 @@ export default function NpcForm({ world }: Props) {
                 aria-describedby={
                   errors.inventory ? "inventory-error" : undefined
                 }
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <StyledTextField
+                id="equipment"
+                label={
+                  <Tooltip title="Example: chain mail, shield">
+                    <span>Equipment (comma separated)</span>
+                  </Tooltip>
+                }
+                placeholder="chain mail, shield"
+                value={state.equipment}
+                onChange={(e) =>
+                  dispatch({ type: "SET_FIELD", field: "equipment", value: e.target.value })
+                }
+                fullWidth
+                margin="normal"
               />
             </Grid>
           </Grid>
@@ -765,6 +1071,103 @@ export default function NpcForm({ world }: Props) {
                   <FormErrorText id="tags-error">{errors.tags}</FormErrorText>
                 }
                 aria-describedby={errors.tags ? "tags-error" : undefined}
+              />
+            </Grid>
+          </Grid>
+        </AccordionDetails>
+      </Accordion>
+    </Grid>
+
+        {/* Personality */}
+        <Grid item xs={12}>
+          <Accordion>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography>Personality</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12}>
+              <StyledTextField
+                id="personalityTraits"
+                label="Personality Traits"
+                value={state.personalityTraits}
+                onChange={(e) =>
+                  dispatch({
+                    type: "SET_FIELD",
+                    field: "personalityTraits",
+                    value: e.target.value,
+                  })
+                }
+                fullWidth
+                margin="normal"
+                multiline
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <StyledTextField
+                id="personalityIdeals"
+                label="Ideals"
+                value={state.personalityIdeals}
+                onChange={(e) =>
+                  dispatch({
+                    type: "SET_FIELD",
+                    field: "personalityIdeals",
+                    value: e.target.value,
+                  })
+                }
+                fullWidth
+                margin="normal"
+                multiline
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <StyledTextField
+                id="personalityBonds"
+                label="Bonds"
+                value={state.personalityBonds}
+                onChange={(e) =>
+                  dispatch({
+                    type: "SET_FIELD",
+                    field: "personalityBonds",
+                    value: e.target.value,
+                  })
+                }
+                fullWidth
+                margin="normal"
+                multiline
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <StyledTextField
+                id="personalityFlaws"
+                label="Flaws"
+                value={state.personalityFlaws}
+                onChange={(e) =>
+                  dispatch({
+                    type: "SET_FIELD",
+                    field: "personalityFlaws",
+                    value: e.target.value,
+                  })
+                }
+                fullWidth
+                margin="normal"
+                multiline
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <StyledTextField
+                id="personalityVoice"
+                label="Voice"
+                value={state.personalityVoice}
+                onChange={(e) =>
+                  dispatch({
+                    type: "SET_FIELD",
+                    field: "personalityVoice",
+                    value: e.target.value,
+                  })
+                }
+                fullWidth
+                margin="normal"
               />
             </Grid>
           </Grid>

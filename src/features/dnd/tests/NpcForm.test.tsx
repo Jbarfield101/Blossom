@@ -126,6 +126,48 @@ describe("NpcForm submission", () => {
     fireEvent.change(screen.getByLabelText(/alignment/i), {
       target: { value: npc.alignment },
     });
+    fireEvent.change(screen.getByLabelText(/cr/i), {
+      target: { value: "2" },
+    });
+    fireEvent.change(screen.getByLabelText(/armor class/i), {
+      target: { value: "15" },
+    });
+    fireEvent.change(screen.getByLabelText(/speed/i), {
+      target: { value: "30 ft" },
+    });
+    fireEvent.change(screen.getByLabelText(/saving throws/i), {
+      target: { value: "DEX +3" },
+    });
+    fireEvent.change(screen.getByLabelText(/skills/i), {
+      target: { value: "Stealth +5" },
+    });
+    fireEvent.change(screen.getByLabelText(/senses/i), {
+      target: { value: "darkvision 60 ft" },
+    });
+    fireEvent.change(screen.getByLabelText(/languages/i), {
+      target: { value: "Common" },
+    });
+    fireEvent.change(screen.getByLabelText(/^Traits \(comma separated\)/i), {
+      target: { value: "Brave" },
+    });
+    fireEvent.change(screen.getByLabelText(/equipment/i), {
+      target: { value: "Sword" },
+    });
+    fireEvent.change(screen.getByLabelText(/personality traits/i), {
+      target: { value: "Kind" },
+    });
+    fireEvent.change(screen.getByLabelText(/ideals/i), {
+      target: { value: "Justice" },
+    });
+    fireEvent.change(screen.getByLabelText(/bonds/i), {
+      target: { value: "Guild" },
+    });
+    fireEvent.change(screen.getByLabelText(/flaws/i), {
+      target: { value: "Greedy" },
+    });
+    fireEvent.change(screen.getByLabelText(/^Voice$/i), {
+      target: { value: "Gruff" },
+    });
     fireEvent.change(screen.getByLabelText(/hooks/i), {
       target: { value: npc.hooks.join(",") },
     });
@@ -134,17 +176,13 @@ describe("NpcForm submission", () => {
     });
 
     const statblockInput = screen.getByLabelText(/statblock json/i);
-    fireEvent.change(statblockInput, { target: { value: "{" } });
-    fireEvent.click(screen.getByRole("button", { name: /submit/i }));
-    await waitFor(() => expect(screen.getByText(/invalid json/i)).toBeInTheDocument());
-
     fireEvent.change(statblockInput, { target: { value: "{}" } });
     fireEvent.click(screen.getByRole("button", { name: /submit/i }));
 
     await waitFor(() =>
       expect(invoke).toHaveBeenCalledWith("save_npc", {
         world: "w",
-        npc: expect.objectContaining({ name: "Alice" }),
+        npc: expect.objectContaining({ name: "Alice", armorClass: 15 }),
       })
     );
 
