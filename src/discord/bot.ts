@@ -1,17 +1,30 @@
 /// <reference types="node" />
 
-import { Client, GatewayIntentBits } from "discord.js";
+import { Client, GatewayIntentBits, type TextBasedChannel } from "discord.js";
 import {
   EndBehaviorType,
   joinVoiceChannel,
   VoiceConnection,
+  createAudioPlayer,
+  createAudioResource,
+  type AudioPlayer,
+  StreamType,
 } from "@discordjs/voice";
+import { Readable } from "stream";
 import { invoke } from "@tauri-apps/api/core";
 
 const SAMPLE_RATE = 48_000;
 const CHANNELS = 2;
 const BYTES_PER_SAMPLE = 2; // 16-bit PCM
 const CHUNK_TARGET = SAMPLE_RATE * CHANNELS * BYTES_PER_SAMPLE * 2; // ~2s
+const NPC_SYSTEM_PROMPT = "You are an NPC in a fantasy world. Respond in-character.";
+const NPC_VOICE_ID = "npc";
+
+interface BotState {
+  npcEnabled: boolean;
+  chatChannel: TextBasedChannel | null;
+  player: AudioPlayer | null;
+}
 
 function pcmToWav(pcm: Buffer) {
   const header = Buffer.alloc(44);
@@ -34,19 +47,55 @@ function pcmToWav(pcm: Buffer) {
   return Buffer.concat([header, pcm]);
 }
 
-async function sendWavForTranscription(userId: string, pcm: Buffer) {
+async function sendWavForTranscription(
+  userId: string,
+  pcm: Buffer,
+  state: BotState,
+) {
   const wav = pcmToWav(pcm);
   try {
     const text = await invoke<string>("transcribe_audio", {
       data: Array.from(wav),
     });
-    console.log(`[${userId}] ${text.trim()}`);
+    const trimmed = text.trim();
+    console.log(`[${userId}] ${trimmed}`);
+
+    if (state.npcEnabled && state.chatChannel) {
+      try {
+        const reply = await invoke<string>("general_chat", {
+          messages: [
+            { role: "system", content: NPC_SYSTEM_PROMPT },
+            { role: "user", content: trimmed },
+          ],
+        });
+        await state.chatChannel.send(reply);
+        if (state.player) {
+          try {
+            const audio = (await invoke(
+              "higgs_tts",
+              { text: reply, speaker: NPC_VOICE_ID },
+            )) as number[] | Uint8Array;
+            const uint8 =
+              audio instanceof Uint8Array ? audio : new Uint8Array(audio);
+            const resource = createAudioResource(
+              Readable.from(Buffer.from(uint8)),
+              { inputType: StreamType.Arbitrary },
+            );
+            state.player.play(resource);
+          } catch (ttsErr) {
+            console.error("TTS error", ttsErr);
+          }
+        }
+      } catch (chatErr) {
+        console.error("Chat error", chatErr);
+      }
+    }
   } catch (err) {
     console.error("Transcription error", err);
   }
 }
 
-function setupReceiver(connection: VoiceConnection) {
+function setupReceiver(connection: VoiceConnection, state: BotState) {
   const receiver = connection.receiver;
   receiver.speaking.on("start", (userId) => {
     const stream = receiver.subscribe(userId, {
@@ -62,7 +111,7 @@ function setupReceiver(connection: VoiceConnection) {
       const pcm = Buffer.concat(chunks, length);
       chunks.length = 0;
       length = 0;
-      void sendWavForTranscription(userId, pcm);
+      void sendWavForTranscription(userId, pcm, state);
     }
 
     stream.on("data", (data: Buffer) => {
@@ -76,9 +125,23 @@ function setupReceiver(connection: VoiceConnection) {
   });
 }
 
-export async function startDiscordBot(token: string, guildId: string, channelId: string) {
+export async function startDiscordBot(
+  token: string,
+  guildId: string,
+  channelId: string,
+) {
+  const state: BotState = {
+    npcEnabled: false,
+    chatChannel: null,
+    player: null,
+  };
   const client = new Client({
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
+    intents: [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildVoiceStates,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.MessageContent,
+    ],
   });
 
   async function connect() {
@@ -93,7 +156,10 @@ export async function startDiscordBot(token: string, guildId: string, channelId:
       adapterCreator: channel.guild.voiceAdapterCreator,
       selfDeaf: false,
     });
-    setupReceiver(connection);
+    const player = createAudioPlayer();
+    connection.subscribe(player);
+    state.player = player;
+    setupReceiver(connection, state);
     connection.on("stateChange", (oldState, newState) => {
       if (newState.status === "disconnected") {
         setTimeout(connect, 5_000);
@@ -115,6 +181,23 @@ export async function startDiscordBot(token: string, guildId: string, channelId:
       } else if (oldState.channelId === channelId) {
         console.log(`${name} left voice`);
       }
+    }
+  });
+
+  client.on("messageCreate", async (msg) => {
+    if (msg.author.bot) return;
+    if (!msg.content.startsWith("!npc")) return;
+    const [, arg] = msg.content.trim().split(/\s+/);
+    if (arg === "on" || arg === "enable") {
+      state.npcEnabled = true;
+      state.chatChannel = msg.channel;
+      await msg.reply("NPC persona enabled");
+    } else if (arg === "off" || arg === "disable") {
+      state.npcEnabled = false;
+      state.chatChannel = null;
+      await msg.reply("NPC persona disabled");
+    } else {
+      await msg.reply("Usage: !npc on|off");
     }
   });
 
