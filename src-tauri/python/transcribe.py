@@ -1,12 +1,12 @@
 """Audio transcription with speaker diarization.
 
-Uses faster-whisper for transcription and WhisperX for speaker
-diarization.  The main `transcribe` function returns a list of segments,
-each containing the recognized text along with speaker label and
-timestamps.
+Uses ``faster-whisper`` for speech recognition and ``pyannote.audio``
+for speaker diarization. The main :func:`transcribe` function returns a
+list of segments, each containing the recognized text along with
+speaker label and timestamps.
 
-This module degrades gracefully if the heavy dependencies are not
-installed, making it easier to mock in unit tests.
+The heavy ML dependencies are optional at runtime so that the module is
+easy to mock in unit tests.
 """
 
 from __future__ import annotations
@@ -22,9 +22,9 @@ except Exception:  # pragma: no cover
     WhisperModel = None  # type: ignore
 
 try:  # pragma: no cover
-    import whisperx  # type: ignore
+    from pyannote.audio import Pipeline  # type: ignore
 except Exception:  # pragma: no cover
-    whisperx = None  # type: ignore
+    Pipeline = None  # type: ignore
 
 
 def transcribe(audio_path: str, model_size: str = "tiny") -> List[Dict[str, Any]]:
@@ -34,42 +34,34 @@ def transcribe(audio_path: str, model_size: str = "tiny") -> List[Dict[str, Any]
     ``end`` and ``text`` fields.
     """
 
-    if WhisperModel is None or whisperx is None:  # pragma: no cover - handled in tests
-        raise RuntimeError("faster-whisper and whisperx are required")
+    if WhisperModel is None or Pipeline is None:  # pragma: no cover - handled in tests
+        raise RuntimeError("faster-whisper and pyannote.audio are required")
 
     model = WhisperModel(model_size, device="cpu")
-    segments, _ = model.transcribe(audio_path, word_timestamps=True)
+    segments, _ = model.transcribe(audio_path, word_timestamps=False)
 
-    diarizer = whisperx.DiarizationPipeline(device="cpu")
-    diarize_segments = diarizer(audio_path)
+    pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization", device="cpu")
+    diarization = pipeline(audio_path)
 
-    segment_list: List[Dict[str, Any]] = []
+    diarized: List[Dict[str, Any]] = []
+    for segment, _, speaker in diarization.itertracks(yield_label=True):
+        diarized.append({"start": float(segment.start), "end": float(segment.end), "speaker": speaker})
+
+    def speaker_for_time(timestamp: float) -> str:
+        for seg in diarized:
+            if seg["start"] <= timestamp <= seg["end"]:
+                return seg["speaker"]
+        return "UNKNOWN"
+
+    results: List[Dict[str, Any]] = []
     for seg in segments:
-        segment_list.append(
-            {
-                "start": float(getattr(seg, "start", seg["start"])),
-                "end": float(getattr(seg, "end", seg["end"])),
-                "text": getattr(seg, "text", seg["text"]),
-                "words": getattr(seg, "words", seg.get("words", [])),
-            }
-        )
+        start = float(getattr(seg, "start", seg["start"]))
+        end = float(getattr(seg, "end", seg["end"]))
+        text = getattr(seg, "text", seg["text"])
+        speaker = speaker_for_time((start + end) / 2)
+        results.append({"speaker": speaker, "start": start, "end": end, "text": text.strip()})
 
-    assigned = whisperx.assign_word_speakers(diarize_segments, segment_list)
-    if isinstance(assigned, dict) and "segments" in assigned:
-        assigned_segments = assigned["segments"]
-    else:
-        assigned_segments = assigned
-
-    result = [
-        {
-            "speaker": seg.get("speaker", "UNKNOWN"),
-            "start": float(seg["start"]),
-            "end": float(seg["end"]),
-            "text": seg["text"].strip(),
-        }
-        for seg in assigned_segments
-    ]
-    return result
+    return results
 
 
 def main() -> int:
