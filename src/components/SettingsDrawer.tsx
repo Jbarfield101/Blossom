@@ -238,6 +238,8 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
     toggleHqSidechain,
     hqChorus,
     toggleHqChorus,
+    micEnabled,
+    toggleMicEnabled,
   } = useAudioDefaults();
   const { theme, setTheme } = useTheme();
   const currentUserId = useUsers((state) => state.currentUserId);
@@ -286,6 +288,11 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
     { label: "Current User", section: "user" as Section, elementId: "current-user" },
     { label: "Python Path", section: "environment" as Section, elementId: "python-path" },
     { label: "Default Save Folder", section: "environment" as Section, elementId: "output-folder" },
+    {
+      label: "Enable Microphone",
+      section: "editor" as Section,
+      elementId: "mic-enabled",
+    },
     { label: "BPM", section: "editor" as Section, elementId: "bpm" },
     { label: "Key", section: "editor" as Section, elementId: "key" },
     { label: "HQ Stereo", section: "editor" as Section, elementId: "hq-stereo" },
@@ -427,6 +434,12 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   const EditorSection = () => (
     <>
       <Typography variant="subtitle1">Audio Defaults</Typography>
+      <Box id="mic-enabled" sx={{ mt: 1 }}>
+        <FormControlLabel
+          control={<Switch checked={micEnabled} onChange={toggleMicEnabled} />}
+          label="Enable Microphone"
+        />
+      </Box>
       <Box id="bpm" sx={{ mt: 1 }}>
         <TextField
           type="number"
