@@ -13,7 +13,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@tauri-apps/api/fs': path.resolve(__dirname, 'test/__mocks__/tauri-fs.ts'),
+      '@tauri-apps/plugin-fs': path.resolve(__dirname, 'test/__mocks__/tauri-fs.ts'),
     },
   },
 });

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { resolveResource } from "@tauri-apps/api/path";
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
-import { readBinaryFile } from "@tauri-apps/api/fs";
+import { readFile } from "@tauri-apps/plugin-fs";
 import { listen } from "@tauri-apps/api/event";
 import { Midi } from "@tonejs/midi";
 import {
@@ -78,7 +78,7 @@ export default function SFZSongForm() {
     if (midiFile) {
       (async () => {
         try {
-          const data = await readBinaryFile(midiFile);
+          const data = await readFile(midiFile);
           const midi = new Midi(data);
           setMidiMeta({
             name: midiFile.split(/[/\\]/).pop() || midiFile,

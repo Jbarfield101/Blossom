@@ -1,8 +1,8 @@
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-vi.mock('@tauri-apps/api/fs', () => ({
-  readBinaryFile: vi.fn().mockResolvedValue(new Uint8Array()),
+vi.mock('@tauri-apps/plugin-fs', () => ({
+  readFile: vi.fn().mockResolvedValue(new Uint8Array()),
 }));
 
 vi.mock('@tonejs/midi', () => ({
@@ -38,12 +38,10 @@ vi.mock('../store/tasks', () => ({
   generateBasicSong: vi.fn(),
 }));
 import { generateBasicSong } from '../store/tasks';
-
 import SFZSongForm from './SFZSongForm';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 import { loadSfz } from '../utils/sfzLoader';
-import { generateBasicSong } from '../store/tasks';
 
 describe('SFZSongForm', () => {
   beforeEach(() => {
