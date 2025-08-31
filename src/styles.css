@@ -7,6 +7,10 @@
 :root {
   color-scheme: dark;
   --top-bar-height: 64px;
+  --color-default-bg: radial-gradient(circle at center, #3d0a0a, #290808);
+  --color-default-text: #ffffff;
+  --background-color: var(--color-default-bg);
+  --text-color: var(--color-default-text);
 }
 * { box-sizing: border-box; }
 html, body, #root {
@@ -17,34 +21,43 @@ html, body, #root {
 }
 body {
   font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  background: var(--background-color);
+  color: var(--text-color);
 }
 a { color: inherit; text-decoration: none; }
 
 body.theme-default {
-  background: radial-gradient(circle at center, #3d0a0a, #290808);
+  --background-color: var(--color-default-bg);
+  --text-color: var(--color-default-text);
 }
 body.theme-forest {
-  background: #228b22;
+  --background-color: #228b22;
+  --text-color: #000000;
 }
 body.theme-sunset {
-  background: radial-gradient(circle at center, #5e2a0a, #381a08);
+  --background-color: radial-gradient(circle at center, #5e2a0a, #381a08);
+  --text-color: #ffffff;
 }
 body.theme-sakura {
-  background: radial-gradient(circle at center, #5e0a3d, #380829);
+  --background-color: radial-gradient(circle at center, #5e0a3d, #380829);
+  --text-color: #ffffff;
 }
 
 body.theme-aurora {
-  background: linear-gradient(270deg, #00ffa3, #0085ff, #b300ff, #ff3ab3);
+  --background-color: linear-gradient(270deg, #00ffa3, #0085ff, #cc00ff, #ff3ab3);
+  --text-color: #000000;
   background-size: 800% 800%;
   animation: auroraShift 30s ease infinite;
 }
 
 body.theme-studio {
-  background: #000;
+  --background-color: #000000;
+  --text-color: #00ffff;
 }
 
 body.theme-galaxy {
-  background: #000;
+  --background-color: #000000;
+  --text-color: #ffffff;
 }
  
 body.theme-galaxy::before {
@@ -60,26 +73,28 @@ body.theme-galaxy::before {
 }
 
 body.theme-retro {
-  background: #000;
-  color: #0f0;
-  font-family: "Courier New", monospace;
+  --background-color: #000000;
+  --text-color: #00ff00;
 }
 
 body.theme-noir {
-  background: #1a1a1a;
+  --background-color: #1a1a1a;
+  --text-color: #f5f5f5;
 }
 
 body.theme-mono {
-  background: #000;
-  color: #fff;
+  --background-color: #000000;
+  --text-color: #ffffff;
 }
 
 body.theme-pastel {
-  background: radial-gradient(circle at center, #ffe4e1, #e0e7ff, #e8ffe8);
+  --background-color: radial-gradient(circle at center, #ffe4e1, #e0e7ff, #e8ffe8);
+  --text-color: #000000;
 }
 
 body.theme-rainy {
-  background: radial-gradient(circle at center, #0a1e3d, #081229);
+  --background-color: radial-gradient(circle at center, #0a1e3d, #081229);
+  --text-color: #ffffff;
   overflow: hidden;
 }
 
@@ -101,7 +116,8 @@ body.theme-rainy::before {
 }
 
 body.theme-eclipse {
-  background: radial-gradient(circle at center, #000, #1a1a1a);
+  --background-color: radial-gradient(circle at center, #000000, #1a1a1a);
+  --text-color: #ffcc00;
   overflow: hidden;
 }
 
