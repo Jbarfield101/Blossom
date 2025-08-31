@@ -2305,24 +2305,26 @@ Transcription
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TranscriptEntry {
-    pub id: String,
-    pub audio_path: String,
+    pub session_id: String,
+    pub speaker_id: String,
+    pub start: f64,
+    pub end: f64,
     pub text: String,
-    pub created_at: String,
 }
 
 fn transcripts_path() -> PathBuf {
     let mut dir = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
     dir.push(".blossom");
     let _ = fs::create_dir_all(&dir);
-    dir.push("transcripts.json");
+    dir.push("transcripts.jsonl");
     dir
 }
 
-fn transcripts_audio_dir() -> PathBuf {
+fn transcripts_audio_dir(session_id: &str) -> PathBuf {
     let mut dir = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
     dir.push(".blossom");
     dir.push("transcripts");
+    dir.push(session_id);
     let _ = fs::create_dir_all(&dir);
     dir
 }
@@ -2393,20 +2395,34 @@ fn run_transcribe_script<R: Runtime>(app: &AppHandle<R>, audio: &Path) -> Result
     Ok(String::from_utf8_lossy(&output.stdout).to_string())
 }
 
-fn save_transcripts(entries: &[TranscriptEntry]) -> Result<(), String> {
+fn save_transcripts(entry: &TranscriptEntry) -> Result<(), String> {
     let path = transcripts_path();
     if let Some(parent) = path.parent() {
         let _ = fs::create_dir_all(parent);
     }
-    let data = serde_json::to_string_pretty(entries).map_err(|e| e.to_string())?;
-    fs::write(path, data).map_err(|e| e.to_string())
+    let mut file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&path)
+        .map_err(|e| e.to_string())?;
+    let line = serde_json::to_string(entry).map_err(|e| e.to_string())?;
+    writeln!(file, "{}", line).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub async fn load_transcripts() -> Result<Vec<TranscriptEntry>, String> {
     let path = transcripts_path();
-    if let Ok(data) = fs::read_to_string(path) {
-        serde_json::from_str(&data).map_err(|e| e.to_string())
+    if let Ok(file) = fs::File::open(path) {
+        let reader = BufReader::new(file);
+        let mut entries = Vec::new();
+        for line in reader.lines() {
+            if let Ok(line) = line {
+                if let Ok(entry) = serde_json::from_str::<TranscriptEntry>(&line) {
+                    entries.push(entry);
+                }
+            }
+        }
+        Ok(entries)
     } else {
         Ok(vec![])
     }
@@ -2415,25 +2431,29 @@ pub async fn load_transcripts() -> Result<Vec<TranscriptEntry>, String> {
 #[tauri::command]
 pub async fn transcribe_audio<R: Runtime>(
     app: AppHandle<R>,
+    session_id: String,
+    speaker_id: String,
+    start: f64,
+    end: f64,
     data: Vec<u8>,
 ) -> Result<String, String> {
     if data.is_empty() {
         return Err("no audio data provided".into());
     }
-    let id = chrono::Local::now().timestamp_millis().to_string();
-    let audio_dir = transcripts_audio_dir();
-    let audio_path = audio_dir.join(format!("{id}.wav"));
+    let audio_dir = transcripts_audio_dir(&session_id);
+    let file_name = format!("{}-{}.wav", (start * 1000.0) as u64, (end * 1000.0) as u64);
+    let audio_path = audio_dir.join(file_name);
     fs::write(&audio_path, &data).map_err(|e| e.to_string())?;
     let text = run_transcribe_script(&app, &audio_path)?.trim().to_string();
 
-    let mut entries = load_transcripts().await.unwrap_or_else(|_| vec![]);
-    entries.push(TranscriptEntry {
-        id: id.clone(),
-        audio_path: audio_path.to_string_lossy().to_string(),
+    let entry = TranscriptEntry {
+        session_id: session_id.clone(),
+        speaker_id: speaker_id.clone(),
+        start,
+        end,
         text: text.clone(),
-        created_at: chrono::Local::now().to_rfc3339(),
-    });
-    save_transcripts(&entries)?;
+    };
+    save_transcripts(&entry)?;
 
     Ok(text)
 }
