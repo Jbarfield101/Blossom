@@ -34,7 +34,7 @@ export default function HoverCircle({
     filter: "blur(28px)",
     pointerEvents: "none",
     transition: "background 200ms ease",
-    zIndex: 0,
+    zIndex: -1,
     "--audio-alpha": alpha,
   };
 
