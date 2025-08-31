@@ -17,6 +17,11 @@ export default function MusicDashboard() {
     update(id, { status: 'pending', progress: 0 });
   };
 
+  const onPlay = (path: string) => {
+    const audio = new Audio(convertFileSrc(path));
+    void audio.play();
+  };
+
   return (
     <Box>
       <Typography variant="h6" sx={{ mb: 2 }}>Project Dashboard</Typography>
@@ -49,7 +54,7 @@ export default function MusicDashboard() {
                 <TableCell>
                   <Stack direction="row" spacing={1} alignItems="center">
                     {j.wavPath && (
-                      <IconButton aria-label="play">
+                      <IconButton aria-label="play" onClick={() => onPlay(j.wavPath!)}>
                         <PlayArrowIcon />
                       </IconButton>
                     )}
