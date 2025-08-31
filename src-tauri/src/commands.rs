@@ -954,6 +954,9 @@ pub async fn sfz_convert_flac_to_wav(
     delete_flac: Option<bool>,
 ) -> Result<String, String> {
     let script = PathBuf::from("scripts").join("sfz-flac-to-wav.ts");
+    if which("npx").is_err() {
+        return Err("npx not found; install Node.js".to_string());
+    }
     let mut cmd = PCommand::new("npx");
     cmd.arg("tsx").arg(&script);
     if let Some(r) = root {
