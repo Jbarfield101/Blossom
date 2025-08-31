@@ -40,6 +40,24 @@ export const zNpc = z.object({
   level: z.number().int().min(1).optional(),
   hp: z.number().int().min(0).optional(),
   inventory: z.array(z.string()).optional(),
+  cr: z.string().optional(),
+  armorClass: z.number().int().positive().optional(),
+  speed: z.string().optional(),
+  savingThrows: z.array(z.string()).optional(),
+  skills: z.array(z.string()).optional(),
+  senses: z.array(z.string()).optional(),
+  languages: z.array(z.string()).optional(),
+  traits: z.array(z.string()).optional(),
+  equipment: z.array(z.string()).optional(),
+  personality: z
+    .object({
+      traits: z.string().optional(),
+      ideals: z.string().optional(),
+      bonds: z.string().optional(),
+      flaws: z.string().optional(),
+      voice: z.string().optional(),
+    })
+    .optional(),
 });
 
 export type Npc = z.infer<typeof zNpc>;

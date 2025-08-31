@@ -5,7 +5,26 @@ export interface DndBase {
 
 import type { Npc } from "../../dnd/schemas/npc";
 
-export type NpcData = Npc;
+export interface Personality {
+  traits?: string;
+  ideals?: string;
+  bonds?: string;
+  flaws?: string;
+  voice?: string;
+}
+
+export interface NpcData extends Npc {
+  cr?: string;
+  armorClass?: number;
+  speed?: string;
+  savingThrows?: string[];
+  skills?: string[];
+  senses?: string[];
+  languages?: string[];
+  traits?: string[];
+  equipment?: string[];
+  personality?: Personality;
+}
 
 export interface LoreData extends DndBase {
   summary: string;
