@@ -14,9 +14,8 @@ use tauri::{AppHandle, Emitter, Wry};
 use tokio::sync::{mpsc, Mutex, Semaphore};
 use tokio::time::sleep;
 
-use crate::commands::{
-    run_basic_sfz, run_lofi_song, AlbumRequest, BasicSfzSpec, ShortSpec, SongSpec,
-};
+use crate::commands::{run_basic_sfz, run_lofi_song, AlbumRequest, BasicSfzSpec, SongSpec};
+use crate::video_tools::ShortSpec;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "id")]
@@ -36,21 +35,21 @@ pub enum TaskCommand {
         doc_id: String,
     },
     ParseSpellPdf {
-        #[serde(default = "crate::commands::conda_python_string")]
+        #[serde(default = "crate::python_helpers::conda_python_string")]
         py: String,
         #[serde(default = "crate::commands::pdf_tools_path_string")]
         script: String,
         path: String,
     },
     ParseRulePdf {
-        #[serde(default = "crate::commands::conda_python_string")]
+        #[serde(default = "crate::python_helpers::conda_python_string")]
         py: String,
         #[serde(default = "crate::commands::pdf_tools_path_string")]
         script: String,
         path: String,
     },
     ParseLorePdf {
-        #[serde(default = "crate::commands::conda_python_string")]
+        #[serde(default = "crate::python_helpers::conda_python_string")]
         py: String,
         #[serde(default = "crate::commands::pdf_tools_path_string")]
         script: String,

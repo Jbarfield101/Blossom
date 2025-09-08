@@ -1,4 +1,4 @@
-use blossom_lib::commands::{load_paths, save_paths};
+use blossom_lib::python_helpers::{load_paths, save_paths};
 use serde_json::Value;
 use std::{env, fs};
 

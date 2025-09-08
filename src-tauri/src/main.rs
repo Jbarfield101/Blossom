@@ -2,7 +2,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod commands;
+mod python_helpers;
 mod task_queue;
+mod video_tools;
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -76,7 +78,7 @@ fn main() {
                 let app = window.app_handle().clone();
                 tauri::async_runtime::spawn(async move {
                     // Conditionally convert SFZ FLAC samples to WAV on startup
-                    let cfg = crate::commands::get_config();
+                    let cfg = crate::python_helpers::get_config();
                     if cfg.sfz_convert_on_start.unwrap_or(true) {
                         if let Err(e) = commands::sfz_convert_flac_to_wav(
                             Some("public/sfz_sounds".into()),
@@ -111,7 +113,7 @@ fn main() {
             commands::dj_mix,
             commands::generate_ambience,
             commands::sfz_convert_flac_to_wav,
-            commands::set_sfz_convert_on_start,
+            python_helpers::set_sfz_convert_on_start,
             commands::higgs_tts,
             // ComfyUI:
             commands::comfy_status,
@@ -145,16 +147,16 @@ fn main() {
             commands::save_lore,
             commands::list_lore,
             // Paths:
-            commands::load_paths,
-            commands::save_paths,
-            commands::detect_python,
+            python_helpers::load_paths,
+            python_helpers::save_paths,
+            python_helpers::detect_python,
             // Shorts:
-            commands::load_shorts,
-            commands::save_shorts,
-            commands::generate_short,
-            // Retro TV:
-            commands::save_retro_tv_video,
-            commands::loop_video,
+            video_tools::load_shorts,
+            video_tools::save_shorts,
+            video_tools::generate_short,
+            // Retro TV and video tools:
+            video_tools::save_retro_tv_video,
+            video_tools::loop_video,
             // Transcription:
             commands::load_transcripts,
             commands::transcribe_audio,
