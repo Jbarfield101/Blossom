@@ -25,3 +25,6 @@ dist-ssr
 
 # Ignore example voice and ambience audio files
 src-tauri/python/samples/**/*.wav
+
+# Ignore test snapshots
+**/__snapshots__/
