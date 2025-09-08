@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Modules
-- `src/`: React + TypeScript app (Vite). Components use PascalCase (`RetroTV.tsx`); utilities and stores use camelCase (e.g., `sfzLoader.ts`). Tests live alongside files as `*.test.ts(x)`.
+- `src/`: React + TypeScript app (Vite). Components use PascalCase (`RetroTV.tsx`); utilities use camelCase (`sfzLoader.ts`), and stores do too (e.g., `inventory.ts`). Tests live alongside files as `*.test.ts(x)`.
 - `src-tauri/`: Tauri (Rust) backend with integration/unit tests under `src-tauri/tests`. Python helpers live in `src-tauri/python/` with tests in `src-tauri/python/tests`.
 - `scripts/`: TypeScript maintenance scripts (run via `tsx`), e.g. `reindex.ts`, `gen-schemas.ts`.
 - `public/`, `assets/`, `models/`: static assets and data.
