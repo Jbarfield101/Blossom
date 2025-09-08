@@ -14,7 +14,10 @@ export default function MusicDashboard() {
   const update = useMusicJobs((s) => s.update);
 
   const latestCompleted = useMemo(
-    () => list.find((j) => j.status === 'completed' && j.wavPath),
+    () =>
+      list.find(
+        (j) => j.status === 'completed' && (j.wavPathFinal || j.wavPath)
+      ),
     [list]
   );
 
@@ -59,13 +62,23 @@ export default function MusicDashboard() {
                 </TableCell>
                 <TableCell>
                   <Stack direction="row" spacing={1} alignItems="center">
-                    {j.wavPath && (
-                      <IconButton aria-label="play" onClick={() => onPlay(j.wavPath!)}>
+                    {(j.wavPathFinal || j.wavPath) && (
+                      <IconButton
+                        aria-label="play"
+                        onClick={() => onPlay(j.wavPathFinal ?? j.wavPath!)}
+                      >
                         <PlayArrowIcon />
                       </IconButton>
                     )}
-                    {j.wavPath && (
-                      <Button size="small" component="a" href={convertFileSrc(j.wavPath)} download target="_blank" rel="noreferrer">
+                    {(j.wavPathFinal || j.wavPath) && (
+                      <Button
+                        size="small"
+                        component="a"
+                        href={convertFileSrc(j.wavPathFinal ?? j.wavPath!)}
+                        download
+                        target="_blank"
+                        rel="noreferrer"
+                      >
                         <DownloadIcon fontSize="small" sx={{ mr: 0.5 }} /> Download
                       </Button>
                     )}
@@ -83,7 +96,9 @@ export default function MusicDashboard() {
       {latestCompleted && (
         <Box sx={{ mt: 3 }}>
           <Typography variant="subtitle1">Latest Preview</Typography>
-          <AudioPlayer src={latestCompleted.wavPath!} />
+          <AudioPlayer
+            src={(latestCompleted.wavPathFinal ?? latestCompleted.wavPath)!}
+          />
         </Box>
       )}
     </Box>

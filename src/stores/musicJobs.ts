@@ -11,6 +11,7 @@ export interface MusicJob {
   status: JobStatus;
   progress?: number; // 0-100
   wavPath?: string; // final output from python
+  wavPathFinal?: string; // post-processed final output
   draftUrl?: string; // local preview (e.g., uploaded melody)
   error?: string;
 }
