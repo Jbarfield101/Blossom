@@ -13,7 +13,6 @@ import pdfplumber
 import pytesseract
 import requests
 import subprocess
-import warnings
 
 
 def _base_dir() -> Path:
@@ -263,249 +262,6 @@ def extract_spells(path: str):
     except Exception:
         pass
     return {"spells": spells}
-
-
-def _persist_npcs(npcs, db_path: Path) -> None:
-    conn = sqlite3.connect(db_path)
-    try:
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS npcs (id TEXT PRIMARY KEY, name TEXT NOT NULL, data TEXT NOT NULL)"
-        )
-        for npc in npcs:
-            conn.execute(
-                "INSERT OR REPLACE INTO npcs (id, name, data) VALUES (?, ?, ?)",
-                (npc["id"], npc["name"], json.dumps(npc)),
-            )
-        conn.commit()
-    finally:
-        conn.close()
-
-
-def extract_npcs(path: str, db_path: str | Path | None = None):
-    pdf_path = Path(path)
-    npcs = []
-    with pdfplumber.open(pdf_path) as pdf:
-        text = "\n".join(page.extract_text() or "" for page in pdf.pages)
-    for block in text.split("\n\n"):
-        lines = [ln.rstrip() for ln in block.splitlines() if ln.strip()]
-        if not lines:
-            continue
-        data = {}
-        list_fields = {"traits", "quirks", "inventory", "equipment", "items", "hooks"}
-        synonym_map = {
-            "class/role": "role",
-            "class role": "role",
-            "class": "role",
-            "role": "role",
-        }
-        heading_fields = {"backstory", "inventory", "hooks"}
-        current = None
-
-        if lines and ":" not in lines[0]:
-            first = lines[0].strip()
-            norm_first = synonym_map.get(first.lower(), first.lower())
-            if norm_first in heading_fields:
-                current = norm_first
-                if current in list_fields:
-                    data.setdefault(current, [])
-                else:
-                    data.setdefault(current, "")
-                lines = lines[1:]
-            else:
-                data["name"] = lines.pop(0).strip()
-
-        for line in lines:
-            stripped = line.strip()
-            key_norm = synonym_map.get(stripped.lower(), stripped.lower())
-            if ":" not in line and not re.match(r"^[\-\*\u2022]", stripped) and key_norm in heading_fields:
-                current = key_norm
-                if current in list_fields:
-                    data.setdefault(current, [])
-                else:
-                    data.setdefault(current, "")
-                continue
-            bullet = re.match(r"^[\-\*\u2022]\s*(.*)", line)
-            if bullet and current in list_fields:
-                data.setdefault(current, []).append(bullet.group(1).strip())
-                continue
-            pairs = re.findall(r"([A-Za-z/ ]+):\s*([^:]*?)(?=\s+[A-Za-z/ ]+:|$)", line)
-            if pairs:
-                for k, v in pairs:
-                    key = synonym_map.get(k.strip().lower(), k.strip().lower())
-                    value = v.strip()
-                    current = key
-                    if key in list_fields:
-                        data[key] = [value] if value else []
-                    else:
-                        data[key] = value
-            else:
-                if current in list_fields and data.get(current):
-                    data[current][-1] += " " + stripped
-                elif current:
-                    data[current] = f"{data.get(current, '')} {stripped}".strip()
-        if not data:
-            continue
-
-        block_text = "\n".join(lines)
-        hooks_raw = (
-            data.get("hooks")
-            or data.get("adventure hooks")
-            or data.get("adventure_hooks")
-            or ""
-        )
-        if isinstance(hooks_raw, list):
-            hooks = [h.strip() for h in hooks_raw if h.strip()]
-        else:
-            hooks = [h.strip() for h in hooks_raw.split(",") if h.strip()]
-        if not hooks:
-            hooks = ["hook"]
-            warnings.warn(
-                "NPC missing hooks; using placeholder 'hook'",
-                UserWarning,
-            )
-        tags = [t.strip() for t in (data.get("tags") or "").split(",") if t.strip()]
-        if not tags:
-            tags = ["npc"]
-            warnings.warn(
-                "NPC missing tags; using placeholder 'npc'",
-                UserWarning,
-            )
-        traits = data.get("traits") or data.get("quirks")
-        npc = {
-            "id": str(uuid.uuid4()),
-            "name": data.get("name", "Unknown"),
-            "species": data.get("species") or data.get("race") or "Unknown",
-            "role": data.get("role") or data.get("occupation") or "Unknown",
-            "alignment": data.get("alignment", "Neutral"),
-            "playerCharacter": data.get("playercharacter", "false").lower()
-            == "true",
-            "backstory": data.get("backstory"),
-            "location": data.get("location")
-            or data.get("origin")
-            or data.get("domain")
-            or data.get("origin/domain"),
-            "hooks": hooks,
-            "quirks": traits or None,
-            "appearance": data.get("appearance"),
-            "statblock": {},
-            "tags": tags,
-        }
-
-        age_raw = data.get("age")
-        if age_raw:
-            try:
-                age_val = int(age_raw)
-                if age_val > 0:
-                    npc["age"] = age_val
-            except ValueError:
-                pass
-
-        voice_raw = data.get("voice")
-        if voice_raw:
-            parts = [p.strip() for p in voice_raw.split(",")]
-            npc["voice"] = {
-                "style": parts[0] if len(parts) > 0 and parts[0] else "neutral",
-                "provider": parts[1] if len(parts) > 1 and parts[1] else "unknown",
-                "preset": parts[2] if len(parts) > 2 and parts[2] else "default",
-            }
-        else:
-            vs = data.get("voice_style")
-            vp = data.get("voice_provider")
-            vz = data.get("voice_preset")
-            if vs or vp or vz:
-                npc["voice"] = {
-                    "style": vs or "neutral",
-                    "provider": vp or "unknown",
-                    "preset": vz or "default",
-                }
-
-        portrait = data.get("portrait")
-        if portrait:
-            npc["portrait"] = portrait
-
-        icon = data.get("icon")
-        if icon:
-            npc["icon"] = icon
-
-        inventory = data.get("inventory") or data.get("equipment") or data.get("items")
-        if inventory:
-            npc["inventory"] = inventory
-
-        abilities = {}
-        for abbr, name in [
-            ("str", "strength"),
-            ("dex", "dexterity"),
-            ("con", "constitution"),
-            ("int", "intelligence"),
-            ("wis", "wisdom"),
-            ("cha", "charisma"),
-        ]:
-            m = re.search(rf"{abbr}\s*:?\s*(\d+)", block_text, re.IGNORECASE)
-            if m:
-                abilities[name] = int(m.group(1))
-        if abilities:
-            npc["abilities"] = abilities
-
-        m = re.search(r"hp\s*:?\s*(\d+)", block_text, re.IGNORECASE)
-        if m:
-            npc["hp"] = int(m.group(1))
-            npc["statblock"]["hp"] = int(m.group(1))
-        m = re.search(r"level\s*:?\s*(\d+)", block_text, re.IGNORECASE)
-        if m:
-            npc["level"] = int(m.group(1))
-        m = re.search(r"ac\s*:?\s*(\d+)", block_text, re.IGNORECASE)
-        if m:
-            npc["statblock"]["ac"] = int(m.group(1))
-        m = re.search(r"speed\s*:?\s*([\d\w\s/']+)", block_text, re.IGNORECASE)
-        if m:
-            npc["statblock"]["speed"] = m.group(1).strip()
-
-        sections = {
-            k: v
-            for k, v in data.items()
-            if k
-            not in {
-                "name",
-                "species",
-                "race",
-                "role",
-                "occupation",
-                "alignment",
-                "playercharacter",
-                "backstory",
-                "location",
-                "origin",
-                "domain",
-                "origin/domain",
-                "hooks",
-                "adventure hooks",
-                "adventure_hooks",
-                "quirks",
-                "traits",
-                "appearance",
-                "portrait",
-                "icon",
-                "voice",
-                "voice_style",
-                "voice_provider",
-                "voice_preset",
-                "tags",
-                "age",
-                "inventory",
-                "equipment",
-                "items",
-            }
-        }
-        if sections:
-            npc["sections"] = sections
-        npcs.append(npc)
-
-    if db_path is None:
-        db_path = ROOT_DIR / "blossom.db"
-    else:
-        db_path = Path(db_path)
-    _persist_npcs(npcs, db_path)
-    return {"npcs": npcs}
 
 
 def extract_lore(path: str):
@@ -856,8 +612,6 @@ def main():
     p.add_argument("path")
     p = sub.add_parser("rules")
     p.add_argument("path")
-    p = sub.add_parser("npcs")
-    p.add_argument("path")
     p = sub.add_parser("lore")
     p.add_argument("path")
     args = parser.parse_args()
@@ -881,8 +635,6 @@ def main():
         out = extract_spells(args.path)
     elif args.cmd == "rules":
         out = extract_rules(args.path)
-    elif args.cmd == "npcs":
-        out = extract_npcs(args.path)
     elif args.cmd == "lore":
         out = extract_lore(args.path)
     else:
