@@ -1,7 +1,6 @@
 // src/pages/Comfy.tsx
 import { useState } from "react";
-import { FaDiceD20, FaImage } from "react-icons/fa";
-import dndPortrait from "../comfy/dnd_portrait.json";
+import { FaImage } from "react-icons/fa";
 
 export default function Comfy() {
   const [status, setStatus] = useState("ready");
@@ -46,21 +45,6 @@ export default function Comfy() {
     <div style={styles.container}>
       <div style={styles.form}>
         <h2 style={{ marginTop: 0 }}>Comfy Form</h2>
-        <div style={styles.section}>
-          <button style={styles.iconBtn} aria-label="DND">
-            <FaDiceD20 />
-          </button>
-          <div style={styles.buttonGroup}>
-            <button
-              style={styles.actionBtn}
-              onClick={() => runWorkflow(dndPortrait)}
-            >
-              Portrait
-            </button>
-            <button style={styles.actionBtn}>Icon</button>
-            <button style={styles.actionBtn}>Sketches</button>
-          </div>
-        </div>
         <div style={styles.section}>
           <button style={styles.iconBtn} aria-label="Image">
             <FaImage />

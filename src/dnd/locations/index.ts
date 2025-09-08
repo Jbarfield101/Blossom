@@ -1,1 +1,0 @@
-export { MapTrigger } from './MapTrigger';

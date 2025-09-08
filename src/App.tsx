@@ -30,7 +30,6 @@ import Construction from "./pages/Construction";
 import Simulation from "./pages/Simulation";
 import BigBrother from "./pages/BigBrother";
 import Voices from "./pages/Voices";
-import TagManager from "./pages/TagManager";
 import VideoEditor from "./pages/VideoEditor";
 
 export default function App() {
@@ -75,7 +74,6 @@ export default function App() {
           <Route path="/construction" element={<Construction />} />
           <Route path="/lofi" element={<Lofi />} />
           <Route path="/voices" element={<Voices />} />
-          <Route path="/tags" element={<TagManager />} />
           <Route path="/shorts" element={<Shorts />} />
           <Route path="/video-editor" element={<VideoEditor />} />
           <Route path="/chores" element={<Chores />} />
