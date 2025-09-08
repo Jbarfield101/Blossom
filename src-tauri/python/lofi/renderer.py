@@ -116,6 +116,21 @@ INSTRUMENTS_DATA = _load_instruments(_resolve_instruments_path())
 def _stable_hash_int(s: str) -> int:
     return int.from_bytes(hashlib.md5(s.encode("utf-8")).digest()[:4], "little")
 
+
+_STREAM_SEEDS = {"key": 0xA5A5A5A5, "post": 0x5A5A5A5A}
+
+
+def _seeded_rng(seed: int, *streams: Any) -> np.random.Generator:
+    """Derive a deterministic RNG from a base seed and stream identifiers."""
+    h = int(seed) & 0xFFFFFFFF
+    for s in streams:
+        if isinstance(s, str):
+            h ^= _STREAM_SEEDS.get(s, _stable_hash_int(s))
+        else:
+            h ^= int(s) & 0xFFFFFFFF
+        h &= 0xFFFFFFFF
+    return np.random.default_rng(h)
+
 def bars_to_ms(bars: int, bpm: float, beats_per_bar: int = 4) -> int:
     seconds_per_beat = 60.0 / float(bpm)
     seconds = bars * beats_per_bar * seconds_per_beat
@@ -794,7 +809,6 @@ PROG_BANK_INTRO = [["I","IV"], ["ii","V"], ["I","V"], ["vi","IV"], ["I","ii"], [
 
 def _stitch_progression(bank, rng, length=None):
     """Generate a progression using a simple Markov chain over the bank."""
-    rng = rng or np.random.default_rng()
     if length is None:
         length = len(rng.choice(bank))
 
@@ -1609,9 +1623,7 @@ def model_generate_audio(
     chords: Optional[List[str]] = None,
     chord_span_beats: int = 4,
 ) -> AudioSegment:
-    sec = _stable_hash_int(section)
-    full_seed = (seed ^ sec) & 0xFFFFFFFF
-    rng = np.random.default_rng(full_seed)
+    rng = _seeded_rng(seed, section)
     return _render_section(
         bars,
         bpm,
@@ -1735,7 +1747,7 @@ def render_from_spec(spec: Dict[str, Any]) -> Tuple[AudioSegment, int]:
     key_val = spec.get("key")
     key_mode = "major"
     if key_val is None or (isinstance(key_val, str) and str(key_val).lower() == "auto"):
-        rng_key = np.random.default_rng((seed ^ 0xA5A5A5A5) & 0xFFFFFFFF)
+        rng_key = _seeded_rng(seed, "key")
         key_letter = rng_key.choice(list("CDEFGAB"))
     else:
         if isinstance(key_val, dict):
@@ -1828,7 +1840,7 @@ def render_from_spec(spec: Dict[str, Any]) -> Tuple[AudioSegment, int]:
         chord_span_beats=chord_span_beats,
     )
     logger.info({"stage": "post", "message": "cleaning audio"})
-    post_rng = np.random.default_rng((seed ^ 0x5A5A5A5A) & 0xFFFFFFFF)
+    post_rng = _seeded_rng(seed, "post")
     wow_cfg = spec.get("wow_flutter")
     if spec.get("lofi_filter", False):
         song = enhanced_post_process_chain(
