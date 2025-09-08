@@ -9,7 +9,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use task_queue::TaskQueue;
 use tauri::Manager;
-use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
+use tauri_plugin_sql::Builder as SqlBuilder;
 
 fn copy_dir(src: &Path, dst: &Path) -> std::io::Result<()> {
     fs::create_dir_all(dst)?;
@@ -103,33 +103,7 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
-        .plugin(
-            SqlBuilder::default()
-                .add_migrations(
-                    "sqlite:stocks.db",
-                    vec![
-                        Migration {
-                            version: 1,
-                            description: "create stocks cache",
-                            sql: "CREATE TABLE IF NOT EXISTS stocks (symbol TEXT PRIMARY KEY, data TEXT, quote_ts INTEGER, hist_ts INTEGER);",
-                            kind: MigrationKind::Up,
-                        },
-                        Migration {
-                            version: 2,
-                            description: "create stock quote cache",
-                            sql: "CREATE TABLE IF NOT EXISTS stock_quotes (ticker TEXT PRIMARY KEY, data TEXT, ts INTEGER);",
-                            kind: MigrationKind::Up,
-                        },
-                        Migration {
-                            version: 3,
-                            description: "create stock series cache",
-                            sql: "CREATE TABLE IF NOT EXISTS stock_series (ticker TEXT, range TEXT, data TEXT, ts INTEGER, PRIMARY KEY(ticker, range));",
-                            kind: MigrationKind::Up,
-                        },
-                    ],
-                )
-                .build(),
-        )
+        .plugin(SqlBuilder::default().build())
         .invoke_handler(tauri::generate_handler![
             commands::lofi_generate_gpu,
             commands::run_basic_sfz,
