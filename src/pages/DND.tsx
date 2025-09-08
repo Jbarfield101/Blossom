@@ -7,8 +7,6 @@ import {
   Gavel,
   AutoStories,
   LibraryAdd,
-  Casino,
-  Map,
   LibraryBooks,
   Inventory,
   Rule,
@@ -22,8 +20,6 @@ import EncounterForm from "../features/dnd/EncounterForm";
 import RuleForm from "../features/dnd/RuleForm";
 import SpellForm from "../features/dnd/SpellForm";
 import SpellBook from "../features/dnd/SpellBook";
-import DiceRoller from "../features/dnd/DiceRoller";
-import TabletopMap from "../features/dnd/TabletopMap";
 import WorldInventory from "./WorldInventory";
 import RuleBook from "../features/dnd/RuleBook";
 import { useWorlds } from "../store/worlds";
@@ -65,8 +61,6 @@ export default function DND() {
     { icon: <Rule />, label: "Add Rule", component: <RuleForm /> },
     { icon: <LibraryAdd />, label: "Add Spell", component: <SpellForm /> },
     { icon: <AutoStories />, label: "Spellbook", component: <SpellBook /> },
-    { icon: <Casino />, label: "Dice", component: <DiceRoller /> },
-    { icon: <Map />, label: "Tabletop", component: <TabletopMap /> },
   ];
   return (
     <Box sx={{ p: 2 }}>
