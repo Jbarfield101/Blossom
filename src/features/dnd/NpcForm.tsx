@@ -16,7 +16,6 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import FormErrorText from "./FormErrorText";
 import { zNpc } from "../../dnd/schemas/npc";
 import { NpcData } from "./types";
-import NpcPdfUpload from "./NpcPdfUpload";
 import StyledTextField from "./StyledTextField";
 import { useNPCs } from "../../store/npcs";
 import { invoke } from "@tauri-apps/api/core";
@@ -142,7 +141,6 @@ export default function NpcForm({ world }: Props) {
   const addNPC = useNPCs((s) => s.addNPC);
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [result, setResult] = useState<NpcData | null>(null);
-  const [importedName, setImportedName] = useState<string | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
 
@@ -165,7 +163,6 @@ export default function NpcForm({ world }: Props) {
     try {
       const text = await file.text();
       const npc = zNpc.parse(JSON.parse(text));
-      setImportedName(npc.name);
       dispatch({ type: "SET_FIELD", field: "id", value: npc.id });
       dispatch({ type: "SET_FIELD", field: "name", value: npc.name });
       dispatch({ type: "SET_FIELD", field: "species", value: npc.species });
@@ -216,7 +213,6 @@ export default function NpcForm({ world }: Props) {
       dispatch({ type: "SET_FIELD", field: "charisma", value: npc.abilities?.charisma?.toString() || "" });
     } catch {
       setErrors({ json: "Invalid JSON" });
-      setImportedName(null);
     }
   };
 
@@ -475,7 +471,6 @@ export default function NpcForm({ world }: Props) {
         addNPC(saved);
         setResult(saved);
         dispatch({ type: "RESET" });
-        setImportedName(null);
         setErrors({});
         setSnackbarMessage(`NPC ${saved.name} saved successfully`);
         setSnackbarOpen(true);
@@ -507,70 +502,6 @@ export default function NpcForm({ world }: Props) {
             </AccordionSummary>
             <AccordionDetails>
               <Grid container spacing={2} alignItems="center">
-            <Grid item xs={4}>
-              <Typography component="label">Upload NPC PDF</Typography>
-            </Grid>
-            <Grid item xs={8}>
-              <NpcPdfUpload
-                world={world}
-                onParsed={(npcs) => {
-                  const npc = npcs[0];
-                  if (!npc) return;
-                  setImportedName(npc.name);
-                  dispatch({ type: "SET_FIELD", field: "id", value: npc.id });
-                  dispatch({ type: "SET_FIELD", field: "name", value: npc.name });
-                  dispatch({ type: "SET_FIELD", field: "species", value: npc.species });
-                  dispatch({ type: "SET_FIELD", field: "role", value: npc.role });
-                  dispatch({ type: "SET_FIELD", field: "alignment", value: npc.alignment });
-                  dispatch({ type: "SET_FIELD", field: "playerCharacter", value: npc.playerCharacter });
-                  dispatch({ type: "SET_FIELD", field: "age", value: npc.age?.toString() || "" });
-                  dispatch({ type: "SET_FIELD", field: "backstory", value: npc.backstory || "" });
-                  dispatch({ type: "SET_FIELD", field: "location", value: npc.location || "" });
-                  dispatch({ type: "SET_FIELD", field: "hooks", value: (npc.hooks || []).join(", ") });
-                  dispatch({ type: "SET_FIELD", field: "quirks", value: (npc.quirks || []).join(", ") });
-                  dispatch({ type: "SET_FIELD", field: "appearance", value: npc.appearance || "" });
-                  dispatch({ type: "SET_FIELD", field: "tags", value: (npc.tags || []).join(", ") });
-                  dispatch({ type: "SET_FIELD", field: "portrait", value: npc.portrait || "" });
-                  dispatch({ type: "SET_FIELD", field: "icon", value: npc.icon || "" });
-                  dispatch({
-                    type: "SET_FIELD",
-                    field: "statblock",
-                    value: JSON.stringify(npc.statblock || {}, null, 2),
-                  });
-                  dispatch({
-                    type: "SET_FIELD",
-                    field: "sections",
-                    value: JSON.stringify(npc.sections || {}, null, 2),
-                  });
-                  dispatch({ type: "SET_FIELD", field: "level", value: npc.level?.toString() || "" });
-                  dispatch({ type: "SET_FIELD", field: "hp", value: npc.hp?.toString() || "" });
-                  dispatch({ type: "SET_FIELD", field: "inventory", value: (npc.inventory || []).join(", ") });
-                  dispatch({ type: "SET_FIELD", field: "cr", value: npc.cr || "" });
-                  dispatch({ type: "SET_FIELD", field: "armorClass", value: npc.armorClass?.toString() || "" });
-                  dispatch({ type: "SET_FIELD", field: "speed", value: npc.speed || "" });
-                  dispatch({ type: "SET_FIELD", field: "savingThrows", value: (npc.savingThrows || []).join(", ") });
-                  dispatch({ type: "SET_FIELD", field: "skills", value: (npc.skills || []).join(", ") });
-                  dispatch({ type: "SET_FIELD", field: "senses", value: (npc.senses || []).join(", ") });
-                  dispatch({ type: "SET_FIELD", field: "languages", value: (npc.languages || []).join(", ") });
-                  dispatch({ type: "SET_FIELD", field: "traits", value: (npc.traits || []).join(", ") });
-                  dispatch({ type: "SET_FIELD", field: "equipment", value: (npc.equipment || []).join(", ") });
-                  dispatch({ type: "SET_FIELD", field: "personalityTraits", value: npc.personality?.traits || "" });
-                  dispatch({ type: "SET_FIELD", field: "personalityIdeals", value: npc.personality?.ideals || "" });
-                  dispatch({ type: "SET_FIELD", field: "personalityBonds", value: npc.personality?.bonds || "" });
-                  dispatch({ type: "SET_FIELD", field: "personalityFlaws", value: npc.personality?.flaws || "" });
-                  dispatch({ type: "SET_FIELD", field: "personalityVoice", value: npc.personality?.voice || "" });
-                  dispatch({ type: "SET_FIELD", field: "strength", value: npc.abilities?.strength?.toString() || "" });
-                  dispatch({ type: "SET_FIELD", field: "dexterity", value: npc.abilities?.dexterity?.toString() || "" });
-                  dispatch({ type: "SET_FIELD", field: "constitution", value: npc.abilities?.constitution?.toString() || "" });
-                  dispatch({ type: "SET_FIELD", field: "intelligence", value: npc.abilities?.intelligence?.toString() || "" });
-                  dispatch({ type: "SET_FIELD", field: "wisdom", value: npc.abilities?.wisdom?.toString() || "" });
-                  dispatch({ type: "SET_FIELD", field: "charisma", value: npc.abilities?.charisma?.toString() || "" });
-                }}
-              />
-              {importedName && (
-                <Typography sx={{ mt: 1 }}>Imported: {importedName}</Typography>
-              )}
-            </Grid>
             <Grid item xs={4}>
               <Typography component="label">Import NPC JSON</Typography>
             </Grid>
