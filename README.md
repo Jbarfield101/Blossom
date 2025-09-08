@@ -114,12 +114,11 @@ The `RetroTV` component renders its children inside a styled television frame wh
 the active theme is set to `retro`. If no children are provided, the component
 automatically displays `/assets/logo.png` as a fallback.
 When a user uploads a video, it plays automatically on an endless loop.
-
 ## Configuration and optional features
 
-- **Paths:** ComfyUI is bundled and starts automatically, so no directory needs
-  to be configured. The Python interpreter path is detected automatically but
-  can be changed there if needed.
+- **Paths:** ComfyUI is bundled and starts automatically, so no directory setup
+  is required. The Python interpreter path is detected automatically but can be
+  changed if needed.
 - **Blender path:** If Blender is not on your system `PATH`, set the
   `BLENDER_PATH` environment variable to the Blender executable so `/objects/blender`
   can run scripts.
