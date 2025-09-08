@@ -117,12 +117,6 @@ When a user uploads a video, it plays automatically on an endless loop.
 
 ## Configuration and optional features
 
-- **Alpha Vantage API key:** Set the `ALPHAVANTAGE_API_KEY` environment variable (or add
-  `alphavantage_api_key` to `~/.blossom/config.json`) so the app can fetch stock
-  news.
-- **Stock data provider:** Set `STOCKS_PROVIDER=twelvedata` and provide a
-  `TWELVEDATA_API_KEY` to fetch quotes and time series from Twelve Data. The
-  free tier allows up to 800 requests per day and 8 per minute.
 - **Paths:** ComfyUI is bundled and starts automatically, so no directory needs
   to be configured. The Python interpreter path is detected automatically but
   can be changed there if needed.
