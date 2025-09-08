@@ -13,7 +13,6 @@ import {
   FaGamepad,
   FaDiceD20,
   FaMicrophone,
-  FaChartLine,
   FaFilm,
   FaBroom,
   FaTools,
