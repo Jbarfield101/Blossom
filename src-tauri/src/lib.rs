@@ -5,7 +5,9 @@ fn greet(name: &str) -> String {
 }
 
 pub mod commands;
+pub mod python_helpers;
 mod task_queue;
+pub mod video_tools;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
