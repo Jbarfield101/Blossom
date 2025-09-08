@@ -78,6 +78,12 @@ describe('enqueueTask validation', () => {
     );
   });
 
+  it('rejects removed ParseNpcPdf task id', async () => {
+    await expect(
+      useTasks.getState().enqueueTask('ParseNpcPdf', {} as any),
+    ).rejects.toThrow('Task command for ParseNpcPdf is missing id: {}');
+  });
+
   it('throws when required fields are missing for GenerateSong', async () => {
     await expect(
       useTasks.getState().enqueueTask('GenerateSong', { spec: {} as any }),
