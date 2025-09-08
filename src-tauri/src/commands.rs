@@ -316,7 +316,6 @@ Python paths
 pub struct AppConfig {
     pub python_path: Option<String>,
     pub comfy_path: Option<String>,
-    pub alphavantage_api_key: Option<String>,
     pub sfz_convert_on_start: Option<bool>,
     pub sfz_out_dir: Option<String>,
 }
@@ -1961,7 +1960,6 @@ fn extract_intent(content: &str) -> String {
     }
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ShortSpec {
     pub id: String,
@@ -2503,7 +2501,13 @@ pub async fn save_temp_file(file_name: String, data: Vec<u8>) -> Result<String, 
     }
     let safe_name = file_name
         .chars()
-        .map(|c| if c.is_ascii_alphanumeric() || c == '.' || c == '-' || c == '_' { c } else { '_' })
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '.' || c == '-' || c == '_' {
+                c
+            } else {
+                '_'
+            }
+        })
         .collect::<String>();
     let ts = chrono::Utc::now().timestamp_millis();
     let path = dir.join(format!("{}-{}", ts, safe_name));
