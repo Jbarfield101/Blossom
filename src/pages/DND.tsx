@@ -9,7 +9,6 @@ import {
   LibraryAdd,
   Casino,
   Map,
-  MilitaryTech,
   LibraryBooks,
   Inventory,
   Rule,
@@ -25,7 +24,6 @@ import SpellForm from "../features/dnd/SpellForm";
 import SpellBook from "../features/dnd/SpellBook";
 import DiceRoller from "../features/dnd/DiceRoller";
 import TabletopMap from "../features/dnd/TabletopMap";
-import WarTable from "../features/dnd/WarTable";
 import WorldInventory from "./WorldInventory";
 import RuleBook from "../features/dnd/RuleBook";
 import { useWorlds } from "../store/worlds";
@@ -69,7 +67,6 @@ export default function DND() {
     { icon: <AutoStories />, label: "Spellbook", component: <SpellBook /> },
     { icon: <Casino />, label: "Dice", component: <DiceRoller /> },
     { icon: <Map />, label: "Tabletop", component: <TabletopMap /> },
-    { icon: <MilitaryTech />, label: "War Table", component: <WarTable /> },
   ];
   return (
     <Box sx={{ p: 2 }}>

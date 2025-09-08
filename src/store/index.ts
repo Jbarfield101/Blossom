@@ -3,7 +3,6 @@ import { useNPCs } from "./npcs";
 import { useWorlds } from "./worlds";
 import { useCharacter } from "./character";
 import { useEncounterStore } from "./encounter";
-import { useWarTableStore } from "./warTable";
 import { useTabletopStore } from "./tabletop";
 import { useVoices } from "./voices";
 import { useInventory } from "./inventory";
@@ -16,7 +15,6 @@ export {
   useWorlds,
   useCharacter,
   useEncounterStore,
-  useWarTableStore,
   useTabletopStore,
   useVoices,
   useInventory,
@@ -29,7 +27,6 @@ const slices = {
   worlds: useWorlds,
   character: useCharacter,
   encounter: useEncounterStore,
-  warTable: useWarTableStore,
   tabletop: useTabletopStore,
   inventory: useInventory,
   spells: useSpells,
