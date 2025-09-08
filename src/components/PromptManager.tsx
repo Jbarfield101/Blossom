@@ -54,12 +54,6 @@ export default function PromptManager() {
             >
               Music
             </button>
-            <button
-              onClick={() => handlePrompt("dnd")}
-              style={styles.actionBtn}
-            >
-              DND
-            </button>
           </div>
         </div>
       )}

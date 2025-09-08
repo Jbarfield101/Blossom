@@ -6,7 +6,6 @@ import {
   FaWrench,
   FaTasks,
   FaArrowLeft,
-  FaDiceD20,
   FaCameraRetro,
   FaMusic,
   FaCalendarAlt,
@@ -79,27 +78,12 @@ export default function TopBar() {
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="D&D">
-            <IconButton
-              onClick={() => nav("/dnd")}
-              sx={{
-                ...fixedIconButtonSx,
-                left: { xs: 80, sm: 108 },
-                ...activeSx("/dnd"),
-              }}
-              aria-label="D&D"
-              aria-current={pathname === "/dnd" ? "page" : undefined}
-            >
-              <FaDiceD20 />
-            </IconButton>
-          </Tooltip>
-
           <Tooltip title="ComfyUI">
             <IconButton
               onClick={() => nav("/comfy")}
               sx={{
                 ...fixedIconButtonSx,
-                left: { xs: 116, sm: 156 },
+                left: { xs: 80, sm: 108 },
                 ...activeSx("/comfy"),
               }}
               aria-label="ComfyUI"
@@ -114,7 +98,7 @@ export default function TopBar() {
               onClick={() => nav("/music")}
               sx={{
                 ...fixedIconButtonSx,
-                left: { xs: 152, sm: 204 },
+                left: { xs: 116, sm: 156 },
                 ...activeSx("/music"),
               }}
               aria-label="Music"
@@ -129,7 +113,7 @@ export default function TopBar() {
               onClick={() => nav("/calendar")}
               sx={{
                 ...fixedIconButtonSx,
-                left: { xs: 188, sm: 252 },
+                left: { xs: 152, sm: 204 },
                 ...activeSx("/calendar"),
               }}
               aria-label="Calendar"
