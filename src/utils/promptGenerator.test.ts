@@ -18,12 +18,6 @@ describe('generatePrompt', () => {
     );
   });
 
-  it('creates a DND prompt', () => {
-    expect(generatePrompt('dragons', 'dnd')).toBe(
-      'Create a DND campaign idea involving dragons.'
-    );
-  });
-
   it('creates an SEO prompt', () => {
     expect(generatePrompt('blogs', 'seo')).toBe(
       'Create SEO optimized copy about blogs.'

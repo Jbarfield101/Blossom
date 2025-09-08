@@ -18,14 +18,9 @@ import Assistant from "./pages/Assistant";
 import GeneralChat from "./pages/GeneralChat";
 import Seo from "./pages/Seo";
 import WorldBuilder from "./pages/WorldBuilder";
-import NPCMaker from "./pages/NPCMaker";
-import NPCList from "./pages/NPCList";
-import NPCDetail from "./pages/NPCDetail";
-import WorldInventory from "./pages/WorldInventory";
 import Laser from "./pages/Laser";
 import Lofi from "./pages/Lofi";
 import NotFound from "./pages/NotFound";
-import DND from "./pages/DND";
 import Shorts from "./pages/Shorts";
 import Chores from "./pages/Chores";
 import User from "./pages/User";
@@ -76,11 +71,7 @@ export default function App() {
           <Route path="/assistant" element={<Assistant />} />
           <Route path="/assistant/general-chat" element={<GeneralChat />} />
           <Route path="/assistant/seo" element={<Seo />} />
-          <Route path="/dnd/world-builder" element={<WorldBuilder />} />
-          <Route path="/dnd/npcs-maker" element={<NPCMaker />} />
-          <Route path="/dnd/npcs-library" element={<NPCList />} />
-          <Route path="/dnd/npcs/:id" element={<NPCDetail />} />
-          <Route path="/dnd/world-inventory" element={<WorldInventory />} />
+          <Route path="/world-builder" element={<WorldBuilder />} />
           <Route path="/laser" element={<Laser />} />
           <Route path="/fusion" element={<Fusion />} />
           <Route path="/construction" element={<Construction />} />
@@ -94,7 +85,6 @@ export default function App() {
           <Route path="/transcription" element={<Transcription />} />
           <Route path="/simulation" element={<Simulation />} />
           <Route path="/big-brother" element={<BigBrother />} />
-          <Route path="/dnd" element={<DND />} />
           <Route path="/user" element={<User />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

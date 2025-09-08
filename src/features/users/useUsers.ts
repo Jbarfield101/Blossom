@@ -12,7 +12,6 @@ type ModuleKey =
   | 'laser'
   | 'fusion'
   | 'simulation'
-  | 'dnd'
   | 'voices'
   | 'shorts'
   | 'chores'
@@ -32,7 +31,6 @@ const defaultModules: ModulesState = {
   laser: true,
   fusion: true,
   simulation: true,
-  dnd: true,
   voices: true,
   shorts: true,
   chores: true,

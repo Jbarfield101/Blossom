@@ -6,7 +6,6 @@ import {
   FaWrench,
   FaTasks,
   FaArrowLeft,
-  FaDiceD20,
   FaCameraRetro,
   FaMusic,
   FaCalendarAlt,
@@ -76,21 +75,6 @@ export default function TopBar() {
               aria-current={pathname === "/" ? "page" : undefined}
             >
               <FaHome />
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title="D&D">
-            <IconButton
-              onClick={() => nav("/dnd")}
-              sx={{
-                ...fixedIconButtonSx,
-                left: { xs: 80, sm: 108 },
-                ...activeSx("/dnd"),
-              }}
-              aria-label="D&D"
-              aria-current={pathname === "/dnd" ? "page" : undefined}
-            >
-              <FaDiceD20 />
             </IconButton>
           </Tooltip>
 

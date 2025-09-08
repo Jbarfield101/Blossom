@@ -1,33 +1,12 @@
 import { saveState, loadState } from "../utils/persist";
-import { useNPCs } from "./npcs";
 import { useWorlds } from "./worlds";
-import { useCharacter } from "./character";
-import { useEncounterStore } from "./encounter";
 import { useVoices } from "./voices";
-import { useInventory } from "./inventory";
-import { useSpells } from "./spells";
-import { useRules } from "./rules";
 
-// Export individual stores for existing imports elsewhere
-export {
-  useNPCs,
-  useWorlds,
-  useCharacter,
-  useEncounterStore,
-  useVoices,
-  useInventory,
-  useSpells,
-  useRules,
-};
+export { useWorlds, useVoices };
 
 const slices = {
-  npcs: useNPCs,
   worlds: useWorlds,
-  character: useCharacter,
-  encounter: useEncounterStore,
-  inventory: useInventory,
-  spells: useSpells,
-  rules: useRules,
+  voices: useVoices,
 };
 
 type StoreState<T> = {
