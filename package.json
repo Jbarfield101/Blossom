@@ -11,12 +11,8 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "test": "vitest",
-    "reindex": "tsx scripts/reindex.ts",
-    "npc:gen": "tsx scripts/npc-gen.ts",
-    "schemas:generate": "tsx scripts/gen-schemas.ts",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed:tags": "tsx scripts/seed_tags.ts",
-    "items:enrich": "tsx scripts/enrich_items.ts",
     "a11y": "tsx scripts/a11y.ts"
   },
   "dependencies": {

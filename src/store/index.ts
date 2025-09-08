@@ -1,5 +1,4 @@
 import { saveState, loadState } from "../utils/persist";
-import { useNPCs } from "./npcs";
 import { useWorlds } from "./worlds";
 import { useCharacter } from "./character";
 import { useEncounterStore } from "./encounter";
@@ -10,7 +9,6 @@ import { useRules } from "./rules";
 
 // Export individual stores for existing imports elsewhere
 export {
-  useNPCs,
   useWorlds,
   useCharacter,
   useEncounterStore,
@@ -21,7 +19,6 @@ export {
 };
 
 const slices = {
-  npcs: useNPCs,
   worlds: useWorlds,
   character: useCharacter,
   encounter: useEncounterStore,

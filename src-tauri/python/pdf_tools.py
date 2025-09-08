@@ -4,15 +4,11 @@ import json
 import os
 import sqlite3
 from pathlib import Path
-import uuid
-import re
-import asyncio
 
 import numpy as np
 import pdfplumber
 import pytesseract
 import requests
-import subprocess
 
 
 def _base_dir() -> Path:
@@ -35,13 +31,6 @@ BASE_DIR = _base_dir()
 PDF_DIR = BASE_DIR / "PDFs"
 INDEX_DIR = BASE_DIR / "Index"
 EMBED_DIM = 512
-
-# repository roots for D&D assets
-ROOT_DIR = Path(__file__).resolve().parents[2]
-DND_DIR = ROOT_DIR / "dnd"
-NPC_SPEC_DIR = ROOT_DIR / "npc" / "specs"
-QUEST_DIR = DND_DIR / "quests"
-TSX_BIN = ROOT_DIR / "node_modules" / ".bin" / ("tsx.cmd" if os.name == "nt" else "tsx")
 
 
 def ensure_dirs() -> None:
@@ -213,214 +202,7 @@ def reindex():
     return {"added": added, "updated": updated}
 
 
-def extract_spells(path: str):
-    """Extract simple spell entries from a PDF file and tag via LLM."""
-    pdf_path = Path(path)
-    spells: list[dict] = []
-    with pdfplumber.open(pdf_path) as pdf:
-        text = "\n".join(page.extract_text() or "" for page in pdf.pages)
-    for block in text.split("\n\n"):
-        lines = [ln.strip() for ln in block.splitlines() if ln.strip()]
-        if not lines:
-            continue
-        name = lines[0]
-        desc = " ".join(lines[1:])
-        spells.append({"name": name, "description": desc})
 
-    async def _tag_spell(spell: dict) -> dict:
-        prompt = (
-            "Extract tags (school, level, etc.) and optional sections from this D&D spell. "
-            "Respond with JSON {\"tags\": [...], \"sections\": {section: text}}."
-        )
-        text = f"Name: {spell['name']}\n{spell['description']}"
-        try:
-            raw = await asyncio.wait_for(
-                asyncio.to_thread(_llm_extract, text, prompt), timeout=15
-            )
-            if raw:
-                data = json.loads(raw)
-                tags = data.get("tags") or []
-                sections = data.get("sections") or {}
-                if isinstance(tags, list):
-                    spell["tags"] = tags
-                if isinstance(sections, dict) and sections:
-                    spell["sections"] = {k: sections[k] for k in sorted(sections)}
-        except Exception:
-            pass
-        return spell
-    try:
-        async def _run_all():
-            return await asyncio.gather(*(_tag_spell(s) for s in spells))
-        try:
-            spells = asyncio.run(_run_all())
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            try:
-                spells = loop.run_until_complete(_run_all())
-            finally:
-                loop.close()
-    except Exception:
-        pass
-    return {"spells": spells}
-
-
-def extract_lore(path: str):
-    pdf_path = Path(path)
-    lore_list = []
-    with pdfplumber.open(pdf_path) as pdf:
-        text = "\n".join(page.extract_text() or "" for page in pdf.pages)
-    for block in text.split("\n\n"):
-        lines = [ln.strip() for ln in block.splitlines() if ln.strip()]
-        if not lines:
-            continue
-        data = {}
-        for line in lines:
-            if ":" in line:
-                k, v = line.split(":", 1)
-                data[k.strip().lower()] = v.strip()
-        if not data:
-            continue
-        hooks_raw = (
-            data.get("hooks")
-            or data.get("adventure hooks")
-            or data.get("adventure_hooks")
-            or ""
-        )
-        lore = {
-            "id": str(uuid.uuid4()),
-            "name": data.get("name", "Unknown"),
-            "summary": data.get("summary", ""),
-            "location": data.get("location"),
-            "hooks": [h.strip() for h in hooks_raw.split(",") if h.strip()] or None,
-            "tags": [t.strip() for t in data.get("tags", "lore").split(",") if t.strip()],
-        }
-        sections = {
-            k: v
-            for k, v in data.items()
-            if k
-            not in {
-                "name",
-                "summary",
-                "location",
-                "hooks",
-                "adventure hooks",
-                "adventure_hooks",
-                "tags",
-            }
-        }
-        if sections:
-            lore["sections"] = sections
-        lore_list.append(lore)
-    return {"lore": lore_list}
-
-
-def extract_rules(path: str):
-    """Extract rule entries from a PDF file using layout heuristics and tag via LLM."""
-    pdf_path = Path(path)
-    rules: list[dict] = []
-
-    def _group_lines(words):
-        """Group extracted words into lines based on their vertical positions."""
-        lines = []
-        current = []
-        last_top = None
-        for w in words:
-            top = w.get("top")
-            if last_top is None or abs(top - last_top) <= 2:
-                current.append(w)
-            else:
-                lines.append(current)
-                current = [w]
-            last_top = top
-        if current:
-            lines.append(current)
-        return lines
-
-    with pdfplumber.open(pdf_path) as pdf:
-        current = None
-        for page in pdf.pages:
-            words = page.extract_words(extra_attrs=["fontname", "size"]) or []
-            if words:
-                lines = _group_lines(words)
-                for line_words in lines:
-                    text = " ".join(w["text"] for w in line_words).strip()
-                    if not text:
-                        continue
-                    fonts = [w.get("fontname", "").lower() for w in line_words]
-                    is_heading = any("bold" in f for f in fonts) or text.isupper() or text.endswith(":")
-                    if is_heading:
-                        if current:
-                            rules.append(current)
-                        current = {"name": text.rstrip(":"), "description": ""}
-                    elif current:
-                        if current["description"]:
-                            current["description"] += " "
-                        current["description"] += text
-            else:
-                # Fallback to text extraction when word data is unavailable
-                for line in (page.extract_text() or "").splitlines():
-                    line = line.strip()
-                    if not line:
-                        continue
-                    if line.isupper() or line.endswith(":"):
-                        if current:
-                            rules.append(current)
-                        current = {"name": line.rstrip(":"), "description": ""}
-                    elif current:
-                        if current["description"]:
-                            current["description"] += " "
-                        current["description"] += line
-        if current:
-            rules.append(current)
-
-    # If heuristics produced nothing, fall back to simple paragraph splitting
-    if not rules:
-        with pdfplumber.open(pdf_path) as pdf:
-            text = "\n".join(page.extract_text() or "" for page in pdf.pages)
-        for block in text.split("\n\n"):
-            lines = [ln.strip() for ln in block.splitlines() if ln.strip()]
-            if not lines:
-                continue
-            name = lines[0]
-            desc = " ".join(lines[1:])
-            rules.append({"name": name, "description": desc})
-
-    async def _tag_rule(rule: dict) -> dict:
-        prompt = (
-            "Extract descriptive tags and optional sections for this game rule. "
-            "Respond with JSON {\"tags\": [...], \"sections\": {section: text}}."
-        )
-        text = f"Name: {rule['name']}\n{rule['description']}"
-        try:
-            raw = await asyncio.wait_for(
-                asyncio.to_thread(_llm_extract, text, prompt), timeout=15
-            )
-            if raw:
-                data = json.loads(raw)
-                tags = data.get("tags") or []
-                sections = data.get("sections") or {}
-                if isinstance(tags, list):
-                    rule["tags"] = tags
-                if isinstance(sections, dict) and sections:
-                    rule["sections"] = {k: sections[k] for k in sorted(sections)}
-        except Exception:
-            pass
-        return rule
-    try:
-        async def _run_all():
-            return await asyncio.gather(*(_tag_rule(r) for r in rules))
-        try:
-            rules = asyncio.run(_run_all())
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            try:
-                rules = loop.run_until_complete(_run_all())
-            finally:
-                loop.close()
-    except Exception:
-        pass
-
-    return {"rules": rules}
 
 
 def search(query: str, k: int = 3):
@@ -488,10 +270,7 @@ def _llm_extract(text: str, prompt: str | None = None) -> str:
     url = os.environ.get("LOCAL_LLM_URL", "http://localhost:11434/api/generate")
     model = os.environ.get("LOCAL_LLM_MODEL", "llama2")
     if prompt is None:
-        prompt = (
-            "Extract Dungeons & Dragons entities (npc, lore, quest) from the following text. "
-            "Respond with a JSON array of objects {\"type\": \"npc|lore|quest\", \"data\": {...}}.\n\n"
-        ) + text
+        prompt = text
     else:
         prompt = prompt + "\n\n" + text
     try:
@@ -510,49 +289,6 @@ def _llm_extract(text: str, prompt: str | None = None) -> str:
     except Exception:
         pass
     return ""
-
-
-def _validate_entry(kind: str, payload: dict) -> bool:
-    """Validate payload using zod schemas via a node script."""
-    script = ROOT_DIR / "scripts" / "validate-dnd.ts"
-    if not TSX_BIN.exists():
-        return False
-    try:
-        subprocess.run(
-            [str(TSX_BIN), str(script), kind, json.dumps(payload)],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        return True
-    except (subprocess.SubprocessError, OSError):
-        return False
-
-
-def _save_entry(kind: str, payload: dict) -> None:
-    if kind == "lore":
-        out_dir = DND_DIR / "lore"
-    elif kind == "npc":
-        out_dir = NPC_SPEC_DIR
-    elif kind == "quest":
-        out_dir = QUEST_DIR
-    else:
-        return
-    out_dir.mkdir(parents=True, exist_ok=True)
-    entry_id = payload.get("id") or hashlib.sha256(json.dumps(payload).encode()).hexdigest()[:8]
-    (out_dir / f"{entry_id}.json").write_text(
-        json.dumps(payload, indent=2), encoding="utf-8"
-    )
-
-
-def _run_reindex() -> None:
-    script = ROOT_DIR / "scripts" / "reindex.ts"
-    if not TSX_BIN.exists():
-        return
-    try:
-        subprocess.run([str(TSX_BIN), str(script)], check=False)
-    except OSError:
-        pass
 
 
 def ingest_doc(doc_id: str):
@@ -579,17 +315,7 @@ def ingest_doc(doc_id: str):
             continue
         if isinstance(items, dict):
             items = [items]
-        for item in items:
-            kind = item.get("type")
-            payload = item.get("data")
-            if not isinstance(payload, dict) or not kind:
-                continue
-            if _validate_entry(kind, payload):
-                _save_entry(kind, payload)
-                saved += 1
-    if saved:
-        _run_reindex()
-    return {"processed": processed, "saved": saved}
+    return {"processed": processed, "saved": 0}
 
 
 def main():
@@ -608,12 +334,6 @@ def main():
     p = sub.add_parser("ingest")
     p.add_argument("doc_id")
     sub.add_parser("list")
-    p = sub.add_parser("spells")
-    p.add_argument("path")
-    p = sub.add_parser("rules")
-    p.add_argument("path")
-    p = sub.add_parser("lore")
-    p.add_argument("path")
     args = parser.parse_args()
 
     if args.cmd == "add":
@@ -631,12 +351,6 @@ def main():
         out = ingest_doc(args.doc_id)
     elif args.cmd == "list":
         out = list_docs()
-    elif args.cmd == "spells":
-        out = extract_spells(args.path)
-    elif args.cmd == "rules":
-        out = extract_rules(args.path)
-    elif args.cmd == "lore":
-        out = extract_lore(args.path)
     else:
         out = {}
     json.dump(out, fp=os.fdopen(1, "w"))

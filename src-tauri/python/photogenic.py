@@ -63,7 +63,7 @@ ACTION_REGEX = re.compile(
 )
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
-DEFAULT_WORKFLOW = ROOT_DIR / "src" / "comfy" / "dnd_portrait.json"
+DEFAULT_WORKFLOW = ROOT_DIR / "src" / "comfy" / "portrait.json"
 COMFY_API_URL = os.environ.get("COMFY_API_URL", "http://127.0.0.1:8188")
 LOCAL_LLM_URL = os.environ.get("LOCAL_LLM_URL", "http://localhost:11434/api/generate")
 LOCAL_LLM_MODEL = os.environ.get("LOCAL_LLM_MODEL", "llama2")

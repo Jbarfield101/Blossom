@@ -49,9 +49,6 @@ export type TaskCommand =
       seed: number;
     }
   | { id: 'PdfIngest'; py: string; script: string; doc_id: string }
-  | { id: 'ParseSpellPdf'; py?: string; script?: string; path: string }
-  | { id: 'ParseRulePdf'; py?: string; script?: string; path: string }
-  | { id: 'ParseLorePdf'; py?: string; script?: string; path: string; world: string }
   | { id: 'GenerateSong'; spec: SongSpec }
   | { id: 'GenerateBasicSfz'; spec: SongSpec }
   | { id: 'GenerateAlbum'; meta: any }
@@ -61,9 +58,6 @@ const TASK_IDS: TaskCommand['id'][] = [
   'Example',
   'LofiGenerateGpu',
   'PdfIngest',
-  'ParseSpellPdf',
-  'ParseRulePdf',
-  'ParseLorePdf',
   'GenerateSong',
   'GenerateBasicSfz',
   'GenerateAlbum',
