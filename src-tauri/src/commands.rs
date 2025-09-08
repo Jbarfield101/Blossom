@@ -589,16 +589,6 @@ pub struct RuleRecord {
 }
 
 #[tauri::command]
-pub async fn parse_npc_pdf<R: Runtime>(
-    app: AppHandle<R>,
-    path: String,
-) -> Result<Vec<Value>, String> {
-    let out = run_pdf_tool(&app, &["npcs", &path])?;
-    let v: Value = serde_json::from_str(&out).map_err(|e| e.to_string())?;
-    serde_json::from_value(v["npcs"].clone()).map_err(|e| e.to_string())
-}
-
-#[tauri::command]
 pub async fn pdf_add<R: Runtime>(app: AppHandle<R>, path: String) -> Result<Value, String> {
     let out = run_pdf_tool(&app, &["add", &path])?;
     serde_json::from_str(&out).map_err(|e| e.to_string())
@@ -684,30 +674,6 @@ pub async fn parse_lore_pdf<R: Runtime>(
     let out = run_pdf_tool(&app, &["lore", &path])?;
     let v: Value = serde_json::from_str(&out).map_err(|e| e.to_string())?;
     serde_json::from_value(v["lore"].clone()).map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-pub async fn enqueue_parse_npc_pdf<R: Runtime>(
-    app: AppHandle<R>,
-    queue: State<'_, TaskQueue>,
-    path: String,
-    world: String,
-) -> Result<u64, String> {
-    let py = conda_python();
-    if !py.exists() {
-        return Err(format!("Python not found at {}", py.display()));
-    }
-    let script = pdf_tools_path(&app);
-    if !script.exists() {
-        return Err(format!("Script not found at {}", script.display()));
-    }
-    let cmd = TaskCommand::ParseNpcPdf {
-        py: py.to_string_lossy().to_string(),
-        script: script.to_string_lossy().to_string(),
-        path,
-        world,
-    };
-    Ok(queue.enqueue("Import NPC PDF".into(), cmd).await)
 }
 
 /* ==============================
