@@ -14,7 +14,6 @@ type ModuleKey =
   | 'simulation'
   | 'dnd'
   | 'voices'
-  | 'stocks'
   | 'shorts'
   | 'chores'
   | 'construction'
@@ -35,7 +34,6 @@ const defaultModules: ModulesState = {
   simulation: true,
   dnd: true,
   voices: true,
-  stocks: true,
   shorts: true,
   chores: true,
   construction: true,
