@@ -1,7 +1,6 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 vi.mock("../features/dnd/DiceRoller", () => ({ default: () => null }));
 vi.mock("../features/dnd/TabletopMap", () => ({ default: () => null }));
-vi.mock("../features/dnd/WarTable", () => ({ default: () => null }));
 vi.mock("./NPCList", () => ({ default: () => null }));
 import { render, screen, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
