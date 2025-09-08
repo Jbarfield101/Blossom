@@ -143,7 +143,6 @@ const MODULE_LABELS: Record<ModuleKey, string> = {
   fusion: "Fusion",
   simulation: "Simulation",
   voices: "Voices",
-  stocks: "Stocks",
   shorts: "Shorts",
   chores: "Chores",
   construction: "Under Construction",

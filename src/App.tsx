@@ -26,7 +26,6 @@ import Laser from "./pages/Laser";
 import Lofi from "./pages/Lofi";
 import NotFound from "./pages/NotFound";
 import DND from "./pages/DND";
-import Stocks from "./pages/Stocks";
 import Shorts from "./pages/Shorts";
 import Chores from "./pages/Chores";
 import User from "./pages/User";
@@ -88,7 +87,6 @@ export default function App() {
           <Route path="/lofi" element={<Lofi />} />
           <Route path="/voices" element={<Voices />} />
           <Route path="/tags" element={<TagManager />} />
-          <Route path="/stocks" element={<Stocks />} />
           <Route path="/shorts" element={<Shorts />} />
           <Route path="/video-editor" element={<VideoEditor />} />
           <Route path="/chores" element={<Chores />} />

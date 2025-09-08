@@ -51,7 +51,6 @@ export const ITEMS: Item[] = [
   { key: "simulation", icon: <FaGamepad />, label: "Simulation", path: "/simulation", color: "rgba(255,200,220,0.55)" },
   { key: "dnd", icon: <FaDiceD20 />, label: "D&D", path: "/dnd", color: "rgba(200,150,255,0.55)" },
   { key: "voices", icon: <FaMicrophone />, label: "Voices", path: "/voices", color: "rgba(200,240,200,0.55)" },
-  { key: "stocks", icon: <FaChartLine />, label: "Stocks", path: "/stocks", color: "rgba(200,255,200,0.55)" },
   { key: "shorts", icon: <FaFilm />, label: "Shorts", path: "/shorts", color: "rgba(200,200,200,0.55)" },
   { key: "chores", icon: <FaBroom />, label: "Chores", path: "/chores", color: "rgba(200,200,255,0.55)" },
   { key: "video", icon: <FaVideo />, label: "Video Editor", path: "/video-editor", color: "rgba(180,180,255,0.55)" },
