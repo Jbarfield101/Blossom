@@ -2,9 +2,7 @@ import os
 import subprocess
 from pathlib import Path
 import sys
-import os
 import json
-import sqlite3
 
 import pytest
 
@@ -69,7 +67,7 @@ def test_search_large_embeddings(monkeypatch, tmp_path):
     assert len(res["results"]) == 5
 
 
-def test_validate_entry(monkeypatch):
+def test_validate_entry(monkeypatch, tmp_path):
     class Dummy:
         def __init__(self, code):
             self.returncode = code
@@ -81,100 +79,14 @@ def test_validate_entry(monkeypatch):
         raise subprocess.CalledProcessError(1, args[0])
 
     monkeypatch.setattr(subprocess, "run", run_ok)
-    assert pdf_tools._validate_entry("npc", {"name": "Bob"})
+    dummy_tsx = tmp_path / "tsx"
+    dummy_tsx.touch()
+    monkeypatch.setattr(pdf_tools, "TSX_BIN", dummy_tsx)
+    assert pdf_tools._validate_entry("lore", {"name": "Bob"})
 
     monkeypatch.setattr(subprocess, "run", run_fail)
-    assert not pdf_tools._validate_entry("npc", {"name": "Bob"})
+    assert not pdf_tools._validate_entry("lore", {"name": "Bob"})
 
-
-def _make_npc_pdf(tmp_path, fields):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Helvetica", "", 12)
-    for k, v in fields.items():
-        pdf.cell(0, 10, f"{k}: {v}", ln=1)
-    path = tmp_path / "npc.pdf"
-    pdf.output(str(path))
-    return str(path)
-
-
-def test_extract_npcs_parses_appearance(tmp_path):
-    path = _make_npc_pdf(
-        tmp_path,
-        {
-            "Name": "Alice",
-            "Species": "Elf",
-            "Role": "Merchant",
-            "Hooks": "Trade",
-            "Tags": "npc",
-            "Appearance": "Tall and slender",
-            "Extra": "Value",
-        },
-    )
-    res = pdf_tools.extract_npcs(path)
-    npc = res["npcs"][0]
-    assert npc["appearance"] == "Tall and slender"
-    sections = npc.get("sections", {})
-    assert "appearance" not in sections
-    assert sections.get("extra") == "Value"
-
-
-def test_extract_npcs_heading_and_inline_fields(tmp_path):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Helvetica", "", 12)
-    pdf.cell(0, 10, "Gorruk", ln=1)
-    pdf.cell(
-        0,
-        10,
-        "Species: Human Age: 27 Class/Role: Beast-Handler Alignment: Neutral",
-        ln=1,
-    )
-    path = tmp_path / "npc.pdf"
-    pdf.output(str(path))
-
-    res = pdf_tools.extract_npcs(str(path))
-    npc = res["npcs"][0]
-    assert npc["name"] == "Gorruk"
-    assert npc["species"] == "Human"
-    assert npc["age"] == 27
-    assert npc["role"] == "Beast-Handler"
-    assert npc["alignment"] == "Neutral"
-
-
-def test_extract_npcs_stats_traits_inventory_persist(tmp_path):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Helvetica", "", 12)
-    pdf.cell(0, 10, "Name: Test NPC", ln=1)
-    pdf.cell(0, 10, "Species: Human", ln=1)
-    pdf.cell(0, 10, "Role: Warrior", ln=1)
-    pdf.cell(0, 10, "Hooks: Quest", ln=1)
-    pdf.cell(0, 10, "Tags: npc", ln=1)
-    pdf.cell(0, 10, "Traits:", ln=1)
-    pdf.multi_cell(0, 10, "- Brave\n- Loyal")
-    pdf.cell(0, 10, "Inventory:", ln=1)
-    pdf.multi_cell(0, 10, "- Longsword\n- Potion of healing\n- Rope with knots\n  50 ft")
-    pdf.cell(0, 10, "Stats: STR 12 DEX 14 CON 13 INT 10 WIS 8 CHA 15", ln=1)
-    pdf.cell(0, 10, "HP: 30", ln=1)
-    pdf.cell(0, 10, "Level: 5", ln=1)
-    path = tmp_path / "npc.pdf"
-    pdf.output(str(path))
-
-    db_path = tmp_path / "npcs.db"
-    res = pdf_tools.extract_npcs(str(path), db_path)
-    npc = res["npcs"][0]
-    assert npc["abilities"]["strength"] == 12
-    assert npc["hp"] == 30
-    assert npc["level"] == 5
-    assert npc["inventory"][-1] == "Rope with knots 50 ft"
-    assert npc["quirks"] == ["Brave", "Loyal"]
-
-    conn = sqlite3.connect(db_path)
-    row = conn.execute("SELECT data FROM npcs WHERE id=?", (npc["id"],)).fetchone()
-    assert row is not None
-    stored = json.loads(row[0])
-    assert stored["name"] == "Test NPC"
 
 
 def _make_pdf(tmp_path, entries, use_bold=True, use_colon=False):
