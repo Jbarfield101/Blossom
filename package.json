@@ -13,7 +13,6 @@
     "test": "vitest",
     "reindex": "tsx scripts/reindex.ts",
     "npc:gen": "tsx scripts/npc-gen.ts",
-    "npc:pdf": "tsx scripts/export_npc_pdf.ts",
     "schemas:generate": "tsx scripts/gen-schemas.ts",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed:tags": "tsx scripts/seed_tags.ts",
