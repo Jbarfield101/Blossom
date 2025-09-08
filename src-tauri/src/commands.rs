@@ -1,24 +1,21 @@
 // src-tauri/src/commands.rs
 use std::{
-    collections::HashMap,
     env,
     fs::{self, OpenOptions},
     io::{BufRead, BufReader, Write},
     path::{Path, PathBuf},
     process::{Command as PCommand, Stdio},
     sync::{Arc, Mutex, OnceLock},
-    time::{Duration, Instant},
+    time::Duration,
 };
 
 use dirs;
 
-use crate::stocks::{stocks_fetch as stocks_fetch_impl, StockBundle};
 use crate::task_queue::{Task, TaskCommand, TaskQueue};
 use base64::{engine::general_purpose, Engine as _};
-use chrono::{Local, NaiveDateTime, Utc};
-use once_cell::sync::Lazy;
+use chrono::{Local, Utc};
 use rand::{thread_rng, Rng};
-use reqwest::{self, header::RETRY_AFTER, StatusCode};
+use reqwest;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::process::Command as StdCommand;
@@ -29,7 +26,6 @@ use tokio::{
     io::{AsyncBufReadExt, BufReader as TokioBufReader},
     process::Child,
     task::JoinHandle,
-    time::sleep,
 };
 use which::which;
 
@@ -340,12 +336,6 @@ fn load_config() -> AppConfig {
     } else {
         AppConfig::default()
     }
-}
-
-fn alphavantage_api_key() -> Option<String> {
-    env::var("ALPHAVANTAGE_API_KEY")
-        .ok()
-        .or_else(|| load_config().alphavantage_api_key)
 }
 
 fn save_config(cfg: &AppConfig) -> Result<(), String> {
@@ -1971,216 +1961,6 @@ fn extract_intent(content: &str) -> String {
     }
 }
 
-#[tauri::command]
-pub async fn stocks_fetch<R: Runtime>(
-    app: AppHandle<R>,
-    tickers: Vec<String>,
-    range: String,
-) -> Result<StockBundle, String> {
-    stocks_fetch_impl(app, tickers, range).await
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct StockForecast {
-    pub short_term: String,
-    pub long_term: String,
-}
-
-static TWELVE_SERIES_CACHE: Lazy<AsyncMutex<HashMap<(String, String, u32), (Value, Instant)>>> =
-    Lazy::new(|| AsyncMutex::new(HashMap::new()));
-
-fn twelvedata_cache_ttl() -> Duration {
-    std::env::var("TWELVEDATA_PROVIDER_CACHE_SECS")
-        .ok()
-        .and_then(|s| s.parse::<u64>().ok())
-        .map(Duration::from_secs)
-        .unwrap_or(Duration::from_secs(30))
-}
-
-async fn fetch_twelvedata_series(
-    sym: &str,
-    interval: &str,
-    outputsize: u32,
-) -> Result<Value, String> {
-    let ttl = twelvedata_cache_ttl();
-    let key = (sym.to_string(), interval.to_string(), outputsize);
-    if let Some((v, ts)) = {
-        let cache = TWELVE_SERIES_CACHE.lock().await;
-        cache.get(&key).cloned()
-    } {
-        if ts.elapsed() < ttl {
-            return Ok(v);
-        }
-    }
-
-    let base = std::env::var("TWELVEDATA_BASE_URL")
-        .unwrap_or_else(|_| "https://api.twelvedata.com".into());
-    let api_key = std::env::var("TWELVEDATA_API_KEY").unwrap_or_default();
-    let url = format!(
-        "{base}/time_series?symbol={sym}&interval={interval}&outputsize={outputsize}&apikey={api_key}"
-    );
-    let mut attempt = 0;
-    let max_retries = 3;
-    let mut delay = Duration::from_secs(1);
-    loop {
-        let resp = reqwest::get(&url).await;
-        let resp = match resp {
-            Ok(r) => r,
-            Err(e) => {
-                attempt += 1;
-                if attempt >= max_retries {
-                    return Err(e.to_string());
-                }
-                let jitter_ms: u64 = thread_rng().gen_range(0..=500);
-                let wait = delay + Duration::from_millis(jitter_ms);
-                sleep(wait).await;
-                delay *= 2;
-                continue;
-            }
-        };
-        if resp.status() == StatusCode::TOO_MANY_REQUESTS {
-            attempt += 1;
-            if attempt >= max_retries {
-                return Err("Twelve Data rate limit exceeded—please try again later.".into());
-            }
-            let wait = resp
-                .headers()
-                .get(RETRY_AFTER)
-                .and_then(|h| h.to_str().ok())
-                .and_then(|s| s.parse::<u64>().ok())
-                .map(Duration::from_secs)
-                .unwrap_or(delay);
-            let jitter_ms: u64 = thread_rng().gen_range(0..=500);
-            let wait = wait + Duration::from_millis(jitter_ms);
-            sleep(wait).await;
-            delay *= 2;
-            continue;
-        }
-        if !resp.status().is_success() {
-            return Err(format!(
-                "failed to fetch series for {}: HTTP {}",
-                sym,
-                resp.status()
-            ));
-        }
-        let json: Value = resp.json().await.map_err(|e| e.to_string())?;
-        {
-            let mut cache = TWELVE_SERIES_CACHE.lock().await;
-            cache.insert(key, (json.clone(), Instant::now()));
-        }
-        return Ok(json);
-    }
-}
-
-#[tauri::command]
-pub async fn stock_forecast<R: Runtime>(
-    app: AppHandle<R>,
-    symbol: String,
-) -> Result<StockForecast, String> {
-    let sym = symbol.to_uppercase();
-
-    // recent 5 day series
-    let recent_json = fetch_twelvedata_series(&sym, "1day", 5).await?;
-    let values = recent_json["values"].as_array().ok_or("values missing")?;
-    let mut recent_parts = Vec::new();
-    for v in values.iter().rev() {
-        if let (Some(dt), Some(close)) = (
-            v["datetime"].as_str(),
-            v["close"].as_str().and_then(|s| s.parse::<f64>().ok()),
-        ) {
-            recent_parts.push(format!("{dt}: {:.2}", close));
-        }
-    }
-    let recent_summary = recent_parts.join(", ");
-
-    // 6 month series (weekly)
-    let long_json = fetch_twelvedata_series(&sym, "1week", 26).await?;
-    let values = long_json["values"].as_array().ok_or("values missing")?;
-    let mut long_parts = Vec::new();
-    for v in values.iter().rev() {
-        if let (Some(dt), Some(close)) = (
-            v["datetime"].as_str(),
-            v["close"].as_str().and_then(|s| s.parse::<f64>().ok()),
-        ) {
-            long_parts.push(format!("{dt}: {:.2}", close));
-        }
-    }
-    let long_summary = long_parts.join(", ");
-
-    // news headlines
-    let articles = fetch_stock_news(sym.clone())
-        .await
-        .unwrap_or_else(|_| vec![]);
-    let news_summary = if articles.is_empty() {
-        String::from("No major news")
-    } else {
-        articles
-            .iter()
-            .take(3)
-            .map(|a| a.title.clone())
-            .collect::<Vec<_>>()
-            .join("; ")
-    };
-
-    let prompt = format!(
-        "Recent closing prices for {sym} (5d): {recent_summary}. Six month trend: {long_summary}. News: {news_summary}. Provide a short-term (next week) and long-term (next quarter or year) forecast for {sym}. Respond in JSON with keys shortTerm and longTerm."
-    );
-
-    let reply = general_chat(
-        app,
-        vec![ChatMessage {
-            role: "user".into(),
-            content: prompt,
-        }],
-    )
-    .await?;
-
-    let forecast: StockForecast = serde_json::from_str(&reply).unwrap_or(StockForecast {
-        short_term: reply.clone(),
-        long_term: String::new(),
-    });
-    Ok(forecast)
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct NewsArticle {
-    pub title: String,
-    pub link: String,
-    pub timestamp: i64,
-    pub summary: String,
-}
-
-#[tauri::command]
-pub async fn fetch_stock_news(symbol: String) -> Result<Vec<NewsArticle>, String> {
-    let sym = symbol.to_uppercase();
-    let api_key = alphavantage_api_key().ok_or("AlphaVantage API key not set")?;
-    let url = format!(
-        "https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers={sym}&apikey={api_key}"
-    );
-    let resp = reqwest::get(&url).await.map_err(|e| e.to_string())?;
-    let json: Value = resp.json().await.map_err(|e| e.to_string())?;
-    let items = json["feed"].as_array().ok_or("feed missing")?;
-    let mut out = Vec::new();
-    for item in items {
-        let title = item["title"].as_str().unwrap_or("").to_string();
-        let link = item["url"].as_str().unwrap_or("").to_string();
-        let summary = item["summary"].as_str().unwrap_or("").to_string();
-        let ts = item["time_published"].as_str().unwrap_or("");
-        let timestamp = NaiveDateTime::parse_from_str(ts, "%Y%m%dT%H%M%S")
-            .map(|dt| dt.and_utc().timestamp())
-            .unwrap_or(0);
-        if !title.is_empty() && !link.is_empty() {
-            out.push(NewsArticle {
-                title,
-                link,
-                timestamp,
-                summary,
-            });
-        }
-    }
-    Ok(out)
-}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ShortSpec {
