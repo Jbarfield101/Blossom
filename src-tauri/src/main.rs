@@ -130,8 +130,6 @@ fn main() {
             commands::pdf_ingest,
             commands::parse_spell_pdf,
             commands::parse_rule_pdf,
-            commands::parse_npc_pdf,
-            commands::enqueue_parse_npc_pdf,
             commands::parse_lore_pdf,
             // Blender:
             commands::blender_run_script,

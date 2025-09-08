@@ -35,14 +35,6 @@ pub enum TaskCommand {
         script: String,
         doc_id: String,
     },
-    ParseNpcPdf {
-        #[serde(default = "crate::commands::conda_python_string")]
-        py: String,
-        #[serde(default = "crate::commands::pdf_tools_path_string")]
-        script: String,
-        path: String,
-        world: String,
-    },
     ParseSpellPdf {
         #[serde(default = "crate::commands::conda_python_string")]
         py: String,
@@ -310,41 +302,7 @@ impl TaskQueue {
                                         } else {
                                             let stdout =
                                                 String::from_utf8_lossy(&output.stdout).to_string();
-                                            log::info!("ParseNpcPdf stdout: {}", stdout.trim());
-                                            serde_json::from_str::<Value>(&stdout).map_err(|e| {
-                                                TaskError {
-                                                    code: PdfErrorCode::InvalidJson,
-                                                    message: e.to_string(),
-                                                }
-                                            })
-                                        }
-                                    }
-                                    TaskCommand::ParseNpcPdf {
-                                        py,
-                                        script,
-                                        path,
-                                        world: _,
-                                    } => {
-                                        let output = PCommand::new(&py)
-                                            .arg(&script)
-                                            .arg("npcs")
-                                            .arg(&path)
-                                            .output()
-                                            .map_err(|e| TaskError {
-                                                code: PdfErrorCode::PythonNotFound,
-                                                message: format!("Failed to start python: {e}"),
-                                            })?;
-                                        if !output.status.success() {
-                                            let stderr = String::from_utf8_lossy(&output.stderr);
-                                            Err(TaskError {
-                                                code: PdfErrorCode::ExecutionFailed,
-                                                message: format!(
-                                                    "Python exited with status {}:\n{}",
-                                                    output.status, stderr
-                                                ),
-                                            })
-                                        } else {
-                                            let stdout = String::from_utf8_lossy(&output.stdout);
+                                            log::info!("PdfIngest stdout: {}", stdout.trim());
                                             serde_json::from_str::<Value>(&stdout).map_err(|e| {
                                                 TaskError {
                                                     code: PdfErrorCode::InvalidJson,
@@ -630,23 +588,5 @@ impl TaskQueue {
     pub fn set_app_handle(&self, handle: AppHandle<Wry>) {
         let mut h = self.app.lock().unwrap();
         *h = Some(handle);
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn deserialize_task_command_from_id_object() {
-        let json = r#"{"id":"ParseNpcPdf","path":"p","world":"w"}"#;
-        let cmd: TaskCommand = serde_json::from_str(json).expect("failed to deserialize");
-        match cmd {
-            TaskCommand::ParseNpcPdf { path, world, .. } => {
-                assert_eq!(path, "p");
-                assert_eq!(world, "w");
-            }
-            other => panic!("unexpected variant: {:?}", other),
-        }
     }
 }
