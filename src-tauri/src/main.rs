@@ -2,14 +2,12 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod commands;
-mod stocks;
 mod task_queue;
 
 use std::fs;
 use std::path::{Path, PathBuf};
 use task_queue::TaskQueue;
 use tauri::Manager;
-use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
 
 fn copy_dir(src: &Path, dst: &Path) -> std::io::Result<()> {
     fs::create_dir_all(dst)?;
@@ -103,33 +101,6 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
-        .plugin(
-            SqlBuilder::default()
-                .add_migrations(
-                    "sqlite:stocks.db",
-                    vec![
-                        Migration {
-                            version: 1,
-                            description: "create stocks cache",
-                            sql: "CREATE TABLE IF NOT EXISTS stocks (symbol TEXT PRIMARY KEY, data TEXT, quote_ts INTEGER, hist_ts INTEGER);",
-                            kind: MigrationKind::Up,
-                        },
-                        Migration {
-                            version: 2,
-                            description: "create stock quote cache",
-                            sql: "CREATE TABLE IF NOT EXISTS stock_quotes (ticker TEXT PRIMARY KEY, data TEXT, ts INTEGER);",
-                            kind: MigrationKind::Up,
-                        },
-                        Migration {
-                            version: 3,
-                            description: "create stock series cache",
-                            sql: "CREATE TABLE IF NOT EXISTS stock_series (ticker TEXT, range TEXT, data TEXT, ts INTEGER, PRIMARY KEY(ticker, range));",
-                            kind: MigrationKind::Up,
-                        },
-                    ],
-                )
-                .build(),
-        )
         .invoke_handler(tauri::generate_handler![
             commands::lofi_generate_gpu,
             commands::run_basic_sfz,
@@ -179,10 +150,6 @@ fn main() {
             commands::load_paths,
             commands::save_paths,
             commands::detect_python,
-            // Stocks:
-            commands::stocks_fetch,
-            commands::stock_forecast,
-            commands::fetch_stock_news,
             // Shorts:
             commands::load_shorts,
             commands::save_shorts,

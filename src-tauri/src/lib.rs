@@ -5,9 +5,7 @@ fn greet(name: &str) -> String {
 }
 
 pub mod commands;
-pub mod stocks;
 mod task_queue;
-pub use stocks::stocks_fetch;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

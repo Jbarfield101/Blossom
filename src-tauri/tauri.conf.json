@@ -31,9 +31,7 @@
   },
   "plugins": {
     "sql": {
-      "preload": [
-        "sqlite:stocks.db"
-      ]
+      "preload": []
     }
   },
   "bundle": {
