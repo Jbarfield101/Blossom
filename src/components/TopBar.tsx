@@ -7,7 +7,6 @@ import {
   FaTasks,
   FaArrowLeft,
   FaCameraRetro,
-  FaMusic,
   FaCalendarAlt,
 } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -93,27 +92,12 @@ export default function TopBar() {
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Music">
-            <IconButton
-              onClick={() => nav("/music")}
-              sx={{
-                ...fixedIconButtonSx,
-                left: { xs: 116, sm: 156 },
-                ...activeSx("/music"),
-              }}
-              aria-label="Music"
-              aria-current={pathname === "/music" ? "page" : undefined}
-            >
-              <FaMusic />
-            </IconButton>
-          </Tooltip>
-
           <Tooltip title="Calendar">
             <IconButton
               onClick={() => nav("/calendar")}
               sx={{
                 ...fixedIconButtonSx,
-                left: { xs: 152, sm: 204 },
+                left: { xs: 116, sm: 156 },
                 ...activeSx("/calendar"),
               }}
               aria-label="Calendar"
