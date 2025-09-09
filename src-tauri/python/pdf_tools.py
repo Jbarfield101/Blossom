@@ -38,9 +38,23 @@ EMBED_DIM = 512
 
 # repository roots for D&D assets
 ROOT_DIR = Path(__file__).resolve().parents[2]
-DND_DIR = ROOT_DIR / "dnd"
-NPC_SPEC_DIR = ROOT_DIR / "npc" / "specs"
-QUEST_DIR = DND_DIR / "quests"
+
+
+def _dnd_dir() -> Path:
+    env = os.environ.get("BLOSSOM_DND_DIR")
+    return Path(env) if env else ROOT_DIR / "dnd"
+
+
+def _npc_spec_dir() -> Path:
+    env = os.environ.get("BLOSSOM_NPC_SPEC_DIR")
+    return Path(env) if env else ROOT_DIR / "npc" / "specs"
+
+
+def _quest_dir() -> Path:
+    env = os.environ.get("BLOSSOM_QUEST_DIR")
+    return Path(env) if env else _dnd_dir() / "quests"
+
+
 TSX_BIN = ROOT_DIR / "node_modules" / ".bin" / ("tsx.cmd" if os.name == "nt" else "tsx")
 
 
@@ -531,11 +545,11 @@ def _validate_entry(kind: str, payload: dict) -> bool:
 
 def _save_entry(kind: str, payload: dict) -> None:
     if kind == "lore":
-        out_dir = DND_DIR / "lore"
+        out_dir = _dnd_dir() / "lore"
     elif kind == "npc":
-        out_dir = NPC_SPEC_DIR
+        out_dir = _npc_spec_dir()
     elif kind == "quest":
-        out_dir = QUEST_DIR
+        out_dir = _quest_dir()
     else:
         return
     out_dir.mkdir(parents=True, exist_ok=True)
