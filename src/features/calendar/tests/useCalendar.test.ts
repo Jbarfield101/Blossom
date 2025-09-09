@@ -25,14 +25,14 @@ describe('useCalendar store', () => {
 
   it('schedules a task with tags', () => {
     useCalendar.getState().scheduleTask(
-      'Music gen',
+      'Tagged task',
       '2024-01-01T09:00',
       '2024-01-01T10:00',
-      ['music']
+      ['special']
     );
     const ev = useCalendar.getState().events[0];
-    expect(ev.title).toBe('Music gen');
-    expect(ev.tags).toEqual(['task', 'music']);
+    expect(ev.title).toBe('Tagged task');
+    expect(ev.tags).toEqual(['task', 'special']);
     expect(ev.status).toBe('scheduled');
   });
 
