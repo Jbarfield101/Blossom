@@ -676,7 +676,6 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
             renderInput={(params) => <TextField {...params} label="Search settings" />}
             sx={{ mb: 2 }}
           />
-          {/* Load SFZ startup setting */}
           {section === "user" && <UserSection />}
           {section === "environment" && <EnvironmentSection />}
           {section === "editor" && <EditorSection />}

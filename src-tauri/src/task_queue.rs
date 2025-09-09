@@ -14,7 +14,6 @@ use tauri::{AppHandle, Emitter, Wry};
 use tokio::sync::{mpsc, Mutex, Semaphore};
 use tokio::time::sleep;
 
-use crate::commands::{run_basic_sfz, run_lofi_song, AlbumRequest, BasicSfzSpec, SongSpec};
 use crate::video_tools::ShortSpec;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -22,13 +21,6 @@ use crate::video_tools::ShortSpec;
 pub enum TaskCommand {
     /// Placeholder variant for future expansion.
     Example,
-    LofiGenerateGpu {
-        py: String,
-        script: String,
-        prompt: String,
-        duration: u32,
-        seed: u64,
-    },
     PdfIngest {
         py: String,
         script: String,
@@ -55,15 +47,6 @@ pub enum TaskCommand {
         script: String,
         path: String,
         world: String,
-    },
-    GenerateSong {
-        spec: SongSpec,
-    },
-    GenerateAlbum {
-        meta: AlbumRequest,
-    },
-    GenerateBasicSfz {
-        spec: BasicSfzSpec,
     },
     GenerateShort {
         spec: ShortSpec,
@@ -228,57 +211,6 @@ impl TaskQueue {
                             let res: Result<Value, TaskError> =
                                 match command {
                                     TaskCommand::Example => Ok(Value::Null),
-                                    TaskCommand::LofiGenerateGpu {
-                                        py,
-                                        script,
-                                        prompt,
-                                        duration,
-                                        seed,
-                                    } => {
-                                        let python_dir = std::path::Path::new(&script)
-                                            .parent()
-                                            .and_then(|p| p.parent())
-                                            .map(|p| p.to_path_buf())
-                                            .ok_or_else(|| "invalid script path".to_string())?;
-                                        let output = PCommand::new(&py)
-                                            .current_dir(python_dir)
-                                            .arg("-u")
-                                            .arg("-m")
-                                            .arg("lofi.renderer")
-                                            .arg("--prompt")
-                                            .arg(&prompt)
-                                            .arg("--duration")
-                                            .arg(duration.to_string())
-                                            .arg("--seed")
-                                            .arg(seed.to_string())
-                                            .output()
-                                            .map_err(|e| TaskError {
-                                                code: PdfErrorCode::PythonNotFound,
-                                                message: format!("Failed to start python: {e}"),
-                                            })?;
-                                        if !output.status.success() {
-                                            let stderr = String::from_utf8_lossy(&output.stderr);
-                                            Err(TaskError {
-                                                code: PdfErrorCode::ExecutionFailed,
-                                                message: format!(
-                                                    "Python exited with status {}:\n{}",
-                                                    output.status, stderr
-                                                ),
-                                            })
-                                        } else {
-                                            let stdout = String::from_utf8_lossy(&output.stdout)
-                                                .trim()
-                                                .to_string();
-                                            if stdout.is_empty() {
-                                                Err(TaskError {
-                                                    code: PdfErrorCode::Unknown,
-                                                    message: "Python returned no path".into(),
-                                                })
-                                            } else {
-                                                Ok(Value::String(stdout))
-                                            }
-                                        }
-                                    }
                                     TaskCommand::PdfIngest { py, script, doc_id } => {
                                         let output = PCommand::new(&py)
                                             .arg(&script)
@@ -409,88 +341,6 @@ impl TaskQueue {
                                                 }
                                             })
                                         }
-                                    }
-                                    TaskCommand::GenerateAlbum { meta } => {
-                                        let app = app_handle.lock().unwrap().clone().ok_or_else(
-                                            || TaskError {
-                                                code: PdfErrorCode::Unknown,
-                                                message: "no app handle".into(),
-                                            },
-                                        )?;
-                                        let specs = meta.specs.ok_or_else(|| TaskError {
-                                            code: PdfErrorCode::Unknown,
-                                            message: "missing specs".into(),
-                                        })?;
-                                        let track_total = specs.len() as f32;
-                                        let mut tracks = Vec::new();
-                                        for (i, mut spec) in specs.into_iter().enumerate() {
-                                            if let Some(names) = &meta.track_names {
-                                                if let Some(n) = names.get(i) {
-                                                    spec.title = n.clone();
-                                                }
-                                            }
-                                            if let Some(album) = &meta.album_name {
-                                                spec.album = Some(album.clone());
-                                            }
-                                            if let Some(dir) = &meta.out_dir {
-                                                spec.out_dir = dir.clone();
-                                            }
-                                            let path = run_lofi_song(app.clone(), spec)
-                                                .await
-                                                .map_err(|e| TaskError {
-                                                    code: PdfErrorCode::ExecutionFailed,
-                                                    message: e,
-                                                })?;
-                                            tracks.push(path);
-                                            let mut snapshot = None;
-                                            {
-                                                let mut map = tasks_clone.lock().await;
-                                                if let Some(t) = map.get_mut(&id) {
-                                                    t.progress = (i as f32 + 1.0) / track_total;
-                                                    snapshot = Some(t.clone());
-                                                }
-                                            }
-                                            if let Some(task) = snapshot {
-                                                let _ = app.emit("task_updated", task);
-                                            }
-                                            if _cancelled_clone.lock().await.contains(&id) {
-                                                return Err(TaskError {
-                                                    code: PdfErrorCode::Unknown,
-                                                    message: "cancelled".into(),
-                                                });
-                                            }
-                                        }
-                                        Ok(serde_json::json!({ "tracks": tracks }))
-                                    }
-                                    TaskCommand::GenerateSong { spec } => {
-                                        let app = app_handle.lock().unwrap().clone().ok_or_else(
-                                            || TaskError {
-                                                code: PdfErrorCode::Unknown,
-                                                message: "no app handle".into(),
-                                            },
-                                        )?;
-                                        let path = run_lofi_song(app.clone(), spec).await.map_err(
-                                            |e| TaskError {
-                                                code: PdfErrorCode::ExecutionFailed,
-                                                message: e,
-                                            },
-                                        )?;
-                                        Ok(serde_json::json!({ "path": path }))
-                                    }
-                                    TaskCommand::GenerateBasicSfz { spec } => {
-                                        let app = app_handle.lock().unwrap().clone().ok_or_else(
-                                            || TaskError {
-                                                code: PdfErrorCode::Unknown,
-                                                message: "no app handle".into(),
-                                            },
-                                        )?;
-                                        let path = run_basic_sfz(app.clone(), spec).await.map_err(
-                                            |e| TaskError {
-                                                code: PdfErrorCode::ExecutionFailed,
-                                                message: e,
-                                            },
-                                        )?;
-                                        Ok(Value::String(path))
                                     }
                                     TaskCommand::GenerateShort { spec } => {
                                         println!("Generating short: {:?}", spec);
