@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Box, Button, Grid, MenuItem, Stack, TextField, Typography } from '@mui/material';
-import { useMusicJobs } from '../stores/musicJobs';
-import { startMusicGenMelody, startMusicGenText, jsonlHandlers } from '../utils/musicGen';
+import { runMusicGenMelody, runMusicGenText } from '../utils/musicGen';
 import { saveTempFile } from '../utils/files';
 
 const GENRES = ['Lo-fi', 'Hip-hop', 'Ambient', 'Cinematic', 'Rock', 'Pop'];
@@ -9,9 +8,6 @@ const MOODS = ['Chill', 'Energetic', 'Dramatic', 'Happy', 'Sad'];
 const KEYS = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 
 export default function MusicGenForm() {
-  const addJob = useMusicJobs((s) => s.add);
-  const updateJob = useMusicJobs((s) => s.update);
-  const getJob = useMusicJobs((s) => s.get);
   const [title, setTitle] = useState('');
   const [genre, setGenre] = useState('');
   const [mood, setMood] = useState('');
@@ -50,35 +46,15 @@ export default function MusicGenForm() {
       setErr('Please fill all required fields with valid values.');
       return;
     }
-    const id = `${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
     const prompt = buildPrompt();
-    const createdAt = Date.now();
-    addJob({ id, title, prompt, createdAt, status: 'in_progress', progress: 1 });
-
     try {
-      let latestPath = '';
-      const handlers = jsonlHandlers(
-        (p) => updateJob(id, { progress: p, status: 'in_progress' }),
-        (pth) => { latestPath = pth; }
-      );
-      const onClose = (_code?: number | null) => {
-        const latest = getJob(id);
-        if (!latest || latest.status === 'canceled') return;
-        if (latestPath) {
-          updateJob(id, { status: 'completed', progress: 100, wavPath: latestPath });
-        } else {
-          updateJob(id, { status: 'failed', error: 'Generation finished without output path' });
-        }
-      };
-
       if (melody) {
         const melodyPath = await saveTempFile(melody);
-        await startMusicGenMelody(id, prompt, melodyPath, Number(duration), { ...handlers, onClose });
+        await runMusicGenMelody(prompt, melodyPath, Number(duration));
       } else {
-        await startMusicGenText(id, prompt, Number(duration), { ...handlers, onClose });
+        await runMusicGenText(prompt, Number(duration));
       }
     } catch (e: any) {
-      updateJob(id, { status: 'failed', error: String(e?.message || e) });
       setErr(String(e?.message || e));
     }
   };
