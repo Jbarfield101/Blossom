@@ -15,7 +15,6 @@ import Assistant from "./pages/Assistant";
 import GeneralChat from "./pages/GeneralChat";
 import Seo from "./pages/Seo";
 import Laser from "./pages/Laser";
-import Lofi from "./pages/Lofi";
 import NotFound from "./pages/NotFound";
 import Shorts from "./pages/Shorts";
 import Chores from "./pages/Chores";
@@ -65,7 +64,6 @@ export default function App() {
           <Route path="/laser" element={<Laser />} />
           <Route path="/fusion" element={<Fusion />} />
           <Route path="/construction" element={<Construction />} />
-          <Route path="/lofi" element={<Lofi />} />
           <Route path="/voices" element={<Voices />} />
           <Route path="/shorts" element={<Shorts />} />
           <Route path="/video-editor" element={<VideoEditor />} />

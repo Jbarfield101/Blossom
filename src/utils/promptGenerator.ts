@@ -1,4 +1,4 @@
-export type PromptType = 'video' | 'image' | 'music' | 'seo';
+export type PromptType = 'video' | 'image' | 'seo';
 
 export function generatePrompt(text: string, type: PromptType): string {
   const cleaned = text.trim();
@@ -9,8 +9,6 @@ export function generatePrompt(text: string, type: PromptType): string {
       return `Generate a short video about ${cleaned}.`;
     case 'image':
       return `Generate a detailed image combining ${cleaned}.`;
-    case 'music':
-      return `Compose a short piece of music about ${cleaned}.`;
     case 'seo':
       return `Create SEO optimized copy about ${cleaned}.`;
     default:

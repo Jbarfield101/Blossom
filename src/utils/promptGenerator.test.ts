@@ -12,12 +12,6 @@ describe('generatePrompt', () => {
     );
   });
 
-  it('creates a music prompt', () => {
-    expect(generatePrompt('jazz', 'music')).toBe(
-      'Compose a short piece of music about jazz.'
-    );
-  });
-
   it('creates an SEO prompt', () => {
     expect(generatePrompt('blogs', 'seo')).toBe(
       'Create SEO optimized copy about blogs.'

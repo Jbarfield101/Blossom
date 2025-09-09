@@ -2,71 +2,20 @@ import { create } from 'zustand';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 
-interface SongSection {
-  name: string;
-  bars: number;
-  chords?: string[];
-}
-
-export interface SongSpec {
-  outDir: string;
-  title: string;
-  album?: string;
-  bpm: number;
-  // Optional metadata fields
-  key?: string;
-  form?: string;
-  structure?: SongSection[];
-  mood?: string[];
-  instruments?: string[];
-  leadInstrument?: string;
-  ambience?: string[];
-  ambienceLevel?: number;
-  seed?: number;
-  variety?: number;
-  chordSpanBeats?: number;
-  drumPattern?: string;
-  hqStereo?: boolean;
-  hqReverb?: boolean;
-  hqSidechain?: boolean;
-  hqChorus?: boolean;
-  limiterDrive?: number;
-  lofiFilter?: boolean;
-  reverb?: boolean;
-  sfzInstrument?: string;
-  midiFile?: string;
-  gain?: number;
-}
-
 export type TaskCommand =
   | { id: 'Example' }
-  | {
-      id: 'LofiGenerateGpu';
-      py: string;
-      script: string;
-      prompt: string;
-      duration: number;
-      seed: number;
-    }
   | { id: 'PdfIngest'; py: string; script: string; doc_id: string }
   | { id: 'ParseSpellPdf'; py?: string; script?: string; path: string }
   | { id: 'ParseRulePdf'; py?: string; script?: string; path: string }
   | { id: 'ParseLorePdf'; py?: string; script?: string; path: string; world: string }
-  | { id: 'GenerateSong'; spec: SongSpec }
-  | { id: 'GenerateBasicSfz'; spec: SongSpec }
-  | { id: 'GenerateAlbum'; meta: any }
   | { id: 'GenerateShort'; spec: any };
 
 const TASK_IDS: TaskCommand['id'][] = [
   'Example',
-  'LofiGenerateGpu',
   'PdfIngest',
   'ParseSpellPdf',
   'ParseRulePdf',
   'ParseLorePdf',
-  'GenerateSong',
-  'GenerateBasicSfz',
-  'GenerateAlbum',
   'GenerateShort',
 ];
 
@@ -150,27 +99,6 @@ export const useTasks = create<TasksState>((set, get) => ({
         cmd = buildTaskCommand(label as TaskCommand['id'], command as Record<string, unknown>);
       } else {
         throw new Error(`Task command for ${label} is missing id: ${JSON.stringify(command)}`);
-      }
-      if (cmd.id === 'GenerateSong' || cmd.id === 'GenerateBasicSfz') {
-        const spec = (cmd as Extract<
-          TaskCommand,
-          { id: 'GenerateSong' | 'GenerateBasicSfz' }
-        >).spec;
-        const required: (keyof SongSpec)[] =
-          cmd.id === 'GenerateBasicSfz'
-            ? ['outDir', 'title', 'bpm', 'sfzInstrument']
-            : ['outDir', 'title', 'bpm'];
-        const missing = required.filter((field) => {
-          const value = spec[field];
-          return (
-            value === undefined ||
-            value === null ||
-            (Array.isArray(value) && value.length === 0)
-          );
-        });
-        if (missing.length) {
-          throw new Error(`Missing required field(s): ${missing.join(', ')}`);
-        }
       }
       const id = await invoke<number>('enqueue_task', { label, command: cmd });
       set((state) => ({
@@ -274,13 +202,6 @@ export const useTasks = create<TasksState>((set, get) => ({
 }));
 
 export type { TasksState };
-
-export async function generateBasicSong(spec: SongSpec) {
-  return useTasks.getState().enqueueTask('Music Generation', {
-    id: 'GenerateBasicSfz',
-    spec,
-  });
-}
 
 export async function listSpells() {
   return invoke<any[]>('list_spells');

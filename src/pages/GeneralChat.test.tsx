@@ -4,19 +4,13 @@ import GeneralChat, { SYSTEM_PROMPT } from './GeneralChat';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { useUsers, defaultModules } from '../features/users/useUsers';
-import { useTasks } from '../store/tasks';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 vi.mock('@tauri-apps/api/event', () => ({ listen: vi.fn() }));
-const enqueueTask = vi.fn(() => Promise.resolve(1));
-vi.mock('../store/tasks', () => ({
-  useTasks: (selector: any) => selector({ enqueueTask, tasks: {}, fetchStatus: vi.fn() }),
-}));
 
 describe('GeneralChat', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    enqueueTask.mockResolvedValue(1);
     localStorage.clear();
     useUsers.setState({
       users: {
@@ -161,39 +155,6 @@ describe('GeneralChat', () => {
     expect(chatCalls).toHaveLength(0);
   });
 
-  it('handles music intent', async () => {
-    (invoke as any).mockImplementation((cmd: string) => {
-      if (cmd === 'start_ollama') return Promise.resolve();
-      if (cmd === 'detect_intent') return Promise.resolve('music');
-      return Promise.resolve();
-    });
-    (listen as any).mockImplementation(() => Promise.resolve(() => {}));
-
-    render(<GeneralChat />);
-    await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
-
-    fireEvent.change(screen.getByLabelText(/message/i), {
-      target: { value: 'My Song template="Classic Lofi" tracks=2' },
-    });
-    fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
-
-    await waitFor(() => {
-      expect(enqueueTask).toHaveBeenCalledWith('Music Generation', {
-        id: 'GenerateAlbum',
-        meta: {
-          track_count: 2,
-          title_base: 'My Song',
-          template: 'Classic Lofi',
-        },
-      });
-    });
-    expect(
-      await screen.findByText(
-        'Started music generation for "My Song" using "Classic Lofi" with 2 tracks.'
-      )
-    ).toBeInTheDocument();
-  });
-
   it('classifies natural system stats request', async () => {
     (invoke as any).mockImplementation((cmd: string) => {
       if (cmd === 'start_ollama') return Promise.resolve();
@@ -219,69 +180,5 @@ describe('GeneralChat', () => {
     expect(chatCalls).toHaveLength(0);
   });
 
-  it('classifies natural music request', async () => {
-    (invoke as any).mockImplementation((cmd: string) => {
-      if (cmd === 'start_ollama') return Promise.resolve();
-      if (cmd === 'detect_intent') return Promise.resolve('music');
-      return Promise.resolve();
-    });
-    (listen as any).mockImplementation(() => Promise.resolve(() => {}));
-
-    render(<GeneralChat />);
-    await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
-
-    fireEvent.change(screen.getByLabelText(/message/i), {
-      target: { value: 'generate a chill song with three tracks' },
-    });
-    fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
-
-    await waitFor(() => {
-      const detect = (invoke as any).mock.calls.find(
-        ([cmd]: [string]) => cmd === 'detect_intent'
-      );
-      expect(detect[1]).toEqual({
-        query: 'generate a chill song with three tracks',
-      });
-      expect(enqueueTask).not.toHaveBeenCalled();
-    });
-    expect(
-      await screen.findByText(/Please specify template and track count/)
-    ).toBeInTheDocument();
-  });
-
-  it('handles music prompt generator flow', async () => {
-    (invoke as any).mockImplementation((cmd: string) => {
-      if (cmd === 'start_ollama') return Promise.resolve();
-      if (cmd === 'detect_intent') return Promise.resolve('music');
-      return Promise.resolve();
-    });
-    (listen as any).mockImplementation(() => Promise.resolve(() => {}));
-
-    render(<GeneralChat />);
-    await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
-
-    fireEvent.click(screen.getByRole('button', { name: /music prompt/i }));
-    fireEvent.change(screen.getByPlaceholderText(/describe vibe/i), {
-      target: { value: 'calm flute' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /check/i }));
-    const trackInput = screen.getByLabelText('track count');
-    fireEvent.change(trackInput, { target: { value: '2' } });
-    fireEvent.click(screen.getByRole('button', { name: /generate/i }));
-
-    await waitFor(() =>
-      expect(invoke).toHaveBeenCalledWith('detect_intent', {
-        query: 'calm flute template="Classic Lofi" tracks=2',
-      })
-    );
-    expect(enqueueTask).toHaveBeenCalledWith('Music Generation', {
-      id: 'GenerateAlbum',
-      meta: {
-        track_count: 2,
-        title_base: 'calm flute',
-        template: 'Classic Lofi',
-      },
-    });
-  });
 });
 

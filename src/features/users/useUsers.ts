@@ -4,8 +4,6 @@ import type { Theme } from '../theme/ThemeContext';
 
 type ModuleKey =
   | 'objects'
-  | 'music'
-  | 'aimusic'
   | 'calendar'
   | 'comfy'
   | 'assistant'
@@ -16,15 +14,12 @@ type ModuleKey =
   | 'shorts'
   | 'chores'
   | 'construction'
-  | 'video'
-  | 'sfz';
+  | 'video';
 
 type ModulesState = Record<ModuleKey, boolean>;
 
 const defaultModules: ModulesState = {
   objects: true,
-  music: true,
-  aimusic: true,
   calendar: true,
   comfy: true,
   assistant: true,
@@ -36,7 +31,6 @@ const defaultModules: ModulesState = {
   chores: true,
   construction: true,
   video: true,
-  sfz: true,
 };
 
 type WidgetKey = 'homeChat' | 'systemInfo' | 'tasks';
