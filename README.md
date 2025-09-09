@@ -45,19 +45,6 @@ needed.
 Install the [`ollama`](https://github.com/ollama/ollama) CLI separately if you
 plan to use the general chat features; the Python package is not required.
 
-## Running Python scripts
-
-Activate your Python environment first. The high‑quality generator lives at
-`src-tauri/python/lofi/renderer.py`.
-
-### FFmpeg for audio decoding
-
-`renderer.py` uses [pydub](https://github.com/jiaaro/pydub) to decode audio, which
-relies on the [FFmpeg](https://ffmpeg.org/) binaries. Install FFmpeg for your
-platform and ensure `ffmpeg` and `ffprobe` are available on your `PATH`:
-
-- **macOS**
-
   ```bash
   brew install ffmpeg
   ```
@@ -121,31 +108,4 @@ When a user uploads a video, it plays automatically on an endless loop.
 - **Blender path:** If Blender is not on your system `PATH`, set the
   `BLENDER_PATH` environment variable to the Blender executable so `/objects/blender`
   can run scripts.
-- **HQ feature flags:** `lofi/renderer.py` supports `hq_stereo`, `hq_reverb`,
-  `hq_sidechain`, and `hq_chorus` flags inside the `motif` object to enable or disable
-  high‑quality processing.
-- **Limiter drive:** Add `limiter_drive` to the song JSON to control soft
-  clipping intensity (values around `1.0` keep saturation subtle).
-- **Chord span:** Control how long each chord lasts with `chord_span_beats`
-  (2 = ½ bar, 4 = 1 bar, 8 = 2 bars).
-- **SFZ instruments:** Supply custom samples in the song JSON with
-  `sfz_instrument` for leads or `sfz_chords`, `sfz_pads`, and `sfz_bass` for
-  chords, pads, and bass lines.
-- **MIDI seeding:** Choose a MIDI file in the SFZ Music form to seed note data.
-  The selection is persisted, included in the song spec, and its name and
-  length are shown for confirmation.
-- **Song form:** Structure songs with through‑composed templates (e.g.
-  `Intro–A–B–C–D–E–F–Outro`) and use odd bar lengths like 5 or 7 bars for
-  asymmetrical phrases.
-- **Analog polish:** Finishing chain adds tape-style saturation and subtle
-  wow/flutter for vintage warmth.
-- **Dithering:** Exported 16‑bit WAVs now include low-level triangular dither.
-  Tune the noise floor with an optional `dither_amount` value in the song JSON
-  (`1.0` for standard dithering, `0` to disable).
-- **Presets:** Set `"preset": "Warm Cassette"`, `"Night Drive"`, `"Sunset VHS"`,
-  `"Neon Palms"`, or `"Night Swim"` in your song JSON to load bundled settings
-  from `src-tauri/python/presets.json`. Presets map HQ flags, limiter drive, and
-  wow/flutter depth so you don't have to tweak raw parameters. Any value you
-  specify in the song JSON overrides the preset. A new `"dreamy"` mood is also
-  available.
 

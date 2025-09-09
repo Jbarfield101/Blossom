@@ -13,7 +13,7 @@
 - JS tests: `npm test` (Vitest + jsdom). CI uses `npm test -- --run` for non-watch.
 - Rust tests: `cargo test` (run in `src-tauri`).
 - Python tests: `pytest src-tauri/python/tests` (requires `pip install -r requirements-dev.txt`).
-- Utilities: `npm run db:migrate`, `npm run schemas:generate`, `npm run npc:gen`, `npm run items:enrich`, `npm run sfz:flac2wav`.
+- Utilities: `npm run db:migrate`, `npm run schemas:generate`, `npm run npc:gen`, `npm run items:enrich`.
 
 ## Coding Style & Conventions
 - TypeScript: strict mode enforced via `tsconfig.json`; prefer 2-space indent; components in PascalCase; hooks/utilities in camelCase; colocate tests as `*.test.ts(x)`.
