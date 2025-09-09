@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import re
 from pathlib import Path
@@ -62,8 +61,6 @@ ACTION_REGEX = re.compile(
     re.IGNORECASE,
 )
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
-DEFAULT_WORKFLOW = ROOT_DIR / "src" / "comfy" / "dnd_portrait.json"
 COMFY_API_URL = os.environ.get("COMFY_API_URL", "http://127.0.0.1:8188")
 LOCAL_LLM_URL = os.environ.get("LOCAL_LLM_URL", "http://localhost:11434/api/generate")
 LOCAL_LLM_MODEL = os.environ.get("LOCAL_LLM_MODEL", "llama2")
@@ -106,10 +103,7 @@ def generate_image(prompt: str, workflow: dict | None = None, api_url: str | Non
     if api_url is None:
         api_url = COMFY_API_URL
     if workflow is None:
-        try:
-            workflow = json.loads(DEFAULT_WORKFLOW.read_text())
-        except Exception:
-            return False
+        return False
     for node in workflow.get("nodes", []):
         if node.get("type") == "CLIPTextEncode":
             widgets = node.get("widgets_values")
