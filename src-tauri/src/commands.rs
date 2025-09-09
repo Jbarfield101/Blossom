@@ -676,11 +676,6 @@ mod tests {
         assert!(v.get("ambienceLevel").is_none());
     }
 
-    #[test]
-    fn parse_json_high_confidence() {
-        let content = "{\"intent\":\"music\",\"confidence\":0.9}";
-        assert_eq!(extract_intent(content), "music");
-    }
 
     #[test]
     fn parse_json_low_confidence_defaults_to_chat() {
@@ -1678,7 +1673,7 @@ pub async fn detect_intent(query: String) -> Result<String, String> {
             "messages": [
                 {
                     "role": "system",
-                    "content": "You are an intent classifier. Reply in JSON with fields intent and confidence (0-1). intent must be sys for system information, music for music generation, or chat for anything else. Examples: 'can you show system stats?' -> {\"intent\":\"sys\",\"confidence\":1}. 'generate a chill song with three tracks' -> {\"intent\":\"music\",\"confidence\":1}.",
+                    "content": "You are an intent classifier. Reply in JSON with fields intent and confidence (0-1). intent must be sys for system information or chat for anything else. Example: 'can you show system stats?' -> {\"intent\":\"sys\",\"confidence\":1}.",
                 },
                 { "role": "user", "content": query },
             ],
@@ -1705,13 +1700,11 @@ fn extract_intent(content: &str) -> String {
         }
         return match intent {
             "sys" => "sys".to_string(),
-            "music" => "music".to_string(),
             _ => "chat".to_string(),
         };
     }
     match trimmed.to_lowercase().as_str() {
         "sys" => "sys".to_string(),
-        "music" => "music".to_string(),
         _ => "chat".to_string(),
     }
 }
