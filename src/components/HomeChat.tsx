@@ -6,8 +6,6 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import Draggable from "react-draggable";
 import { nanoid } from "nanoid";
 import { invoke } from "@tauri-apps/api/core";
-import { useTasks } from "../store/tasks";
-import { PRESET_TEMPLATES } from "./songTemplates";
 import { SystemInfo } from "../features/system/useSystemInfo";
 
 interface Message {
@@ -23,7 +21,6 @@ export default function HomeChat() {
   const [minimized, setMinimized] = useState(false);
   const nodeRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const enqueueTask = useTasks((s) => s.enqueueTask);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -48,33 +45,6 @@ export default function HomeChat() {
           `CPU: ${Math.round(info.cpu_usage)}%\n` +
           `Memory: ${Math.round(info.mem_usage)}%\n` +
           `GPU: ${gpu}`;
-      } else if (trimmed.toLowerCase().startsWith("/music")) {
-        const args = trimmed.slice(6).trim();
-        const templateMatch = args.match(/template=("[^"]+"|[^\s]+)/i);
-        const trackMatch = args.match(/tracks=(\d+)/i);
-        const template = templateMatch
-          ? templateMatch[1].replace(/^"|"$/g, "")
-          : undefined;
-        const trackCount = trackMatch ? Number(trackMatch[1]) : undefined;
-        const title = args
-          .replace(/template=("[^"]+"|[^\s]+)/i, "")
-          .replace(/tracks=\d+/i, "")
-          .trim() || "untitled";
-
-        if (!template || !trackCount) {
-          const templates = Object.keys(PRESET_TEMPLATES).join(", ");
-          reply =
-            `Please specify template and track count.\n` +
-            `Templates: ${templates}\n` +
-            `Example: /music My Song template="Classic Lofi" tracks=3`;
-        } else {
-          await enqueueTask("Music Generation", {
-            id: "GenerateAlbum",
-            meta: { track_count: trackCount, title_base: title, template },
-          });
-          const plural = trackCount === 1 ? "track" : "tracks";
-          reply = `Started music generation for "${title}" using "${template}" with ${trackCount} ${plural}.`;
-        }
       } else {
         const history = [...messages, userMsg].map(({ role, content }) => ({
           role,

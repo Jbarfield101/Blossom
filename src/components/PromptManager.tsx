@@ -48,12 +48,6 @@ export default function PromptManager() {
             >
               Video
             </button>
-            <button
-              onClick={() => handlePrompt("music")}
-              style={styles.actionBtn}
-            >
-              Music
-            </button>
           </div>
         </div>
       )}

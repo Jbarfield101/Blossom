@@ -3,18 +3,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import HomeChat from './HomeChat';
 import { invoke } from '@tauri-apps/api/core';
 import { SystemInfo } from '../features/system/useSystemInfo';
-import { useTasks } from '../store/tasks';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
-const enqueueTask = vi.fn(() => Promise.resolve(1));
-vi.mock('../store/tasks', () => ({
-  useTasks: (selector: any) => selector({ enqueueTask, tasks: {} }),
-}));
 
 describe('HomeChat', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    enqueueTask.mockResolvedValue(1);
   });
 
   afterEach(() => {
@@ -34,47 +28,6 @@ describe('HomeChat', () => {
       });
     });
     expect(await screen.findByText('Reply')).toBeInTheDocument();
-  });
-
-  it('prompts for template and track count when missing', async () => {
-    render(<HomeChat />);
-    fireEvent.change(screen.getByPlaceholderText('Ask Blossom...'), {
-      target: { value: '/music My Song' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /send/i }));
-    await waitFor(() => {
-      expect(invoke).not.toHaveBeenCalled();
-      expect(enqueueTask).not.toHaveBeenCalled();
-    });
-    expect(
-      await screen.findByText(/Please specify template and track count/i)
-    ).toBeInTheDocument();
-  });
-
-  it('handles /music with template and tracks', async () => {
-    (invoke as any).mockResolvedValue(undefined);
-    render(<HomeChat />);
-    fireEvent.change(screen.getByPlaceholderText('Ask Blossom...'), {
-      target: {
-        value: '/music My Song template="Classic Lofi" tracks=2',
-      },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /send/i }));
-    await waitFor(() => {
-      expect(enqueueTask).toHaveBeenCalledWith('Music Generation', {
-        id: 'GenerateAlbum',
-        meta: {
-          track_count: 2,
-          title_base: 'My Song',
-          template: 'Classic Lofi',
-        },
-      });
-    });
-    expect(
-      await screen.findByText(
-        'Started music generation for "My Song" using "Classic Lofi" with 2 tracks.'
-      )
-    ).toBeInTheDocument();
   });
 
   it('handles /sys command', async () => {

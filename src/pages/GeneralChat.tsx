@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { useTasks } from "../store/tasks";
 import { listen } from "@tauri-apps/api/event";
 import {
   Box,
@@ -17,9 +16,7 @@ import remarkGfm from "remark-gfm";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import Center from "./_Center";
 import { useUsers } from "../features/users/useUsers";
-import { PRESET_TEMPLATES } from "../components/songTemplates";
 import { SystemInfo } from "../features/system/useSystemInfo";
-import MusicPromptGenerator from "../components/MusicPromptGenerator";
 import ImagePromptGenerator from "../components/ImagePromptGenerator";
 
 export const SYSTEM_PROMPT =
@@ -45,7 +42,6 @@ export default function GeneralChat() {
   const [status, setStatus] = useState<"init" | "starting" | "ready" | "error">("init");
   const [error, setError] = useState<string>("");
   const [logs, setLogs] = useState<string[]>([]);
-  const enqueueTask = useTasks((s) => s.enqueueTask);
 
   const userName = useUsers((state) =>
     state.currentUserId ? state.users[state.currentUserId]?.name : undefined
@@ -171,32 +167,6 @@ export default function GeneralChat() {
           `CPU: ${Math.round(info.cpu_usage)}%\n` +
           `Memory: ${Math.round(info.mem_usage)}%\n` +
           `GPU: ${gpu}`;
-      } else if (intent === "music") {
-        const args = raw;
-        const templateMatch = args.match(/template=("[^"]+"|[^\s]+)/i);
-        const trackMatch = args.match(/tracks=(\d+)/i);
-        const template = templateMatch
-          ? templateMatch[1].replace(/^"|"$/g, "")
-          : undefined;
-        const trackCount = trackMatch ? Number(trackMatch[1]) : undefined;
-        const title = args
-          .replace(/template=("[^"]+"|[^\s]+)/i, "")
-          .replace(/tracks=\d+/i, "")
-          .trim() || "untitled";
-        if (!template || !trackCount) {
-          const templates = Object.keys(PRESET_TEMPLATES).join(", ");
-          reply =
-            `Please specify template and track count.\n` +
-            `Templates: ${templates}\n` +
-            `Example: /music My Song template="Classic Lofi" tracks=3`;
-        } else {
-          await enqueueTask("Music Generation", {
-            id: "GenerateAlbum",
-            meta: { track_count: trackCount, title_base: title, template },
-          });
-          const plural = trackCount === 1 ? "track" : "tracks";
-          reply = `Started music generation for "${title}" using "${template}" with ${trackCount} ${plural}.`;
-        }
       } else {
         reply = await invoke("general_chat", {
           messages: newMessages.map(({ role, content }) => ({ role, content })),
@@ -322,7 +292,6 @@ export default function GeneralChat() {
       </Box>
       <Stack spacing={2} sx={{ p: 2, flexGrow: 1, width: "100%", maxWidth: 600, mx: "auto" }}>
         <ImagePromptGenerator onGenerate={(prompt) => send(prompt)} />
-        <MusicPromptGenerator onGenerate={(prompt) => send(prompt)} />
         <Box sx={{ flexGrow: 1, overflowY: "auto", width: "100%" }}>
           {messages.map((m, i) => (
             <Box
