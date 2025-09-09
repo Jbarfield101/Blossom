@@ -1119,27 +1119,9 @@ fn rule_storage_dir<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
         .path()
         .app_data_dir()
         .map_err(|_| "app data dir".to_string())?
-        .join("dnd")
         .join("rules");
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     Ok(dir)
-}
-
-fn validate_rule(rule: &Value) -> Result<Value, String> {
-    let script = PathBuf::from("scripts").join("validate-dnd.ts");
-    let json = serde_json::to_string(rule).map_err(|e| e.to_string())?;
-    let output = PCommand::new("npx")
-        .arg("tsx")
-        .arg(&script)
-        .arg("rule")
-        .arg(&json)
-        .output()
-        .map_err(|e| e.to_string())?;
-    if !output.status.success() {
-        return Err(String::from_utf8_lossy(&output.stderr).to_string());
-    }
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    serde_json::from_str(&stdout).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -1148,8 +1130,7 @@ pub async fn save_rule<R: Runtime>(
     rule: Value,
     overwrite: Option<bool>,
 ) -> Result<(), String> {
-    let validated = validate_rule(&rule)?;
-    let id = validated["id"]
+    let id = rule["id"]
         .as_str()
         .ok_or_else(|| "missing id".to_string())?;
     let dir = rule_storage_dir(&app)?;
@@ -1157,7 +1138,7 @@ pub async fn save_rule<R: Runtime>(
     if path.exists() && !overwrite.unwrap_or(false) {
         return Err("exists".into());
     }
-    let json = serde_json::to_string_pretty(&validated).map_err(|e| e.to_string())?;
+    let json = serde_json::to_string_pretty(&rule).map_err(|e| e.to_string())?;
     fs::write(&path, json).map_err(|e| e.to_string())
 }
 
@@ -1191,27 +1172,9 @@ fn spell_storage_dir<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> 
         .path()
         .app_data_dir()
         .map_err(|_| "app data dir".to_string())?
-        .join("dnd")
         .join("spells");
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     Ok(dir)
-}
-
-fn validate_spell(spell: &Value) -> Result<Value, String> {
-    let script = PathBuf::from("scripts").join("validate-dnd.ts");
-    let json = serde_json::to_string(spell).map_err(|e| e.to_string())?;
-    let output = PCommand::new("npx")
-        .arg("tsx")
-        .arg(&script)
-        .arg("spell")
-        .arg(&json)
-        .output()
-        .map_err(|e| e.to_string())?;
-    if !output.status.success() {
-        return Err(String::from_utf8_lossy(&output.stderr).to_string());
-    }
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    serde_json::from_str(&stdout).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -1220,8 +1183,7 @@ pub async fn save_spell<R: Runtime>(
     spell: Value,
     overwrite: Option<bool>,
 ) -> Result<(), String> {
-    let validated = validate_spell(&spell)?;
-    let id = validated["id"]
+    let id = spell["id"]
         .as_str()
         .ok_or_else(|| "missing id".to_string())?;
     let dir = spell_storage_dir(&app)?;
@@ -1229,7 +1191,7 @@ pub async fn save_spell<R: Runtime>(
     if path.exists() && !overwrite.unwrap_or(false) {
         return Err("exists".into());
     }
-    let json = serde_json::to_string_pretty(&validated).map_err(|e| e.to_string())?;
+    let json = serde_json::to_string_pretty(&spell).map_err(|e| e.to_string())?;
     fs::write(&path, json).map_err(|e| e.to_string())
 }
 
@@ -1270,23 +1232,6 @@ fn lore_storage_dir<R: Runtime>(app: &AppHandle<R>, world: &str) -> Result<PathB
     Ok(dir)
 }
 
-fn validate_lore(lore: &Value) -> Result<Value, String> {
-    let script = PathBuf::from("scripts").join("validate-dnd.ts");
-    let json = serde_json::to_string(lore).map_err(|e| e.to_string())?;
-    let output = PCommand::new("npx")
-        .arg("tsx")
-        .arg(&script)
-        .arg("lore")
-        .arg(&json)
-        .output()
-        .map_err(|e| e.to_string())?;
-    if !output.status.success() {
-        return Err(String::from_utf8_lossy(&output.stderr).to_string());
-    }
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    serde_json::from_str(&stdout).map_err(|e| e.to_string())
-}
-
 fn update_lore_index<R: Runtime>(app: &AppHandle<R>, world: &str) -> Result<(), String> {
     let dir = lore_storage_dir(app, world)?;
     let mut entries = Vec::new();
@@ -1323,8 +1268,7 @@ pub async fn save_lore<R: Runtime>(
     lore: Value,
     overwrite: Option<bool>,
 ) -> Result<(), String> {
-    let validated = validate_lore(&lore)?;
-    let id = validated["id"]
+    let id = lore["id"]
         .as_str()
         .ok_or_else(|| "missing id".to_string())?;
     let dir = lore_storage_dir(&app, &world)?;
@@ -1332,7 +1276,7 @@ pub async fn save_lore<R: Runtime>(
     if path.exists() && !overwrite.unwrap_or(false) {
         return Err("exists".into());
     }
-    let json = serde_json::to_string_pretty(&validated).map_err(|e| e.to_string())?;
+    let json = serde_json::to_string_pretty(&lore).map_err(|e| e.to_string())?;
     fs::write(&path, json).map_err(|e| e.to_string())?;
     update_lore_index(&app, &world)?;
     Ok(())
@@ -1373,23 +1317,6 @@ fn npc_storage_dir<R: Runtime>(app: &AppHandle<R>, world: &str) -> Result<PathBu
     Ok(dir)
 }
 
-fn validate_npc(npc: &Value) -> Result<Value, String> {
-    let script = PathBuf::from("scripts").join("validate-dnd.ts");
-    let json = serde_json::to_string(npc).map_err(|e| e.to_string())?;
-    let output = PCommand::new("npx")
-        .arg("tsx")
-        .arg(&script)
-        .arg("npc")
-        .arg(&json)
-        .output()
-        .map_err(|e| e.to_string())?;
-    if !output.status.success() {
-        return Err(String::from_utf8_lossy(&output.stderr).to_string());
-    }
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    serde_json::from_str(&stdout).map_err(|e| e.to_string())
-}
-
 fn create_placeholder_image(path: &Path, width: u32, height: u32) -> Result<(), String> {
     use std::fs::File;
     use std::io::BufWriter;
@@ -1412,11 +1339,10 @@ fn create_placeholder_image(path: &Path, width: u32, height: u32) -> Result<(), 
 pub async fn save_npc<R: Runtime>(
     app: AppHandle<R>,
     world: String,
-    npc: Value,
+    mut npc: Value,
     overwrite: Option<bool>,
 ) -> Result<Value, String> {
-    let mut validated = validate_npc(&npc)?;
-    let id = validated["id"]
+    let id = npc["id"]
         .as_str()
         .ok_or_else(|| "missing id".to_string())?
         .to_string();
@@ -1430,38 +1356,38 @@ pub async fn save_npc<R: Runtime>(
     let icons = dir.join("icons");
     fs::create_dir_all(&icons).map_err(|e| e.to_string())?;
 
-    match validated.get("portrait").and_then(|v| v.as_str()) {
+    match npc.get("portrait").and_then(|v| v.as_str()) {
         Some(p) if !p.is_empty() && p != "placeholder.png" => {
             let src = PathBuf::from(p);
             let ext = src.extension().and_then(|s| s.to_str()).unwrap_or("png");
             let dest = portraits.join(format!("{}.{}", &id, ext));
             fs::copy(&src, &dest).map_err(|e| e.to_string())?;
-            validated["portrait"] = Value::String(dest.to_string_lossy().into());
+            npc["portrait"] = Value::String(dest.to_string_lossy().into());
         }
         _ => {
             let dest = portraits.join(format!("{}.png", &id));
             create_placeholder_image(&dest, 900, 1200)?;
-            validated["portrait"] = Value::String(dest.to_string_lossy().into());
+            npc["portrait"] = Value::String(dest.to_string_lossy().into());
         }
     }
 
-    match validated.get("icon").and_then(|v| v.as_str()) {
+    match npc.get("icon").and_then(|v| v.as_str()) {
         Some(p) if !p.is_empty() && p != "placeholder-icon.png" => {
             let src = PathBuf::from(p);
             let ext = src.extension().and_then(|s| s.to_str()).unwrap_or("png");
             let dest = icons.join(format!("{}.{}", &id, ext));
             fs::copy(&src, &dest).map_err(|e| e.to_string())?;
-            validated["icon"] = Value::String(dest.to_string_lossy().into());
+            npc["icon"] = Value::String(dest.to_string_lossy().into());
         }
         _ => {
             let dest = icons.join(format!("{}.png", &id));
             create_placeholder_image(&dest, 300, 300)?;
-            validated["icon"] = Value::String(dest.to_string_lossy().into());
+            npc["icon"] = Value::String(dest.to_string_lossy().into());
         }
     }
-    let json = serde_json::to_string_pretty(&validated).map_err(|e| e.to_string())?;
+    let json = serde_json::to_string_pretty(&npc).map_err(|e| e.to_string())?;
     fs::write(path, json).map_err(|e| e.to_string())?;
-    Ok(validated)
+    Ok(npc)
 }
 
 #[tauri::command]
