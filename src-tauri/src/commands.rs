@@ -503,20 +503,44 @@ pub async fn parse_lore_pdf<R: Runtime>(
     serde_json::from_value(v["lore"].clone()).map_err(|e| e.to_string())
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn parse_json_low_confidence_defaults_to_chat() {
-        let content = "{\"intent\":\"sys\",\"confidence\":0.4}";
-        assert_eq!(extract_intent(content), "chat");
+    fn parse_json_npc() {
+        let content = "{\"intent\":\"npc\",\"confidence\":0.9}";
+        assert_eq!(extract_intent(content), "npc");
+    }
+
+    #[test]
+    fn parse_json_rules() {
+        let content = "{\"intent\":\"rules\",\"confidence\":0.9}";
+        assert_eq!(extract_intent(content), "rules");
+    }
+
+    #[test]
+    fn parse_json_lore() {
+        let content = "{\"intent\":\"lore\",\"confidence\":0.9}";
+        assert_eq!(extract_intent(content), "lore");
+    }
+
+    #[test]
+    fn parse_json_notes() {
+        let content = "{\"intent\":\"notes\",\"confidence\":0.9}";
+        assert_eq!(extract_intent(content), "notes");
+    }
+
+    #[test]
+    fn parse_json_low_confidence_defaults_to_notes() {
+        let content = "{\"intent\":\"npc\",\"confidence\":0.2}";
+        assert_eq!(extract_intent(content), "notes");
     }
 
     #[test]
     fn parse_plain_string() {
-        assert_eq!(extract_intent("sys"), "sys");
+        assert_eq!(extract_intent("lore"), "lore");
+        assert_eq!(extract_intent("unknown"), "notes");
     }
 
     #[tokio::test]
@@ -1170,7 +1194,7 @@ pub async fn detect_intent(query: String) -> Result<String, String> {
             "messages": [
                 {
                     "role": "system",
-                    "content": "You are an intent classifier. Reply in JSON with fields intent and confidence (0-1). intent must be sys for system information or chat for anything else. Example: 'can you show system stats?' -> {\"intent\":\"sys\",\"confidence\":1}.",
+                    "content": "You are an intent classifier. Reply ONLY in JSON with fields intent and confidence (0-1). intent must be one of npc, rules, lore, or notes. npc = questions about non-player characters, rules = game mechanics or rules, lore = world or setting information, notes = personal or miscellaneous notes.",
                 },
                 { "role": "user", "content": query },
             ],
@@ -1183,26 +1207,27 @@ pub async fn detect_intent(query: String) -> Result<String, String> {
     let content = json["message"]["content"]
         .as_str()
         .or_else(|| json["content"].as_str())
-        .unwrap_or("chat");
+        .unwrap_or("notes");
     Ok(extract_intent(content))
 }
 
 fn extract_intent(content: &str) -> String {
     let trimmed = content.trim();
+    const INTENTS: [&str; 4] = ["npc", "rules", "lore", "notes"];
     if let Ok(v) = serde_json::from_str::<Value>(trimmed) {
-        let intent = v["intent"].as_str().unwrap_or("chat");
-        let confidence = v["confidence"].as_f64().unwrap_or(0.0);
-        if confidence < 0.5 {
-            return "chat".to_string();
+        if let Some(intent) = v["intent"].as_str() {
+            let confidence = v["confidence"].as_f64().unwrap_or(0.0);
+            if confidence >= 0.5 && INTENTS.contains(&intent) {
+                return intent.to_string();
+            }
         }
-        return match intent {
-            "sys" => "sys".to_string(),
-            _ => "chat".to_string(),
-        };
+        return "notes".to_string();
     }
-    match trimmed.to_lowercase().as_str() {
-        "sys" => "sys".to_string(),
-        _ => "chat".to_string(),
+    let lower = trimmed.to_lowercase();
+    if INTENTS.contains(&lower.as_str()) {
+        lower
+    } else {
+        "notes".to_string()
     }
 }
 
