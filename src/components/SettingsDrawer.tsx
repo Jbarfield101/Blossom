@@ -26,6 +26,7 @@ import { useSettings, type ModuleKey, type WidgetKey } from "../features/setting
 import { usePaths } from "../features/paths/usePaths";
 import { useOutput } from "../features/output/useOutput";
 import { useAudioDefaults } from "../features/audioDefaults/useAudioDefaults";
+import { presetCatalog } from "../features/audioDefaults/presets";
 import { useTheme, type Theme } from "../features/theme/ThemeContext";
 import { useComfyTutorial } from "../features/comfyTutorial/useComfyTutorial";
 import { useUsers } from "../features/users/useUsers";
@@ -222,6 +223,10 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
     toggleHqChorus,
     micEnabled,
     toggleMicEnabled,
+    currentPreset,
+    customPresets,
+    setPreset,
+    savePreset,
   } = useAudioDefaults();
   const { theme, setTheme } = useTheme();
   const currentUserId = useUsers((state) => state.currentUserId);
@@ -238,6 +243,8 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   const [outputSaved, setOutputSaved] = useState(false);
   const [ambienceMessage, setAmbienceMessage] = useState<string | null>(null);
   const [generatingAmbience, setGeneratingAmbience] = useState(false);
+  const [presetName, setPresetName] = useState("");
+  const [presetSaved, setPresetSaved] = useState(false);
 
   const [pythonDraft, setPythonDraft] = useState(pythonPath);
   const [folderDraft, setFolderDraft] = useState(folder);
@@ -269,6 +276,11 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
     { label: "Current User", section: "user" as Section, elementId: "current-user" },
     { label: "Python Path", section: "environment" as Section, elementId: "python-path" },
     { label: "Default Save Folder", section: "environment" as Section, elementId: "output-folder" },
+    {
+      label: "Preset",
+      section: "editor" as Section,
+      elementId: "preset",
+    },
     {
       label: "Enable Microphone",
       section: "editor" as Section,
@@ -415,6 +427,46 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   const EditorSection = () => (
     <>
       <Typography variant="subtitle1">Audio Defaults</Typography>
+      <Box id="preset" sx={{ mt: 1 }}>
+        <FormControl fullWidth>
+          <InputLabel id="preset-label">Preset</InputLabel>
+          <Select
+            labelId="preset-label"
+            label="Preset"
+            value={currentPreset ?? ""}
+            onChange={(e) => setPreset(e.target.value as string)}
+          >
+            {Object.keys(presetCatalog).map((n) => (
+              <MenuItem key={n} value={n}>
+                {n}
+              </MenuItem>
+            ))}
+            {Object.keys(customPresets).map((n) => (
+              <MenuItem key={n} value={n}>
+                {n}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <TextField
+          label="New Preset Name"
+          value={presetName}
+          onChange={(e) => setPresetName(e.target.value)}
+          sx={{ mt: 2 }}
+        />
+        <Button
+          variant="outlined"
+          sx={{ mt: 1 }}
+          onClick={() => {
+            savePreset(presetName);
+            setPresetName("");
+            setPresetSaved(true);
+          }}
+          disabled={!presetName}
+        >
+          Save Preset
+        </Button>
+      </Box>
       <Box id="mic-enabled" sx={{ mt: 1 }}>
         <FormControlLabel
           control={<Switch checked={micEnabled} onChange={toggleMicEnabled} />}
@@ -693,6 +745,12 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
             autoHideDuration={3000}
             onClose={() => setAudioSaved(false)}
             message="Audio defaults saved"
+          />
+          <Snackbar
+            open={presetSaved}
+            autoHideDuration={3000}
+            onClose={() => setPresetSaved(false)}
+            message="Preset saved"
           />
             <Snackbar
               open={pathsSaved}
