@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ONNX Generation</title>
+</head>
+<body>
+  <form id="onnx-form">
+    <label for="model-select">Model</label>
+    <select id="model-select"></select>
+
+    <label for="steps">Steps</label>
+    <input type="number" id="steps" min="1" value="50" />
+
+    <label for="top-k">Top K</label>
+    <input type="number" id="top-k" min="0" value="50" />
+
+    <label for="top-p">Top P</label>
+    <input type="number" id="top-p" min="0" max="1" step="0.01" value="0.9" />
+
+    <label for="temperature">Temperature</label>
+    <input type="number" id="temperature" min="0" step="0.01" value="1" />
+
+    <label for="song-spec">Song Spec</label>
+    <textarea id="song-spec"></textarea>
+
+    <label for="midi-file">MIDI File</label>
+    <input type="file" id="midi-file" accept=".mid,.midi" />
+
+    <button type="button" id="start-button">Start</button>
+    <button type="button" id="cancel-button">Cancel</button>
+  </form>
+
+  <script>
+    async function convertMidiFileToDataUri(file) {
+      if (!file) return null;
+      return await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    let currentJobId = null;
+
+    document.getElementById('start-button').addEventListener('click', async () => {
+      const model = document.getElementById('model-select').value;
+      const steps = Number(document.getElementById('steps').value);
+      const topK = Number(document.getElementById('top-k').value);
+      const topP = Number(document.getElementById('top-p').value);
+      const temperature = Number(document.getElementById('temperature').value);
+      const songSpec = document.getElementById('song-spec').value;
+      const midiFile = document.getElementById('midi-file').files[0];
+      const midiDataUri = await convertMidiFileToDataUri(midiFile);
+
+      const config = {
+        model,
+        steps,
+        top_k: topK,
+        top_p: topP,
+        temperature,
+        song_spec: songSpec,
+        midi: midiDataUri
+      };
+
+      try {
+        currentJobId = await window.__TAURI__.invoke('onnx_generate', { args: [JSON.stringify(config)] });
+      } catch (err) {
+        console.error('onnx_generate failed', err);
+      }
+    });
+
+    document.getElementById('cancel-button').addEventListener('click', async () => {
+      if (!currentJobId) return;
+      try {
+        await window.__TAURI__.invoke('cancel_render', { jobId: currentJobId });
+        currentJobId = null;
+      } catch (err) {
+        console.error('cancel_render failed', err);
+      }
+    });
+
+    // Optional progress events
+    if (window.__TAURI__?.event) {
+      window.__TAURI__.event.listen('onnx_progress', event => {
+        console.log('progress', event.payload);
+      });
+      window.__TAURI__.event.listen('render_cancelled', () => {
+        currentJobId = null;
+        console.log('render cancelled');
+      });
+    }
+  </script>
+</body>
+</html>
