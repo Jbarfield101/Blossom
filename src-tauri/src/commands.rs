@@ -1231,6 +1231,51 @@ fn extract_intent(content: &str) -> String {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::extract_intent;
+
+    #[test]
+    fn parses_npc() {
+        assert_eq!(
+            extract_intent("{\"intent\":\"npc\",\"confidence\":0.9}"),
+            "npc"
+        );
+    }
+
+    #[test]
+    fn parses_rules() {
+        assert_eq!(
+            extract_intent("{\"intent\":\"rules\",\"confidence\":0.8}"),
+            "rules"
+        );
+    }
+
+    #[test]
+    fn parses_lore() {
+        assert_eq!(
+            extract_intent("{\"intent\":\"lore\",\"confidence\":0.95}"),
+            "lore"
+        );
+    }
+
+    #[test]
+    fn parses_notes() {
+        assert_eq!(
+            extract_intent("{\"intent\":\"notes\",\"confidence\":0.99}"),
+            "notes"
+        );
+    }
+
+    #[test]
+    fn defaults_to_notes_on_low_confidence() {
+        assert_eq!(
+            extract_intent("{\"intent\":\"npc\",\"confidence\":0.2}"),
+            "notes"
+        );
+    }
+}
+
 /* ==============================
 Transcription
 ============================== */
