@@ -1402,6 +1402,12 @@ fn run_summarize_session_script<R: Runtime>(
     if !script.exists() {
         return Err(format!("Script not found at {}", script.display()));
     }
+    if !transcripts.exists() {
+        return Err(format!(
+            "transcripts file not found at {}",
+            transcripts.display()
+        ));
+    }
     let output = PCommand::new(&py)
         .arg(&script)
         .arg(transcripts)
@@ -1410,6 +1416,9 @@ fn run_summarize_session_script<R: Runtime>(
         .map_err(|e| format!("Failed to start python: {e}"))?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
+        if stderr.contains("FileNotFoundError") {
+            return Err("model file not found — please download the .onnx model".into());
+        }
         return Err(format!(
             "Python exited with status {}:\n{}",
             output.status, stderr
@@ -1567,7 +1576,7 @@ pub async fn generate_ambience<R: Runtime>(app: AppHandle<R>) -> Result<(), Stri
     if !py.exists() {
         return Err(format!("Python not found at {}", py.display()));
     }
-    let script = script_path(&app);
+    let script = higgs_tts_script_path(&app);
     let py_dir = script
         .parent()
         .and_then(|p| p.parent())
