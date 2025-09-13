@@ -16,7 +16,9 @@ vi.mock('./features/theme/ThemeContext', () => ({
 
 vi.mock('./features/users/useUsers', () => ({
   useUsers: (selector: any) =>
-    selector({ users: {}, currentUserId: null, switchUser: vi.fn() })
+    selector({ users: {}, currentUserId: null, switchUser: vi.fn() }),
+  defaultModules: {},
+  defaultWidgets: {},
 }));
 
 import App from './App';

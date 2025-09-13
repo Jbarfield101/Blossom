@@ -3,7 +3,6 @@ import type { SxProps } from "@mui/material";
 import { fixedIconButtonSx } from "./sx";
 import {
   FaHome,
-  FaWrench,
   FaTasks,
   FaArrowLeft,
   FaCameraRetro,
@@ -11,15 +10,12 @@ import {
 } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import SettingsDrawer from "./SettingsDrawer";
-import ErrorBoundary from "./ErrorBoundary";
 import TaskDrawer from "./TaskDrawer";
 import { useTasks } from "../store/tasks";
 
 export default function TopBar() {
   const nav = useNavigate();
   const { pathname } = useLocation();
-  const [open, setOpen] = useState(false);
   const [taskOpen, setTaskOpen] = useState(false);
   const taskCount = useTasks((s) =>
     Object.values(s.tasks).filter((t) => t.status === "queued" || t.status === "running").length
@@ -128,25 +124,6 @@ export default function TopBar() {
         </>
       )}
 
-      <Tooltip title="Settings">
-        <IconButton
-          onClick={() => setOpen(true)}
-          sx={{
-            ...fixedIconButtonSx,
-            right: { xs: 8, sm: 12 },
-            ...(open
-              ? { color: "#000", backgroundColor: "#fff", borderRadius: 4 }
-              : { color: "white" }),
-          }}
-          aria-label="Settings"
-          aria-expanded={open}
-        >
-          <FaWrench />
-        </IconButton>
-      </Tooltip>
-      <ErrorBoundary>
-        <SettingsDrawer open={open} onClose={() => setOpen(false)} />
-      </ErrorBoundary>
       <TaskDrawer open={taskOpen} onClose={() => setTaskOpen(false)} />
     </>
   );
