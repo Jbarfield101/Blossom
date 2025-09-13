@@ -1,6 +1,11 @@
 /// <reference types="node" />
 
-import { Client, GatewayIntentBits, type TextBasedChannel } from "discord.js";
+import {
+  Client,
+  GatewayIntentBits,
+  SlashCommandBuilder,
+  type TextBasedChannel,
+} from "discord.js";
 import {
   EndBehaviorType,
   joinVoiceChannel,
@@ -186,8 +191,68 @@ export async function startDiscordBot(
     });
   }
 
-  client.once("ready", () => {
+  client.once("ready", async () => {
     console.log(`Logged in as ${client.user?.tag ?? "bot"}`);
+    await client.application?.commands.set([
+      new SlashCommandBuilder()
+        .setName("npc")
+        .setDescription("Enable or disable NPC persona")
+        .addStringOption((option) =>
+          option
+            .setName("mode")
+            .setDescription("on or off")
+            .setRequired(true)
+            .addChoices(
+              { name: "on", value: "on" },
+              { name: "off", value: "off" },
+            ),
+        )
+        .toJSON(),
+      new SlashCommandBuilder()
+        .setName("lore")
+        .setDescription("Ask about lore")
+        .addStringOption((o) =>
+          o
+            .setName("query")
+            .setDescription("Question or topic")
+            .setRequired(true),
+        )
+        .toJSON(),
+      new SlashCommandBuilder()
+        .setName("note")
+        .setDescription("Add a personal note")
+        .addStringOption((o) =>
+          o
+            .setName("content")
+            .setDescription("Note content")
+            .setRequired(true),
+        )
+        .toJSON(),
+      new SlashCommandBuilder()
+        .setName("scene")
+        .setDescription("Describe a scene")
+        .addStringOption((o) =>
+          o
+            .setName("description")
+            .setDescription("Scene description")
+            .setRequired(true),
+        )
+        .toJSON(),
+      new SlashCommandBuilder()
+        .setName("track")
+        .setDescription("Track combat events")
+        .addStringOption((o) =>
+          o
+            .setName("entry")
+            .setDescription("Event to track")
+            .setRequired(true),
+        )
+        .toJSON(),
+      new SlashCommandBuilder()
+        .setName("export")
+        .setDescription("Export campaign data")
+        .toJSON(),
+    ]);
     void connect();
   });
 
@@ -203,20 +268,76 @@ export async function startDiscordBot(
     }
   });
 
-  client.on("messageCreate", async (msg) => {
-    if (msg.author.bot) return;
-    if (!msg.content.startsWith("!npc")) return;
-    const [, arg] = msg.content.trim().split(/\s+/);
-    if (arg === "on" || arg === "enable") {
-      state.npcEnabled = true;
-      state.chatChannel = msg.channel;
-      await msg.reply("NPC persona enabled");
-    } else if (arg === "off" || arg === "disable") {
-      state.npcEnabled = false;
-      state.chatChannel = null;
-      await msg.reply("NPC persona disabled");
-    } else {
-      await msg.reply("Usage: !npc on|off");
+  client.on("interactionCreate", async (interaction) => {
+    if (!interaction.isChatInputCommand()) return;
+    switch (interaction.commandName) {
+      case "npc": {
+        const mode = interaction.options.getString("mode");
+        if (mode === "on") {
+          state.npcEnabled = true;
+          state.chatChannel =
+            interaction.channel && interaction.channel.isTextBased()
+              ? interaction.channel
+              : null;
+          await interaction.reply("NPC persona enabled");
+        } else if (mode === "off") {
+          state.npcEnabled = false;
+          state.chatChannel = null;
+          await interaction.reply("NPC persona disabled");
+        } else {
+          await interaction.reply("Usage: /npc on|off");
+        }
+        break;
+      }
+      case "lore": {
+        const query = interaction.options.getString("query", true);
+        try {
+          const ctx = await invoke<string>("retrieve_context", {
+            query,
+            intent: "lore",
+          });
+          const messages = [
+            { role: "system", content: INTENT_PROMPTS.lore },
+            { role: "user", content: query },
+          ];
+          if (ctx) {
+            messages.unshift({ role: "system", content: ctx });
+          }
+          const reply = await invoke<string>("general_chat", { messages });
+          await interaction.reply(reply);
+        } catch (err) {
+          console.error("Lore command error", err);
+          await interaction.reply("Lore lookup failed");
+        }
+        break;
+      }
+      case "note": {
+        const content = interaction.options.getString("content", true);
+        try {
+          await invoke("save_note", { content });
+          await interaction.reply("Note saved");
+        } catch (err) {
+          console.error("Note command error", err);
+          await interaction.reply("Failed to save note");
+        }
+        break;
+      }
+      case "scene": {
+        const description = interaction.options.getString("description", true);
+        await interaction.reply(`Scene noted: ${description}`);
+        break;
+      }
+      case "track": {
+        const entry = interaction.options.getString("entry", true);
+        await interaction.reply(`Tracking: ${entry}`);
+        break;
+      }
+      case "export": {
+        await interaction.reply("Export started");
+        break;
+      }
+      default:
+        break;
     }
   });
 
