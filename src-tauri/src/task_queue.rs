@@ -96,6 +96,13 @@ pub struct Task {
     pub started_at: Option<DateTime<Utc>>,
 }
 
+#[derive(Debug, Clone, Serialize)]
+struct TaskUpdatePayload {
+    task: Task,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    progress: Option<Value>,
+}
+
 fn parse_python_json(output: Output) -> Result<Value, TaskError> {
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -205,148 +212,167 @@ impl TaskQueue {
                             };
                             if let Some(task) = snapshot {
                                 if let Some(app) = app_handle.lock().unwrap().clone() {
-                                    let _ = app.emit("task_updated", task);
+                                    let _ = app.emit(
+                                        "task_updated",
+                                        TaskUpdatePayload {
+                                            task,
+                                            progress: None,
+                                        },
+                                    );
                                 }
                             }
-                            let res: Result<Value, TaskError> =
-                                match command {
-                                    TaskCommand::Example => Ok(Value::Null),
-                                    TaskCommand::PdfIngest { py, script, doc_id } => {
-                                        let output = PCommand::new(&py)
-                                            .arg(&script)
-                                            .arg("ingest")
-                                            .arg(&doc_id)
-                                            .output()
-                                            .map_err(|e| TaskError {
-                                                code: PdfErrorCode::PythonNotFound,
-                                                message: format!("Failed to start python: {e}"),
-                                            })?;
-                                        if !output.status.success() {
-                                            let stderr = String::from_utf8_lossy(&output.stderr);
-                                            Err(TaskError {
-                                                code: PdfErrorCode::ExecutionFailed,
-                                                message: format!(
-                                                    "Python exited with status {}:\n{}",
-                                                    output.status, stderr
-                                                ),
-                                            })
-                                        } else {
-                                            let stdout =
-                                                String::from_utf8_lossy(&output.stdout).to_string();
-                                            log::info!("PdfIngest stdout: {}", stdout.trim());
-                                            serde_json::from_str::<Value>(&stdout).map_err(|e| {
-                                                TaskError {
-                                                    code: PdfErrorCode::InvalidJson,
-                                                    message: e.to_string(),
-                                                }
-                                            })
-                                        }
-                                    }
-                                    TaskCommand::ParseSpellPdf { py, script, path } => {
-                                        let output = PCommand::new(&py)
-                                            .arg(&script)
-                                            .arg("spells")
-                                            .arg(&path)
-                                            .output()
-                                            .map_err(|e| TaskError {
-                                                code: PdfErrorCode::PythonNotFound,
-                                                message: format!("Failed to start python: {e}"),
-                                            })?;
-                                        parse_python_json(output)
-                                    }
-                                    TaskCommand::ParseRulePdf { py, script, path } => {
-                                        let output = PCommand::new(&py)
-                                            .arg(&script)
-                                            .arg("rules")
-                                            .arg(&path)
-                                            .output()
-                                            .map_err(|e| TaskError {
-                                                code: PdfErrorCode::PythonNotFound,
-                                                message: format!("Failed to start python: {e}"),
-                                            })?;
-                                        parse_python_json(output)
-                                    }
-                                    TaskCommand::ParseLorePdf {
-                                        py,
-                                        script,
-                                        path,
-                                        world: _,
-                                    } => {
-                                        let mut cmd = PCommand::new(&py);
-                                        cmd.arg(&script)
-                                            .arg("lore")
-                                            .arg(&path)
-                                            .stdout(Stdio::piped())
-                                            .stderr(Stdio::piped());
-                                        let mut child = cmd.spawn().map_err(|e| TaskError {
+                            let res: Result<Value, TaskError> = match command {
+                                TaskCommand::Example => Ok(Value::Null),
+                                TaskCommand::PdfIngest { py, script, doc_id } => {
+                                    let output = PCommand::new(&py)
+                                        .arg(&script)
+                                        .arg("ingest")
+                                        .arg(&doc_id)
+                                        .output()
+                                        .map_err(|e| TaskError {
                                             code: PdfErrorCode::PythonNotFound,
                                             message: format!("Failed to start python: {e}"),
                                         })?;
+                                    if !output.status.success() {
+                                        let stderr = String::from_utf8_lossy(&output.stderr);
+                                        Err(TaskError {
+                                            code: PdfErrorCode::ExecutionFailed,
+                                            message: format!(
+                                                "Python exited with status {}:\n{}",
+                                                output.status, stderr
+                                            ),
+                                        })
+                                    } else {
                                         let stdout =
-                                            child.stdout.take().ok_or_else(|| TaskError {
-                                                code: PdfErrorCode::ExecutionFailed,
-                                                message: "no stdout".to_string(),
-                                            })?;
-                                        let mut reader = BufReader::new(stdout);
-                                        let mut output = String::new();
-                                        loop {
-                                            let mut line = String::new();
-                                            let n = reader.read_line(&mut line).map_err(|e| {
-                                                TaskError {
-                                                    code: PdfErrorCode::Unknown,
-                                                    message: e.to_string(),
-                                                }
-                                            })?;
-                                            if n == 0 {
-                                                break;
+                                            String::from_utf8_lossy(&output.stdout).to_string();
+                                        log::info!("PdfIngest stdout: {}", stdout.trim());
+                                        serde_json::from_str::<Value>(&stdout).map_err(|e| {
+                                            TaskError {
+                                                code: PdfErrorCode::InvalidJson,
+                                                message: e.to_string(),
                                             }
-                                            if let Ok(p) = line.trim().parse::<f32>() {
+                                        })
+                                    }
+                                }
+                                TaskCommand::ParseSpellPdf { py, script, path } => {
+                                    let output = PCommand::new(&py)
+                                        .arg(&script)
+                                        .arg("spells")
+                                        .arg(&path)
+                                        .output()
+                                        .map_err(|e| TaskError {
+                                            code: PdfErrorCode::PythonNotFound,
+                                            message: format!("Failed to start python: {e}"),
+                                        })?;
+                                    parse_python_json(output)
+                                }
+                                TaskCommand::ParseRulePdf { py, script, path } => {
+                                    let output = PCommand::new(&py)
+                                        .arg(&script)
+                                        .arg("rules")
+                                        .arg(&path)
+                                        .output()
+                                        .map_err(|e| TaskError {
+                                            code: PdfErrorCode::PythonNotFound,
+                                            message: format!("Failed to start python: {e}"),
+                                        })?;
+                                    parse_python_json(output)
+                                }
+                                TaskCommand::ParseLorePdf {
+                                    py,
+                                    script,
+                                    path,
+                                    world: _,
+                                } => {
+                                    let mut cmd = PCommand::new(&py);
+                                    cmd.arg(&script)
+                                        .arg("lore")
+                                        .arg(&path)
+                                        .stdout(Stdio::piped())
+                                        .stderr(Stdio::piped());
+                                    let mut child = cmd.spawn().map_err(|e| TaskError {
+                                        code: PdfErrorCode::PythonNotFound,
+                                        message: format!("Failed to start python: {e}"),
+                                    })?;
+                                    let stdout = child.stdout.take().ok_or_else(|| TaskError {
+                                        code: PdfErrorCode::ExecutionFailed,
+                                        message: "no stdout".to_string(),
+                                    })?;
+                                    let mut reader = BufReader::new(stdout);
+                                    let mut output = String::new();
+                                    loop {
+                                        let mut line = String::new();
+                                        let n =
+                                            reader.read_line(&mut line).map_err(|e| TaskError {
+                                                code: PdfErrorCode::Unknown,
+                                                message: e.to_string(),
+                                            })?;
+                                        if n == 0 {
+                                            break;
+                                        }
+                                        if let Ok(v) = serde_json::from_str::<Value>(line.trim()) {
+                                            if let Some(p) =
+                                                v.get("progress").and_then(|p| p.as_f64())
+                                            {
                                                 let mut map = tasks_clone.lock().await;
                                                 if let Some(t) = map.get_mut(&id) {
-                                                    t.progress = p;
+                                                    t.progress = p as f32;
+                                                    let update = TaskUpdatePayload {
+                                                        task: t.clone(),
+                                                        progress: Some(v.clone()),
+                                                    };
+                                                    drop(map);
+                                                    if let Some(app) =
+                                                        app_handle.lock().unwrap().clone()
+                                                    {
+                                                        let _ = app.emit("task_updated", update);
+                                                    }
                                                 }
                                             } else {
                                                 output.push_str(&line);
                                             }
-                                            if _cancelled_clone.lock().await.contains(&id) {
-                                                let _ = child.kill();
-                                                return Err(TaskError {
-                                                    code: PdfErrorCode::Unknown,
-                                                    message: "cancelled".into(),
-                                                });
-                                            }
-                                        }
-                                        let status = child.wait().map_err(|e| TaskError {
-                                            code: PdfErrorCode::Unknown,
-                                            message: e.to_string(),
-                                        })?;
-                                        if !status.success() {
-                                            let mut err = String::new();
-                                            if let Some(mut e) = child.stderr.take() {
-                                                use std::io::Read;
-                                                let _ = e.read_to_string(&mut err);
-                                            }
-                                            Err(TaskError {
-                                                code: PdfErrorCode::ExecutionFailed,
-                                                message: format!(
-                                                    "Python exited with status {}:\n{}",
-                                                    status, err
-                                                ),
-                                            })
                                         } else {
-                                            serde_json::from_str::<Value>(&output).map_err(|e| {
-                                                TaskError {
-                                                    code: PdfErrorCode::InvalidJson,
-                                                    message: e.to_string(),
-                                                }
-                                            })
+                                            output.push_str(&line);
+                                        }
+                                        if _cancelled_clone.lock().await.contains(&id) {
+                                            let _ = child.kill();
+                                            return Err(TaskError {
+                                                code: PdfErrorCode::Unknown,
+                                                message: "cancelled".into(),
+                                            });
                                         }
                                     }
-                                    TaskCommand::GenerateShort { spec } => {
-                                        println!("Generating short: {:?}", spec);
-                                        Ok(Value::String("ok".into()))
+                                    let status = child.wait().map_err(|e| TaskError {
+                                        code: PdfErrorCode::Unknown,
+                                        message: e.to_string(),
+                                    })?;
+                                    if !status.success() {
+                                        let mut err = String::new();
+                                        if let Some(mut e) = child.stderr.take() {
+                                            use std::io::Read;
+                                            let _ = e.read_to_string(&mut err);
+                                        }
+                                        Err(TaskError {
+                                            code: PdfErrorCode::ExecutionFailed,
+                                            message: format!(
+                                                "Python exited with status {}:\n{}",
+                                                status, err
+                                            ),
+                                        })
+                                    } else {
+                                        serde_json::from_str::<Value>(&output).map_err(|e| {
+                                            TaskError {
+                                                code: PdfErrorCode::InvalidJson,
+                                                message: e.to_string(),
+                                            }
+                                        })
                                     }
-                                };
+                                }
+                                TaskCommand::GenerateShort { spec } => {
+                                    println!("Generating short: {:?}", spec);
+                                    Ok(Value::String("ok".into()))
+                                }
+                            };
                             let snapshot = {
                                 let mut map = tasks_clone.lock().await;
                                 if let Some(t) = map.get_mut(&id) {
@@ -370,7 +396,13 @@ impl TaskQueue {
                             };
                             if let Some(task) = snapshot {
                                 if let Some(app) = app_handle.lock().unwrap().clone() {
-                                    let _ = app.emit("task_updated", task);
+                                    let _ = app.emit(
+                                        "task_updated",
+                                        TaskUpdatePayload {
+                                            task,
+                                            progress: None,
+                                        },
+                                    );
                                 }
                             }
                             drop(permit);

@@ -53,6 +53,11 @@ interface RawTask {
   started_at?: string;
 }
 
+interface TaskEventPayload {
+  task: RawTask;
+  progress?: Record<string, unknown>;
+}
+
 function normalize(raw: RawTask): Task {
   if (typeof raw.status === 'string') {
     return {
@@ -187,8 +192,8 @@ export const useTasks = create<TasksState>((set, get) => ({
   },
   subscribe: async () => {
     try {
-      const unlisten = await listen<RawTask>('task_updated', (e) => {
-        const task = normalize(e.payload);
+      const unlisten = await listen<TaskEventPayload>('task_updated', (e) => {
+        const task = normalize(e.payload.task);
         set((state) => ({ tasks: { ...state.tasks, [task.id]: task } }));
         if (['completed', 'cancelled', 'failed'].includes(task.status)) {
           get().stopPolling(task.id);
