@@ -1,11 +1,12 @@
-use blossom_lib::commands::{comfy_start, comfy_stop, __has_comfy_child};
+use blossom_lib::commands::{__has_comfy_child, comfy_start, comfy_stop};
 use std::{env, fs};
-use which::which;
 use tauri::Manager;
+use which::which;
 
 #[tokio::test]
 async fn start_and_stop_comfy() {
-    let _rt = <tauri::test::MockRuntime as tauri_runtime::Runtime<()>>::new(Default::default()).unwrap();
+    let _rt =
+        <tauri::test::MockRuntime as tauri_runtime::Runtime<()>>::new(Default::default()).unwrap();
     let app = tauri::test::mock_builder()
         .build(tauri::test::mock_context(tauri::test::noop_assets()))
         .unwrap();
