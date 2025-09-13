@@ -1,7 +1,8 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Box } from "@mui/material";
+import { Box, useMediaQuery } from "@mui/material";
 import TopBar from "./components/TopBar";
+import Sidebar from "./components/Sidebar";
 import ErrorBoundary from "./components/ErrorBoundary";
 import CreateUserDialog from "./components/CreateUserDialog";
 import RetroTV from "./components/RetroTV";
@@ -34,6 +35,7 @@ export default function App() {
   const currentUserId = useUsers((s) => s.currentUserId);
   const switchUser = useUsers((s) => s.switchUser);
   const [showUserDialog, setShowUserDialog] = useState(false);
+  const isMobile = useMediaQuery("(max-width:600px)");
 
   useEffect(() => {
     const ids = Object.keys(users);
@@ -46,12 +48,13 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-        <TopBar />
-        {pathname !== "/calendar" && pathname !== "/comfy" && (
-            <RetroTV>NO SIGNAL</RetroTV>
-          )}
-        <CreateUserDialog open={showUserDialog} onClose={() => setShowUserDialog(false)} />
-      <Box sx={{ pt: 'var(--top-bar-height)' }}>
+      <TopBar />
+      <Sidebar />
+      {pathname !== "/calendar" && pathname !== "/comfy" && (
+        <RetroTV>NO SIGNAL</RetroTV>
+      )}
+      <CreateUserDialog open={showUserDialog} onClose={() => setShowUserDialog(false)} />
+      <Box sx={{ pt: 'var(--top-bar-height)', pl: isMobile ? 0 : 60 }}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/objects" element={<Objects />} />
