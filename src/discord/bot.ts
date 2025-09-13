@@ -19,6 +19,12 @@ const BYTES_PER_SAMPLE = 2; // 16-bit PCM
 const CHUNK_TARGET = SAMPLE_RATE * CHANNELS * BYTES_PER_SAMPLE * 2; // ~2s
 const NPC_SYSTEM_PROMPT = "You are an NPC in a fantasy world. Respond in-character.";
 const NPC_VOICE_ID = "npc";
+const INTENT_PROMPTS: Record<string, string> = {
+  npc: "You are roleplaying a non-player character. Stay in character and use any provided context.",
+  lore: "You are a lore expert. Use the provided context to answer questions about the world or setting.",
+  rules: "You are a rules assistant. Provide answers based on official game mechanics.",
+  notes: "You are a helpful assistant for personal or miscellaneous notes.",
+};
 
 interface BotState {
   npcEnabled: boolean;
@@ -62,12 +68,25 @@ async function sendWavForTranscription(
 
     if (state.npcEnabled && state.chatChannel) {
       try {
-        const reply = await invoke<string>("general_chat", {
-          messages: [
-            { role: "system", content: NPC_SYSTEM_PROMPT },
-            { role: "user", content: trimmed },
-          ],
-        });
+        const intent = await invoke<string>("detect_intent", { query: trimmed });
+        let messages = [
+          { role: "system", content: NPC_SYSTEM_PROMPT },
+          { role: "user", content: trimmed },
+        ];
+        if (intent === "npc" || intent === "lore") {
+          const ctx = await invoke<string>("retrieve_context", {
+            query: trimmed,
+            intent,
+          });
+          if (ctx) {
+            messages.unshift({ role: "system", content: ctx });
+          }
+        }
+        const rolePrompt = INTENT_PROMPTS[intent];
+        if (rolePrompt) {
+          messages.unshift({ role: "system", content: rolePrompt });
+        }
+        const reply = await invoke<string>("general_chat", { messages });
         await state.chatChannel.send(reply);
         if (state.player) {
           try {

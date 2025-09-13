@@ -1229,55 +1229,54 @@ pub async fn stop_ollama() -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+pub async fn retrieve_context<R: Runtime>(
+    app: AppHandle<R>,
+    query: String,
+    intent: String,
+) -> Result<String, String> {
+    if intent != "npc" && intent != "lore" {
+        return Ok(String::new());
+    }
+    let mut ctx = String::new();
+    if let Ok(results) = pdf_search(app.clone(), query.clone(), None).await {
+        if !results.is_empty() {
+            ctx.push_str("Relevant documents:\n");
+            for r in &results {
+                ctx.push_str(&format!(
+                    "- {} p.{}-{}: {}\n",
+                    r.doc_id, r.page_range[0], r.page_range[1], r.text
+                ));
+            }
+        }
+    }
+    if let Ok(notes) = vault_search(app.clone(), query, None).await {
+        if !notes.is_empty() {
+            ctx.push_str("Relevant notes:\n");
+            for n in &notes {
+                ctx.push_str(&format!(
+                    "- {} p.{}-{}: {}\n",
+                    n.doc_id, n.page_range[0], n.page_range[1], n.text
+                ));
+            }
+        }
+    }
+    Ok(ctx)
+}
+
 #[cfg(not(test))]
 #[tauri::command]
 pub async fn general_chat<R: Runtime>(
-    app: AppHandle<R>,
+    _app: AppHandle<R>,
     messages: Vec<ChatMessage>,
 ) -> Result<String, String> {
-    let mut msgs = messages.clone();
-    let query = messages
-        .last()
-        .map(|m| m.content.clone())
-        .unwrap_or_default();
-    if !query.is_empty() {
-        let mut ctx = String::new();
-        if let Ok(results) = pdf_search(app.clone(), query.clone(), None).await {
-            if !results.is_empty() {
-                ctx.push_str("Relevant documents:\n");
-                for r in &results {
-                    ctx.push_str(&format!(
-                        "- {} p.{}-{}: {}\n",
-                        r.doc_id, r.page_range[0], r.page_range[1], r.text
-                    ));
-                }
-            }
-        }
-        if let Ok(notes) = vault_search(app.clone(), query, None).await {
-            if !notes.is_empty() {
-                ctx.push_str("Relevant notes:\n");
-                for n in &notes {
-                    ctx.push_str(&format!(
-                        "- {} p.{}-{}: {}\n",
-                        n.doc_id, n.page_range[0], n.page_range[1], n.text
-                    ));
-                }
-            }
-        }
-        if !ctx.is_empty() {
-            msgs.push(ChatMessage {
-                role: "system".into(),
-                content: ctx,
-            });
-        }
-    }
     let client = reqwest::Client::new();
     let resp = client
         .post("http://127.0.0.1:11434/api/chat")
         .json(&serde_json::json!({
           "model": "gpt-oss:20b",
           "stream": false,
-          "messages": msgs,
+          "messages": messages,
         }))
         .send()
         .await

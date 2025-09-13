@@ -36,7 +36,7 @@ describe('GeneralChat', () => {
   it('handles message flow', async () => {
     (invoke as any).mockImplementation((cmd: string) => {
       if (cmd === 'start_ollama') return Promise.resolve();
-      if (cmd === 'detect_intent') return Promise.resolve('chat');
+      if (cmd === 'detect_intent') return Promise.resolve('notes');
       if (cmd === 'general_chat') return Promise.resolve('Reply');
       return Promise.resolve();
     });
@@ -62,10 +62,13 @@ describe('GeneralChat', () => {
       const chatCall = calls.find(([cmd]: [string]) => cmd === 'general_chat');
       expect(chatCall[1]).toEqual({
         messages: [
+          { role: 'system', content: 'You are a helpful assistant for personal or miscellaneous notes.' },
           { role: 'system', content: systemPromptWithName },
           { role: 'user', content: 'Hello' },
         ],
       });
+      const retrieveCall = calls.find(([cmd]: [string]) => cmd === 'retrieve_context');
+      expect(retrieveCall).toBeFalsy();
     });
     expect(screen.getAllByText('Hello')[0]).toBeInTheDocument();
     expect(await screen.findByText('Reply')).toBeInTheDocument();
@@ -74,7 +77,7 @@ describe('GeneralChat', () => {
   it('inserts system prompt only once', async () => {
     (invoke as any).mockImplementation((cmd: string) => {
       if (cmd === 'start_ollama') return Promise.resolve();
-      if (cmd === 'detect_intent') return Promise.resolve('chat');
+      if (cmd === 'detect_intent') return Promise.resolve('notes');
       if (cmd === 'general_chat') return Promise.resolve('Reply');
       return Promise.resolve();
     });
@@ -97,6 +100,7 @@ describe('GeneralChat', () => {
       const chatCall = calls.find(([cmd]: [string]) => cmd === 'general_chat');
       expect(chatCall[1]).toEqual({
         messages: [
+          { role: 'system', content: 'You are a helpful assistant for personal or miscellaneous notes.' },
           { role: 'system', content: systemPromptWithName },
           { role: 'user', content: 'Hi' },
         ],
@@ -112,6 +116,7 @@ describe('GeneralChat', () => {
       const secondChatCall = calls.filter(([cmd]: [string]) => cmd === 'general_chat')[1];
       expect(secondChatCall[1]).toEqual({
         messages: [
+          { role: 'system', content: 'You are a helpful assistant for personal or miscellaneous notes.' },
           { role: 'system', content: systemPromptWithName },
           { role: 'user', content: 'Hi' },
           { role: 'assistant', content: 'Reply' },
@@ -124,7 +129,7 @@ describe('GeneralChat', () => {
   it('shows error when send fails', async () => {
     (invoke as any).mockImplementation((cmd: string) => {
       if (cmd === 'start_ollama') return Promise.resolve();
-      if (cmd === 'detect_intent') return Promise.resolve('chat');
+      if (cmd === 'detect_intent') return Promise.resolve('notes');
       if (cmd === 'general_chat') return Promise.reject('fail');
       return Promise.resolve();
     });
@@ -199,6 +204,127 @@ describe('GeneralChat', () => {
       ([cmd]: [string]) => cmd === 'general_chat'
     );
     expect(chatCalls).toHaveLength(0);
+  });
+
+  it('routes npc intent with retrieval', async () => {
+    (invoke as any).mockImplementation((cmd: string) => {
+      if (cmd === 'start_ollama') return Promise.resolve();
+      if (cmd === 'detect_intent') return Promise.resolve('npc');
+      if (cmd === 'retrieve_context') return Promise.resolve('NPC ctx');
+      if (cmd === 'general_chat') return Promise.resolve('Hi');
+      return Promise.resolve();
+    });
+    (listen as any).mockImplementation(() => Promise.resolve(() => {}));
+
+    render(
+      <MemoryRouter>
+        <GeneralChat />
+      </MemoryRouter>
+    );
+    const systemPromptWithName =
+      SYSTEM_PROMPT + " The user's name is Test User. Address them by name.";
+    await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
+
+    fireEvent.change(screen.getByLabelText(/message/i), {
+      target: { value: 'Who is Bob?' },
+    });
+    fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
+
+    await waitFor(() => {
+      const calls = (invoke as any).mock.calls;
+      const retrieve = calls.find(([cmd]: [string]) => cmd === 'retrieve_context');
+      expect(retrieve[1]).toEqual({ query: 'Who is Bob?', intent: 'npc' });
+      const chatCall = calls.find(([cmd]: [string]) => cmd === 'general_chat');
+      expect(chatCall[1]).toEqual({
+        messages: [
+          { role: 'system', content: 'You are roleplaying a non-player character. Stay in character and use any provided context.' },
+          { role: 'system', content: 'NPC ctx' },
+          { role: 'system', content: systemPromptWithName },
+          { role: 'user', content: 'Who is Bob?' },
+        ],
+      });
+    });
+  });
+
+  it('routes lore intent with retrieval', async () => {
+    (invoke as any).mockImplementation((cmd: string) => {
+      if (cmd === 'start_ollama') return Promise.resolve();
+      if (cmd === 'detect_intent') return Promise.resolve('lore');
+      if (cmd === 'retrieve_context') return Promise.resolve('Lore ctx');
+      if (cmd === 'general_chat') return Promise.resolve('Hi');
+      return Promise.resolve();
+    });
+    (listen as any).mockImplementation(() => Promise.resolve(() => {}));
+
+    render(
+      <MemoryRouter>
+        <GeneralChat />
+      </MemoryRouter>
+    );
+    const systemPromptWithName =
+      SYSTEM_PROMPT + " The user's name is Test User. Address them by name.";
+    await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
+
+    fireEvent.change(screen.getByLabelText(/message/i), {
+      target: { value: 'Tell me about the realm' },
+    });
+    fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
+
+    await waitFor(() => {
+      const calls = (invoke as any).mock.calls;
+      const retrieve = calls.find(([cmd]: [string]) => cmd === 'retrieve_context');
+      expect(retrieve[1]).toEqual({
+        query: 'Tell me about the realm',
+        intent: 'lore',
+      });
+      const chatCall = calls.find(([cmd]: [string]) => cmd === 'general_chat');
+      expect(chatCall[1]).toEqual({
+        messages: [
+          { role: 'system', content: 'You are a lore expert. Use the provided context to answer questions about the world or setting.' },
+          { role: 'system', content: 'Lore ctx' },
+          { role: 'system', content: systemPromptWithName },
+          { role: 'user', content: 'Tell me about the realm' },
+        ],
+      });
+    });
+  });
+
+  it('routes rules intent without retrieval', async () => {
+    (invoke as any).mockImplementation((cmd: string) => {
+      if (cmd === 'start_ollama') return Promise.resolve();
+      if (cmd === 'detect_intent') return Promise.resolve('rules');
+      if (cmd === 'general_chat') return Promise.resolve('Ok');
+      return Promise.resolve();
+    });
+    (listen as any).mockImplementation(() => Promise.resolve(() => {}));
+
+    render(
+      <MemoryRouter>
+        <GeneralChat />
+      </MemoryRouter>
+    );
+    const systemPromptWithName =
+      SYSTEM_PROMPT + " The user's name is Test User. Address them by name.";
+    await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
+
+    fireEvent.change(screen.getByLabelText(/message/i), {
+      target: { value: 'How does combat work?' },
+    });
+    fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
+
+    await waitFor(() => {
+      const calls = (invoke as any).mock.calls;
+      const retrieve = calls.find(([cmd]: [string]) => cmd === 'retrieve_context');
+      expect(retrieve).toBeFalsy();
+      const chatCall = calls.find(([cmd]: [string]) => cmd === 'general_chat');
+      expect(chatCall[1]).toEqual({
+        messages: [
+          { role: 'system', content: 'You are a rules assistant. Provide answers based on official game mechanics.' },
+          { role: 'system', content: systemPromptWithName },
+          { role: 'user', content: 'How does combat work?' },
+        ],
+      });
+    });
   });
 
 });

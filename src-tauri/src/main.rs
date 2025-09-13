@@ -55,6 +55,7 @@ fn main() {
             commands::stop_ollama,
             commands::general_chat,
             commands::detect_intent,
+            commands::retrieve_context,
             // PDF tools:
             commands::pdf_add,
             commands::pdf_remove,
