@@ -114,6 +114,10 @@ def chunk_text(pages, doc_id, chunk_size: int = 500):
     return chunks
 
 
+def _emit_progress(value: float) -> None:
+    print(json.dumps({"progress": value}), flush=True)
+
+
 def hash_embed(text: str, dim: int = EMBED_DIM):
     """Create a simple bag-of-words embedding with stable token hashing.
 
@@ -283,9 +287,12 @@ def extract_lore(path: str):
     lore_list = []
     with pdfplumber.open(pdf_path) as pdf:
         text = "\n".join(page.extract_text() or "" for page in pdf.pages)
-    for block in text.split("\n\n"):
+    blocks = [blk for blk in text.split("\n\n") if blk.strip()]
+    total = len(blocks) or 1
+    for i, block in enumerate(blocks, start=1):
         lines = [ln.strip() for ln in block.splitlines() if ln.strip()]
         if not lines:
+            _emit_progress(i / total)
             continue
         data = {}
         for line in lines:
@@ -293,6 +300,7 @@ def extract_lore(path: str):
                 k, v = line.split(":", 1)
                 data[k.strip().lower()] = v.strip()
         if not data:
+            _emit_progress(i / total)
             continue
         hooks_raw = (
             data.get("hooks")
@@ -325,6 +333,7 @@ def extract_lore(path: str):
         if sections:
             lore["sections"] = sections
         lore_list.append(lore)
+        _emit_progress(i / total)
     return {"lore": lore_list}
 
 
