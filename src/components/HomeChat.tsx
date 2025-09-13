@@ -14,6 +14,14 @@ interface Message {
   content: string;
 }
 
+interface NpcEvent {
+  who: string;
+  action: string;
+  targets: string[];
+  effects: string[];
+  narration: string;
+}
+
 export default function HomeChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -50,7 +58,10 @@ export default function HomeChat() {
           role,
           content,
         }));
-        reply = await invoke<string>("general_chat", { messages: history });
+        const event = await invoke<NpcEvent>("npc_event_chat", {
+          messages: history,
+        });
+        reply = event.narration;
       }
     } catch (e: any) {
       reply = String(e);

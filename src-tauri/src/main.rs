@@ -54,6 +54,7 @@ fn main() {
             commands::start_ollama,
             commands::stop_ollama,
             commands::general_chat,
+            commands::npc_event_chat,
             commands::detect_intent,
             commands::retrieve_context,
             // PDF tools:

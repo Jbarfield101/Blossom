@@ -36,6 +36,14 @@ interface Message {
   ts: number;
 }
 
+interface NpcEvent {
+  who: string;
+  action: string;
+  targets: string[];
+  effects: string[];
+  narration: string;
+}
+
 interface Chat {
   id: string;
   name: string;
@@ -190,7 +198,8 @@ export default function GeneralChat() {
         if (rolePrompt) {
           msgs.unshift({ role: "system", content: rolePrompt });
         }
-        reply = await invoke("general_chat", { messages: msgs });
+        const event = await invoke<NpcEvent>("npc_event_chat", { messages: msgs });
+        reply = event.narration;
       }
       const asst: Message = { role: "assistant", content: reply, ts: Date.now() };
       updateChat(currentChat.id, [...newMessages, asst]);

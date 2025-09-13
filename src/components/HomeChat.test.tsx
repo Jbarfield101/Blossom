@@ -15,15 +15,21 @@ describe('HomeChat', () => {
     cleanup();
   });
 
-  it('sends to general_chat', async () => {
-    (invoke as any).mockResolvedValue('Reply');
+  it('sends to npc_event_chat', async () => {
+    (invoke as any).mockResolvedValue({
+      who: 'n',
+      action: 'say',
+      targets: [],
+      effects: [],
+      narration: 'Reply',
+    });
     render(<HomeChat />);
     fireEvent.change(screen.getByPlaceholderText('Ask Blossom...'), {
       target: { value: 'Hello' },
     });
     fireEvent.click(screen.getByRole('button', { name: /send/i }));
     await waitFor(() => {
-      expect(invoke).toHaveBeenCalledWith('general_chat', {
+      expect(invoke).toHaveBeenCalledWith('npc_event_chat', {
         messages: [{ role: 'user', content: 'Hello' }],
       });
     });

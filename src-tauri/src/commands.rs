@@ -1121,6 +1121,20 @@ pub struct ChatMessage {
     pub content: String,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+pub struct NpcEvent {
+    pub who: String,
+    pub action: String,
+    pub targets: Vec<String>,
+    pub effects: Vec<String>,
+    pub narration: String,
+}
+
+pub fn parse_npc_event(s: &str) -> Result<NpcEvent, String> {
+    serde_json::from_str::<NpcEvent>(s)
+        .map_err(|e| format!("invalid npc event: {e}; input: {s}"))
+}
+
 fn models_dir<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
     let dir = app
         .path()
@@ -1297,6 +1311,45 @@ pub async fn general_chat<R: Runtime>(
     _messages: Vec<ChatMessage>,
 ) -> Result<String, String> {
     Ok("{\"shortTerm\":\"up\",\"longTerm\":\"down\"}".into())
+}
+
+#[cfg(not(test))]
+#[tauri::command]
+pub async fn npc_event_chat<R: Runtime>(
+    _app: AppHandle<R>,
+    messages: Vec<ChatMessage>,
+) -> Result<NpcEvent, String> {
+    let mut msgs = messages.clone();
+    msgs.push(ChatMessage {
+        role: "system".into(),
+        content: "Reply ONLY in JSON with fields who, action, targets, effects, narration.".into(),
+    });
+    let client = reqwest::Client::new();
+    let resp = client
+        .post("http://127.0.0.1:11434/api/chat")
+        .json(&serde_json::json!({
+            "model": "gpt-oss:20b",
+            "stream": false,
+            "messages": msgs,
+        }))
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+    let json: Value = resp.json().await.map_err(|e| e.to_string())?;
+    let content = json["message"]["content"]
+        .as_str()
+        .or_else(|| json["content"].as_str())
+        .ok_or("no content")?;
+    parse_npc_event(content)
+}
+
+#[cfg(test)]
+#[tauri::command]
+pub async fn npc_event_chat<R: Runtime>(
+    _app: AppHandle<R>,
+    _messages: Vec<ChatMessage>,
+) -> Result<NpcEvent, String> {
+    parse_npc_event("{\"who\":\"npc\",\"action\":\"say\",\"targets\":[],\"effects\":[],\"narration\":\"hi\"}")
 }
 
 #[tauri::command]

@@ -37,7 +37,14 @@ describe('GeneralChat', () => {
     (invoke as any).mockImplementation((cmd: string) => {
       if (cmd === 'start_ollama') return Promise.resolve();
       if (cmd === 'detect_intent') return Promise.resolve('notes');
-      if (cmd === 'general_chat') return Promise.resolve('Reply');
+      if (cmd === 'npc_event_chat')
+        return Promise.resolve({
+          who: 'n',
+          action: 'say',
+          targets: [],
+          effects: [],
+          narration: 'Reply',
+        });
       return Promise.resolve();
     });
     (listen as any).mockImplementation(() => Promise.resolve(() => {}));
@@ -59,7 +66,7 @@ describe('GeneralChat', () => {
       const detect = calls.find(([cmd]: [string]) => cmd === 'detect_intent');
       expect(detect).toBeTruthy();
       expect(detect[1]).toEqual({ query: 'Hello' });
-      const chatCall = calls.find(([cmd]: [string]) => cmd === 'general_chat');
+      const chatCall = calls.find(([cmd]: [string]) => cmd === 'npc_event_chat');
       expect(chatCall[1]).toEqual({
         messages: [
           { role: 'system', content: 'You are a helpful assistant for personal or miscellaneous notes.' },
@@ -78,7 +85,14 @@ describe('GeneralChat', () => {
     (invoke as any).mockImplementation((cmd: string) => {
       if (cmd === 'start_ollama') return Promise.resolve();
       if (cmd === 'detect_intent') return Promise.resolve('notes');
-      if (cmd === 'general_chat') return Promise.resolve('Reply');
+      if (cmd === 'npc_event_chat')
+        return Promise.resolve({
+          who: 'n',
+          action: 'say',
+          targets: [],
+          effects: [],
+          narration: 'Reply',
+        });
       return Promise.resolve();
     });
     (listen as any).mockImplementation(() => Promise.resolve(() => {}));
@@ -97,7 +111,7 @@ describe('GeneralChat', () => {
     fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
     await waitFor(() => {
       const calls = (invoke as any).mock.calls;
-      const chatCall = calls.find(([cmd]: [string]) => cmd === 'general_chat');
+      const chatCall = calls.find(([cmd]: [string]) => cmd === 'npc_event_chat');
       expect(chatCall[1]).toEqual({
         messages: [
           { role: 'system', content: 'You are a helpful assistant for personal or miscellaneous notes.' },
@@ -113,7 +127,7 @@ describe('GeneralChat', () => {
     fireEvent.click(screen.getAllByRole('button', { name: /send/i })[0]);
     await waitFor(() => {
       const calls = (invoke as any).mock.calls;
-      const secondChatCall = calls.filter(([cmd]: [string]) => cmd === 'general_chat')[1];
+      const secondChatCall = calls.filter(([cmd]: [string]) => cmd === 'npc_event_chat')[1];
       expect(secondChatCall[1]).toEqual({
         messages: [
           { role: 'system', content: 'You are a helpful assistant for personal or miscellaneous notes.' },
@@ -130,7 +144,7 @@ describe('GeneralChat', () => {
     (invoke as any).mockImplementation((cmd: string) => {
       if (cmd === 'start_ollama') return Promise.resolve();
       if (cmd === 'detect_intent') return Promise.resolve('notes');
-      if (cmd === 'general_chat') return Promise.reject('fail');
+      if (cmd === 'npc_event_chat') return Promise.reject('fail');
       return Promise.resolve();
     });
     (listen as any).mockImplementation(() => Promise.resolve(() => {}));
@@ -172,7 +186,7 @@ describe('GeneralChat', () => {
 
     expect(await screen.findByText(/CPU: 1%/)).toBeInTheDocument();
     const chatCalls = (invoke as any).mock.calls.filter(
-      ([cmd]: [string]) => cmd === 'general_chat'
+      ([cmd]: [string]) => cmd === 'npc_event_chat'
     );
     expect(chatCalls).toHaveLength(0);
   });
@@ -201,7 +215,7 @@ describe('GeneralChat', () => {
 
     expect(await screen.findByText(/CPU: 1%/)).toBeInTheDocument();
     const chatCalls = (invoke as any).mock.calls.filter(
-      ([cmd]: [string]) => cmd === 'general_chat'
+      ([cmd]: [string]) => cmd === 'npc_event_chat'
     );
     expect(chatCalls).toHaveLength(0);
   });
@@ -211,7 +225,14 @@ describe('GeneralChat', () => {
       if (cmd === 'start_ollama') return Promise.resolve();
       if (cmd === 'detect_intent') return Promise.resolve('npc');
       if (cmd === 'retrieve_context') return Promise.resolve('NPC ctx');
-      if (cmd === 'general_chat') return Promise.resolve('Hi');
+      if (cmd === 'npc_event_chat')
+        return Promise.resolve({
+          who: 'n',
+          action: 'say',
+          targets: [],
+          effects: [],
+          narration: 'Hi',
+        });
       return Promise.resolve();
     });
     (listen as any).mockImplementation(() => Promise.resolve(() => {}));
@@ -234,7 +255,7 @@ describe('GeneralChat', () => {
       const calls = (invoke as any).mock.calls;
       const retrieve = calls.find(([cmd]: [string]) => cmd === 'retrieve_context');
       expect(retrieve[1]).toEqual({ query: 'Who is Bob?', intent: 'npc' });
-      const chatCall = calls.find(([cmd]: [string]) => cmd === 'general_chat');
+      const chatCall = calls.find(([cmd]: [string]) => cmd === 'npc_event_chat');
       expect(chatCall[1]).toEqual({
         messages: [
           { role: 'system', content: 'You are roleplaying a non-player character. Stay in character and use any provided context.' },
@@ -251,7 +272,14 @@ describe('GeneralChat', () => {
       if (cmd === 'start_ollama') return Promise.resolve();
       if (cmd === 'detect_intent') return Promise.resolve('lore');
       if (cmd === 'retrieve_context') return Promise.resolve('Lore ctx');
-      if (cmd === 'general_chat') return Promise.resolve('Hi');
+      if (cmd === 'npc_event_chat')
+        return Promise.resolve({
+          who: 'n',
+          action: 'say',
+          targets: [],
+          effects: [],
+          narration: 'Hi',
+        });
       return Promise.resolve();
     });
     (listen as any).mockImplementation(() => Promise.resolve(() => {}));
@@ -277,7 +305,7 @@ describe('GeneralChat', () => {
         query: 'Tell me about the realm',
         intent: 'lore',
       });
-      const chatCall = calls.find(([cmd]: [string]) => cmd === 'general_chat');
+      const chatCall = calls.find(([cmd]: [string]) => cmd === 'npc_event_chat');
       expect(chatCall[1]).toEqual({
         messages: [
           { role: 'system', content: 'You are a lore expert. Use the provided context to answer questions about the world or setting.' },
@@ -293,7 +321,14 @@ describe('GeneralChat', () => {
     (invoke as any).mockImplementation((cmd: string) => {
       if (cmd === 'start_ollama') return Promise.resolve();
       if (cmd === 'detect_intent') return Promise.resolve('rules');
-      if (cmd === 'general_chat') return Promise.resolve('Ok');
+      if (cmd === 'npc_event_chat')
+        return Promise.resolve({
+          who: 'n',
+          action: 'say',
+          targets: [],
+          effects: [],
+          narration: 'Ok',
+        });
       return Promise.resolve();
     });
     (listen as any).mockImplementation(() => Promise.resolve(() => {}));
@@ -316,7 +351,7 @@ describe('GeneralChat', () => {
       const calls = (invoke as any).mock.calls;
       const retrieve = calls.find(([cmd]: [string]) => cmd === 'retrieve_context');
       expect(retrieve).toBeFalsy();
-      const chatCall = calls.find(([cmd]: [string]) => cmd === 'general_chat');
+      const chatCall = calls.find(([cmd]: [string]) => cmd === 'npc_event_chat');
       expect(chatCall[1]).toEqual({
         messages: [
           { role: 'system', content: 'You are a rules assistant. Provide answers based on official game mechanics.' },

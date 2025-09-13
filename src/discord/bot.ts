@@ -26,6 +26,14 @@ const INTENT_PROMPTS: Record<string, string> = {
   notes: "You are a helpful assistant for personal or miscellaneous notes.",
 };
 
+interface NpcEvent {
+  who: string;
+  action: string;
+  targets: string[];
+  effects: string[];
+  narration: string;
+}
+
 interface BotState {
   npcEnabled: boolean;
   chatChannel: TextBasedChannel | null;
@@ -86,13 +94,13 @@ async function sendWavForTranscription(
         if (rolePrompt) {
           messages.unshift({ role: "system", content: rolePrompt });
         }
-        const reply = await invoke<string>("general_chat", { messages });
-        await state.chatChannel.send(reply);
+        const event = await invoke<NpcEvent>("npc_event_chat", { messages });
+        await state.chatChannel.send(event.narration);
         if (state.player) {
           try {
             const audio = (await invoke(
               "higgs_tts",
-              { text: reply, speaker: NPC_VOICE_ID },
+              { text: event.narration, speaker: NPC_VOICE_ID },
             )) as number[] | Uint8Array;
             const uint8 =
               audio instanceof Uint8Array ? audio : new Uint8Array(audio);
