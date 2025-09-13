@@ -2,6 +2,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Box } from "@mui/material";
 import TopBar from "./components/TopBar";
+import Sidebar from "./components/Sidebar";
 import ErrorBoundary from "./components/ErrorBoundary";
 import CreateUserDialog from "./components/CreateUserDialog";
 import RetroTV from "./components/RetroTV";
@@ -47,6 +48,7 @@ export default function App() {
   return (
     <ErrorBoundary>
         <TopBar />
+        <Sidebar />
         {pathname !== "/calendar" && pathname !== "/comfy" && (
             <RetroTV>NO SIGNAL</RetroTV>
           )}
