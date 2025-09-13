@@ -9,6 +9,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Calendar from './Calendar';
 import { useCalendar } from '../features/calendar/useCalendar';
+import { MemoryRouter } from 'react-router-dom';
 
 describe('Calendar quick add', () => {
   beforeEach(() => {
@@ -21,7 +22,11 @@ describe('Calendar quick add', () => {
   });
 
   it('creates and edits events via popup with tags', () => {
-    render(<Calendar />);
+    render(
+      <MemoryRouter>
+        <Calendar />
+      </MemoryRouter>
+    );
     const day1 = screen.getByTestId('day-1');
     fireEvent.click(day1);
     fireEvent.change(screen.getByPlaceholderText('Title'), {
@@ -56,7 +61,11 @@ describe('Calendar quick add', () => {
   });
 
   it('deletes events from agenda list', () => {
-    render(<Calendar />);
+    render(
+      <MemoryRouter>
+        <Calendar />
+      </MemoryRouter>
+    );
     const day1 = screen.getByTestId('day-1');
     fireEvent.click(day1);
     fireEvent.change(screen.getByPlaceholderText('Title'), {
@@ -71,7 +80,11 @@ describe('Calendar quick add', () => {
   });
 
   it('switches between month, week, and agenda views', () => {
-    render(<Calendar />);
+    render(
+      <MemoryRouter>
+        <Calendar />
+      </MemoryRouter>
+    );
     const day1 = screen.getByTestId('day-1');
     fireEvent.click(day1);
     fireEvent.change(screen.getByPlaceholderText('Title'), {
@@ -115,7 +128,11 @@ describe('Calendar quick add', () => {
   });
 
   it('closes quick add with Escape key and restores focus', () => {
-    render(<Calendar />);
+    render(
+      <MemoryRouter>
+        <Calendar />
+      </MemoryRouter>
+    );
     const day1 = screen.getByTestId('day-1');
     fireEvent.click(day1);
     const titleInput = screen.getByPlaceholderText('Title');
@@ -153,7 +170,11 @@ describe('Calendar holidays', () => {
   });
 
   it('displays holidays returned by the API', async () => {
-    render(<Calendar />);
+    render(
+      <MemoryRouter>
+        <Calendar />
+      </MemoryRouter>
+    );
     await waitFor(() =>
       expect(global.fetch).toHaveBeenCalledWith(
         `https://date.nager.at/api/v3/PublicHolidays/${year}/US`,

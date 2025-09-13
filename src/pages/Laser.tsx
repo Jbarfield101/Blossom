@@ -1,2 +1,11 @@
 import Center from "./_Center";
-export default function Laser(){ return <Center>Laser Lab (future)</Center>; }
+import BackButton from "../components/BackButton";
+
+export default function Laser() {
+  return (
+    <Center>
+      <BackButton />
+      Laser Lab (future)
+    </Center>
+  );
+}

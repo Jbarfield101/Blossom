@@ -25,6 +25,7 @@ import { useCalendar } from "../features/calendar/useCalendar";
 import { useStatusColors } from "../features/calendar/statusColors";
 import type { CalendarEvent } from "../features/calendar/types";
 import { toLocalNaive } from "../utils/time";
+import BackButton from "../components/BackButton";
 
 function pad(n: number) {
   return n.toString().padStart(2, "0");
@@ -248,6 +249,7 @@ export default function Calendar() {
 
   return (
     <Box sx={{ p: 5, pt: 20, mx: "auto", maxWidth: 1200 }}>
+      <BackButton />
       <Box
         display="flex"
         alignItems="center"

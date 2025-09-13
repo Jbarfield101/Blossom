@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Fusion from './Fusion';
+import { MemoryRouter } from 'react-router-dom';
 
 function getArchive() {
   return JSON.parse(localStorage.getItem('fusionArchive') || '[]');
@@ -16,7 +17,11 @@ describe('Fusion', () => {
   });
 
   it('fuses provided concepts into prompt and stores archive', () => {
-    render(<Fusion />);
+    render(
+      <MemoryRouter>
+        <Fusion />
+      </MemoryRouter>
+    );
     fireEvent.change(screen.getByLabelText('Concept 1'), {
       target: { value: 'ancient library' },
     });
@@ -36,7 +41,11 @@ describe('Fusion', () => {
   });
 
   it('random button fills words and archives', () => {
-    render(<Fusion />);
+    render(
+      <MemoryRouter>
+        <Fusion />
+      </MemoryRouter>
+    );
     fireEvent.click(screen.getAllByRole('button', { name: /random/i })[2]);
     expect(screen.getByLabelText('Concept 1')).not.toHaveValue('');
     expect(screen.getByLabelText('Concept 2')).not.toHaveValue('');
@@ -52,7 +61,11 @@ describe('Fusion', () => {
       prompt: `p${i}`,
     }));
     localStorage.setItem('fusionArchive', JSON.stringify(entries));
-    render(<Fusion />);
+    render(
+      <MemoryRouter>
+        <Fusion />
+      </MemoryRouter>
+    );
     fireEvent.change(screen.getByLabelText('Concept 1'), {
       target: { value: 'new' },
     });

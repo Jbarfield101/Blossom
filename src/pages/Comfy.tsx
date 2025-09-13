@@ -1,6 +1,7 @@
 // src/pages/Comfy.tsx
 import { useState } from "react";
 import { FaImage } from "react-icons/fa";
+import BackButton from "../components/BackButton";
 
 export default function Comfy() {
   const [status, setStatus] = useState("ready");
@@ -42,9 +43,11 @@ export default function Comfy() {
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.form}>
-        <h2 style={{ marginTop: 0 }}>Comfy Form</h2>
+    <>
+      <BackButton />
+      <div style={styles.container}>
+        <div style={styles.form}>
+          <h2 style={{ marginTop: 0 }}>Comfy Form</h2>
         <div style={styles.section}>
           <button style={styles.iconBtn} aria-label="Image">
             <FaImage />
@@ -65,6 +68,7 @@ export default function Comfy() {
         <div style={styles.status}>Status: {status}</div>
       </div>
     </div>
+    </>
   );
 }
 

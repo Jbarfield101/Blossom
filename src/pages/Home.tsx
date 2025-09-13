@@ -11,6 +11,7 @@ import HomeChat from "../components/HomeChat";
 import SystemInfoWidget from "../components/SystemInfoWidget";
 import TasksWidget from "../components/TasksWidget";
 import { useSettings } from "../features/settings/useSettings";
+import BackButton from "../components/BackButton";
 import {
   countdownContainerSx,
   countdownTextSx,
@@ -54,6 +55,7 @@ export default function Home() {
 
   return (
     <>
+      <BackButton />
       {event && (
         <Box sx={countdownContainerSx}>
           <Box sx={countdownTextSx}>

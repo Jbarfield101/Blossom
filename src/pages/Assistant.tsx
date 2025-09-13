@@ -1,6 +1,7 @@
 import { Button, Stack } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import Center from "./_Center";
+import BackButton from "../components/BackButton";
 
 interface Feature {
   label: string;
@@ -20,6 +21,7 @@ export default function Assistant() {
   const navigate = useNavigate();
   return (
     <Center>
+      <BackButton />
       <Stack spacing={2} sx={{ width: "100%", maxWidth: 400 }}>
         {features.map((feature) => (
           <Button
