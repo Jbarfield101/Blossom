@@ -1,6 +1,7 @@
 import Center from "./_Center";
 import { useUsers } from "../features/users/useUsers";
 import { Box, Typography, List, ListItem, ListItemText } from "@mui/material";
+import BackButton from "../components/BackButton";
 
 export default function User() {
   const user = useUsers((state) => {
@@ -9,11 +10,17 @@ export default function User() {
   });
 
   if (!user) {
-    return <Center>No user selected</Center>;
+    return (
+      <Center>
+        <BackButton />
+        No user selected
+      </Center>
+    );
   }
 
   return (
     <Center>
+      <BackButton />
       <Box sx={{ textAlign: "left", maxWidth: 400 }}>
         <Typography variant="h4" gutterBottom>
           User Info

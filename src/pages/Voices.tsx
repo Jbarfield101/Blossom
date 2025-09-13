@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Box, Typography, TextField, Button } from "@mui/material";
 import VoiceSelect from "../features/voice/VoiceSelect";
 import { useHiggsVoice } from "../features/voice/useHiggsVoice";
+import BackButton from "../components/BackButton";
 
 export default function Voices() {
   const [selected, setSelected] = useState<string>("");
@@ -9,7 +10,9 @@ export default function Voices() {
   const { speak, status, error } = useHiggsVoice();
 
   return (
-    <Box
+    <>
+      <BackButton />
+      <Box
       sx={{
         p: 2,
         mt: 8,
@@ -46,5 +49,6 @@ export default function Voices() {
         </Typography>
       )}
     </Box>
+    </>
   );
 }

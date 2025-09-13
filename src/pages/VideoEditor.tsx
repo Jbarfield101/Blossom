@@ -12,6 +12,7 @@ import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import Center from "./_Center";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke, convertFileSrc } from "@tauri-apps/api/core";
+import BackButton from "../components/BackButton";
 
 export default function VideoEditor() {
   const [input, setInput] = useState("");
@@ -66,6 +67,7 @@ export default function VideoEditor() {
 
   return (
     <Center>
+      <BackButton />
       <Stack spacing={2} sx={{ width: "100%", maxWidth: 500 }}>
         <Button variant="outlined" onClick={pickInput}>
           Select Input Video

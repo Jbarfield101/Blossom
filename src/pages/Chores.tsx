@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import Center from "./_Center";
 import { useCalendar } from "../features/calendar/useCalendar";
 import { useTasks } from "../store/tasks";
+import BackButton from "../components/BackButton";
 
 export default function Chores() {
   const { events } = useCalendar();
@@ -44,6 +45,7 @@ export default function Chores() {
 
   return (
     <Center>
+      <BackButton />
       <div
         style={{
           display: "flex",

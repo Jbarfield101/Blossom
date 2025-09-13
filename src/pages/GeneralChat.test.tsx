@@ -4,6 +4,7 @@ import GeneralChat, { SYSTEM_PROMPT } from './GeneralChat';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { useUsers, defaultModules } from '../features/users/useUsers';
+import { MemoryRouter } from 'react-router-dom';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 vi.mock('@tauri-apps/api/event', () => ({ listen: vi.fn() }));
@@ -41,7 +42,11 @@ describe('GeneralChat', () => {
     });
     (listen as any).mockImplementation(() => Promise.resolve(() => {}));
 
-    render(<GeneralChat />);
+    render(
+      <MemoryRouter>
+        <GeneralChat />
+      </MemoryRouter>
+    );
     const systemPromptWithName =
       SYSTEM_PROMPT + " The user's name is Test User. Address them by name.";
     await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
@@ -75,7 +80,11 @@ describe('GeneralChat', () => {
     });
     (listen as any).mockImplementation(() => Promise.resolve(() => {}));
 
-    render(<GeneralChat />);
+    render(
+      <MemoryRouter>
+        <GeneralChat />
+      </MemoryRouter>
+    );
     const systemPromptWithName =
       SYSTEM_PROMPT + " The user's name is Test User. Address them by name.";
     await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
@@ -121,7 +130,11 @@ describe('GeneralChat', () => {
     });
     (listen as any).mockImplementation(() => Promise.resolve(() => {}));
 
-    render(<GeneralChat />);
+    render(
+      <MemoryRouter>
+        <GeneralChat />
+      </MemoryRouter>
+    );
     await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
 
     fireEvent.change(screen.getByLabelText(/message/i), { target: { value: 'Hi' } });
@@ -140,7 +153,11 @@ describe('GeneralChat', () => {
     });
     (listen as any).mockImplementation(() => Promise.resolve(() => {}));
 
-    render(<GeneralChat />);
+    render(
+      <MemoryRouter>
+        <GeneralChat />
+      </MemoryRouter>
+    );
     await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
 
     fireEvent.change(screen.getByLabelText(/message/i), {
@@ -165,7 +182,11 @@ describe('GeneralChat', () => {
     });
     (listen as any).mockImplementation(() => Promise.resolve(() => {}));
 
-    render(<GeneralChat />);
+    render(
+      <MemoryRouter>
+        <GeneralChat />
+      </MemoryRouter>
+    );
     await waitFor(() => expect(invoke).toHaveBeenCalledWith('start_ollama'));
 
     fireEvent.change(screen.getByLabelText(/message/i), {

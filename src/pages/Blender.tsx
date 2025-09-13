@@ -7,6 +7,7 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { loadState, saveState } from "../utils/persist";
 import SystemInfoWidget from "../components/SystemInfoWidget";
 import { systemInfoWidgetSx } from "./homeStyles";
+import BackButton from "../components/BackButton";
 
 export default function Blender() {
   const [code, setCode] = useState("import bpy\n\n# example cube\nbpy.ops.mesh.primitive_cube_add()");
@@ -101,6 +102,7 @@ export default function Blender() {
 
   return (
     <>
+      <BackButton />
       <Center>
         <Stack spacing={2} sx={{ width: "100%", maxWidth: 600 }}>
         <Box>

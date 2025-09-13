@@ -2,6 +2,7 @@ import { Box, Typography } from "@mui/material";
 import { useSystemInfo } from "../features/system/useSystemInfo";
 import { Theme, useTheme } from "../features/theme/ThemeContext";
 import { useAudioLevel } from "../utils/useAudioLevel";
+import BackButton from "../components/BackButton";
 
 const themeColors: Record<Theme, string> = {
   default: "rgba(255,255,255,0.22)",
@@ -26,7 +27,9 @@ export default function SystemInfo() {
   const retroAlpha = 0.22 + level * (1 - 0.22);
 
   return (
-    <Box
+    <>
+      <BackButton />
+      <Box
       sx={{
         display: "flex",
         flexDirection: "column",
@@ -58,5 +61,6 @@ export default function SystemInfo() {
         <Typography>Loading...</Typography>
       )}
     </Box>
+    </>
   );
 }

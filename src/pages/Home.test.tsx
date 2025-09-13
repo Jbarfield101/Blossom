@@ -2,6 +2,7 @@ import { render, screen, cleanup } from '@testing-library/react';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import Home from './Home';
 import { useCalendar } from '../features/calendar/useCalendar';
+import { MemoryRouter } from 'react-router-dom';
 
 const widgets = { homeChat: false, systemInfo: false, tasks: false };
 
@@ -47,7 +48,11 @@ describe('Home widgets', () => {
   });
 
   it('hides all widgets when flags are false', () => {
-    render(<Home />);
+    render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>
+    );
     expect(screen.queryByText('HomeChatWidget')).toBeNull();
     expect(screen.queryByText('SystemInfoWidget')).toBeNull();
     expect(screen.queryByText(/No tasks today!/i)).toBeNull();
@@ -55,19 +60,31 @@ describe('Home widgets', () => {
 
   it('shows HomeChat when enabled', () => {
     widgets.homeChat = true;
-    render(<Home />);
+    render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>
+    );
     expect(screen.getByText('HomeChatWidget')).toBeInTheDocument();
   });
 
   it('shows SystemInfoWidget when enabled', () => {
     widgets.systemInfo = true;
-    render(<Home />);
+    render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>
+    );
     expect(screen.getByText('SystemInfoWidget')).toBeInTheDocument();
   });
 
   it('shows TasksWidget and empty message when enabled without events', () => {
     widgets.tasks = true;
-    render(<Home />);
+    render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>
+    );
     expect(screen.getByText('No tasks today!')).toBeInTheDocument();
   });
 });

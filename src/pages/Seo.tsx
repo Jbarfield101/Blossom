@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 import Center from "./_Center";
 import { generatePrompt } from "../utils/promptGenerator";
+import BackButton from "../components/BackButton";
 
 function generateMetaTags(keywords: string[], content: string) {
   const description = content.trim().slice(0, 160);
@@ -60,6 +61,7 @@ export default function Seo() {
 
   return (
     <Center>
+      <BackButton />
       <Stack spacing={2} sx={{ width: "100%", maxWidth: 600 }}>
         <TextField
           label="Target Keywords"

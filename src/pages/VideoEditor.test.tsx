@@ -3,6 +3,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import VideoEditor from './VideoEditor';
 import { open } from '@tauri-apps/plugin-dialog';
 import { invoke, convertFileSrc } from '@tauri-apps/api/core';
+import { MemoryRouter } from 'react-router-dom';
 
 type Mock = ReturnType<typeof vi.fn>;
 vi.mock('@tauri-apps/plugin-dialog', () => ({ open: vi.fn() }));
@@ -20,7 +21,11 @@ describe('VideoEditor', () => {
     (invoke as Mock).mockResolvedValue('/out/looped.mp4');
     (convertFileSrc as Mock).mockImplementation((p: string) => `converted:${p}`);
 
-    const { container } = render(<VideoEditor />);
+    const { container } = render(
+      <MemoryRouter>
+        <VideoEditor />
+      </MemoryRouter>
+    );
 
     fireEvent.click(screen.getByRole('button', { name: /select input video/i }));
     await waitFor(() => expect(open).toHaveBeenCalledTimes(1));

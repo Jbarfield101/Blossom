@@ -3,6 +3,7 @@ import { Button, Stack, TextField, IconButton } from "@mui/material";
 import Center from "./_Center";
 import { useWorlds } from "../store/worlds";
 import { TrashIcon } from "@heroicons/react/24/outline";
+import BackButton from "../components/BackButton";
 
 export default function WorldBuilder() {
   const worlds = useWorlds((s) => s.worlds);
@@ -22,6 +23,7 @@ export default function WorldBuilder() {
 
   return (
     <Center>
+      <BackButton />
       <Stack spacing={2} sx={{ width: "100%", maxWidth: 400 }}>
         {worlds.map((w) => (
           <Stack direction="row" spacing={1} key={w}>

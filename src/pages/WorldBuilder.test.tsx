@@ -2,6 +2,7 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { describe, it, expect, afterEach } from "vitest";
 import WorldBuilder from "./WorldBuilder";
 import { useWorlds } from "../store/worlds";
+import { MemoryRouter } from "react-router-dom";
 
 describe("WorldBuilder", () => {
   afterEach(() => {
@@ -12,7 +13,11 @@ describe("WorldBuilder", () => {
   });
 
   it("persists worlds across remounts", () => {
-    const { unmount } = render(<WorldBuilder />);
+    const { unmount } = render(
+      <MemoryRouter>
+        <WorldBuilder />
+      </MemoryRouter>
+    );
     fireEvent.click(screen.getByText("Create New World"));
     fireEvent.change(screen.getByLabelText("World Name"), {
       target: { value: "Faerun" },
@@ -20,7 +25,11 @@ describe("WorldBuilder", () => {
     fireEvent.click(screen.getByText("Submit"));
     expect(screen.getByText("Faerun")).toBeInTheDocument();
     unmount();
-    render(<WorldBuilder />);
+    render(
+      <MemoryRouter>
+        <WorldBuilder />
+      </MemoryRouter>
+    );
     expect(screen.getByText("Faerun")).toBeInTheDocument();
   });
 });

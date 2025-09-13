@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Box, Stack, TextField, Button, Typography } from "@mui/material";
 import { generatePrompt } from "../utils/promptGenerator";
 import { getRandomConcept } from "../utils/randomConcept";
+import BackButton from "../components/BackButton";
 
 export default function Fusion() {
   const [concept1, setConcept1] = useState("");
@@ -53,6 +54,7 @@ export default function Fusion() {
 
   return (
     <Box sx={{ p: 2, color: "#fff" }}>
+      <BackButton />
       <Stack spacing={2}>
         <Stack direction="row" spacing={2}>
           <Stack direction="row" spacing={1}>
