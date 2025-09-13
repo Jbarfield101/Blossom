@@ -60,6 +60,7 @@ fn main() {
             commands::pdf_remove,
             commands::pdf_list,
             commands::pdf_search,
+            commands::vault_search,
             commands::pdf_ingest,
             commands::parse_spell_pdf,
             commands::parse_rule_pdf,

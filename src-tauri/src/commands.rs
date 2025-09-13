@@ -18,6 +18,8 @@ use rand::{thread_rng, Rng};
 use reqwest;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use sha2::{Digest, Sha256};
+use sqlx::{Connection, Row, SqliteConnection};
 use std::process::Command as StdCommand;
 use sysinfo::System;
 use tauri::async_runtime::Mutex as AsyncMutex;
@@ -404,6 +406,14 @@ pub struct PdfSearchHit {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct VaultSearchHit {
+    pub doc_id: String,
+    pub page_range: [u32; 2],
+    pub text: String,
+    pub score: f32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct SpellRecord {
     pub name: String,
     pub description: String,
@@ -449,6 +459,91 @@ pub async fn pdf_search<R: Runtime>(
     let out = run_pdf_tool(&app, &arg_refs)?;
     let v: Value = serde_json::from_str(&out).map_err(|e| e.to_string())?;
     serde_json::from_value(v["results"].clone()).map_err(|e| e.to_string())
+}
+
+const EMBED_DIM: usize = 512;
+
+fn hash_embed(text: &str) -> Vec<f32> {
+    let mut vec = vec![0f32; EMBED_DIM];
+    for token in text.split_whitespace() {
+        let digest = Sha256::digest(token.to_lowercase().as_bytes());
+        let bytes: [u8; 8] = digest[0..8].try_into().unwrap();
+        let idx = (u64::from_be_bytes(bytes) as usize) % EMBED_DIM;
+        vec[idx] += 1.0;
+    }
+    let norm = vec.iter().map(|v| v * v).sum::<f32>().sqrt();
+    if norm > 0.0 {
+        for v in &mut vec {
+            *v /= norm;
+        }
+    }
+    vec
+}
+
+fn vault_index_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
+    if let Ok(dir) = env::var("BLOSSOM_OUTPUT_DIR") {
+        return PathBuf::from(dir).join("Index");
+    }
+    if let Some(home) = dirs::home_dir() {
+        let settings = home.join(".blossom_settings.json");
+        if settings.exists() {
+            if let Ok(text) = fs::read_to_string(&settings) {
+                if let Ok(v) = serde_json::from_str::<Value>(&text) {
+                    if let Some(out) = v["output_folder"].as_str() {
+                        return PathBuf::from(out).join("Index");
+                    }
+                }
+            }
+        }
+    }
+    PathBuf::from("Knowledge").join("Index")
+}
+
+#[tauri::command]
+pub async fn vault_search<R: Runtime>(
+    app: AppHandle<R>,
+    query: String,
+    k: Option<u32>,
+) -> Result<Vec<VaultSearchHit>, String> {
+    let k = k.unwrap_or(3) as usize;
+    let db_path = vault_index_path(&app).join("index.sqlite");
+    if !db_path.exists() {
+        return Ok(Vec::new());
+    }
+    let mut conn = SqliteConnection::connect(&format!("sqlite:{}", db_path.to_string_lossy()))
+        .await
+        .map_err(|e| e.to_string())?;
+    let rows = sqlx::query("SELECT doc_id, page_start, page_end, text, embedding FROM embeddings")
+        .fetch_all(&mut conn)
+        .await
+        .map_err(|e| e.to_string())?;
+    let qvec = hash_embed(&query);
+    let mut hits = Vec::new();
+    for row in rows {
+        let doc_id: String = row.get("doc_id");
+        let ps: i64 = row.get("page_start");
+        let pe: i64 = row.get("page_end");
+        let text: String = row.get("text");
+        let blob: Vec<u8> = row.get("embedding");
+        let mut emb = vec![0f32; blob.len() / 4];
+        for (i, chunk) in blob.chunks_exact(4).enumerate() {
+            emb[i] = f32::from_ne_bytes(chunk.try_into().unwrap());
+        }
+        let score: f32 = qvec.iter().zip(emb.iter()).map(|(a, b)| a * b).sum();
+        hits.push(VaultSearchHit {
+            doc_id,
+            page_range: [ps as u32, pe as u32],
+            text,
+            score,
+        });
+    }
+    hits.sort_by(|a, b| {
+        b.score
+            .partial_cmp(&a.score)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+    hits.truncate(k);
+    Ok(hits)
 }
 
 #[tauri::command]
@@ -529,6 +624,14 @@ mod tests {
     fn parse_json_notes() {
         let content = "{\"intent\":\"notes\",\"confidence\":0.9}";
         assert_eq!(extract_intent(content), "notes");
+    }
+
+    #[test]
+    fn hash_embed_produces_unit_vec() {
+        let v = hash_embed("hello world");
+        assert_eq!(v.len(), 512);
+        let norm = v.iter().map(|x| x * x).sum::<f32>().sqrt();
+        assert!((norm - 1.0).abs() < 1e-6);
     }
 
     #[test]
@@ -1138,20 +1241,34 @@ pub async fn general_chat<R: Runtime>(
         .map(|m| m.content.clone())
         .unwrap_or_default();
     if !query.is_empty() {
-        if let Ok(results) = pdf_search(app.clone(), query, None).await {
+        let mut ctx = String::new();
+        if let Ok(results) = pdf_search(app.clone(), query.clone(), None).await {
             if !results.is_empty() {
-                let mut ctx = String::from("Relevant documents:\n");
+                ctx.push_str("Relevant documents:\n");
                 for r in &results {
                     ctx.push_str(&format!(
                         "- {} p.{}-{}: {}\n",
                         r.doc_id, r.page_range[0], r.page_range[1], r.text
                     ));
                 }
-                msgs.push(ChatMessage {
-                    role: "system".into(),
-                    content: ctx,
-                });
             }
+        }
+        if let Ok(notes) = vault_search(app.clone(), query, None).await {
+            if !notes.is_empty() {
+                ctx.push_str("Relevant notes:\n");
+                for n in &notes {
+                    ctx.push_str(&format!(
+                        "- {} p.{}-{}: {}\n",
+                        n.doc_id, n.page_range[0], n.page_range[1], n.text
+                    ));
+                }
+            }
+        }
+        if !ctx.is_empty() {
+            msgs.push(ChatMessage {
+                role: "system".into(),
+                content: ctx,
+            });
         }
     }
     let client = reqwest::Client::new();
@@ -1232,7 +1349,7 @@ fn extract_intent(content: &str) -> String {
 }
 
 #[cfg(test)]
-mod tests {
+mod intent_tests {
     use super::extract_intent;
 
     #[test]
@@ -1363,6 +1480,10 @@ fn summarize_session_script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
         .expect("resource dir")
         .join("python")
         .join("summarize_session.py")
+}
+
+fn script_path<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
+    transcribe_script_path(app)
 }
 
 fn run_transcribe_script<R: Runtime>(app: &AppHandle<R>, audio: &Path) -> Result<String, String> {

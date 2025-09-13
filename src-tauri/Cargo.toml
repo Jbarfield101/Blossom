@@ -46,6 +46,7 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "io-ut
 png = "0.17"
 rand = "0.8"
 base64 = "0.21"
+sha2 = "0.10"
 
 [dev-dependencies]
 tauri = { version = "2", features = ["protocol-asset", "test"] }
